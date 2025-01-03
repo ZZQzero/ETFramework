@@ -7,4 +7,13 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\ET.Core\ET.Core.csproj" />
+      <ProjectReference Include="..\ET.Loader\ET.Loader.csproj" />
+      <ProjectReference Include="..\ET.Mathematics\ET.Mathematics.csproj" />
+      <ProjectReference Include="..\ET.Recast\ET.Recast.csproj" />
+      <ProjectReference Include="..\ET.SourceGeneratorAttribute\ET.SourceGeneratorAttribute.csproj" />
+      <ProjectReference Include="..\ET.SourceGenerator\ET.SourceGenerator.csproj" />
+    </ItemGroup>
+
 </Project>

@@ -4,6 +4,91 @@
     "D:\\Project\\ETFramework\\DotNet\\ET.Hotfix\\ET.Hotfix.csproj": {}
   },
   "projects": {
+    "D:\\Project\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Project\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj",
+        "projectName": "ET.Core",
+        "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj",
+        "packagesPath": "C:\\Users\\52847\\.nuget\\packages\\",
+        "outputPath": "D:\\Project\\ETFramework\\DotNet\\ET.Core\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\52847\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj"
+              },
+              "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "CommandLineParser": {
+              "target": "Package",
+              "version": "[2.9.1, )"
+            },
+            "MemoryPack": {
+              "target": "Package",
+              "version": "[1.21.3, )"
+            },
+            "MongoDB.Driver": {
+              "target": "Package",
+              "version": "[3.1.0, )"
+            },
+            "NLog": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.404/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
     "D:\\Project\\ETFramework\\DotNet\\ET.Hotfix\\ET.Hotfix.csproj": {
       "version": "1.0.0",
       "restore": {
@@ -12,6 +97,155 @@
         "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Hotfix\\ET.Hotfix.csproj",
         "packagesPath": "C:\\Users\\52847\\.nuget\\packages\\",
         "outputPath": "D:\\Project\\ETFramework\\DotNet\\ET.Hotfix\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\52847\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "D:\\Project\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj"
+              },
+              "D:\\Project\\ETFramework\\DotNet\\ET.Loader\\ET.Loader.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Loader\\ET.Loader.csproj"
+              },
+              "D:\\Project\\ETFramework\\DotNet\\ET.Mathematics\\ET.Mathematics.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Mathematics\\ET.Mathematics.csproj"
+              },
+              "D:\\Project\\ETFramework\\DotNet\\ET.Model\\ET.Model.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Model\\ET.Model.csproj"
+              },
+              "D:\\Project\\ETFramework\\DotNet\\ET.Recast\\ET.Recast.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Recast\\ET.Recast.csproj"
+              },
+              "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj"
+              },
+              "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.404/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Project\\ETFramework\\DotNet\\ET.Loader\\ET.Loader.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Project\\ETFramework\\DotNet\\ET.Loader\\ET.Loader.csproj",
+        "projectName": "ET.Loader",
+        "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Loader\\ET.Loader.csproj",
+        "packagesPath": "C:\\Users\\52847\\.nuget\\packages\\",
+        "outputPath": "D:\\Project\\ETFramework\\DotNet\\ET.Loader\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\52847\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "D:\\Project\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj"
+              },
+              "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.404/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Project\\ETFramework\\DotNet\\ET.Mathematics\\ET.Mathematics.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Project\\ETFramework\\DotNet\\ET.Mathematics\\ET.Mathematics.csproj",
+        "projectName": "ET.Mathematics",
+        "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Mathematics\\ET.Mathematics.csproj",
+        "packagesPath": "C:\\Users\\52847\\.nuget\\packages\\",
+        "outputPath": "D:\\Project\\ETFramework\\DotNet\\ET.Mathematics\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\52847\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -44,6 +278,281 @@
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.404/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Project\\ETFramework\\DotNet\\ET.Model\\ET.Model.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Project\\ETFramework\\DotNet\\ET.Model\\ET.Model.csproj",
+        "projectName": "ET.Model",
+        "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Model\\ET.Model.csproj",
+        "packagesPath": "C:\\Users\\52847\\.nuget\\packages\\",
+        "outputPath": "D:\\Project\\ETFramework\\DotNet\\ET.Model\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\52847\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "D:\\Project\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj"
+              },
+              "D:\\Project\\ETFramework\\DotNet\\ET.Loader\\ET.Loader.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Loader\\ET.Loader.csproj"
+              },
+              "D:\\Project\\ETFramework\\DotNet\\ET.Mathematics\\ET.Mathematics.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Mathematics\\ET.Mathematics.csproj"
+              },
+              "D:\\Project\\ETFramework\\DotNet\\ET.Recast\\ET.Recast.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Recast\\ET.Recast.csproj"
+              },
+              "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj"
+              },
+              "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj": {
+                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.404/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Project\\ETFramework\\DotNet\\ET.Recast\\ET.Recast.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Project\\ETFramework\\DotNet\\ET.Recast\\ET.Recast.csproj",
+        "projectName": "ET.Recast",
+        "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Recast\\ET.Recast.csproj",
+        "packagesPath": "C:\\Users\\52847\\.nuget\\packages\\",
+        "outputPath": "D:\\Project\\ETFramework\\DotNet\\ET.Recast\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\52847\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.404/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj",
+        "projectName": "ET.SourceGeneratorAttribute",
+        "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj",
+        "packagesPath": "C:\\Users\\52847\\.nuget\\packages\\",
+        "outputPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\52847\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.404/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj",
+        "projectName": "ET.SourceGenerator",
+        "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj",
+        "packagesPath": "C:\\Users\\52847\\.nuget\\packages\\",
+        "outputPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\52847\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.CodeAnalysis.Analyzers": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[3.11.0, )"
+            },
+            "Microsoft.CodeAnalysis.CSharp": {
+              "target": "Package",
+              "version": "[4.12.0, )"
+            },
+            "Microsoft.CodeAnalysis.CSharp.Workspaces": {
+              "target": "Package",
+              "version": "[4.12.0, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

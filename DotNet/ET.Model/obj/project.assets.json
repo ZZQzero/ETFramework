@@ -8,19 +8,19 @@
     "net8.0": []
   },
   "packageFolders": {
-    "C:\\Users\\Administrator\\.nuget\\packages\\": {}
+    "C:\\Users\\52847\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "G:\\UnityProject\\ETFramework\\DotNet\\ET.Model\\ET.Model.csproj",
+      "projectUniqueName": "D:\\Project\\ETFramework\\DotNet\\ET.Model\\ET.Model.csproj",
       "projectName": "ET.Model",
-      "projectPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.Model\\ET.Model.csproj",
-      "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-      "outputPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.Model\\obj\\",
+      "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Model\\ET.Model.csproj",
+      "packagesPath": "C:\\Users\\52847\\.nuget\\packages\\",
+      "outputPath": "D:\\Project\\ETFramework\\DotNet\\ET.Model\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\52847\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [

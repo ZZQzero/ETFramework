@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ET.Loader")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7d493d18ae14bd41ac915a3edb72af98b19a3022")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+dea2766aa4d52936c29c6c697a505e003b4f0fe7")]
 [assembly: System.Reflection.AssemblyProductAttribute("ET.Loader")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ET.Loader")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

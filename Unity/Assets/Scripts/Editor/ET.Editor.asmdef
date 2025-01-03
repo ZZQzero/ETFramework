@@ -1,0 +1,28 @@
+{
+    "name": "ET.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:00eeea5e741dc2e47ab83d962bcf3fe5",
+        "GUID:30cf3be23c5359248b19bbbf74eaf7f0",
+        "GUID:9420f27681c08ff4d9168111f8617391",
+        "GUID:13ba8ce62aa80c74598530029cb2d649",
+        "GUID:2373f786d14518f44b0f475db77ba4de",
+        "GUID:e34a5702dd353724aa315fb8011f08c3",
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:e41bfb732b96fb549bd09ea6fbb5b4e5",
+        "GUID:8b6ee0f4136d69f4c8b4d46ebdb9ee5f",
+        "GUID:f53f3dfdde3f7e6429fb9040a944ee75",
+        "GUID:f00321415b160744b8a281448528f373"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

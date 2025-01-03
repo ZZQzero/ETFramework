@@ -12,4 +12,10 @@
       <ProjectReference Include="..\ET.SourceGeneratorAttribute\ET.SourceGeneratorAttribute.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <Compile Include="..\..\Unity\Assets\Scripts\Loader\Share\**\*.cs">
+            <Link>Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        </Compile>
+    </ItemGroup>
+
 </Project>

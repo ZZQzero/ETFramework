@@ -7,4 +7,10 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+        <Compile Include="..\..\Unity\Assets\Scripts\ThirdParty\SourceGeneratorAttribute\**\*.cs">
+            <Link>SourceGeneratorAttribute\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        </Compile>
+    </ItemGroup>
+
 </Project>

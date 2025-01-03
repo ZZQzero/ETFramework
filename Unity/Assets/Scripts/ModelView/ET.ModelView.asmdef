@@ -1,0 +1,23 @@
+{
+    "name": "ET.ModelView",
+    "rootNamespace": "ET",
+    "references": [
+        "ET.Core",
+        "ET.Loader",
+        "ET.Model",
+        "ET.ThirdParty",
+        "YooAsset",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "IS_COMPILING || UNITY_EDITOR"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

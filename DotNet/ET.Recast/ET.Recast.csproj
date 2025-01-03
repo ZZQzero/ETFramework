@@ -7,4 +7,10 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+        <Compile Include="..\..\Unity\Assets\Scripts\ThirdParty\Recast\**\*.cs">
+            <Link>Recast\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        </Compile>
+    </ItemGroup>
+
 </Project>

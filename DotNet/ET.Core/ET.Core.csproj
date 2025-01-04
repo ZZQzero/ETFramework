@@ -1,11 +1,33 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
+        <Nullable>disable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <RootNamespace>ET</RootNamespace>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <DefineConstants>DOTNET</DefineConstants>
+        <OutputPath>$(SolutionDir)Bin</OutputPath>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <Optimize>false</Optimize>
+        <NoWarn>0169,0649,3021,8981,CS9193,CS9192,NU1903</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <DefineConstants>DOTNET</DefineConstants>
+        <OutputPath>$(SolutionDir)Bin</OutputPath>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <NoWarn>0169,0649,3021,8981,CS9193,CS9192,NU1903</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

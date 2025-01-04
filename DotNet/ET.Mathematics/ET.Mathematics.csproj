@@ -1,15 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
+        <Nullable>disable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <RootNamespace>ET</RootNamespace>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
+      <DefineConstants>DOTNET;UNITY_DOTSPLAYER</DefineConstants>
+      <Optimize>true</Optimize>
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+      <NoWarn>0169,0649,3021,8981,NU1903</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
+      <DefineConstants>DOTNET;UNITY_DOTSPLAYER</DefineConstants>
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+      <NoWarn>0169,0649,3021,8981,NU1903</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="..\..\Unity\Library\PackageCache\com.unity.mathematics*\Unity.Mathematics\**\*.cs">
+        <Compile Include="..\..\Unity\Library\PackageCache\com.unity.mathematics*\Unity.Mathematics\**\*.cs" 
+                 Exclude="..\..\Unity\Library\PackageCache\com.unity.mathematics*\Unity.Mathematics\PropertyAttributes.cs">
             <Link>Unity.Mathematics\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
     </ItemGroup>

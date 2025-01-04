@@ -4,11 +4,39 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
+        <Nullable>disable</Nullable>
+        <PackageId>Apps.Tool</PackageId>
+        <AssemblyName>ET.ExcelExporter</AssemblyName>
+        <RootNamespace>ET</RootNamespace>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <OutputPath>./Exe</OutputPath>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <DefineConstants>DOTNET</DefineConstants>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <OutputPath>./Exe</OutputPath>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <DefineConstants>DOTNET</DefineConstants>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\ET.Core\ET.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="Template.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>

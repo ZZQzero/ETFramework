@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Project\\ETFramework\\DotNet\\ET.Proto2CS\\ET.Proto2CS.csproj": {}
+    "G:\\UnityProject\\ETFramework\\DotNet\\ET.Proto2CS\\ET.Proto2CS.csproj": {}
   },
   "projects": {
-    "D:\\Project\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj": {
+    "G:\\UnityProject\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Project\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj",
+        "projectUniqueName": "G:\\UnityProject\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj",
         "projectName": "ET.Core",
-        "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj",
-        "packagesPath": "C:\\Users\\52847\\.nuget\\packages\\",
-        "outputPath": "D:\\Project\\ETFramework\\DotNet\\ET.Core\\obj\\",
+        "projectPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj",
+        "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
+        "outputPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.Core\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\52847\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -28,16 +28,20 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj": {
-                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj"
+              "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj": {
+                "projectPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj"
               },
-              "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj": {
-                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj"
+              "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj": {
+                "projectPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj"
               }
             }
           }
         },
         "warningProperties": {
+          "allWarningsAsErrors": true,
+          "noWarn": [
+            "NU1903"
+          ],
           "warnAsError": [
             "NU1605"
           ]
@@ -89,17 +93,17 @@
         }
       }
     },
-    "D:\\Project\\ETFramework\\DotNet\\ET.Proto2CS\\ET.Proto2CS.csproj": {
+    "G:\\UnityProject\\ETFramework\\DotNet\\ET.Proto2CS\\ET.Proto2CS.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Project\\ETFramework\\DotNet\\ET.Proto2CS\\ET.Proto2CS.csproj",
+        "projectUniqueName": "G:\\UnityProject\\ETFramework\\DotNet\\ET.Proto2CS\\ET.Proto2CS.csproj",
         "projectName": "ET.Proto2CS",
-        "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Proto2CS\\ET.Proto2CS.csproj",
-        "packagesPath": "C:\\Users\\52847\\.nuget\\packages\\",
-        "outputPath": "D:\\Project\\ETFramework\\DotNet\\ET.Proto2CS\\obj\\",
+        "projectPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.Proto2CS\\ET.Proto2CS.csproj",
+        "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
+        "outputPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.Proto2CS\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\52847\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -113,19 +117,20 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\Project\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj": {
-                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj"
+              "G:\\UnityProject\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj": {
+                "projectPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.Core\\ET.Core.csproj"
               },
-              "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj": {
-                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj"
+              "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj": {
+                "projectPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj"
               },
-              "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj": {
-                "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj"
+              "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj": {
+                "projectPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj"
               }
             }
           }
         },
         "warningProperties": {
+          "allWarningsAsErrors": true,
           "warnAsError": [
             "NU1605"
           ]
@@ -159,29 +164,29 @@
         }
       }
     },
-    "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj": {
+    "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj",
+        "projectUniqueName": "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj",
         "projectName": "ET.SourceGeneratorAttribute",
-        "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj",
-        "packagesPath": "C:\\Users\\52847\\.nuget\\packages\\",
-        "outputPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\obj\\",
+        "projectPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj",
+        "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
+        "outputPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\52847\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net8.0"
+          "netstandard2.0"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net8.0": {
-            "targetAlias": "net8.0",
+          "netstandard2.0": {
+            "targetAlias": "netstandard2.0",
             "projectReferences": {}
           }
         },
@@ -197,8 +202,16 @@
         }
       },
       "frameworks": {
-        "net8.0": {
-          "targetAlias": "net8.0",
+        "netstandard2.0": {
+          "targetAlias": "netstandard2.0",
+          "dependencies": {
+            "NETStandard.Library": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.0.3, )",
+              "autoReferenced": true
+            }
+          },
           "imports": [
             "net461",
             "net462",
@@ -210,38 +223,33 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "frameworkReferences": {
-            "Microsoft.NETCore.App": {
-              "privateAssets": "all"
-            }
-          },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.404/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.404\\RuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj": {
+    "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj",
+        "projectUniqueName": "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj",
         "projectName": "ET.SourceGenerator",
-        "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj",
-        "packagesPath": "C:\\Users\\52847\\.nuget\\packages\\",
-        "outputPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\obj\\",
+        "projectPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj",
+        "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
+        "outputPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGenerator\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\52847\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net8.0"
+          "netstandard2.0"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net8.0": {
-            "targetAlias": "net8.0",
+          "netstandard2.0": {
+            "targetAlias": "netstandard2.0",
             "projectReferences": {}
           }
         },
@@ -257,8 +265,8 @@
         }
       },
       "frameworks": {
-        "net8.0": {
-          "targetAlias": "net8.0",
+        "netstandard2.0": {
+          "targetAlias": "netstandard2.0",
           "dependencies": {
             "Microsoft.CodeAnalysis.Analyzers": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
@@ -273,6 +281,12 @@
             "Microsoft.CodeAnalysis.CSharp.Workspaces": {
               "target": "Package",
               "version": "[4.12.0, )"
+            },
+            "NETStandard.Library": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.0.3, )",
+              "autoReferenced": true
             }
           },
           "imports": [
@@ -286,12 +300,7 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "frameworkReferences": {
-            "Microsoft.NETCore.App": {
-              "privateAssets": "all"
-            }
-          },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.404/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.404\\RuntimeIdentifierGraph.json"
         }
       }
     }

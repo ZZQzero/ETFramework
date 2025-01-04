@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>ET.App</AssemblyName>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <DefineConstants>DOTNET</DefineConstants>
+        <OutputPath>$(SolutionDir)Bin</OutputPath>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <Optimize>true</Optimize>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PublishTrimmed>false</PublishTrimmed>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+        <DefineConstants>DOTNET</DefineConstants>
+        <OutputPath>$(SolutionDir)Bin</OutputPath>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ET.Core\ET.Core.csproj" />
+      <ProjectReference Include="..\ET.Loader\ET.Loader.csproj" />
+      <ProjectReference Include="..\ET.Mathematics\ET.Mathematics.csproj" />
+      <ProjectReference Include="..\ET.Model\ET.Model.csproj" />
+      <ProjectReference Include="..\ET.Recast\ET.Recast.csproj" />
+      <ProjectReference Include="..\ET.SourceGeneratorAttribute\ET.SourceGeneratorAttribute.csproj" />
+    </ItemGroup>
+
+</Project>

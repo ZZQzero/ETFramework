@@ -1,12 +1,13 @@
 {
-    "name": "ET.Model",
+    "name": "Unity.Hotfix",
     "rootNamespace": "ET",
     "references": [
-        "ET.Core",
-        "MemoryPack",
-        "ET.ThirdParty",
-        "YooAsset",
-        "Unity.Mathematics"
+        "GUID:756335c0388f7114790e504ed368ae1d",
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:30cf3be23c5359248b19bbbf74eaf7f0",
+        "GUID:9420f27681c08ff4d9168111f8617391",
+        "GUID:e41bfb732b96fb549bd09ea6fbb5b4e5",
+        "GUID:00eeea5e741dc2e47ab83d962bcf3fe5"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

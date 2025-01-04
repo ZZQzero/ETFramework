@@ -1,5 +1,5 @@
 {
-    "name": "ET.Editor",
+    "name": "Unity.Editor",
     "rootNamespace": "",
     "references": [
         "GUID:00eeea5e741dc2e47ab83d962bcf3fe5",

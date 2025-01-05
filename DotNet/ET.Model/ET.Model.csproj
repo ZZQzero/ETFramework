@@ -54,12 +54,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\..\Unity\Assets\Scripts\Model\Excel\Share\**\*.cs">
-            <Link>Excel\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
-        </Compile>
-    </ItemGroup>
-
-    <ItemGroup>
         <Compile Include="..\..\Unity\Assets\Scripts\Model\Login\Share\**\*.cs">
             <Link>Login\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>

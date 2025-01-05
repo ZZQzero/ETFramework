@@ -88,7 +88,7 @@ namespace ET
             List<EventInfo> iEvents;
             if (!this.allEvents.TryGetValue(typeof(T), out iEvents))
             {
-                return;
+                throw new Exception($"PublishAsync error1: {typeof(T)} | {typeof(T).FullName} not found");
             }
 
             using ListComponent<ETTask> list = ListComponent<ETTask>.Create();
@@ -155,7 +155,9 @@ namespace ET
         {
             if (!this.allInvokers.TryGetValue(typeof(A), out var invokeHandlers))
             {
-                throw new Exception($"Invoke error1: {type} {typeof(A).FullName}");
+                throw new Exception($"Invoke error1: {type} {typeof(A).FullName} + " +
+                                    $"如果同一个类型来自不同的程序集，即使它们的名称相同，它们在类型比较时也会被视为不同的类型。" +
+                                    $"这是因为类型比较不仅考虑类型名称，还包括程序集信息");
             }
             if (!invokeHandlers.TryGetValue(type, out var invokeHandler))
             {
@@ -175,7 +177,9 @@ namespace ET
         {
             if (!this.allInvokers.TryGetValue(typeof(A), out var invokeHandlers))
             {
-                throw new Exception($"Invoke error4: {type} {typeof(A).FullName}");
+                throw new Exception($"Invoke error4: {type} {typeof(A).FullName} + " +
+                                    $"如果同一个类型来自不同的程序集，即使它们的名称相同，它们在类型比较时也会被视为不同的类型。" +
+                                    $"这是因为类型比较不仅考虑类型名称，还包括程序集信息");
             }
             
             if (!invokeHandlers.TryGetValue(type, out var invokeHandler))

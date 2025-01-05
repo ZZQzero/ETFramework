@@ -9,14 +9,14 @@ namespace ET
         [MenuItem("ET/Loader/ReGenerateProjectFiles")]
         public static void Run()
         {
-            Unity.CodeEditor.CodeEditor.CurrentEditor.SyncAll();
+            /*Unity.CodeEditor.CodeEditor.CurrentEditor.SyncAll();
 
             foreach (string s in FileHelper.GetAllFiles(".", "Ignore.ET*.csproj"))
             {
                 System.IO.File.Delete(s);
             }
 
-            Debug.Log("regenerate csproj");
+            Debug.Log("regenerate csproj");*/
         }
     }
 }

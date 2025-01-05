@@ -8,6 +8,11 @@
         <LangVersion>12</LangVersion>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    </PropertyGroup>
+
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
       <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
     </PropertyGroup>
@@ -21,5 +26,4 @@
             <Link>SourceGeneratorAttribute\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
     </ItemGroup>
-
 </Project>

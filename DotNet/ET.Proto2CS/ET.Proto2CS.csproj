@@ -8,6 +8,11 @@
         <RootNamespace>ET</RootNamespace>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    </PropertyGroup>
+
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
       <OutputPath>./Exe\</OutputPath>
       <DefineConstants>DOTNET</DefineConstants>

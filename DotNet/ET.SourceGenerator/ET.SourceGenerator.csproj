@@ -12,6 +12,11 @@
       <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    </PropertyGroup>
+
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
     </PropertyGroup>

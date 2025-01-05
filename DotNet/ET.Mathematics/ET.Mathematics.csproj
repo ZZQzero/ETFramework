@@ -8,6 +8,11 @@
         <RootNamespace>ET</RootNamespace>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    </PropertyGroup>
+    
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
       <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
       <DefineConstants>DOTNET;UNITY_DOTSPLAYER</DefineConstants>

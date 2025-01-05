@@ -62,9 +62,9 @@ namespace ET
         private static string ServerClassDir;
         private static string CSClassDir;
 
-        private const string jsonDir = "./Packages/cn.etetet.excel/Config/Json";
+        private const string jsonDir = "./Unity/Assets/Config/Excel/Json";
 
-        private const string serverProtoDir = "./Packages/cn.etetet.excel/Config/Bytes";
+        private const string serverProtoDir = "./Unity/Assets/Config/Excel/Bytes";
         private static Assembly[] configAssemblies = new Assembly[3];
 
         private static Dictionary<string, Table> tables = new();
@@ -102,7 +102,7 @@ namespace ET
                 // 强制调用一下mongo，避免mongo库被裁剪
                 MongoHelper.ToJson(1);
                 
-                template = File.ReadAllText("./Packages/cn.etetet.excel/DotNet~/Template.txt");
+                template = File.ReadAllText("Template.txt");
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
                 
                 PackagesLock packagesLock = PackageHelper.LoadEtPackagesLock("./");

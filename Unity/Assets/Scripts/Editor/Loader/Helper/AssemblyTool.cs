@@ -16,7 +16,7 @@ namespace ET
         /// <summary>
         /// 程序集名字数组
         /// </summary>
-        public static readonly string[] DllNames = { "ET.Hotfix", "ET.HotfixView", "ET.Model", "ET.ModelView" };
+        public static readonly string[] DllNames = { "ETClient.Hotfix", "ETClient.HotfixView", "ETClient.Model", "ETClient.ModelView" };
 
         [InitializeOnLoadMethod]
         static void Initialize()
@@ -56,8 +56,8 @@ namespace ET
             // 强制刷新一下，防止关闭auto refresh，编译出老代码
             AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 
-            GlobalConfig globalConfig = Resources.Load<GlobalConfig>("GlobalConfig");
-            CodeModeChangeHelper.ChangeToCodeMode(globalConfig.CodeMode.ToString());
+            /*GlobalConfig globalConfig = Resources.Load<GlobalConfig>("GlobalConfig");
+            CodeModeChangeHelper.ChangeToCodeMode(globalConfig.CodeMode.ToString());*/
 
             bool isCompileOk = CompileDlls();
             if (!isCompileOk)

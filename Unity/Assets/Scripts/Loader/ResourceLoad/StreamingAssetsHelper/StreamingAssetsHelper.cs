@@ -47,7 +47,7 @@ namespace ET
         }
     }
 #else
-    public static class StreamingAssetsHelper
+    /*public static class StreamingAssetsHelper
     {
         private class PackageQuery
         {
@@ -112,7 +112,7 @@ namespace ET
 
             return true;
         }
-    }
+    }*/
 #endif
 
 #if UNITY_EDITOR

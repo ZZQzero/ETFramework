@@ -25,10 +25,10 @@ namespace ET
                 
                 EditorResHelper.SaveAssets(globalConfig);
                 
-                CodeModeChangeHelper.ChangeToCodeMode(codeMode.ToString());
+                //CodeModeChangeHelper.ChangeToCodeMode(codeMode.ToString());
                 
                 AssetDatabase.Refresh();
-                ReGenerateProjectFilesHelper.Run();
+                //ReGenerateProjectFilesHelper.Run();
             }
             
             string sceneName = EditorGUILayout.TextField($"SceneName", globalConfig.SceneName);

@@ -1,5 +1,7 @@
 ﻿using UnityEditor;
 using System.Diagnostics;
+using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace ET
 {
@@ -8,7 +10,9 @@ namespace ET
         [MenuItem("ET/Excel/ExcelExporter")]
         public static void Run()
         {
-            Process process = ProcessHelper.DotNet("./Packages/cn.etetet.excel/DotNet~/Exe/ET.ExcelExporter.dll", "./", true);
+            string path = Application.dataPath.Replace("Unity/Assets", "DotNet/ET.ExcelExporter/Exe/ET.ExcelExporter.dll");
+            
+            Process process = ProcessHelper.DotNet(path, "./", true);
 
             UnityEngine.Debug.Log(process.StandardOutput.ReadToEnd());
         }

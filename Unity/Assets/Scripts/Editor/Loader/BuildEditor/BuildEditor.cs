@@ -45,8 +45,8 @@ namespace ET
 
         private void OnEnable()
         {
-            globalConfig = AssetDatabase.LoadAssetAtPath<GlobalConfig>("Packages/cn.etetet.loader/Resources/GlobalConfig.asset");
-            yooConfig = AssetDatabase.LoadAssetAtPath<YooConfig>("Packages/cn.etetet.yooassets/YooConfig.asset");
+            globalConfig = Resources.Load<GlobalConfig>("GlobalConfig");
+            yooConfig = Resources.Load<YooConfig>("YooConfig");
 
 #if UNITY_ANDROID
             activePlatform = PlatformType.Android;

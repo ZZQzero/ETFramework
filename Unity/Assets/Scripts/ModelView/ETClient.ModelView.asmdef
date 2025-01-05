@@ -1,0 +1,23 @@
+{
+    "name": "ETClient.ModelView",
+    "rootNamespace": "ET",
+    "references": [
+        "GUID:e34a5702dd353724aa315fb8011f08c3",
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:30cf3be23c5359248b19bbbf74eaf7f0",
+        "GUID:9420f27681c08ff4d9168111f8617391",
+        "GUID:e41bfb732b96fb549bd09ea6fbb5b4e5",
+        "GUID:00eeea5e741dc2e47ab83d962bcf3fe5"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "IS_COMPILING || UNITY_EDITOR"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

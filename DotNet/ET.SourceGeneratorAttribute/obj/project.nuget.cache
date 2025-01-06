@@ -1,11 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "Kj5SsW/3hqc=",
+  "dgSpecHash": "PMYA4PtaNIE=",
   "success": true,
-  "projectFilePath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj",
+  "projectFilePath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGeneratorAttribute\\ET.SourceGeneratorAttribute.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\Administrator\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
-    "C:\\Users\\Administrator\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512"
+    "C:\\Users\\52847\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\52847\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512"
   ],
   "logs": []
 }

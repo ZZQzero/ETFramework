@@ -40,7 +40,7 @@ namespace ET
 
         public const string ETClientNameSpace = "ET.Client";
 
-        public const string ClientDirInServer = @"Unity\Assets\Scripts\Hotfix\Client\";
+        public const string ClientDirInServer = @"Unity\Assets\Scripts\Hotfix\";
 
         public const string EntitySystemAttribute = "EntitySystem";
         public const string EntitySystemAttributeMetaName = "ET.EntitySystemAttribute";

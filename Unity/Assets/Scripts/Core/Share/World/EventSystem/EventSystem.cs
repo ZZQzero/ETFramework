@@ -88,7 +88,8 @@ namespace ET
             List<EventInfo> iEvents;
             if (!this.allEvents.TryGetValue(typeof(T), out iEvents))
             {
-                throw new Exception($"PublishAsync error1: {typeof(T)} | {typeof(T).FullName} not found");
+                Log.Warning($"PublishAsync error1: {typeof(T)} | {typeof(T).FullName} not found");
+                return;
             }
 
             using ListComponent<ETTask> list = ListComponent<ETTask>.Create();

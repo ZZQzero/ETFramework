@@ -13,7 +13,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <OutputPath>G:\UnityProject\ETFramework\Bin</OutputPath>
+      <OutputPath>$(SolutionDir)Bin</OutputPath>
       <DefineConstants>DOTNET</DefineConstants>
       <Optimize>true</Optimize>
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -21,7 +21,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
+      <OutputPath>$(SolutionDir)Bin</OutputPath>
       <DefineConstants>DOTNET</DefineConstants>
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

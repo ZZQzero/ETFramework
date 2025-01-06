@@ -66,7 +66,7 @@ public class ETEntitySerializeFormatter : MemoryPackFormatter<global::{{Definiti
     };
     
     [global::MemoryPack.Internal.Preserve]
-    public override void Serialize{{genericTypeParam}}(ref MemoryPackWriter{{genericTypeParam}} writer,{{scopedCode}} ref global::{{Definition.EntityType}}? value)
+    public override void Serialize<TBufferWriter>{{genericTypeParam}}(ref MemoryPackWriter<TBufferWriter>{{genericTypeParam}} writer,{{scopedCode}} scoped ref global::{{Definition.EntityType}}? value)
     {
 
         if (value == null)
@@ -93,7 +93,7 @@ public class ETEntitySerializeFormatter : MemoryPackFormatter<global::{{Definiti
     }
     
     [global::MemoryPack.Internal.Preserve]
-    public override void Deserialize(ref MemoryPackReader reader,{{scopedCode}} ref global::{{Definition.EntityType}}? value)
+    public override void Deserialize(ref MemoryPackReader reader,{{scopedCode}} scoped ref global::{{Definition.EntityType}}? value)
     {
 
         bool isNull = reader.ReadValue<byte>() == global::MemoryPack.MemoryPackCode.NullObject;

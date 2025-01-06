@@ -6,6 +6,10 @@
         <Nullable>enable</Nullable>
         <RootNamespace>ET</RootNamespace>
         <LangVersion>12</LangVersion>
+        <DevelopmentDependency>true</DevelopmentDependency>
+        <IncludeSymbols>false</IncludeSymbols>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <NoWarn>1701;1702;RS2008</NoWarn>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -14,11 +18,11 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
+      <OutputPath>$(SolutionDir)Bin</OutputPath>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
+      <OutputPath>$(SolutionDir)Bin</OutputPath>
     </PropertyGroup>
 
     <ItemGroup>

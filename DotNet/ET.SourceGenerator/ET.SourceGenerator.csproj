@@ -6,10 +6,14 @@
         <Nullable>enable</Nullable>
         <RootNamespace>ET</RootNamespace>
         <LangVersion>12</LangVersion>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <DevelopmentDependency>true</DevelopmentDependency>
+        <IncludeSymbols>false</IncludeSymbols>
+        <NoWarn>1701;1702;RS2008</NoWarn>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
+      <OutputPath>$(SolutionDir)Bin</OutputPath>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -18,7 +22,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
+      <OutputPath>$(SolutionDir)Bin</OutputPath>
     </PropertyGroup>
 
     <ItemGroup>
@@ -26,8 +30,8 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
-      <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0" />
+      <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
+      <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.11.0" />
     </ItemGroup>
 
 </Project>

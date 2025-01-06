@@ -38,7 +38,7 @@
           "buildTransitive/Microsoft.CodeAnalysis.Analyzers.targets": {}
         }
       },
-      "Microsoft.CodeAnalysis.Common/4.12.0": {
+      "Microsoft.CodeAnalysis.Common/4.11.0": {
         "type": "package",
         "dependencies": {
           "Microsoft.CodeAnalysis.Analyzers": "3.3.4",
@@ -103,11 +103,11 @@
           }
         }
       },
-      "Microsoft.CodeAnalysis.CSharp/4.12.0": {
+      "Microsoft.CodeAnalysis.CSharp/4.11.0": {
         "type": "package",
         "dependencies": {
           "Microsoft.CodeAnalysis.Analyzers": "3.3.4",
-          "Microsoft.CodeAnalysis.Common": "[4.12.0]",
+          "Microsoft.CodeAnalysis.Common": "[4.11.0]",
           "System.Buffers": "4.5.1",
           "System.Collections.Immutable": "8.0.0",
           "System.Memory": "4.5.5",
@@ -169,15 +169,15 @@
           }
         }
       },
-      "Microsoft.CodeAnalysis.CSharp.Workspaces/4.12.0": {
+      "Microsoft.CodeAnalysis.CSharp.Workspaces/4.11.0": {
         "type": "package",
         "dependencies": {
           "Humanizer.Core": "2.14.1",
           "Microsoft.Bcl.AsyncInterfaces": "8.0.0",
           "Microsoft.CodeAnalysis.Analyzers": "3.3.4",
-          "Microsoft.CodeAnalysis.CSharp": "[4.12.0]",
-          "Microsoft.CodeAnalysis.Common": "[4.12.0]",
-          "Microsoft.CodeAnalysis.Workspaces.Common": "[4.12.0]",
+          "Microsoft.CodeAnalysis.CSharp": "[4.11.0]",
+          "Microsoft.CodeAnalysis.Common": "[4.11.0]",
+          "Microsoft.CodeAnalysis.Workspaces.Common": "[4.11.0]",
           "System.Buffers": "4.5.1",
           "System.Collections.Immutable": "8.0.0",
           "System.Composition": "8.0.0",
@@ -242,13 +242,13 @@
           }
         }
       },
-      "Microsoft.CodeAnalysis.Workspaces.Common/4.12.0": {
+      "Microsoft.CodeAnalysis.Workspaces.Common/4.11.0": {
         "type": "package",
         "dependencies": {
           "Humanizer.Core": "2.14.1",
           "Microsoft.Bcl.AsyncInterfaces": "8.0.0",
           "Microsoft.CodeAnalysis.Analyzers": "3.3.4",
-          "Microsoft.CodeAnalysis.Common": "[4.12.0]",
+          "Microsoft.CodeAnalysis.Common": "[4.11.0]",
           "System.Buffers": "4.5.1",
           "System.Collections.Immutable": "8.0.0",
           "System.Composition": "8.0.0",
@@ -1334,10 +1334,10 @@
         "tools/uninstall.ps1"
       ]
     },
-    "Microsoft.CodeAnalysis.Common/4.12.0": {
-      "sha512": "c1kNYihL2gdcuU1dqm8R8YeA4YkB43TpU3pa2r66Uooh6AAhRtENzj9A4Kj0a+H8JDDyuTjNZql9XlVUzV+UjA==",
+    "Microsoft.CodeAnalysis.Common/4.11.0": {
+      "sha512": "djf8ujmqYImFgB04UGtcsEhHrzVqzHowS+EEl/Yunc5LdrYrZhGBWUTXoCF0NzYXJxtfuD+UVQarWpvrNc94Qg==",
       "type": "package",
-      "path": "microsoft.codeanalysis.common/4.12.0",
+      "path": "microsoft.codeanalysis.common/4.11.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1391,14 +1391,14 @@
         "lib/netstandard2.0/tr/Microsoft.CodeAnalysis.resources.dll",
         "lib/netstandard2.0/zh-Hans/Microsoft.CodeAnalysis.resources.dll",
         "lib/netstandard2.0/zh-Hant/Microsoft.CodeAnalysis.resources.dll",
-        "microsoft.codeanalysis.common.4.12.0.nupkg.sha512",
+        "microsoft.codeanalysis.common.4.11.0.nupkg.sha512",
         "microsoft.codeanalysis.common.nuspec"
       ]
     },
-    "Microsoft.CodeAnalysis.CSharp/4.12.0": {
-      "sha512": "30vVQ1MizeC22iEdEvI2w0eTIYG43/L20yBzuQH01xKzJgHAoWehzI2F8u07o4mXh4DGMOjQF7aEm0zzvsG3Mg==",
+    "Microsoft.CodeAnalysis.CSharp/4.11.0": {
+      "sha512": "6XYi2EusI8JT4y2l/F3VVVS+ISoIX9nqHsZRaG6W5aFeJ5BEuBosHfT/ABb73FN0RZ1Z3cj2j7cL28SToJPXOw==",
       "type": "package",
-      "path": "microsoft.codeanalysis.csharp/4.12.0",
+      "path": "microsoft.codeanalysis.csharp/4.11.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1452,14 +1452,14 @@
         "lib/netstandard2.0/tr/Microsoft.CodeAnalysis.CSharp.resources.dll",
         "lib/netstandard2.0/zh-Hans/Microsoft.CodeAnalysis.CSharp.resources.dll",
         "lib/netstandard2.0/zh-Hant/Microsoft.CodeAnalysis.CSharp.resources.dll",
-        "microsoft.codeanalysis.csharp.4.12.0.nupkg.sha512",
+        "microsoft.codeanalysis.csharp.4.11.0.nupkg.sha512",
         "microsoft.codeanalysis.csharp.nuspec"
       ]
     },
-    "Microsoft.CodeAnalysis.CSharp.Workspaces/4.12.0": {
-      "sha512": "ZZ08UBgL3f3VeVvRA1k+PGZYbCIy2EBX4nBld/1ndsaoUZcwqkUaXbljjpoJ5reozpRrBPMUJ0E34REaVgYKjw==",
+    "Microsoft.CodeAnalysis.CSharp.Workspaces/4.11.0": {
+      "sha512": "/oRJPIMvzOfiunIegSF6FEa4VvBAUSXlbLDKxyzXuOZN9nLHg3fHuX6Mr9JZLNIupbe2xqQZEmfsPxgB01vCmg==",
       "type": "package",
-      "path": "microsoft.codeanalysis.csharp.workspaces/4.12.0",
+      "path": "microsoft.codeanalysis.csharp.workspaces/4.11.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1513,14 +1513,14 @@
         "lib/netstandard2.0/tr/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll",
         "lib/netstandard2.0/zh-Hans/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll",
         "lib/netstandard2.0/zh-Hant/Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll",
-        "microsoft.codeanalysis.csharp.workspaces.4.12.0.nupkg.sha512",
+        "microsoft.codeanalysis.csharp.workspaces.4.11.0.nupkg.sha512",
         "microsoft.codeanalysis.csharp.workspaces.nuspec"
       ]
     },
-    "Microsoft.CodeAnalysis.Workspaces.Common/4.12.0": {
-      "sha512": "9WFrMPm/k72qo7pxn6hPIS/UIAFVS/2yKBWJAW+kkmcY8PCsuBgp5ms+pmRI3mjAf7J1SmpdgHpRj2x1Gqc+9A==",
+    "Microsoft.CodeAnalysis.Workspaces.Common/4.11.0": {
+      "sha512": "UtwEt42V7/LnvAcschSlmUXRLEj0poX1H7QeFbY5bezcS+tJBCssAq8C7GfisgIA0qZPo2xzOrwKGBbg51CetA==",
       "type": "package",
-      "path": "microsoft.codeanalysis.workspaces.common/4.12.0",
+      "path": "microsoft.codeanalysis.workspaces.common/4.11.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1574,7 +1574,7 @@
         "lib/netstandard2.0/tr/Microsoft.CodeAnalysis.Workspaces.resources.dll",
         "lib/netstandard2.0/zh-Hans/Microsoft.CodeAnalysis.Workspaces.resources.dll",
         "lib/netstandard2.0/zh-Hant/Microsoft.CodeAnalysis.Workspaces.resources.dll",
-        "microsoft.codeanalysis.workspaces.common.4.12.0.nupkg.sha512",
+        "microsoft.codeanalysis.workspaces.common.4.11.0.nupkg.sha512",
         "microsoft.codeanalysis.workspaces.common.nuspec"
       ]
     },
@@ -2211,25 +2211,25 @@
   "projectFileDependencyGroups": {
     ".NETStandard,Version=v2.0": [
       "Microsoft.CodeAnalysis.Analyzers >= 3.11.0",
-      "Microsoft.CodeAnalysis.CSharp >= 4.12.0",
-      "Microsoft.CodeAnalysis.CSharp.Workspaces >= 4.12.0",
+      "Microsoft.CodeAnalysis.CSharp >= 4.11.0",
+      "Microsoft.CodeAnalysis.CSharp.Workspaces >= 4.11.0",
       "NETStandard.Library >= 2.0.3"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Administrator\\.nuget\\packages\\": {}
+    "C:\\Users\\52847\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj",
+      "projectUniqueName": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj",
       "projectName": "ET.SourceGenerator",
-      "projectPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj",
-      "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-      "outputPath": "G:\\UnityProject\\ETFramework\\DotNet\\ET.SourceGenerator\\obj\\",
+      "projectPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\ET.SourceGenerator.csproj",
+      "packagesPath": "C:\\Users\\52847\\.nuget\\packages\\",
+      "outputPath": "D:\\Project\\ETFramework\\DotNet\\ET.SourceGenerator\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\52847\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -2268,11 +2268,11 @@
           },
           "Microsoft.CodeAnalysis.CSharp": {
             "target": "Package",
-            "version": "[4.12.0, )"
+            "version": "[4.11.0, )"
           },
           "Microsoft.CodeAnalysis.CSharp.Workspaces": {
             "target": "Package",
-            "version": "[4.12.0, )"
+            "version": "[4.11.0, )"
           },
           "NETStandard.Library": {
             "suppressParent": "All",

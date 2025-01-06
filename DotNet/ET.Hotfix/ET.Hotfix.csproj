@@ -13,13 +13,13 @@
     </PropertyGroup>
     
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <OutputPath>G:\UnityProject\ETFramework\Bin</OutputPath>
+      <OutputPath>$(SolutionDir)Bin</OutputPath>
       <DefineConstants>DOTNET</DefineConstants>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <OutputPath>G:\UnityProject\ETFramework\Bin</OutputPath>
+      <OutputPath>$(SolutionDir)Bin</OutputPath>
       <DefineConstants>DOTNET</DefineConstants>
       <Optimize>false</Optimize>
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -33,7 +33,7 @@
       <ProjectReference Include="..\ET.Model\ET.Model.csproj" />
       <ProjectReference Include="..\ET.Recast\ET.Recast.csproj" />
       <ProjectReference Include="..\ET.SourceGeneratorAttribute\ET.SourceGeneratorAttribute.csproj" />
-      <ProjectReference Include="..\ET.SourceGenerator\ET.SourceGenerator.csproj" />
+      <ProjectReference Include="..\ET.SourceGenerator\ET.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
     </ItemGroup>
 
     <ItemGroup>

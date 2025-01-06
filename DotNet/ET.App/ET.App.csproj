@@ -16,7 +16,7 @@
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
         <DefineConstants>DOTNET</DefineConstants>
-        <OutputPath>G:\UnityProject\ETFramework\Bin</OutputPath>
+        <OutputPath>$(SolutionDir)Bin</OutputPath>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <Optimize>true</Optimize>
     </PropertyGroup>
@@ -27,7 +27,7 @@
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
         <DefineConstants>DOTNET</DefineConstants>
-        <OutputPath>G:\UnityProject\ETFramework\Bin</OutputPath>
+        <OutputPath>$(SolutionDir)Bin</OutputPath>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace ET.Client
 {
@@ -25,6 +26,7 @@ namespace ET.Client
                 UIEventAttribute uiEventAttribute = attrs[0] as UIEventAttribute;
                 AUIEvent aUIEvent = Activator.CreateInstance(type) as AUIEvent;
                 this.UIEvents.Add(uiEventAttribute.UIType, aUIEvent);
+                Debug.LogError($"uievent  {uiEventAttribute.UIType}");
             }
         }
 	}

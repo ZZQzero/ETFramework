@@ -865,9 +865,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 1784017107}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 502d8cafd6a5a0447ab1db9a24cdcb10, type: 3}
+  m_Script: {fileID: 11500000, guid: af073eaea61bcb94c921fae589dbea40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  data:
+  - key: Hidden
+    gameObject: {fileID: 872594939}
+  - key: Low
+    gameObject: {fileID: 251107983}
+  - key: Mid
+    gameObject: {fileID: 493985069}
+  - key: High
+    gameObject: {fileID: 1439952248}
 --- !u!850595691 &1972482029
 LightingSettings:
   m_ObjectHideFlags: 0

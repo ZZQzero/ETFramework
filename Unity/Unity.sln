@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETClient.Core", "ETClient.Core.csproj", "{0b6af215-3714-9fa2-e60d-ba0e16d6f52f}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETClient.Model", "ETClient.Model.csproj", "{eb23995f-e132-5593-7f70-427b8285cdee}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETClient.Hotfix", "ETClient.Hotfix.csproj", "{dcc2c951-d288-5d65-fe56-970f465071aa}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETClient.ThirdParty", "ETClient.ThirdParty.csproj", "{a7be3672-436a-eded-30e5-4a23c76fdb86}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETClient.HotfixView", "ETClient.HotfixView.csproj", "{904e47ce-8ee7-ff7c-9a01-ca9c3c4e4b5c}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETClient.ModelView", "ETClient.ModelView.csproj", "{9546db23-1e2c-ec4a-9bec-84885447775b}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{03938ccd-4b40-8dfb-6b9b-21988d5cac0a}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETClient.Loader", "ETClient.Loader.csproj", "{c1663578-d3aa-99a7-6b04-2639f2e2906c}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETClient.Editor", "ETClient.Editor.csproj", "{8148c933-f6e1-c696-0265-2e0c5b37256a}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0b6af215-3714-9fa2-e60d-ba0e16d6f52f}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0b6af215-3714-9fa2-e60d-ba0e16d6f52f}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{eb23995f-e132-5593-7f70-427b8285cdee}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{eb23995f-e132-5593-7f70-427b8285cdee}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{dcc2c951-d288-5d65-fe56-970f465071aa}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{dcc2c951-d288-5d65-fe56-970f465071aa}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{a7be3672-436a-eded-30e5-4a23c76fdb86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{a7be3672-436a-eded-30e5-4a23c76fdb86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{904e47ce-8ee7-ff7c-9a01-ca9c3c4e4b5c}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{904e47ce-8ee7-ff7c-9a01-ca9c3c4e4b5c}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9546db23-1e2c-ec4a-9bec-84885447775b}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9546db23-1e2c-ec4a-9bec-84885447775b}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03938ccd-4b40-8dfb-6b9b-21988d5cac0a}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03938ccd-4b40-8dfb-6b9b-21988d5cac0a}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{c1663578-d3aa-99a7-6b04-2639f2e2906c}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{c1663578-d3aa-99a7-6b04-2639f2e2906c}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8148c933-f6e1-c696-0265-2e0c5b37256a}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8148c933-f6e1-c696-0265-2e0c5b37256a}.Debug|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

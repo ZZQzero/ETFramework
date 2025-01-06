@@ -24,23 +24,28 @@ namespace ET
                 content = content.Replace(";DEBUG;", ";");
             }
 
-            if (path.EndsWith("ET.Model.csproj"))
+            if (path.EndsWith("ETClient.Core.csproj"))
             {
-                return GenerateCustomProject(content, globalConfig.CodeMode, "Model");
+                return GenerateCustomProject(content, globalConfig.CodeMode, "ETClient.Core");
             }
             
-            if (path.EndsWith("ET.Hotfix.csproj"))
+            if (path.EndsWith("ETClient.Model.csproj"))
             {
-                return GenerateCustomProject(content, globalConfig.CodeMode, "Hotfix");
+                return GenerateCustomProject(content, globalConfig.CodeMode, "ETClient.Model");
+            }
+            
+            if (path.EndsWith("ETClient.Hotfix.csproj"))
+            {
+                return GenerateCustomProject(content, globalConfig.CodeMode, "ETClient.Hotfix");
             }
 
-            if (path.EndsWith("ET.ModelView.csproj"))
+            if (path.EndsWith("ETClient.ModelView.csproj"))
             {
-                return GenerateCustomProject(content, globalConfig.CodeMode, "ModelView");
+                return GenerateCustomProject(content, globalConfig.CodeMode, "ETClient.ModelView");
             }
-            if (path.EndsWith("ET.HotfixView.csproj"))
+            if (path.EndsWith("ETClient.HotfixView.csproj"))
             {
-                return GenerateCustomProject(content, globalConfig.CodeMode, "HotfixView");
+                return GenerateCustomProject(content, globalConfig.CodeMode, "ETClient.HotfixView");
             }
 
             return content;
@@ -72,7 +77,6 @@ namespace ET
 
             // AfterBuild(字符串替换后作用是编译后复制到CodeDir)
             {
-
                 string afterBuild =
                         $"    <Copy SourceFiles=\"$(TargetDir)/$(TargetName).dll\" DestinationFiles=\"$(ProjectDir)/{Define.CodeDir}/$(TargetName).dll.bytes\" ContinueOnError=\"false\" />\n" +
                         $"    <Copy SourceFiles=\"$(TargetDir)/$(TargetName).pdb\" DestinationFiles=\"$(ProjectDir)/{Define.CodeDir}/$(TargetName).pdb.bytes\" ContinueOnError=\"false\" />\n" +
@@ -80,10 +84,10 @@ namespace ET
                         $"    <Copy SourceFiles=\"$(TargetDir)/$(TargetName).pdb\" DestinationFiles=\"$(ProjectDir)/{Define.BuildOutputDir}/$(TargetName).pdb\" ContinueOnError=\"false\" />\n";
                 switch (dllName)
                 {
-                    case "Model":
-                    case "Hotfix":
-                    case "HotfixView":
-                    case "ModelView":
+                    case "ETClient.Model":
+                    case "ETClient.Hotfix":
+                    case "ETClient.HotfixView":
+                    case "ETClient.ModelView":
                     {
                         var target = newDoc.CreateElement("Target", newDoc.DocumentElement.NamespaceURI);
                         target.SetAttribute("Name", "AfterBuild");

@@ -74,8 +74,26 @@ namespace ET
             doc.LoadXml(content);
             var newDoc = doc.Clone() as XmlDocument;
             var rootNode = newDoc.GetElementsByTagName("Project")[0];
+            bool isSourcesGenerator = false;
+            var itemGroup = newDoc.GetElementsByTagName("ItemGroup")[0];
+            foreach (var item in itemGroup.ChildNodes)
+            {
+                var element = item as XmlElement;
+                var str = element.GetAttribute("Include");
+                if (str.EndsWith("ET.SourceGenerator.dll"))
+                {
+                    isSourcesGenerator = true;
+                }
+            }
 
-            // AfterBuild(字符串替换后作用是编译后复制到CodeDir)
+            if (!isSourcesGenerator)
+            {
+                XmlElement newElement = newDoc.CreateElement("Analyzer", newDoc.DocumentElement.NamespaceURI);
+               newElement.SetAttribute("Include", @"..\Unity\Assets\Plugins\ET.SourceGenerator.dll"); 
+               itemGroup.AppendChild(newElement);
+            }
+
+            /*// AfterBuild(字符串替换后作用是编译后复制到CodeDir)
             {
                 string afterBuild =
                         $"    <Copy SourceFiles=\"$(TargetDir)/$(TargetName).dll\" DestinationFiles=\"$(ProjectDir)/{Define.CodeDir}/$(TargetName).dll.bytes\" ContinueOnError=\"false\" />\n" +
@@ -96,7 +114,7 @@ namespace ET
                         break;
                     }
                 }
-            }
+            }*/
 
             using StringWriter sw = new();
             using XmlTextWriter tx = new(sw);

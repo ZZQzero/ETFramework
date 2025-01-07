@@ -19,6 +19,7 @@ Unity/Library
 Unity/Logs
 Unity/UserSettings
 Unity/*.vsconfig
+Unity/*.csproj
 Unity/ProjectSettings/RiderScriptEditorPersistedState.asset
 Unity/HybridCLRData
 

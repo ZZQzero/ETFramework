@@ -20,6 +20,7 @@ namespace ET.Client
                 object[] attrs = type.GetCustomAttributes(typeof (UIEventAttribute), false);
                 if (attrs.Length == 0)
                 {
+	                Debug.LogError($"type  {type}");
                     continue;
                 }
 

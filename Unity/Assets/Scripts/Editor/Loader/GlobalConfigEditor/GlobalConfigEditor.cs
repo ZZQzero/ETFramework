@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using YooAsset;
 
 namespace ET
 {
@@ -12,7 +13,7 @@ namespace ET
         {
             GlobalConfig globalConfig = (GlobalConfig)this.target;
             //globalConfig.BuildType = EditorUserBuildSettings.development ? BuildType.Debug : BuildType.Release;
-            EditorResHelper.SaveAssets(globalConfig);
+            SaveAsset(globalConfig);
         }
 
         public override void OnInspectorGUI()
@@ -22,31 +23,43 @@ namespace ET
             if (codeMode != globalConfig.CodeMode)
             {
                 globalConfig.CodeMode = codeMode;
-                
-                EditorResHelper.SaveAssets(globalConfig);
-                
-                //CodeModeChangeHelper.ChangeToCodeMode(codeMode.ToString());
-                
                 AssetDatabase.Refresh();
-                //ReGenerateProjectFilesHelper.Run();
+            }
+            
+            EPlayMode playMode = (EPlayMode)EditorGUILayout.EnumPopup("PlayMode", globalConfig.PlayMode);
+            if (playMode != globalConfig.PlayMode)
+            {
+                globalConfig.PlayMode = playMode;
+                AssetDatabase.Refresh();
             }
             
             string sceneName = EditorGUILayout.TextField($"SceneName", globalConfig.SceneName);
             if (sceneName != globalConfig.SceneName)
             {
                 globalConfig.SceneName = sceneName;
-                EditorResHelper.SaveAssets(globalConfig);
-                AssetDatabase.Refresh();
+                SaveAsset(globalConfig);
             }
             
-            string address = EditorGUILayout.TextField($"Address", globalConfig.Address);
-            if (address != globalConfig.Address)
+            string package = EditorGUILayout.TextField($"PackageName", globalConfig.PackageName);
+            if (package != globalConfig.PackageName)
             {
-                globalConfig.Address = address;
-                EditorResHelper.SaveAssets(globalConfig);
-                AssetDatabase.Refresh();
+                globalConfig.PackageName = package;
+                SaveAsset(globalConfig);
             }
             
+            string address = EditorGUILayout.TextField($"Address", globalConfig.IPAddress);
+            if (address != globalConfig.IPAddress)
+            {
+                globalConfig.IPAddress = address;
+                SaveAsset(globalConfig);
+            }
+        }
+
+        private void SaveAsset(UnityEngine.Object obj)
+        {
+            EditorUtility.SetDirty(obj);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
     }
 }

@@ -41,7 +41,6 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="Assets\Plugins\ET.SourceGenerator.dll" />
     <Analyzer Include="D:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="D:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="D:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
@@ -78,7 +77,6 @@
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawer\Vector4TypeDrawer.cs" />
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawer\ColorTypeDrawer.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\BuildEditor\BuildHelper.cs" />
-    <Compile Include="Assets\Scripts\Editor\Loader\EditorResHelper.cs" />
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawer\EnumTypeDrawer.cs" />
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawer\BoundsTypeDrawer.cs" />
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawer\AnimationCurveTypeDrawer.cs" />

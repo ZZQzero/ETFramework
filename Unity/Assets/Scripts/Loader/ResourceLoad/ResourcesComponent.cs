@@ -37,68 +37,103 @@ namespace ET
             YooAssets.Initialize();
         }
 
-        protected override void Destroy()
+        public async ETTask CreatePackageAsync()
         {
-            //YooAssets.Destroy();
-        }
-
-        public async ETTask CreatePackageAsync(string packageName, bool isDefault = false)
-        {
-            YooConfig yooConfig = Resources.Load<YooConfig>("YooConfig");
-            ResourcePackage package = YooAssets.CreatePackage(packageName);
-            if (isDefault)
-            {
-                YooAssets.SetDefaultPackage(package);
-            }
-
-            // 编辑器下的模拟模式
-            switch (yooConfig.EPlayMode)
+            var config = Resources.Load<GlobalConfig>("GlobalConfig");
+            ResourcePackage package = YooAssets.CreatePackage(config.PackageName);
+            InitializationOperation initializationOperation = null;
+            switch (config.PlayMode)
             {
                 case EPlayMode.EditorSimulateMode:
                 {
-                    EditorSimulateModeParameters createParameters = new();
-                    //createParameters.SimulateManifestFilePath = EditorSimulateModeHelper.SimulateBuild("ScriptableBuildPipeline", packageName);
-                    await package.InitializeAsync(createParameters).Task;
+                    var simulateBuildParam = new EditorSimulateBuildParam();
+                    simulateBuildParam.PackageName = config.PackageName;
+                    var simulateBuildResult = EditorSimulateModeHelper.SimulateBuild(simulateBuildParam);
+                    var createParameters = new EditorSimulateModeParameters();
+                    createParameters.EditorFileSystemParameters = FileSystemParameters.CreateDefaultEditorFileSystemParameters(simulateBuildResult);
+                    initializationOperation = package.InitializeAsync(createParameters);
                     break;
                 }
                 case EPlayMode.OfflinePlayMode:
                 {
-                    OfflinePlayModeParameters createParameters = new();
-                    await package.InitializeAsync(createParameters).Task;
+                    var createParameters = new OfflinePlayModeParameters();
+                    createParameters.BuildinFileSystemParameters = FileSystemParameters.CreateDefaultBuildinFileSystemParameters();
+                    initializationOperation = package.InitializeAsync(createParameters);
                     break;
                 }
                 case EPlayMode.HostPlayMode:
                 {
-                    string defaultHostServer = GetHostServerURL(yooConfig.Url, package.PackageName);
-                    string fallbackHostServer = GetHostServerURL(yooConfig.Url, package.PackageName);
-                    HostPlayModeParameters createParameters = new();
-                    /*createParameters.BuildinQueryServices = new GameQueryServices();
-                    createParameters.RemoteServices = new RemoteServices(defaultHostServer, fallbackHostServer);*/
-                    await package.InitializeAsync(createParameters).Task;
+                    string defaultHostServer = GetHostServerURL(config);
+                    string fallbackHostServer = GetHostServerURL(config);
+                    IRemoteServices remoteServices = new RemoteServices(defaultHostServer, fallbackHostServer);
+                    var createParameters = new HostPlayModeParameters();
+                    createParameters.BuildinFileSystemParameters = FileSystemParameters.CreateDefaultBuildinFileSystemParameters();
+                    createParameters.CacheFileSystemParameters = FileSystemParameters.CreateDefaultCacheFileSystemParameters(remoteServices);
+                    initializationOperation = package.InitializeAsync(createParameters);
                     break;
                 }
                 case EPlayMode.WebPlayMode:
                 {
-                    string defaultHostServer = GetHostServerURL(yooConfig.Url, package.PackageName);
-                    string fallbackHostServer = GetHostServerURL(yooConfig.Url, package.PackageName);
-                    WebPlayModeParameters createParameters = new();
-                    /*createParameters.BuildinQueryServices = new WebGLGameQueryServices();
-                    createParameters.RemoteServices = new RemoteServices(defaultHostServer, fallbackHostServer);*/
-                    await package.InitializeAsync(createParameters).Task;
+                    var createParameters = new WebPlayModeParameters();
+#if UNITY_WEBGL && WEIXINMINIGAME && !UNITY_EDITOR
+			        string defaultHostServer = GetHostServerURL(config);
+                    string fallbackHostServer = GetHostServerURL(config);
+                    IRemoteServices remoteServices = new RemoteServices(defaultHostServer, fallbackHostServer);
+                    createParameters.WebServerFileSystemParameters = WechatFileSystemCreater.CreateWechatFileSystemParameters(remoteServices);
+#else
+                    createParameters.WebServerFileSystemParameters = FileSystemParameters.CreateDefaultWebServerFileSystemParameters();
+#endif
+                    initializationOperation = package.InitializeAsync(createParameters);
                     break;
                 }
-                default:
-                    throw new ArgumentOutOfRangeException();
+            }
+
+            if (initializationOperation != null)
+            {
+                await initializationOperation.Task;
+                if (initializationOperation.Status != EOperationStatus.Succeed)
+                {
+                    Log.Error($"{initializationOperation.Error}");
+                    return;
+                }
+
+                var succeed = await UpdatePackageVersion(package);
+                if (!succeed) return;
+                
             }
         }
 
-        string GetHostServerURL(string url, string pacakgeName)
+        private async ETTask<bool> UpdatePackageVersion(ResourcePackage package)
         {
-            //string hostServerIP = "http://10.0.2.2"; //安卓模拟器地址
-            string hostServerIP = url;
-            string appVersion = "v1.0";
-                
-                
+            var operation = package.RequestPackageVersionAsync();
+            await operation.Task;
+            if (operation.Status == EOperationStatus.Succeed)
+            {
+                return await UpdatePackageManifest(package,operation.PackageVersion);
+            }
+            Log.Error($"资源版本号请求失败：{operation.Error}");
+            return false;
+        }
+
+        private async ETTask<bool> UpdatePackageManifest(ResourcePackage package,string version)
+        {
+            var manifest = package.UpdatePackageManifestAsync(version);
+            await manifest.Task;
+            if (manifest.Status == EOperationStatus.Succeed)
+            {
+                YooAssets.SetDefaultPackage(package);
+                //TODO 此时已经可以使用yooAssets加载资源了
+                return true;
+            }
+            Log.Error($"资源清单请求失败：{manifest.Error}");
+            return false;
+        }
+        
+        private string GetHostServerURL(GlobalConfig config)
+        {
+            string hostServerIP = config.IPAddress;
+            string appVersion = config.Version;
+            
 #if UNITY_EDITOR
             switch (UnityEditor.EditorUserBuildSettings.activeBuildTarget)
             {
@@ -107,9 +142,7 @@ namespace ET
                 case UnityEditor.BuildTarget.iOS:
                     return $"{hostServerIP}/CDN/IPhone/{appVersion}";
                 case UnityEditor.BuildTarget.WebGL:
-                {
-                    return $"{hostServerIP}/StreamingAssets/Bundles/{pacakgeName}";
-                }
+                    return $"{hostServerIP}/StreamingAssets/Bundles/{config.PackageName}";
                 default:
                     return $"{hostServerIP}/CDN/PC/{appVersion}";
             }
@@ -121,15 +154,14 @@ namespace ET
                     case RuntimePlatform.IPhonePlayer:
                         return $"{hostServerIP}/CDN/IPhone/{appVersion}";
                     case RuntimePlatform.WebGLPlayer:
-                    {
-                        return $"{hostServerIP}/StreamingAssets/Bundles/{pacakgeName}";
-                    }
+                        return $"{hostServerIP}/StreamingAssets/Bundles/{config.PackageName}";
                     default:
                         return $"{hostServerIP}/CDN/PC/{appVersion}";
                 }
 #endif
         }
 
+        
         public void DestroyPackage(string packageName)
         {
             ResourcePackage package = YooAssets.GetPackage(packageName);

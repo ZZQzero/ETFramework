@@ -14,36 +14,36 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowPackageView: 1
   ShowEditorAlias: 0
-  UniqueBundleName: 0
+  UniqueBundleName: 1
   Packages:
   - PackageName: DefaultPackage
     PackageDesc: 
-    EnableAddressable: 0
+    EnableAddressable: 1
     LocationToLower: 0
     IncludeAssetGUID: 0
     AutoCollectShaders: 1
     IgnoreRuleName: NormalIgnoreRule
     Groups:
-    - GroupName: Code
-      GroupDesc: 
-      AssetTags: 
-      ActiveRuleName: EnableGroup
-      Collectors:
-      - CollectPath: Assets/Bundles/Code
-        CollectorGUID: 5ea482f759d12ca408df44936d10a31a
-        CollectorType: 0
-        AddressRuleName: AddressByFileName
-        PackRuleName: PackDirectory
-        FilterRuleName: CollectAll
-        AssetTags: 
-        UserData: 
-    - GroupName: UI
+    - GroupName: UIPrefab
       GroupDesc: 
       AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
       - CollectPath: Assets/Demo/UI
         CollectorGUID: aba46fdae3f587a418bb792dc4b20b55
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackDirectory
+        FilterRuleName: CollectAll
+        AssetTags: 
+        UserData: 
+    - GroupName: CodeDll
+      GroupDesc: 
+      AssetTags: 
+      ActiveRuleName: EnableGroup
+      Collectors:
+      - CollectPath: Assets/Bundles/Code
+        CollectorGUID: 5ea482f759d12ca408df44936d10a31a
         CollectorType: 0
         AddressRuleName: AddressByFileName
         PackRuleName: PackDirectory

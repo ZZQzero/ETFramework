@@ -41,7 +41,6 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="Assets\Plugins\ET.SourceGenerator.dll" />
     <Analyzer Include="D:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="D:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="D:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
@@ -61,7 +60,6 @@
     <Compile Include="Assets\Scripts\Loader\ReferenceCollector\GameObjectHelper.cs" />
     <Compile Include="Assets\Scripts\Loader\ResourceLoad\StreamingAssetsHelper\StreamingAssetsHelper.cs" />
     <Compile Include="Assets\Scripts\Loader\ReferenceCollector\ReferenceCollector.cs" />
-    <Compile Include="Assets\Scripts\Loader\ResourceLoad\YooConfig.cs" />
     <Compile Include="Assets\Scripts\Loader\ResourceLoad\ResourcesComponent.cs" />
     <Compile Include="Assets\Scripts\Loader\Share\HttpClientHelper.cs" />
     <Compile Include="Assets\Scripts\Loader\Client\Define.cs" />

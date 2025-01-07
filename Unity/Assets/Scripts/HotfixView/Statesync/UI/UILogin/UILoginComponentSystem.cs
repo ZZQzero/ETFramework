@@ -24,7 +24,7 @@ namespace ET.Client
 			GlobalComponent globalComponent = self.Root().GetComponent<GlobalComponent>();
 			LoginHelper.Login(
 				self.Root(), 
-				globalComponent.GlobalConfig.Address,
+				globalComponent.GlobalConfig.IPAddress,
 				self.account.GetComponent<InputField>().text, 
 				self.password.GetComponent<InputField>().text).NoContext();
 		}

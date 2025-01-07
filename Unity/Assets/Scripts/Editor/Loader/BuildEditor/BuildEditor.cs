@@ -35,7 +35,6 @@ namespace ET
         private BuildOptions buildOptions;
 
         private GlobalConfig globalConfig;
-        private YooConfig yooConfig;
 
         [MenuItem("ET/Loader/Build Tool", false, ETMenuItemPriority.BuildTool)]
         public static void ShowWindow()
@@ -46,7 +45,6 @@ namespace ET
         private void OnEnable()
         {
             globalConfig = Resources.Load<GlobalConfig>("GlobalConfig");
-            yooConfig = Resources.Load<YooConfig>("YooConfig");
 
 #if UNITY_ANDROID
             activePlatform = PlatformType.Android;

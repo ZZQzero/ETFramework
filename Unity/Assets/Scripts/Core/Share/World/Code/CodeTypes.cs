@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using UnityEngine;
 
 namespace ET
 {
@@ -15,7 +16,7 @@ namespace ET
             foreach ((string fullName, Type type) in addTypes)
             {
                 this.allTypes[fullName] = type;
-                
+                Debug.LogError($"CodeTypes: {type}  | {fullName}");
                 if (type.IsAbstract)
                 {
                     continue;
@@ -26,6 +27,7 @@ namespace ET
 
                 foreach (object o in objects)
                 {
+                    Debug.LogError($"Attribute: {o.GetType()}  | {type}  |  {type.Assembly.FullName}");
                     this.types.Add(o.GetType(), type);
                 }
             }
@@ -33,8 +35,23 @@ namespace ET
 
         public HashSet<Type> GetTypes(Type systemAttributeType)
         {
+            Debug.LogError($"systemAttributeType :{systemAttributeType}  |  {systemAttributeType.Assembly.FullName}");
+
+            foreach (var item in types)
+            {
+                if(item.Key.FullName == systemAttributeType.FullName)
+                {
+                    Debug.LogError($"item.Key :{item.Key}  |  {item.Key.Assembly.FullName}");
+                    if (item.Key.Equals(systemAttributeType))
+                    {
+                        Debug.LogError($"systemAttributeType  {systemAttributeType}");
+                    }
+                }
+            }
+            
             if (!this.types.ContainsKey(systemAttributeType))
             {
+                Debug.LogError($"types里面不存在{systemAttributeType}类型，也有可能他们不在一个程序集，即使名字相同，也会被认为是两个对象");
                 return new HashSet<Type>();
             }
 

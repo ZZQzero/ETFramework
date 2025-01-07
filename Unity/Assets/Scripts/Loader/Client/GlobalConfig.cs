@@ -1,12 +1,13 @@
 ﻿using UnityEngine;
+using YooAsset;
 
 namespace ET
 {
     public enum CodeMode
     {
-        Client = 1,
-        Server = 2,
-        ClientServer = 3,
+        Client,
+        Server,
+        ClientServer,
     }
     
     public enum BuildType
@@ -19,9 +20,15 @@ namespace ET
     public class GlobalConfig: ScriptableObject
     {
         public CodeMode CodeMode;
+        
+        public EPlayMode PlayMode;
 
+        public string Version;
+
+        public string PackageName = "DefaultPackage";
+        
         public string SceneName;
 
-        public string Address;
+        public string IPAddress;
     }
 }

@@ -94,7 +94,6 @@ namespace ET
                 }
                 singletons[type] = singleton;
             }
-
             singleton.Register();
         }
     }

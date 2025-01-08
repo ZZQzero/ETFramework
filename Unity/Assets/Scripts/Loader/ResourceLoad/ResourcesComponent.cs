@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+using GameUI;
 using UnityEngine;
 using YooAsset;
 
@@ -123,10 +125,33 @@ namespace ET
             {
                 YooAssets.SetDefaultPackage(package);
                 //TODO 此时已经可以使用yooAssets加载资源了
+                //TODO GameUI里面加一个刷新数据的方法
+                GameUIManager.Instance.SetPackage(package);
+                await GameUIManager.Instance.OpenUI(GameUIName.PatchPanel, package);
                 return true;
             }
             Log.Error($"资源清单请求失败：{manifest.Error}");
             return false;
+        }
+
+        public async ETTask<ResourceDownloaderOperation> OnCreateDownLoad(ResourcePackage package)
+        {
+            int downloadingMaxNum = 10;
+            int failedTryAgain = 3;
+            var downloader = package.CreateResourceDownloader(downloadingMaxNum, failedTryAgain);
+            return downloader;
+        }
+        
+        public void BeginDownload(ResourceDownloaderOperation downloaderOperation,
+                                                DownloaderOperation.DownloaderFinish downloaderFinish,
+                                                DownloaderOperation.DownloadUpdate progressCallback,
+                                                DownloaderOperation.DownloadError errorCallback)
+        {
+            if (downloaderOperation.TotalDownloadCount == 0)
+            {
+                return;
+            }
+            downloaderOperation.BeginDownload();
         }
         
         private string GetHostServerURL(GlobalConfig config)

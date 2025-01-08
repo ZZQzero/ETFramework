@@ -8,7 +8,8 @@ namespace ET
     public class CodeTypes: Singleton<CodeTypes>, ISingletonAwake<Assembly[]>
     {
         private readonly Dictionary<string, Type> allTypes = new();
-        private readonly UnOrderMultiMapSet<Type, Type> types = new();
+        //private readonly UnOrderMultiMapSet<Type, Type> types = new();
+        private readonly Dictionary<Type, HashSet<Type>> types = new();
         
         public void Awake(Assembly[] assemblies)
         {
@@ -16,7 +17,7 @@ namespace ET
             foreach ((string fullName, Type type) in addTypes)
             {
                 this.allTypes[fullName] = type;
-                Debug.LogError($"CodeTypes: {type}  | {fullName}");
+                //Debug.LogError($"CodeTypes: {type}  | {fullName}");
                 if (type.IsAbstract)
                 {
                     continue;
@@ -27,31 +28,20 @@ namespace ET
 
                 foreach (object o in objects)
                 {
-                    Debug.LogError($"Attribute: {o.GetType()}  | {type}  |  {type.Assembly.FullName}");
-                    this.types.Add(o.GetType(), type);
+                    if (!this.types.ContainsKey(o.GetType()))
+                    {
+                        this.types[o.GetType()] = new HashSet<Type>();
+                    }
+                    this.types[o.GetType()].Add(type);
+                    //Debug.LogError($"BaseAttribute {o.GetType()}  |  {type}   |   {o.GetType().Assembly.FullName}");;
                 }
             }
         }
 
         public HashSet<Type> GetTypes(Type systemAttributeType)
         {
-            Debug.LogError($"systemAttributeType :{systemAttributeType}  |  {systemAttributeType.Assembly.FullName}");
-
-            foreach (var item in types)
-            {
-                if(item.Key.FullName == systemAttributeType.FullName)
-                {
-                    Debug.LogError($"item.Key :{item.Key}  |  {item.Key.Assembly.FullName}");
-                    if (item.Key.Equals(systemAttributeType))
-                    {
-                        Debug.LogError($"systemAttributeType  {systemAttributeType}");
-                    }
-                }
-            }
-            
             if (!this.types.ContainsKey(systemAttributeType))
             {
-                Debug.LogError($"types里面不存在{systemAttributeType}类型，也有可能他们不在一个程序集，即使名字相同，也会被认为是两个对象");
                 return new HashSet<Type>();
             }
 

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace ET
 {
-    [CodeProcess]
     public class AIDispatcherComponent: Singleton<AIDispatcherComponent>, ISingletonAwake
     {
         private readonly Dictionary<string, AAIHandler> aiHandlers = new();

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace ET
 {
@@ -49,51 +50,71 @@ namespace ET
 
         public T AddSingleton<T>() where T : ASingleton, ISingletonAwake, new()
         {
+            if (this.singletons.ContainsKey(typeof(T)))
+            {
+                Debug.LogError($"有重复添加:{typeof(T)}");
+                return (T)this.singletons[typeof(T)];
+            }
             T singleton = new();
             singleton.Awake();
 
-            AddSingleton(singleton);
+            AddSingleton(singleton,typeof(T));
             return singleton;
         }
         
         public T AddSingleton<T, A>(A a) where T : ASingleton, ISingletonAwake<A>, new()
         {
+            if (this.singletons.ContainsKey(typeof(T)))
+            {
+                Debug.LogError($"有重复添加:{typeof(T)}");
+                return (T)this.singletons[typeof(T)];
+            }
             T singleton = new();
             singleton.Awake(a);
 
-            AddSingleton(singleton);
+            AddSingleton(singleton,typeof(T));
             return singleton;
         }
         
         public T AddSingleton<T, A, B>(A a, B b) where T : ASingleton, ISingletonAwake<A, B>, new()
         {
+            if (this.singletons.ContainsKey(typeof(T)))
+            {
+                Debug.LogError($"有重复添加:{typeof(T)}");
+                return (T)this.singletons[typeof(T)];
+            }
             T singleton = new();
             singleton.Awake(a, b);
 
-            AddSingleton(singleton);
+            AddSingleton(singleton,typeof(T));
             return singleton;
         }
         
         public T AddSingleton<T, A, B, C>(A a, B b, C c) where T : ASingleton, ISingletonAwake<A, B, C>, new()
         {
+            if (this.singletons.ContainsKey(typeof(T)))
+            {
+                Debug.LogError($"有重复添加:{typeof(T)}");
+                return (T)this.singletons[typeof(T)];
+            }
             T singleton = new();
             singleton.Awake(a, b, c);
 
-            AddSingleton(singleton);
+            AddSingleton(singleton,typeof(T));
             return singleton;
         }
 
-        public void AddSingleton(ASingleton singleton)
+        public void AddSingleton(ASingleton singleton,Type type)
         {
             lock (this)
             {
-                Type type = singleton.GetType();
                 if (singleton is ISingletonReverseDispose)
                 {
                     this.stack.Push(type);
                 }
-                singletons[type] = singleton;
+                singletons.Add(type, singleton);
             }
+
             singleton.Register();
         }
     }

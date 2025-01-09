@@ -5,22 +5,6 @@ namespace ET
     [EntitySystemOf(typeof(SessionAcceptTimeoutComponent))]
     public static partial class SessionAcceptTimeoutComponentSystem
     {
-        [Invoke(TimerCoreInvokeType.SessionAcceptTimeout)]
-        public class SessionAcceptTimeout: ATimer<SessionAcceptTimeoutComponent>
-        {
-            protected override void Run(SessionAcceptTimeoutComponent self)
-            {
-                try
-                {
-                    self.Parent.Dispose();
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"move timer error: {self.Id}\n{e}");
-                }
-            }
-        }
-        
         [EntitySystem]
         private static void Awake(this SessionAcceptTimeoutComponent self)
         {

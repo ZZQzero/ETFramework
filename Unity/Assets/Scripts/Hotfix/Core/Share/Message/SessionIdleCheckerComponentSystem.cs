@@ -5,22 +5,6 @@ namespace ET
     [EntitySystemOf(typeof(SessionIdleCheckerComponent))]
     public static partial class SessionIdleCheckerComponentSystem
     {
-        [Invoke(TimerCoreInvokeType.SessionIdleChecker)]
-        public class SessionIdleChecker: ATimer<SessionIdleCheckerComponent>
-        {
-            protected override void Run(SessionIdleCheckerComponent self)
-            {
-                try
-                {
-                    self.Check();
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"session idle checker timer error: {self.Id}\n{e}");
-                }
-            }
-        }
-    
         [EntitySystem]
         private static void Awake(this SessionIdleCheckerComponent self)
         {
@@ -41,7 +25,7 @@ namespace ET
         public const int SessionTimeoutTime = 40000;
 #endif
 
-        private static void Check(this SessionIdleCheckerComponent self)
+        public static void Check(this SessionIdleCheckerComponent self)
         {
             Session session = self.GetParent<Session>();
             long timeNow = TimeInfo.Instance.ClientNow();

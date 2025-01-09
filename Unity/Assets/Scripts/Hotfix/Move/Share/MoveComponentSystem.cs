@@ -7,23 +7,6 @@ namespace ET
     [EntitySystemOf(typeof(MoveComponent))]
     public static partial class MoveComponentSystem
     {
-        [Invoke(TimerInvokeType.MoveTimer)]
-        public class MoveTimer: ATimer<MoveComponent>
-        {
-            protected override void Run(MoveComponent self)
-            {
-                try
-                {
-                    self.MoveForward(true);
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"move timer error: {self.Id}\n{e}");
-                }
-            }
-        }
-    
-        
         [EntitySystem]
         private static void Destroy(this MoveComponent self)
         {
@@ -105,7 +88,7 @@ namespace ET
         }
 
         // ret: 停止的时候，移动协程的返回值
-        private static void MoveForward(this MoveComponent self, bool ret)
+        public static void MoveForward(this MoveComponent self, bool ret)
         {
             Unit unit = self.GetParent<Unit>();
             

@@ -155,6 +155,7 @@
     <Compile Include="Assets\Scripts\Core\Share\World\Code\CodeProcessAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\ETCancellationToken.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\ProcessHelper.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\HttpClientHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\StringHashHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\IGetComponentSysSystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\PackageHelper.cs" />

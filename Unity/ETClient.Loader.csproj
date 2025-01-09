@@ -48,20 +48,25 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Loader\Client\UnityLogger.cs" />
+    <Compile Include="Assets\Scripts\Loader\ResourceLoad\UI\PatchPanelPanelComponent.cs" />
     <Compile Include="Assets\Scripts\Loader\ResourceLoad\StreamingAssetsHelper\StreamingAssetsDefine.cs" />
     <Compile Include="Assets\Scripts\Loader\ResourceLoad\WebGLGameQueryServices.cs" />
     <Compile Include="Assets\Scripts\Loader\Client\GlobalConfig.cs" />
     <Compile Include="Assets\Scripts\Loader\Client\UILayerScript.cs" />
     <Compile Include="Assets\Scripts\Loader\Client\Init.cs" />
     <Compile Include="Assets\Scripts\Loader\Client\CodeLoader.cs" />
+    <Compile Include="Assets\Scripts\Loader\ResourceLoad\UI\MessageBoxPanelPanelComponent.cs" />
     <Compile Include="Assets\Scripts\Loader\Client\CoroutineHelper.cs" />
     <Compile Include="Assets\Scripts\Loader\ResourceLoad\StreamingAssetsHelper\BuildinFileManifest.cs" />
     <Compile Include="Assets\Scripts\Loader\Client\CanvasConfig.cs" />
+    <Compile Include="Assets\Scripts\Loader\ResourceLoad\UI\MessageBoxPanelPanel.cs" />
     <Compile Include="Assets\Scripts\Loader\ReferenceCollector\GameObjectHelper.cs" />
     <Compile Include="Assets\Scripts\Loader\ResourceLoad\StreamingAssetsHelper\StreamingAssetsHelper.cs" />
+    <Compile Include="Assets\Scripts\Loader\Client\UnityLogInvoke.cs" />
     <Compile Include="Assets\Scripts\Loader\ReferenceCollector\ReferenceCollector.cs" />
+    <Compile Include="Assets\Scripts\Loader\ResourceLoad\UI\GameUIName.cs" />
+    <Compile Include="Assets\Scripts\Loader\ResourceLoad\UI\PatchPanelPanel.cs" />
     <Compile Include="Assets\Scripts\Loader\ResourceLoad\ResourcesComponent.cs" />
-    <Compile Include="Assets\Scripts\Loader\Share\HttpClientHelper.cs" />
     <Compile Include="Assets\Scripts\Loader\Client\Define.cs" />
     <None Include="Assets\Scripts\Loader\ETClient.Loader.asmdef" />
     <Reference Include="UnityEngine">
@@ -871,6 +876,12 @@
     <Reference Include="HybridCLR.Runtime">
       <HintPath>D:\Project\ETFramework\Unity\Library\ScriptAssemblies\HybridCLR.Runtime.dll</HintPath>
     </Reference>
+    <Reference Include="GameUIFramework">
+      <HintPath>D:\Project\ETFramework\Unity\Library\ScriptAssemblies\GameUIFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="UniTask">
+      <HintPath>D:\Project\ETFramework\Unity\Library\ScriptAssemblies\UniTask.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>D:\Project\ETFramework\Unity\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
     </Reference>
@@ -879,13 +890,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="ETClient.Core.csproj">
-      <Project>{0b6af215-3714-9fa2-e60d-ba0e16d6f52f}</Project>
-      <Name>ETClient.Core</Name>
-    </ProjectReference>
     <ProjectReference Include="ETClient.ThirdParty.csproj">
       <Project>{a7be3672-436a-eded-30e5-4a23c76fdb86}</Project>
       <Name>ETClient.ThirdParty</Name>
+    </ProjectReference>
+    <ProjectReference Include="ETClient.Core.csproj">
+      <Project>{0b6af215-3714-9fa2-e60d-ba0e16d6f52f}</Project>
+      <Name>ETClient.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

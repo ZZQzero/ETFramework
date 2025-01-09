@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETClient.Loader", "ETClient
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETClient.Editor", "ETClient.Editor.csproj", "{8148c933-f6e1-c696-0265-2e0c5b37256a}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameEntry", "GameEntry.csproj", "{874ec6d4-2d99-6b15-d2b4-a12b236b4d8b}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{03938ccd-4b40-8dfb-6b9b-21988d5cac0a}"
 EndProject
 Global
@@ -40,6 +42,8 @@ Global
 		{c1663578-d3aa-99a7-6b04-2639f2e2906c}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8148c933-f6e1-c696-0265-2e0c5b37256a}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8148c933-f6e1-c696-0265-2e0c5b37256a}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{874ec6d4-2d99-6b15-d2b4-a12b236b4d8b}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{874ec6d4-2d99-6b15-d2b4-a12b236b4d8b}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{03938ccd-4b40-8dfb-6b9b-21988d5cac0a}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{03938ccd-4b40-8dfb-6b9b-21988d5cac0a}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection

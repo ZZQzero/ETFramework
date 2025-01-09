@@ -19,7 +19,6 @@ namespace ET
     /// <summary>
     /// Actor消息分发组件
     /// </summary>
-    [CodeProcess]
     public class MessageDispatcher: Singleton<MessageDispatcher>, ISingletonAwake
     {
         private readonly Dictionary<Type, List<MessageDispatcherInfo>> messageHandlers = new();

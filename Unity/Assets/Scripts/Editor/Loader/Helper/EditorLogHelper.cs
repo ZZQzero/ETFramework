@@ -46,7 +46,7 @@ namespace ET
 
             if (Options.Instance == null)
             {
-                World.Instance.AddSingleton(new Options());
+                World.Instance.AddSingleton(new Options(), typeof(Options));
             }
         }
 

@@ -854,6 +854,9 @@
     <Reference Include="Unity.Mathematics">
       <HintPath>D:\Project\ETFramework\Unity\Library\ScriptAssemblies\Unity.Mathematics.dll</HintPath>
     </Reference>
+    <Reference Include="GameUIFramework">
+      <HintPath>D:\Project\ETFramework\Unity\Library\ScriptAssemblies\GameUIFramework.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>D:\Project\ETFramework\Unity\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
     </Reference>

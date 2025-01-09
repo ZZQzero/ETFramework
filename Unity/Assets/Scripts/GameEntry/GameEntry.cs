@@ -1,0 +1,15 @@
+using UnityEngine;
+
+namespace ET
+{
+    public class GameEntry : MonoBehaviour
+    {
+        void Awake()
+        {
+            GameRegister.RegisterSingleton();
+            GameRegister.RegisterEvent();
+            GameRegister.RegisterInvoke();
+            Entry.Start();
+        }
+    }
+}

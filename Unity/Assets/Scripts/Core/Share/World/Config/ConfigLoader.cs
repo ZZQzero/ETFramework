@@ -59,9 +59,9 @@ namespace ET
 
         private static void LoadOneConfig(Type configType, byte[] oneConfigBytes)
         {
-            object category = MongoHelper.Deserialize(configType, oneConfigBytes, 0, oneConfigBytes.Length);
+            /*object category = MongoHelper.Deserialize(configType, oneConfigBytes, 0, oneConfigBytes.Length);
             ASingleton singleton = category as ASingleton;
-            World.Instance.AddSingleton(singleton);
+            World.Instance.AddSingleton(singleton);*/
         }
 
         private void ConfigProcess()
@@ -71,7 +71,7 @@ namespace ET
             {
                 object obj = Activator.CreateInstance(type);
                 ((ISingletonAwake)obj).Awake();
-                World.Instance.AddSingleton((ASingleton)obj);
+                //World.Instance.AddSingleton((ASingleton)obj);
             }
         }
     }

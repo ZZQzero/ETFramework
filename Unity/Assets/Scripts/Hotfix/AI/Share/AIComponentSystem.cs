@@ -7,22 +7,6 @@ namespace ET
     [FriendOf(typeof(AIDispatcherComponent))]
     public static partial class AIComponentSystem
     {
-        [Invoke(TimerInvokeType.AITimer)]
-        public class AITimer: ATimer<AIComponent>
-        {
-            protected override void Run(AIComponent self)
-            {
-                try
-                {
-                    self.Check();
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"move timer error: {self.Id}\n{e}");
-                }
-            }
-        }
-    
         [EntitySystem]
         private static void Awake(this AIComponent self, int aiConfigId)
         {
@@ -39,7 +23,7 @@ namespace ET
             self.Current = 0;
         }
 
-        private static void Check(this AIComponent self)
+        public static void Check(this AIComponent self)
         {
             Fiber fiber = self.Fiber();
             if (self.Parent == null)

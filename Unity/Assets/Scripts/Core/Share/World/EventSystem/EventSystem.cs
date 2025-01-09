@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace ET
 {
-    [CodeProcess]
     public class EventSystem: Singleton<EventSystem>, ISingletonAwake
     {
         private class EventInfo
@@ -19,13 +19,15 @@ namespace ET
             }
         }
         
-        private readonly Dictionary<Type, List<EventInfo>> allEvents = new();
+        private readonly Dictionary<Type, Dictionary<long, IInvoke>> _allInvokeDic = new();
         
-        private readonly Dictionary<Type, Dictionary<long, object>> allInvokers = new(); 
+        private readonly Dictionary<Type, List<EventInfo>> _allEventDic = new();
+        
+        //private readonly Dictionary<Type, Dictionary<long, object>> allInvokers = new(); 
         
         public void Awake()
         {
-            CodeTypes codeTypes = CodeTypes.Instance;
+            /*CodeTypes codeTypes = CodeTypes.Instance;
             foreach (Type type in codeTypes.GetTypes(typeof (EventAttribute)))
             {
                 IEvent obj = Activator.CreateInstance(type) as IEvent;
@@ -43,15 +45,15 @@ namespace ET
 
                     EventInfo eventInfo = new(obj, eventAttribute.SceneType);
 
-                    if (!this.allEvents.ContainsKey(eventType))
+                    if (!this._allEventDic.ContainsKey(eventType))
                     {
-                        this.allEvents.Add(eventType, new List<EventInfo>());
+                        this._allEventDic.Add(eventType, new List<EventInfo>());
                     }
-                    this.allEvents[eventType].Add(eventInfo);
+                    this._allEventDic[eventType].Add(eventInfo);
                 }
-            }
+            }*/
 
-            foreach (Type type in codeTypes.GetTypes(typeof (InvokeAttribute)))
+            /*foreach (Type type in codeTypes.GetTypes(typeof (InvokeAttribute)))
             {
                 object obj = Activator.CreateInstance(type);
                 IInvoke iInvoke = obj as IInvoke;
@@ -80,13 +82,53 @@ namespace ET
                         throw new Exception($"action type duplicate: {iInvoke.Type.Name} {invokeAttribute.Type}", e);
                     }
                 }
+            }*/
+        }
+
+        public void RegisterEvent<T>(int sceneType) where T : IEvent, new()
+        {
+            T obj = new T();
+            try
+            {
+                IEvent ieEvent = obj;
+                EventInfo eventInfo = new EventInfo(obj, sceneType);
+                if (!_allEventDic.TryGetValue(ieEvent.Type, out var list))
+                {
+                    list = new List<EventInfo>();
+                    _allEventDic.Add(ieEvent.Type,list);
+                }
+                _allEventDic[ieEvent.Type].Add(eventInfo);
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"type not is AEvent: {typeof(T).Name}", e);
+            }
+        }
+        
+        public void RegisterInvoke<T>(long attributeType = 0) where T : IInvoke, new()
+        {
+            T obj = new T();
+            try
+            {
+                IInvoke iInvoke = obj;
+                if (!_allInvokeDic.TryGetValue(iInvoke.Type, out var dict))
+                {
+                    dict = new Dictionary<long, IInvoke>();
+                    _allInvokeDic.Add(iInvoke.Type, dict);
+                }
+                dict.Add(attributeType, obj);
+                //Debug.LogError($"type : {typeof(T)}   {iInvoke.Type}  {attributeType}   {obj}");
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"action type duplicate: {typeof(T).Name} {attributeType}", e);
             }
         }
         
         public async ETTask PublishAsync<S, T>(S scene, T a) where S: class, IScene where T : struct
         {
             List<EventInfo> iEvents;
-            if (!this.allEvents.TryGetValue(typeof(T), out iEvents))
+            if (!this._allEventDic.TryGetValue(typeof(T), out iEvents))
             {
                 Log.Warning($"PublishAsync error1: {typeof(T)} | {typeof(T).FullName} not found");
                 return;
@@ -123,7 +165,7 @@ namespace ET
         public void Publish<S, T>(S scene, T a) where S: class, IScene where T : struct
         {
             List<EventInfo> iEvents;
-            if (!this.allEvents.TryGetValue(typeof (T), out iEvents))
+            if (!this._allEventDic.TryGetValue(typeof (T), out iEvents))
             {
                 return;
             }
@@ -154,7 +196,7 @@ namespace ET
         // publish是事件，抛出去可以没人订阅，调用者跟被调用者属于两个模块，比如任务系统需要知道道具使用的信息，则订阅道具使用事件
         public void Invoke<A>(long type, A args) where A: struct
         {
-            if (!this.allInvokers.TryGetValue(typeof(A), out var invokeHandlers))
+            if (!this._allInvokeDic.TryGetValue(typeof(A), out var invokeHandlers))
             {
                 throw new Exception($"Invoke error1: {type} {typeof(A).FullName} + " +
                                     $"如果同一个类型来自不同的程序集，即使它们的名称相同，它们在类型比较时也会被视为不同的类型。" +
@@ -176,7 +218,8 @@ namespace ET
         
         public T Invoke<A, T>(long type, A args) where A: struct
         {
-            if (!this.allInvokers.TryGetValue(typeof(A), out var invokeHandlers))
+            //<LogInvoker, ILog>(logInvoker);
+            if (!this._allInvokeDic.TryGetValue(typeof(A), out var invokeHandlers))
             {
                 throw new Exception($"Invoke error4: {type} {typeof(A).FullName} + " +
                                     $"如果同一个类型来自不同的程序集，即使它们的名称相同，它们在类型比较时也会被视为不同的类型。" +

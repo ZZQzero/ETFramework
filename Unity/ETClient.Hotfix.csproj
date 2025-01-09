@@ -57,6 +57,7 @@
     <Compile Include="Assets\Scripts\Hotfix\StateSync\Client\Main\Unit\M2C_CreateUnitsHandler.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Login\NetClient\Router\RouterConnectorSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Unit\Share\UnitComponentSystem.cs" />
+    <Compile Include="Assets\Scripts\Hotfix\Move\Share\MoveTimerInvoke.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\FiberInit_Main.cs" />
     <Compile Include="Assets\Scripts\Hotfix\StateSync\Client\Main\Scene\CurrentSceneFactory.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Login\NetClient\PingComponentSystem.cs" />
@@ -71,6 +72,7 @@
     <Compile Include="Assets\Scripts\Hotfix\StateSync\Client\Main\Move\M2C_StopHandler.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Login\NetClient2Main_SessionDisposeHandler.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\ETCancellationTokenHelper.cs" />
+    <Compile Include="Assets\Scripts\Hotfix\Core\Share\Message\SessionIdleCheckerInvoke.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Login\Login\LoginHelper.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Move\Share\MoveComponentSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\Message\MessageSessionHandler.cs" />
@@ -84,11 +86,13 @@
     <Compile Include="Assets\Scripts\Hotfix\Login\ClientSessionErrorComponentSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Login\NetClient\A2NetClient_MessageHandler.cs" />
     <Compile Include="Assets\Scripts\Hotfix\StateSync\Client\Main\AI\XunLuoPathComponentSystem.cs" />
+    <Compile Include="Assets\Scripts\Hotfix\Core\Share\Message\SessionAcceptTimeoutInvoke.cs" />
     <Compile Include="Assets\Scripts\Hotfix\StateSync\Share\ConstValue.cs" />
     <Compile Include="Assets\Scripts\Hotfix\StateSync\Share\EntryEvent1_InitShare.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Unit\Share\UnitSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\StateSync\Client\Main\Unit\UnitHelper.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Login\NetClient\Main2NetClient_LoginHandler.cs" />
+    <Compile Include="Assets\Scripts\Hotfix\AI\Share\AITimer.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Numeric\Share\NumericWatcher_Hp_ShowUI.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\Actor\ProcessInnerSenderSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\StateSync\Client\Main\AI\AI_Attack.cs" />

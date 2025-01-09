@@ -3,19 +3,6 @@ using System.Threading;
 
 namespace ET
 {
-    [Invoke(TimerCoreInvokeType.CoroutineTimeout)]
-    public class WaitCoroutineLockTimer: ATimer<WaitCoroutineLock>
-    {
-        protected override void Run(WaitCoroutineLock waitCoroutineLock)
-        {
-            if (waitCoroutineLock.IsDisposed())
-            {
-                return;
-            }
-            waitCoroutineLock.SetException(new Exception("coroutine is timeout!"));
-        }
-    }
-    
     public class WaitCoroutineLock: Object
     {
         public static WaitCoroutineLock Create()

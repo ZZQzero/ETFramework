@@ -85,6 +85,7 @@
     <Compile Include="Assets\Scripts\Model\StateSync\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\ActorLocation\Share\ErrorCode.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Client\NetClient\PingComponent.cs" />
+    <Compile Include="Assets\Scripts\Model\UI\UILayerComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\ProcessInnerSender.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\ISessionMessage.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\SceneType.cs" />
@@ -130,6 +131,7 @@
     <Compile Include="Assets\Scripts\Model\Router\Share\ErrorCode.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Client\NetClient\Router\RouterAddressComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\TimerInvokeType.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\WaitCoroutineLockTimerInvoke.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\Proto\Client\RouterProto_C_1100.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Timer\TimerComponent.cs" />

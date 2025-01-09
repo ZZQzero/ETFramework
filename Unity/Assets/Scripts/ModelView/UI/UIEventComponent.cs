@@ -7,14 +7,13 @@ namespace ET.Client
 	/// <summary>
 	/// 管理所有UI GameObject
 	/// </summary>
-	[CodeProcess]
 	public class UIEventComponent: Singleton<UIEventComponent>, ISingletonAwake
 	{
 		public Dictionary<string, AUIEvent> UIEvents { get; } = new();
 		
         public void Awake()
         {
-            var uiEvents = CodeTypes.Instance.GetTypes(typeof (UIEventAttribute));
+            /*var uiEvents = CodeTypes.Instance.GetTypes(typeof (UIEventAttribute));
             foreach (Type type in uiEvents)
             {
                 object[] attrs = type.GetCustomAttributes(typeof (UIEventAttribute), false);
@@ -28,7 +27,7 @@ namespace ET.Client
                 AUIEvent aUIEvent = Activator.CreateInstance(type) as AUIEvent;
                 this.UIEvents.Add(uiEventAttribute.UIType, aUIEvent);
                 Debug.LogError($"uievent  {uiEventAttribute.UIType}");
-            }
+            }*/
         }
 	}
 }

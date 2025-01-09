@@ -50,10 +50,9 @@ namespace ET
             logMsg.AddIgnore(LoginOuter.C2G_Ping);
             logMsg.AddIgnore(LoginOuter.G2C_Ping);
             
-            // 创建需要reload的code singleton
-            CodeTypes.Instance.CodeProcess();
             await World.Instance.AddSingleton<ConfigLoader>().LoadAsync();
             Log.Info("Entry Start");
+            
             await FiberManager.Instance.Create(SchedulerType.Main, SceneType.Main, 0, SceneType.Main, "Main");
         }
     }

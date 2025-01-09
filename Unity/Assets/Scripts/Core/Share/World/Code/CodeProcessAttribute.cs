@@ -1,7 +1,7 @@
 ﻿namespace ET
 {
-    public class CodeProcessAttribute: BaseAttribute
+    /*public class CodeProcessAttribute: BaseAttribute
     {
 
-    }
+    }*/
 }

@@ -34,13 +34,15 @@ namespace ET
 
     public class ResourcesComponent : Singleton<ResourcesComponent>, ISingletonAwake
     {
+        private GameUIBase _uiBase;
         public void Awake()
         {
             YooAssets.Initialize();
         }
 
-        public async ETTask CreatePackageAsync()
+        public async ETTask CreatePackageAsync(GameUIBase uiBase)
         {
+            _uiBase = uiBase;
             var config = Resources.Load<GlobalConfig>("GlobalConfig");
             ResourcePackage package = YooAssets.CreatePackage(config.PackageName);
             InitializationOperation initializationOperation = null;
@@ -124,10 +126,9 @@ namespace ET
             if (manifest.Status == EOperationStatus.Succeed)
             {
                 YooAssets.SetDefaultPackage(package);
-                //TODO 此时已经可以使用yooAssets加载资源了
-                //TODO GameUI里面加一个刷新数据的方法
+                // 此时已经可以使用yooAssets加载资源了
                 GameUIManager.Instance.SetPackage(package);
-                await GameUIManager.Instance.OpenUI(GameUIName.PatchPanel, package);
+                GameUIManager.Instance.RefreshUI(_uiBase, package);
                 return true;
             }
             Log.Error($"资源清单请求失败：{manifest.Error}");

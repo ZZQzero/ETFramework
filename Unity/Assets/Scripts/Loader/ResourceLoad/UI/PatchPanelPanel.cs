@@ -20,9 +20,14 @@ namespace GameUI
 			#endregion Auto Generate Code
 			
 		}
-		public override async void OnOpenUI()
+		public override void OnOpenUI()
 		{
 			base.OnOpenUI();
+		}
+		
+		public override async void OnRefreshUI()
+		{
+			base.OnRefreshUI();
 			if(Data != null && Data is ResourcePackage package)
 			{
 				_package = package;

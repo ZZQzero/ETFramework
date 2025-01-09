@@ -2,8 +2,11 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading;
+#if UNITY
+using UnityEngine;
+#endif
 
-namespace ET.Client
+namespace ET
 {
     public static partial class HttpClientHelper
     {

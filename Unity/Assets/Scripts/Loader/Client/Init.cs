@@ -7,7 +7,7 @@ namespace ET
 {
     public class Init: MonoBehaviour
     {
-        private GameObject loadUI;
+        private GameUIBase loadUI;
         private void Start()
         {
             this.StartAsync().NoContext();
@@ -38,19 +38,19 @@ namespace ET
             World.Instance.AddSingleton<TimeInfo>();
             World.Instance.AddSingleton<FiberManager>();
             
-            await World.Instance.AddSingleton<ResourcesComponent>().CreatePackageAsync();
+            await World.Instance.AddSingleton<ResourcesComponent>().CreatePackageAsync(loadUI);
             Debug.LogError("init");
             //World.Instance.AddSingleton<CodeLoader>().Start().NoContext();
         }
 
         private void LoadUI()
         {
-            /*var parent = GameUIManager.Instance.GetUILayer(EGameUILayer.Loading);
+            var parent = GameUIManager.Instance.GetUILayer(EGameUILayer.Loading);
             var prefab = Resources.Load<GameObject>("UI/PatchPanel");
             if (prefab != null)
             {
-                loadUI = GameObject.Instantiate(prefab, parent);
-            }*/
+                loadUI = GameObject.Instantiate(prefab, parent).GetComponent<PatchPanelPanel>();
+            }
         }
         
         private void Update()

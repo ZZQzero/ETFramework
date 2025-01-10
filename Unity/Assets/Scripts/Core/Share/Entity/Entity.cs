@@ -701,7 +701,6 @@ namespace ET
             {
                 throw new Exception($"entity already has component: {type.FullName}");
             }
-
             Entity component = Create(type, isFromPool);
             component.Id = id;
             component.ComponentParent = this;

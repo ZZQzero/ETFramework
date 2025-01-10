@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using GameUI;
+using UnityEngine;
 
 namespace ET.Client
 {
@@ -10,9 +11,10 @@ namespace ET.Client
             await ETTask.CompletedTask;
             string assetsName = $"{UIType.UILobby}";
             GameObject bundleGameObject = await uiComponent.Scene().GetComponent<ResourcesLoaderComponent>().LoadAssetAsync<GameObject>(assetsName);
-            GameObject gameObject = UnityEngine.Object.Instantiate(bundleGameObject, uiComponent.UIGlobalComponent.GetLayer((int)uiLayer));
-            UI ui = uiComponent.AddChild<UI, string, GameObject>(UIType.UILobby, gameObject);
-
+            bundleGameObject.transform.SetParent(GameUIManager.Instance.GetUILayer(EGameUILayer.Normal));
+            UI ui = uiComponent.AddChild<UI, string, GameObject>(UIType.UILobby, bundleGameObject);
+            bundleGameObject.transform.localPosition = Vector3.zero;
+            bundleGameObject.transform.localScale = Vector3.one;
             ui.AddComponent<UILobbyComponent>();
             return ui;
         }

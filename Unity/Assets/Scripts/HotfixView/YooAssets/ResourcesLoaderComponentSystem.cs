@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using YooAsset;
 
@@ -11,12 +12,15 @@ namespace ET.Client
         private static void Awake(this ResourcesLoaderComponent self)
         {
             self.package = YooAssets.GetPackage("DefaultPackage");
+            Debug.LogError($"self package  {self.package}");
         }
 
         [EntitySystem]
         private static void Awake(this ResourcesLoaderComponent self, string packageName)
         {
             self.package = YooAssets.GetPackage(packageName);
+            Debug.LogError($"self package  {self.package}");
+
         }
 
         [EntitySystem]
@@ -51,7 +55,6 @@ namespace ET.Client
         public static async ETTask<T> LoadAssetAsync<T>(this ResourcesLoaderComponent self, string location) where T : UnityEngine.Object
         {
             using CoroutineLock coroutineLock = await self.Root().GetComponent<CoroutineLockComponent>().Wait(CoroutineLockType.ResourcesLoader, location.GetHashCode());
-
             HandleBase handler;
             if (!self.handlers.TryGetValue(location, out handler))
             {
@@ -62,7 +65,8 @@ namespace ET.Client
                 self.handlers.Add(location, handler);
             }
 
-            return (T)((AssetHandle)handler).AssetObject;
+            var assetHandle = (AssetHandle)handler;
+            return assetHandle.InstantiateSync() as T;
         }
 
         public static async ETTask<Dictionary<string, T>> LoadAllAssetsAsync<T>(this ResourcesLoaderComponent self, string location) where T : UnityEngine.Object

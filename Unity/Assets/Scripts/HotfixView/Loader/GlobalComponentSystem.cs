@@ -8,9 +8,10 @@ namespace ET
         [EntitySystem]
         private static void Awake(this GlobalComponent self)
         {
-            self.Global = GameObject.Find("/Global").transform;
+            /*self.Global = GameObject.Find("/Global").transform;
             self.Unit = GameObject.Find("/Global/Unit").transform;
-            self.UI = GameObject.Find("/Global/UI").transform;
+            self.UI = GameObject.Find("/Global/UI").transform;*/
+            /*self.Unit = GameObject.Find("/Init").transform;*/
             self.GlobalConfig = Resources.Load<GlobalConfig>("GlobalConfig");
         }
     }

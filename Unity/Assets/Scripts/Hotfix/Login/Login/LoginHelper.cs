@@ -8,7 +8,6 @@ namespace ET.Client
             
             ClientSenderComponent clientSenderComponent = root.AddComponent<ClientSenderComponent>();
             
-            
             long playerId = await clientSenderComponent.LoginAsync(address, account, password);
 
             root.GetComponent<PlayerComponent>().MyId = playerId;

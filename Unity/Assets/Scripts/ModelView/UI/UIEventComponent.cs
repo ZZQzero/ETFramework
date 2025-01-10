@@ -13,21 +13,19 @@ namespace ET.Client
 		
         public void Awake()
         {
-            /*var uiEvents = CodeTypes.Instance.GetTypes(typeof (UIEventAttribute));
+            var uiEvents = CodeTypes.Instance.GetTypes(typeof (UIEventAttribute));
             foreach (Type type in uiEvents)
             {
                 object[] attrs = type.GetCustomAttributes(typeof (UIEventAttribute), false);
                 if (attrs.Length == 0)
                 {
-	                Debug.LogError($"type  {type}");
                     continue;
                 }
 
                 UIEventAttribute uiEventAttribute = attrs[0] as UIEventAttribute;
                 AUIEvent aUIEvent = Activator.CreateInstance(type) as AUIEvent;
                 this.UIEvents.Add(uiEventAttribute.UIType, aUIEvent);
-                Debug.LogError($"uievent  {uiEventAttribute.UIType}");
-            }*/
+            }
         }
 	}
 }

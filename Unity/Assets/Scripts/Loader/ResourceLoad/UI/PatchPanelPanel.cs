@@ -45,6 +45,7 @@ namespace GameUI
 				var obj = handle.InstantiateSync();
 				GameObject.DontDestroyOnLoad(obj);
 				Debug.LogError("不用下载");
+				Destroy(gameObject);
 			}
 			else
 			{
@@ -81,6 +82,7 @@ namespace GameUI
 			if (data.Succeed)
 			{
 				Debug.LogError("下载完成");
+				Destroy(gameObject);
 				//TODO 正式进入游戏
 			}
 		}

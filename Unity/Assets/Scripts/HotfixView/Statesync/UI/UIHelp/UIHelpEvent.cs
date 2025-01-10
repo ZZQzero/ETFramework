@@ -1,4 +1,5 @@
 ﻿using System;
+using GameUI;
 using UnityEngine;
 
 namespace ET.Client
@@ -12,9 +13,10 @@ namespace ET.Client
 	        {
 		        string assetsName = $"{UIType.UIHelp}";
 		        GameObject bundleGameObject = await uiComponent.Scene().GetComponent<ResourcesLoaderComponent>().LoadAssetAsync<GameObject>(assetsName);
-		        GameObject gameObject = UnityEngine.Object.Instantiate(bundleGameObject, uiComponent.UIGlobalComponent.GetLayer((int)uiLayer));
-		        UI ui = uiComponent.AddChild<UI, string, GameObject>(UIType.UIHelp, gameObject);
-
+		        bundleGameObject.transform.SetParent(GameUIManager.Instance.GetUILayer(EGameUILayer.Normal));
+		        UI ui = uiComponent.AddChild<UI, string, GameObject>(UIType.UIHelp, bundleGameObject);
+		        bundleGameObject.transform.localPosition = Vector3.zero;
+		        bundleGameObject.transform.localScale = Vector3.one;
 				ui.AddComponent<UIHelpComponent>();
 				return ui;
 	        }

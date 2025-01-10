@@ -1,17 +1,67 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using UnityEngine;
 
 namespace ET
 {
-    public class CodeTypes: Singleton<CodeTypes>, ISingletonAwake<Assembly[]>
+    public class CodeTypes: Singleton<CodeTypes>, ISingletonAwake
     {
-        private readonly Dictionary<string, Type> allTypes = new();
+        private readonly Dictionary<string, Type> _allTypes = new();
         //private readonly UnOrderMultiMapSet<Type, Type> types = new();
-        private readonly Dictionary<Type, HashSet<Type>> types = new();
+        private readonly Dictionary<Type, HashSet<Type>> _types = new();
         
-        public void Awake(Assembly[] assemblies)
+        private readonly List<Assembly> _assemblyList = new();
+        private readonly Dictionary<string, Type> _allClassTypeDic = new();
+        public void Awake()
+        {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            for (int i = 0; i < assemblies.Length; i++)
+            {
+                var assembly = assemblies[i];
+                if (AssemblyHelper.AssembleNames.ContainsKey(assembly.FullName.Split(",")[0]))
+                {
+                    _assemblyList.Add(assembly);
+                }
+            }
+
+            
+            foreach (var item in _assemblyList)
+            {
+                var types = item.GetTypes();
+                foreach (var type in types)
+                {
+                    if (type.FullName != null)
+                    {
+                        if (!_allClassTypeDic.TryAdd(type.FullName, type))
+                        {
+                            Log.Error($"已经存在相同的类型：{type.FullName}");
+                        }
+                    }
+                }
+            }
+
+            foreach ((string fullName,Type type) in _allClassTypeDic)
+            {
+                _allTypes.Add(fullName,type);
+                if (type.IsAbstract)
+                {
+                    continue;
+                }
+                object[] objects = type.GetCustomAttributes(typeof(BaseAttribute), true);
+                foreach (object o in objects)
+                {
+                    var objType = o.GetType();
+                    if (!_types.ContainsKey(objType))
+                    {
+                        HashSet<Type> hashSet = new HashSet<Type>();
+                        _types.Add(objType,hashSet);
+                    }
+                    _types[objType].Add(type);
+                }
+            }
+        }
+        
+        /*public void Awake(Assembly[] assemblies)
         {
             Dictionary<string, Type> addTypes = AssemblyHelper.GetAssemblyTypes(assemblies);
             foreach ((string fullName, Type type) in addTypes)
@@ -37,26 +87,27 @@ namespace ET
                 }
             }
         }
+        */
 
         public HashSet<Type> GetTypes(Type systemAttributeType)
         {
-            if (!this.types.ContainsKey(systemAttributeType))
+            if (!this._types.ContainsKey(systemAttributeType))
             {
                 return new HashSet<Type>();
             }
 
-            return this.types[systemAttributeType];
+            return this._types[systemAttributeType];
         }
 
         public Dictionary<string, Type> GetTypes()
         {
-            return allTypes;
+            return _allTypes;
         }
         
         public Type GetType(string typeName)
         {
             Type type = null;
-            this.allTypes.TryGetValue(typeName, out type);
+            this._allTypes.TryGetValue(typeName, out type);
             return type;
         }
         

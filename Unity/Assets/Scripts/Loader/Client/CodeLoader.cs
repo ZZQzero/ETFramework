@@ -17,6 +17,7 @@ namespace ET
 
         public void Awake()
         {
+            Start().NoContext();
         }
 
         private async ETTask DownloadAsync()
@@ -70,11 +71,11 @@ namespace ET
             
             (Assembly hotfixAssembly, Assembly hotfixViewAssembly) = this.LoadHotfix();
 
-            World.Instance.AddSingleton<CodeTypes, Assembly[]>(new[]
+            /*World.Instance.AddSingleton<CodeTypes, Assembly[]>(new[]
             {
                 typeof (World).Assembly, typeof (Init).Assembly, this.modelAssembly, this.modelViewAssembly, hotfixAssembly,
                 hotfixViewAssembly
-            });
+            });*/
 
             Debug.LogError("code load");
             IStaticMethod start = new StaticMethod(this.modelAssembly, "ET.Entry", "Start");
@@ -120,12 +121,12 @@ namespace ET
         {
             (Assembly hotfixAssembly, Assembly hotfixViewAssembly) = this.LoadHotfix();
 
-            CodeTypes codeTypes = World.Instance.AddSingleton<CodeTypes, Assembly[]>(new[]
+            /*CodeTypes codeTypes = World.Instance.AddSingleton<CodeTypes, Assembly[]>(new[]
             {
                 typeof (World).Assembly, typeof (Init).Assembly, this.modelAssembly, this.modelViewAssembly, hotfixAssembly,
                 hotfixViewAssembly
             });
-            codeTypes.CodeProcess();
+            codeTypes.CodeProcess();*/
 
             Log.Info($"reload dll finish!");
         }

@@ -1,5 +1,7 @@
 fileFormatVersion: 2
 guid: 245daf9c2ea7e7844838cc41cde00b90
+labels:
+- RoslynAnalyzer
 PluginImporter:
   externalObjects: {}
   serializedVersion: 3

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace ET
 {
@@ -10,16 +11,15 @@ namespace ET
         public void Awake()
         {
             this.TypeSystems = new TypeSystems();
-
             foreach (Type type in CodeTypes.Instance.GetTypes(typeof (EntitySystemAttribute)))
             {
                 SystemObject obj = (SystemObject)Activator.CreateInstance(type);
-
+                
                 if (obj is ISystemType iSystemType)
                 {
                     TypeSystems.OneTypeSystems oneTypeSystems = this.TypeSystems.GetOrCreateOneTypeSystems(iSystemType.Type());
                     oneTypeSystems.Map.Add(iSystemType.SystemType(), obj);
-                    
+
                     if (iSystemType is IClassEventSystem)
                     {
                         oneTypeSystems.ClassType.Add(iSystemType.SystemType());

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
-
 namespace ET
 {
     public class EventSystem: Singleton<EventSystem>, ISingletonAwake

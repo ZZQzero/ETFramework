@@ -1,4 +1,5 @@
 ﻿using System;
+using GameUI;
 using UnityEngine;
 
 namespace ET.Client
@@ -9,9 +10,13 @@ namespace ET.Client
         public override async ETTask<UI> OnCreate(UIComponent uiComponent, UILayer uiLayer)
         {
             string assetsName = $"{UIType.UILogin}";
-            GameObject bundleGameObject = await uiComponent.Scene().GetComponent<ResourcesLoaderComponent>().LoadAssetAsync<GameObject>(assetsName);
-            GameObject gameObject = UnityEngine.Object.Instantiate(bundleGameObject, uiComponent.UIGlobalComponent.GetLayer((int)uiLayer));
-            UI ui = uiComponent.AddChild<UI, string, GameObject>(UIType.UILogin, gameObject);
+            var load = uiComponent.Scene().GetComponent<ResourcesLoaderComponent>();
+            GameObject bundleGameObject = await load.LoadAssetAsync<GameObject>(assetsName);
+            Debug.LogError($"{bundleGameObject}");
+            bundleGameObject.transform.SetParent(GameUIManager.Instance.GetUILayer(EGameUILayer.Normal));
+            bundleGameObject.transform.localPosition = Vector3.zero;
+            bundleGameObject.transform.localScale = Vector3.one;
+            UI ui = uiComponent.AddChild<UI, string, GameObject>(UIType.UILogin, bundleGameObject);
             ui.AddComponent<UILoginComponent>();
             return ui;
         }

@@ -15,7 +15,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-        <DefineConstants>DOTNET</DefineConstants>
+        <DefineConstants>DOTNET,SHARE</DefineConstants>
         <OutputPath>$(SolutionDir)Bin</OutputPath>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <Optimize>true</Optimize>
@@ -26,7 +26,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-        <DefineConstants>DOTNET</DefineConstants>
+        <DefineConstants>DOTNET,SHARE</DefineConstants>
         <OutputPath>$(SolutionDir)Bin</OutputPath>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -34,11 +34,18 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ET.Core\ET.Core.csproj" />
+      <ProjectReference Include="..\ET.Hotfix\ET.Hotfix.csproj" />
       <ProjectReference Include="..\ET.Loader\ET.Loader.csproj" />
       <ProjectReference Include="..\ET.Mathematics\ET.Mathematics.csproj" />
       <ProjectReference Include="..\ET.Model\ET.Model.csproj" />
       <ProjectReference Include="..\ET.Recast\ET.Recast.csproj" />
       <ProjectReference Include="..\ET.SourceGeneratorAttribute\ET.SourceGeneratorAttribute.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Include="..\..\Unity\Assets\Scripts\GameEntry\GameRegister.cs">
+        <Link>GameRegister.cs</Link>
+      </Compile>
     </ItemGroup>
 
 </Project>

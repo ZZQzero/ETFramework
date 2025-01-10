@@ -1,6 +1,6 @@
 {
     "name": "GameEntry",
-    "rootNamespace": "",
+    "rootNamespace": "ET",
     "references": [
         "GUID:30cf3be23c5359248b19bbbf74eaf7f0",
         "GUID:f53f3dfdde3f7e6429fb9040a944ee75",

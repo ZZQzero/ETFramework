@@ -37,18 +37,6 @@ namespace ET
             
             // 注册Entity序列化器
             EntitySerializeRegister.Init();
-
-            World.Instance.AddSingleton<SceneTypeSingleton, Type>(typeof(SceneType));
-            World.Instance.AddSingleton<ObjectPool>();
-            World.Instance.AddSingleton<IdGenerater>();
-            World.Instance.AddSingleton<OpcodeType>();
-            
-            World.Instance.AddSingleton<MessageQueue>();
-            World.Instance.AddSingleton<NetServices>();
-            
-            LogMsg logMsg = World.Instance.AddSingleton<LogMsg>();
-            logMsg.AddIgnore(LoginOuter.C2G_Ping);
-            logMsg.AddIgnore(LoginOuter.G2C_Ping);
             
             await World.Instance.AddSingleton<ConfigLoader>().LoadAsync();
             Log.Info("Entry Start");

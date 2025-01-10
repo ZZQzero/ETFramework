@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace ET
 {
@@ -52,7 +51,7 @@ namespace ET
         {
             if (this.singletons.ContainsKey(typeof(T)))
             {
-                Debug.LogError($"有重复添加:{typeof(T)}");
+                Log.Error($"有重复添加:{typeof(T)}");
                 return (T)this.singletons[typeof(T)];
             }
             T singleton = new();
@@ -66,7 +65,7 @@ namespace ET
         {
             if (this.singletons.ContainsKey(typeof(T)))
             {
-                Debug.LogError($"有重复添加:{typeof(T)}");
+                Log.Error($"有重复添加:{typeof(T)}");
                 return (T)this.singletons[typeof(T)];
             }
             T singleton = new();
@@ -80,7 +79,7 @@ namespace ET
         {
             if (this.singletons.ContainsKey(typeof(T)))
             {
-                Debug.LogError($"有重复添加:{typeof(T)}");
+                Log.Error($"有重复添加:{typeof(T)}");
                 return (T)this.singletons[typeof(T)];
             }
             T singleton = new();
@@ -94,7 +93,7 @@ namespace ET
         {
             if (this.singletons.ContainsKey(typeof(T)))
             {
-                Debug.LogError($"有重复添加:{typeof(T)}");
+                Log.Error($"有重复添加:{typeof(T)}");
                 return (T)this.singletons[typeof(T)];
             }
             T singleton = new();

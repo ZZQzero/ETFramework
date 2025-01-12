@@ -8,7 +8,7 @@
         <AssemblyName>ET.App</AssemblyName>
         <RootNamespace>ET</RootNamespace>
     </PropertyGroup>
-
+    
     <PropertyGroup>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
@@ -16,7 +16,7 @@
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
         <DefineConstants>DOTNET,SHARE</DefineConstants>
-        <OutputPath>$(SolutionDir)Bin</OutputPath>
+        <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <Optimize>true</Optimize>
     </PropertyGroup>
@@ -27,7 +27,7 @@
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
         <DefineConstants>DOTNET,SHARE</DefineConstants>
-        <OutputPath>$(SolutionDir)Bin</OutputPath>
+        <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>

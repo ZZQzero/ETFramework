@@ -21,14 +21,16 @@ namespace ET
                 Parser.Default.ParseArguments<Options>(System.Environment.GetCommandLineArgs())
                         .WithNotParsed(error => throw new Exception($"命令行格式错误! {error}"))
                         .WithParsed((o)=>World.Instance.AddSingleton(o,typeof(Options)));
-				
+                Options.Instance.SceneName = "StateSync";
+                Options.Instance.Develop = 1;
+                Options.Instance.Console = 1;
                 World.Instance.AddSingleton<Logger>().Log = new NLogger(Options.Instance.SceneName, Options.Instance.Process, 0);
 				
                 ETTask.ExceptionHandler += Log.Error;
                 World.Instance.AddSingleton<TimeInfo>();
                 World.Instance.AddSingleton<FiberManager>();
 
-                //World.Instance.AddSingleton<CodeLoader>().Start();
+                World.Instance.AddSingleton<CodeLoader>().Start();
             }
             catch (Exception e)
             {

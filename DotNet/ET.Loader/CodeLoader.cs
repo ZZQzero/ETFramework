@@ -32,8 +32,8 @@ namespace ET
 
             //World.Instance.AddSingleton<CodeTypes, Assembly[]>([typeof (World).Assembly, typeof(Init).Assembly, this.assembly, hotfixAssembly]);
 
-            IStaticMethod start = new StaticMethod(this.assembly, "ET.Entry", "Start");
-            start.Run();
+            /*IStaticMethod start = new StaticMethod(this.assembly, "ET.Entry", "Start");
+            start.Run();*/
         }
 
         private Assembly LoadHotfix()
@@ -41,8 +41,8 @@ namespace ET
             assemblyLoadContext?.Unload();
             GC.Collect();
             assemblyLoadContext = new AssemblyLoadContext("ET.Hotfix", true);
-            byte[] dllBytes = File.ReadAllBytes("./Bin/ET.Hotfix.dll");
-            byte[] pdbBytes = File.ReadAllBytes("./Bin/ET.Hotfix.pdb");
+            byte[] dllBytes = File.ReadAllBytes("ET.Hotfix.dll");
+            byte[] pdbBytes = File.ReadAllBytes("ET.Hotfix.pdb");
             Assembly hotfixAssembly = assemblyLoadContext.LoadFromStream(new MemoryStream(dllBytes), new MemoryStream(pdbBytes));
             return hotfixAssembly;
         }

@@ -13,7 +13,9 @@ namespace ET
             Log.Info($"FiberInit_Main {root.SceneType}  {root.Name}");
             await EventSystem.Instance.PublishAsync(root, new EntryEvent1());
             await EventSystem.Instance.PublishAsync(root, new EntryEvent2());
+#if UNITY
             await EventSystem.Instance.PublishAsync(root, new EntryEvent3());
+#endif
         }
     }
 }

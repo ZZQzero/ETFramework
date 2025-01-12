@@ -40,7 +40,6 @@ namespace ET
             //RegisterStruct<TSVector4>();
             //RegisterStruct<TSQuaternion>();
             //RegisterStruct<LSInput>();
-
             Dictionary<string, Type> types = CodeTypes.Instance.GetTypes();
             foreach (Type type in types.Values)
             {
@@ -54,6 +53,11 @@ namespace ET
                     continue;
                 }
 
+                if (type.Name.Contains("HttpGetRouterResponse"))
+                {
+                    Log.Error("HttpGetRouterResponse注册成功");
+                }
+                
                 BsonClassMap.LookupClassMap(type);
             }
         }

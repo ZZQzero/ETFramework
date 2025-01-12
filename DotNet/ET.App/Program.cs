@@ -20,7 +20,7 @@ namespace ET
             GameRegister.RegisterSingleton();
             GameRegister.RegisterInvoke();
             GameRegister.RegisterEvent();
-            Entry.Init();
+            Entry.Start();
             
             
             

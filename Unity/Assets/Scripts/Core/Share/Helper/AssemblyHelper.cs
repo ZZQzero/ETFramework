@@ -14,6 +14,11 @@ namespace ET
             { "ETClient.HotfixView", "ETClient.HotfixView.dll" },
             { "ETClient.Loader", "ETClient.Loader.dll" },
             { "ETClient.Core", "ETClient.Core.dll" },
+            //服务端
+            {"ET.Core","ET.Core.dll"},
+            {"ET.Hotfix","ET.Hotfix.dll"},
+            {"ET.Loader","ET.Loader.dll"},
+            {"ET.Model","ET.Model.dll"},
         };
         public static Dictionary<string, Type> GetAssemblyTypes(params Assembly[] args)
         {

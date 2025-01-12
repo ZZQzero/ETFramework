@@ -20,6 +20,7 @@ namespace ET.Server
             foreach (StartSceneConfig startSceneConfig in StartSceneConfigCategory.Instance.GetBySceneType(SceneType.Router))
             {
                 httpGetRouterResponse.Routers.Add($"{startSceneConfig.StartProcessConfig.OuterIP}:{startSceneConfig.Port}");
+                Log.Error($"{startSceneConfig.StartProcessConfig.OuterIP}:{startSceneConfig.Port}");
             }
             
             HttpListenerRequest request = context.Request;

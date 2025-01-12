@@ -111,7 +111,7 @@ namespace ET
                 {
                     this.stack.Push(type);
                 }
-                singletons.Add(type, singleton);
+                singletons.Add(singleton.GetType(), singleton);
             }
 
             singleton.Register();

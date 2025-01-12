@@ -37,6 +37,11 @@ namespace ET
 #if UNITY
             World.Instance.AddSingleton<UIEventComponent>();
 #endif
+
+#if DOTNET
+            World.Instance.AddSingleton<ConsoleDispatcher>();
+            World.Instance.AddSingleton<HttpDispatcher>();
+#endif
         }
 
         public static void RegisterInvoke()
@@ -55,7 +60,15 @@ namespace ET
 
             //服务端用
 #if DOTNET
-
+            EventSystem.Instance.RegisterInvoke<FiberInit_Location>(SceneType.Location);
+            EventSystem.Instance.RegisterInvoke<FiberInit_Gate>(SceneType.Gate);
+            EventSystem.Instance.RegisterInvoke<FiberInit_Realm>(SceneType.Realm);
+            EventSystem.Instance.RegisterInvoke<FiberInit_NetInner>(SceneType.NetInner);
+            EventSystem.Instance.RegisterInvoke<FiberInit_Router>(SceneType.Router);
+            EventSystem.Instance.RegisterInvoke<FiberInit_RouterManager>(SceneType.RouterManager);
+            EventSystem.Instance.RegisterInvoke<FiberInit_Map>(SceneType.Map);
+            EventSystem.Instance.RegisterInvoke<FiberInit_Robot>(SceneType.Robot);
+            EventSystem.Instance.RegisterInvoke<LogInvoker_NLog>();
 #endif
 
             //客户端用

@@ -22,6 +22,7 @@ namespace ET
 
     public static partial class InnerProto2CS
     {
+        private const string protoDir = "Proto/";
         private static string clientMessagePath;
         private static string serverMessagePath;
         private static string clientServerMessagePath;
@@ -34,15 +35,31 @@ namespace ET
             MongoHelper.ToJson(1);
             
             msgOpcode.Clear();
-
-            PackagesLock packagesLock = PackageHelper.LoadEtPackagesLock("./");
-            PackageInfo protoPackage = packagesLock.dependencies["cn.etetet.proto"];
-            clientMessagePath = Path.Combine(protoPackage.dir, "CodeMode/Model/Client");
-            serverMessagePath = Path.Combine(protoPackage.dir, "CodeMode/Model/Server");
-            clientServerMessagePath = Path.Combine(protoPackage.dir, "CodeMode/Model/ClientServer");
+            /*PackagesLock packagesLock = PackageHelper.LoadEtPackagesLock("./");
+            PackageInfo protoPackage = packagesLock.dependencies["cn.etetet.proto"];*/
+            clientMessagePath = "Unity/Assets/Scripts/Model/Proto/Client/"; //Path.Combine(protoPackage.dir, "CodeMode/Model/Client");
+            serverMessagePath = "Unity/Assets/Scripts/Model/Proto/Server/";//Path.Combine(protoPackage.dir, "CodeMode/Model/Server");
+            clientServerMessagePath = "Unity/Assets/Scripts/Model/Proto/ClientServer/";//Path.Combine(protoPackage.dir, "CodeMode/Model/ClientServer");
             
-            List<(string, string)> list = new ();
-            foreach ((string key, PackageInfo packageInfo) in packagesLock.dependencies)
+            List<string> list = FileHelper.GetAllFiles(protoDir, "*proto");
+            foreach (string s in list)
+            {
+                if (!s.EndsWith(".proto"))
+                {
+                    continue;
+                }
+
+                string fileName = Path.GetFileNameWithoutExtension(s);
+                string[] ss2 = fileName.Split('_');
+                string protoName = ss2[0];
+                string cs = ss2[1];
+                int startOpcode = int.Parse(ss2[2]);
+                Console.WriteLine($"{s} | {fileName} | {protoName} | {cs} | {startOpcode}");
+                ProtoFile2CS(s, "", protoName, cs, startOpcode);
+            }
+            
+            //List<(string, string)> list = new ();
+            /*foreach ((string key, PackageInfo packageInfo) in packagesLock.dependencies)
             {
                 string p = Path.Combine(packageInfo.dir, "Proto");
                 if (!Directory.Exists(p))
@@ -69,7 +86,7 @@ namespace ET
                 string cs = ss2[1];
                 int startOpcode = int.Parse(ss2[2]);
                 ProtoFile2CS(s, module, protoName, cs, startOpcode);
-            }
+            }*/
         }
 
         private static void ProtoFile2CS(string path, string module, string protoName, string cs, int startOpcode)

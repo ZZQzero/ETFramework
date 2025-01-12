@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace ET.Server
 {
-    [CodeProcess]
     public class HttpDispatcher: Singleton<HttpDispatcher>, ISingletonAwake
     {
         private readonly Dictionary<string, Dictionary<int, IHttpHandler>> dispatcher = new();

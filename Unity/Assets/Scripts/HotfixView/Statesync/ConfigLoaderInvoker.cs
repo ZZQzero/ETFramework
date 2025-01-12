@@ -44,12 +44,13 @@ namespace ET
                     string configFilePath;
                     if (startConfigs.Contains(configType.Name))
                     {
-                        configFilePath = $"{ConstValue.ExcelPackagePath}/Bytes/{ct}/{Options.Instance.StartConfig}/{configType.Name}.bytes";    
+                        configFilePath = $"Assets/{ConstValue.ExcelPackagePath}/Bytes/{ct}/{Options.Instance.StartConfig}/{configType.Name}.bytes";    
                     }
                     else
                     {
-                        configFilePath = $"{ConstValue.ExcelPackagePath}/Bytes/{ct}/{configType.Name}.bytes";
+                        configFilePath = $"Assets/{ConstValue.ExcelPackagePath}/Bytes/{ct}/{configType.Name}.bytes";
                     }
+                    Log.Error(configFilePath);
                     output[configType] = File.ReadAllBytes(configFilePath);
                 }
             }

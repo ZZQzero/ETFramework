@@ -6,7 +6,7 @@ namespace ET
         public const int RouterHttpPort = 30300;
         public const int SessionTimeoutTime = 30 * 1000;
         
-        public const string ExcelPackagePath = "Assets/Config/Excel";
+        public const string ExcelPackagePath = "Config/Excel";
         
     }
 }

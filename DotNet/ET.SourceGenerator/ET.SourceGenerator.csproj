@@ -13,7 +13,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <OutputPath>$(SolutionDir)Bin</OutputPath>
+      <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -22,7 +22,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <OutputPath>$(SolutionDir)Bin</OutputPath>
+      <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
     </PropertyGroup>
 
     <ItemGroup>

@@ -17,6 +17,7 @@
       <DefineConstants>DOTNET</DefineConstants>
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+      <NoWarn>0169,0649,3021,8981,CS9193,CS9192</NoWarn>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -24,6 +25,7 @@
       <DefineConstants>DOTNET</DefineConstants>
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+      <NoWarn>0169,0649,3021,8981,CS9193,CS9192</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
@@ -95,4 +97,8 @@
         </Compile>
     </ItemGroup>
 
+    <!-- sourcegenerator use -->
+    <ItemGroup>
+        <CompilerVisibleProperty Include="DotNetAssembly" />
+    </ItemGroup>
 </Project>

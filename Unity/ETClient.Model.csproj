@@ -50,15 +50,16 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Model\Move\Share\MoveEventType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageHandlerAttribute.cs" />
+    <Compile Include="Assets\Scripts\Model\Proto\ClientServer\ActorLocation_S_20100.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageDispatcher.cs" />
     <Compile Include="Assets\Scripts\Model\Excel\Client\UnitConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Client\ClientSessionErrorComponent.cs" />
+    <Compile Include="Assets\Scripts\Model\Proto\ClientServer\StateSyncInner_S_20001.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\NumericComponent.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\SceneType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\EntitySerializeRegister.cs" />
     <Compile Include="Assets\Scripts\Model\Unit\Share\Unit.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\INumericWatcher.cs" />
-    <Compile Include="Assets\Scripts\Model\Proto\Client\LoginOuter_C_1000.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\IMessageSessionHandler.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\LogMsg.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\NumericType.cs" />
@@ -77,10 +78,10 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageSenderStruct.cs" />
     <Compile Include="Assets\Scripts\Model\Move\Share\TimerInvokeType.cs" />
     <Compile Include="Assets\Scripts\Model\YooAssets\Share\PackageType.cs" />
+    <Compile Include="Assets\Scripts\Model\Proto\ClientServer\StateSyncOuter_C_10001.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLockQueueType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\MailBoxType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\ObjectWait\ObjectWait.cs" />
-    <Compile Include="Assets\Scripts\Model\Proto\Client\StateSyncOuter_C_10001.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Mailbox\MailBoxComponent.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\ActorLocation\Share\ErrorCode.cs" />
@@ -108,6 +109,7 @@
     <Compile Include="Assets\Scripts\Model\Login\Client\FiberParentComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\PlayerComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Unit\Share\UnitEventType.cs" />
+    <Compile Include="Assets\Scripts\Model\Proto\ClientServer\RouterProto_C_1100.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLockQueue.cs" />
     <Compile Include="Assets\Scripts\Model\AI\Share\AIConfig.cs" />
     <Compile Include="Assets\Scripts\Model\AI\Share\AAIHandler.cs" />
@@ -116,6 +118,7 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageHelper.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\SceneType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\MessageSessionDispatcher.cs" />
+    <Compile Include="Assets\Scripts\Model\Proto\ClientServer\LoginOuter_C_1000.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\CurrentScenesComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\ClientSenderComponent.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Client\Main\AI\XunLuoPathComponent.cs" />
@@ -130,10 +133,10 @@
     <Compile Include="Assets\Scripts\Model\Login\Client\NetClient\Router\RouterConnector.cs" />
     <Compile Include="Assets\Scripts\Model\Router\Share\ErrorCode.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Client\NetClient\Router\RouterAddressComponent.cs" />
+    <Compile Include="Assets\Scripts\Model\Proto\ClientServer\LoginInner_S_20001.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\TimerInvokeType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\WaitCoroutineLockTimerInvoke.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\PackageType.cs" />
-    <Compile Include="Assets\Scripts\Model\Proto\Client\RouterProto_C_1100.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Timer\TimerComponent.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Client\Main\Move\Wait_UnitStop.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\ErrorCode.cs" />

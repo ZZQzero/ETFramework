@@ -72,4 +72,9 @@
         </Compile>
     </ItemGroup>
 
+    <!-- sourcegenerator use -->
+    <ItemGroup>
+        <CompilerVisibleProperty Include="DotNetAssembly" />
+    </ItemGroup>
+
 </Project>

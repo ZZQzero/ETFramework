@@ -34,6 +34,7 @@ namespace ET.Server
             }
             response.AppendHeader("Access-Control-Allow-Origin", "*");
             
+            Log.Info($"HttpGetRouterHandler  {MongoHelper.ToJson(httpGetRouterResponse)}");
             byte[] bytes = MongoHelper.ToJson(httpGetRouterResponse).ToUtf8();
             response.StatusCode = 200;
             response.ContentEncoding = Encoding.UTF8;

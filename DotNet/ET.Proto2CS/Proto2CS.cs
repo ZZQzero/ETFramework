@@ -22,7 +22,7 @@ namespace ET
 
     public static partial class InnerProto2CS
     {
-        private const string protoDir = "Proto/";
+        private const string protoDir = "Config/Proto/";
         private static string clientMessagePath;
         private static string serverMessagePath;
         private static string clientServerMessagePath;

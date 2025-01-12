@@ -21,6 +21,8 @@ namespace ET
                 if (AssemblyHelper.AssembleNames.ContainsKey(assembly.FullName.Split(",")[0]))
                 {
                     _assemblyList.Add(assembly);
+                    
+                    Log.Info(assembly.FullName);
                 }
             }
 

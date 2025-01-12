@@ -52,11 +52,6 @@ namespace ET
                 {
                     continue;
                 }
-
-                if (type.Name.Contains("HttpGetRouterResponse"))
-                {
-                    Log.Error("HttpGetRouterResponse注册成功");
-                }
                 
                 BsonClassMap.LookupClassMap(type);
             }

@@ -30,7 +30,7 @@ namespace ET
                 World.Instance.AddSingleton<TimeInfo>();
                 World.Instance.AddSingleton<FiberManager>();
 
-                World.Instance.AddSingleton<CodeLoader>().Start();
+                //World.Instance.AddSingleton<CodeLoader>().Start();
             }
             catch (Exception e)
             {

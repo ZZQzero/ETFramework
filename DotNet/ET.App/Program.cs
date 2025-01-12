@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using MongoDB.Bson.Serialization;
 
 namespace ET
 {
@@ -16,7 +17,8 @@ namespace ET
             //的组件可以写在Core中
             Init init = new();
             init.Start();
-            
+            HotfixInit hotfix = new HotfixInit();
+            hotfix.Init();
             GameRegister.RegisterSingleton();
             GameRegister.RegisterInvoke();
             GameRegister.RegisterEvent();

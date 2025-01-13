@@ -1,5 +1,6 @@
 using MemoryPack;
 using System.Collections.Generic;
+using MongoDB.Bson.Serialization;
 
 namespace ET
 {

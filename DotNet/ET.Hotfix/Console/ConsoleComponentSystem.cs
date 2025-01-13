@@ -30,7 +30,11 @@ namespace ET.Server
                         Console.Write($"{modeContex?.Mode ?? ""}> ");
                         return Console.In.ReadLine();
                     }, self.CancellationTokenSource.Token);
-                    
+
+                    if (line == null)
+                    {
+                        continue;
+                    }
                     line = line.Trim();
 
                     switch (line)

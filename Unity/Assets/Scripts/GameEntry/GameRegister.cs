@@ -69,6 +69,13 @@ namespace ET
             EventSystem.Instance.RegisterInvoke<FiberInit_Map>(SceneType.Map);
             EventSystem.Instance.RegisterInvoke<FiberInit_Robot>(SceneType.Robot);
             EventSystem.Instance.RegisterInvoke<LogInvoker_NLog>();
+            EventSystem.Instance.RegisterInvoke<NetComponentOnReadInvoker_Realm>(SceneType.Realm);
+            EventSystem.Instance.RegisterInvoke<MailBoxType_OrderedMessageHandler>(MailBoxType.OrderedMessage);
+            EventSystem.Instance.RegisterInvoke<MessageLocationSenderComponentSystem.MessageLocationSenderChecker>(TimerInvokeType.MessageLocationSenderChecker);
+            EventSystem.Instance.RegisterInvoke<MailBoxType_GateSessionHandler>(MailBoxType.GateSession);
+            EventSystem.Instance.RegisterInvoke<MoveComponentSystem.MoveTimer>(TimerInvokeType.MoveTimer);
+            EventSystem.Instance.RegisterInvoke<NetComponentOnReadInvoker_Gate>(SceneType.Gate);
+            EventSystem.Instance.RegisterInvoke<RecastFileReader>();
 #endif
 
             //客户端用

@@ -16,7 +16,7 @@
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <DefineConstants>DOTNET</DefineConstants>
-        <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
+        <OutputPath>..\..\Bin\</OutputPath>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <Optimize>false</Optimize>
         <NoWarn>0169,0649,3021,8981,CS9193,CS9192,NU1903</NoWarn>
@@ -25,7 +25,7 @@
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <DefineConstants>DOTNET</DefineConstants>
-        <OutputPath>G:\UnityProject\ETFramework\Bin\</OutputPath>
+        <OutputPath>..\..\Bin\</OutputPath>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <NoWarn>0169,0649,3021,8981,CS9193,CS9192,NU1903</NoWarn>
     </PropertyGroup>
@@ -44,7 +44,7 @@
     <ItemGroup>
       <PackageReference Include="CommandLineParser" Version="2.9.1" />
       <PackageReference Include="MemoryPack" Version="1.10.0" />
-      <PackageReference Include="MongoDB.Driver" Version="3.1.0" />
+      <PackageReference Include="MongoDB.Driver" Version="2.17.1" />
       <PackageReference Include="NLog" Version="5.3.4" />
     </ItemGroup>
 

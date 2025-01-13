@@ -25,12 +25,12 @@ namespace ET
                 if (startConfigs.Contains(configType.Name))
                 {
                     //configFilePath = Path.Combine($"{ConstValue.ExcelPackagePath}/Bytes/s/{Options.Instance.StartConfig}/{configType.Name}.bytes");    
-                    configFilePath = $"../Unity/Assets/{ConstValue.ExcelPackagePath}/Bytes/s/{Options.Instance.StartConfig}/{configType.Name}.bytes";
+                    configFilePath = $"Unity/Assets/{ConstValue.ExcelPackagePath}/Bytes/s/{Options.Instance.StartConfig}/{configType.Name}.bytes";
                 }
                 else
                 {
                     //configFilePath = Path.Combine($"{ConstValue.ExcelPackagePath}/Bytes/s/{configType.Name}.bytes");
-                    configFilePath = $"../Unity/Assets/{ConstValue.ExcelPackagePath}/Bytes/s/{configType.Name}.bytes";
+                    configFilePath = $"Unity/Assets/{ConstValue.ExcelPackagePath}/Bytes/s/{configType.Name}.bytes";
                 }
                 output[configType] = File.ReadAllBytes(configFilePath);
             }

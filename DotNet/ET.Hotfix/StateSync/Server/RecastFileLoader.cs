@@ -8,7 +8,8 @@ namespace ET.Server
     {
         public override byte[] Handle(NavmeshComponent.RecastFileLoader args)
         {
-            return File.ReadAllBytes(Path.Combine("Packages/cn.etetet.statesync/Config/Recast", args.Name));
+            string path = @"Unity\Assets\Config\Recast\" + args.Name;
+            return File.ReadAllBytes(path);
         }
     }
 }

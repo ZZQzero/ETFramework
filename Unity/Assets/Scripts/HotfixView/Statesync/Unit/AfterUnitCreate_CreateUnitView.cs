@@ -13,7 +13,8 @@ namespace ET.Client
             GameObject go = await scene.GetComponent<ResourcesLoaderComponent>().LoadAssetAsync<GameObject>(assetsName);
             GlobalComponent globalComponent = scene.Root().GetComponent<GlobalComponent>();
             go.transform.position = unit.Position;
-            go.transform.localScale = Vector3.one;
+            go.transform.localScale = Vector3.one * 10;
+            UnityEngine.Object.DontDestroyOnLoad(go);
             unit.AddComponent<GameObjectComponent>().GameObject = go;
             unit.AddComponent<AnimatorComponent>();
             await ETTask.CompletedTask;

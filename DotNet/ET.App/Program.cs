@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 
 namespace ET
@@ -23,8 +24,6 @@ namespace ET
             GameRegister.RegisterInvoke();
             GameRegister.RegisterEvent();
             Entry.Start();
-            
-            
             
             while (true)
             {

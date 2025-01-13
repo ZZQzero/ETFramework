@@ -34,13 +34,23 @@ namespace ET.Server
             }
             response.AppendHeader("Access-Control-Allow-Origin", "*");
             
-            Log.Info($"HttpGetRouterHandler  {MongoHelper.ToJson(httpGetRouterResponse)}");
-            byte[] bytes = MongoHelper.ToJson(httpGetRouterResponse).ToUtf8();
-            response.StatusCode = 200;
-            response.ContentEncoding = Encoding.UTF8;
-            response.ContentLength64 = bytes.Length;
-            await response.OutputStream.WriteAsync(bytes, 0, bytes.Length);
-            await scene.Root().GetComponent<TimerComponent>().WaitAsync(1000);
+            Log.Error($"HttpGetRouterHandler : {httpGetRouterResponse}");
+            try
+            {
+                var json = httpGetRouterResponse.ToJson();
+                /*var json = MongoHelper.ToJson(httpGetRouterResponse);*/
+                byte[] bytes = json.ToUtf8();
+                response.StatusCode = 200;
+                response.ContentEncoding = Encoding.UTF8;
+                response.ContentLength64 = bytes.Length;
+                await response.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+                await scene.Root().GetComponent<TimerComponent>().WaitAsync(1000);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e + "\n" + e.StackTrace);
+            }
+           
         }
     }
 }

@@ -57,6 +57,7 @@
             this.Destroy();
             
             Instance = null;
+            base.Dispose();
         }
     }
 }

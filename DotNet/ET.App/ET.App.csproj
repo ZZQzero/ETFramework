@@ -43,8 +43,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Include="..\..\Unity\Assets\Scripts\GameEntry\GameRegister.cs">
-        <Link>GameRegister.cs</Link>
+      <Compile Include="..\..\Unity\Assets\Scripts\GameEntry\GameRegister\*.cs">
+          <Link>GameRegister\%(RecursiveDir)%(FileName)%(Extension)</Link>
       </Compile>
     </ItemGroup>
 

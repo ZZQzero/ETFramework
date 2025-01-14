@@ -104,7 +104,7 @@ namespace ET
                     this.ViewGO = new UnityEngine.GameObject(this.ViewName);
                     this.ViewGO.AddComponent<ComponentView>().Component = this;
                     this.ViewGO.transform.SetParent(this.Parent == null? 
-                            UnityEngine.GameObject.Find("Global/Scenes").transform : this.Parent.ViewGO.transform);
+                            UnityEngine.GameObject.Find("Init/Scenes").transform : this.Parent.ViewGO.transform);
                 }
                 else
                 {
@@ -238,7 +238,7 @@ namespace ET
 #if ENABLE_VIEW && UNITY_EDITOR
                 this.ViewGO.GetComponent<ComponentView>().Component = this;
                 this.ViewGO.transform.SetParent(this.Parent == null ?
-                        UnityEngine.GameObject.Find("Global").transform : this.Parent.ViewGO.transform);
+                        UnityEngine.GameObject.Find("Init/Scenes").transform : this.Parent.ViewGO.transform);
                 foreach (Entity child in this.Children.Values)
                 {
                     child.ViewGO.transform.SetParent(this.ViewGO.transform);

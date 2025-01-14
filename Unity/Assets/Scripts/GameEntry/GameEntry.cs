@@ -11,6 +11,8 @@ namespace ET
             GameRegister.RegisterSingleton();
             GameRegister.RegisterEvent();
             GameRegister.RegisterInvoke();
+            GameRegister.RegisterMessage();
+            GameRegister.RegisterMessageSession();
             Entry.Start();
         }
     }

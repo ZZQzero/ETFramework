@@ -21,7 +21,7 @@ namespace ET
         
         public void Awake()
         {
-            HashSet<Type> types = CodeTypes.Instance.GetTypes(typeof (MessageSessionHandlerAttribute));
+            /*HashSet<Type> types = CodeTypes.Instance.GetTypes(typeof (MessageSessionHandlerAttribute));
 
             foreach (Type type in types)
             {
@@ -50,7 +50,22 @@ namespace ET
                     MessageSessionDispatcherInfo messageSessionDispatcherInfo = new (messageSessionHandlerAttribute.SceneType, iMessageSessionHandler);
                     this.RegisterHandler(opcode, messageSessionDispatcherInfo);
                 }
+            }*/
+        }
+
+        public void RegisterMessageSession<T>(int sceneType) where T : IMessageSessionHandler, new()
+        {
+            IMessageSessionHandler iMessageSessionHandler = new T();
+            Type messageType = iMessageSessionHandler.GetMessageType();
+
+            ushort opcode = OpcodeType.Instance.GetOpcode(messageType);
+            if (opcode == 0)
+            {
+                throw new Exception($"消息opcode为0: {messageType.Name}");
             }
+
+            MessageSessionDispatcherInfo messageSessionDispatcherInfo = new (sceneType, iMessageSessionHandler);
+            this.RegisterHandler(opcode, messageSessionDispatcherInfo);
         }
         
         private void RegisterHandler(ushort opcode, MessageSessionDispatcherInfo handler)

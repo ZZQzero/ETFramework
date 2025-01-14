@@ -23,6 +23,8 @@ namespace ET
             GameRegister.RegisterSingleton();
             GameRegister.RegisterInvoke();
             GameRegister.RegisterEvent();
+            GameRegister.RegisterMessage();
+            GameRegister.RegisterMessageSession();
             Entry.Start();
             
             while (true)

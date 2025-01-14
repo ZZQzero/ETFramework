@@ -25,16 +25,34 @@ namespace ET
 
         public void Awake()
         {
-            HashSet<Type> types = CodeTypes.Instance.GetTypes(typeof (MessageHandlerAttribute));
+            /*HashSet<Type> types = CodeTypes.Instance.GetTypes(typeof (MessageHandlerAttribute));
             
             foreach (Type type in types)
             {
-                this.Register(type);
-            }
+                //this.RegisterMessage(type);
+            }*/
         }
         
-        private void Register(Type type)
+        public void RegisterMessage<T>(int sceneType) where T : IMHandler, new()
         {
+            IMHandler imHandler = new T();
+            Type messageType = imHandler.GetRequestType();
+
+            Type handleResponseType = imHandler.GetResponseType();
+            if (handleResponseType != null)
+            {
+                Type responseType = OpcodeType.Instance.GetResponseType(messageType);
+                if (handleResponseType != responseType)
+                {
+                    throw new Exception($"message handler response type error: {messageType.FullName}");
+                }
+            }
+            
+            MessageDispatcherInfo messageDispatcherInfo = new(sceneType, imHandler);
+
+            RegisterHandler(messageType, messageDispatcherInfo);
+        }
+        /*{
             object obj = Activator.CreateInstance(type);
 
             IMHandler imHandler = obj as IMHandler;
@@ -65,7 +83,7 @@ namespace ET
 
                 this.RegisterHandler(messageType, messageDispatcherInfo);
             }
-        }
+        }*/
         
         private void RegisterHandler(Type type, MessageDispatcherInfo handler)
         {

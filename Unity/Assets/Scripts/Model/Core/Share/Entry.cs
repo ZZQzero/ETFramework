@@ -40,7 +40,11 @@ namespace ET
             
             await World.Instance.AddSingleton<ConfigLoader>().LoadAsync();
             Log.Info("Entry Start");
-            
+            var test = LubanTestConfigCategory.Instance.GetDataList();
+            foreach (var item in test)
+            {
+                Log.Error($"{item.Name}   {item.Id}   {item.NameCN}");;
+            }
             await FiberManager.Instance.Create(SchedulerType.Main, SceneType.Main, 0, SceneType.Main, "Main");
         }
     }

@@ -55,10 +55,12 @@
     <Compile Include="Assets\Scripts\Model\Excel\Client\UnitConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Client\ClientSessionErrorComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Proto\ClientServer\StateSyncInner_S_20001.cs" />
+    <Compile Include="Assets\Scripts\Model\Excel\Generated\TbLubanTest.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\NumericComponent.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\SceneType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\EntitySerializeRegister.cs" />
     <Compile Include="Assets\Scripts\Model\Unit\Share\Unit.cs" />
+    <Compile Include="Assets\Scripts\Model\Excel\TableConfigManager.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\INumericWatcher.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\IMessageSessionHandler.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\LogMsg.cs" />
@@ -93,6 +95,7 @@
     <Compile Include="Assets\Scripts\Model\Login\Client\SessionComponent.cs" />
     <Compile Include="Assets\Scripts\Model\YooAssets\Share\CoroutineLockType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Entry.cs" />
+    <Compile Include="Assets\Scripts\Model\Excel\Generated\Tables.cs" />
     <Compile Include="Assets\Scripts\Model\Unit\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\Move\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Client\Main\Scene\Wait_CreateMyUnit.cs" />
@@ -119,6 +122,7 @@
     <Compile Include="Assets\Scripts\Model\Login\Share\SceneType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\MessageSessionDispatcher.cs" />
     <Compile Include="Assets\Scripts\Model\Proto\ClientServer\LoginOuter_C_1000.cs" />
+    <Compile Include="Assets\Scripts\Model\Excel\Generated\LubanTest.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\CurrentScenesComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\ClientSenderComponent.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Client\Main\AI\XunLuoPathComponent.cs" />
@@ -127,6 +131,7 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\WaitCoroutineLock.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\NetComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Unit\Share\UnitType.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\TableConfigCategoryBase.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLock.cs" />
     <Compile Include="Assets\Scripts\Model\Router\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\ErrorCode.cs" />
@@ -142,6 +147,7 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\ErrorCode.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\IMHandler.cs" />
     <Compile Include="Assets\Scripts\Model\AI\Share\AIDispatcherComponent.cs" />
+    <Compile Include="Assets\Scripts\Model\Excel\Category\LubanTestConfigCategory.cs" />
     <None Include="Assets\Scripts\Model\ETClient.Model.asmdef" />
     <Reference Include="nunit.framework">
       <HintPath>D:\Project\ETFramework\Unity\Library\PackageCache\com.unity.ext.nunit\net40\unity-custom\nunit.framework.dll</HintPath>
@@ -569,11 +575,11 @@
     <Reference Include="MemoryPack">
       <HintPath>D:\Project\ETFramework\Unity\Library\ScriptAssemblies\MemoryPack.dll</HintPath>
     </Reference>
-    <Reference Include="YooAsset">
-      <HintPath>D:\Project\ETFramework\Unity\Library\ScriptAssemblies\YooAsset.dll</HintPath>
-    </Reference>
     <Reference Include="Unity.Mathematics">
       <HintPath>D:\Project\ETFramework\Unity\Library\ScriptAssemblies\Unity.Mathematics.dll</HintPath>
+    </Reference>
+    <Reference Include="Luban.Runtime">
+      <HintPath>D:\Project\ETFramework\Unity\Library\ScriptAssemblies\Luban.Runtime.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -584,6 +590,10 @@
     <ProjectReference Include="ETClient.ThirdParty.csproj">
       <Project>{a7be3672-436a-eded-30e5-4a23c76fdb86}</Project>
       <Name>ETClient.ThirdParty</Name>
+    </ProjectReference>
+    <ProjectReference Include="ETClient.Loader.csproj">
+      <Project>{c1663578-d3aa-99a7-6b04-2639f2e2906c}</Project>
+      <Name>ETClient.Loader</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -11,11 +11,11 @@ namespace ET
         public static void RegisterSingleton()
         {
             World.Instance.AddSingleton<CodeTypes>();
+            World.Instance.AddSingleton<TableConfigManager>();
             World.Instance.AddSingleton<SceneTypeSingleton, Type>(typeof(SceneType));
             World.Instance.AddSingleton<ObjectPool>();
             World.Instance.AddSingleton<IdGenerater>();
             World.Instance.AddSingleton<OpcodeType>();
-            
             World.Instance.AddSingleton<MessageQueue>();
             World.Instance.AddSingleton<NetServices>();
             

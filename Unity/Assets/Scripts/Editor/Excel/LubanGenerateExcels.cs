@@ -6,15 +6,15 @@ using UnityEngine;
 using Debug = UnityEngine.Debug;
 
 
-public class LubanGenerateKoalaExcels : MonoBehaviour
+public class LubanGenerateExcels : MonoBehaviour
 {
-    [MenuItem("Tools/KoalaExcel/很优雅的导表工具",false, 1)]
+    [MenuItem("Tools/导表工具",false, 1)]
     public static void GenerateExcelTools()
     {
         string path = Application.dataPath;
 
-        path = path.Replace("project/Assets", "");
-        path = Path.Combine(path, "design", "KoalaExcel");
+        path = path.Replace("Unity/Assets", "");
+        path = Path.Combine(path, "Config");
         string rootPath = path;
         
 
@@ -56,23 +56,33 @@ public class LubanGenerateKoalaExcels : MonoBehaviour
 
     static void GenerateTDProxyFiles()
     {
-        string koalaTableGenCSFilePath = Path.Combine(Application.dataPath, @"Scripts\UGCScripts\Script\KoalaEditor\KoalaTableGen");
-        string proxyTemplateFilePath = Path.Combine(Application.dataPath, @"Scripts\Editor\KoalaExcel\TDProxy_cs.template");
+        string csFilePath = Path.Combine(Application.dataPath, @"Scripts\Model\Excel\Generated");
+        string proxyTemplateFilePath = Path.Combine(Application.dataPath.Replace("Unity/Assets",""), @"Config\TableConfigCategoryTemp.template");
         string templateContent = File.ReadAllText(proxyTemplateFilePath);
-        string templateOutputPath = Path.Combine(Application.dataPath, @"Scripts\UGCScripts\Script\StudioScripts\PlayerApplication\KoalaConfigProxy\Proxys");
-        string templateOutputFileName = "#Name#TDProxy.cs";
-        DirectoryInfo dirInfo = new DirectoryInfo(koalaTableGenCSFilePath);
+        string templateOutputPath = Path.Combine(Application.dataPath, @"Scripts\Model\Excel\Category");
+        string templateOutputFileName = "#Name#ConfigCategory.cs";
+        DirectoryInfo dirInfo = new DirectoryInfo(csFilePath);
+
+        if (!Directory.Exists(templateOutputPath))
+        {
+            Directory.CreateDirectory(templateOutputPath);
+        }
         foreach (FileInfo fileInfo in dirInfo.GetFiles())
         {
             // 获取文件名
             string fileName = fileInfo.Name;
-            if (fileName.StartsWith("KoalaTD.") && fileName.EndsWith(".cs") && !fileName.Contains("TableData"))
+            if (fileName.StartsWith("Tb") && fileName.EndsWith(".cs") && !fileName.Contains("TableData"))
             {
-                string name = fileName.Replace("KoalaTD.", "").Replace(".cs", "");
+                string name = fileName.Replace("Tb","").Replace(".cs", "");
     
                 string outputContent = templateContent.Replace("#Name#", name);
                 string outputFileName = templateOutputFileName.Replace("#Name#", name);
                 string outputPath = Path.Combine(templateOutputPath, outputFileName);
+
+                if (!File.Exists(outputPath))
+                {
+                    File.Create(outputPath).Dispose();
+                }
                 File.WriteAllText(outputPath, outputContent, Encoding.UTF8);
                 Debug.Log($"Generate TDProxy File :{outputFileName}");
             }

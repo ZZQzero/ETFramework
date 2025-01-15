@@ -54,6 +54,7 @@
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawer\LongTypeDrawer.cs" />
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawerAttribute.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\Helper\AssemblyTool.cs" />
+    <Compile Include="Assets\Scripts\Editor\Excel\LubanGenerateExcels.cs" />
     <Compile Include="Assets\Scripts\Editor\ReferenceCollector\ReferenceCollectorEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawer\ISceneTypeDrawer.cs" />
     <Compile Include="Assets\Scripts\Editor\Proto\ProtoEditor.cs" />
@@ -61,7 +62,6 @@
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawer\Vector3TypeDrawer.cs" />
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawer\IntTypeDrawer.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\InitEditor\DefineHelper.cs" />
-    <Compile Include="Assets\Scripts\Editor\Excel\LubanGenerateKoalaExcels.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\BuildEditor\BuildEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\AssetPostProcessor\OnGenerateCSProjectProcessor.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\LogRedirection\LogRedirection.cs" />

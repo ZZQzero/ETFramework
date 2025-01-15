@@ -8,6 +8,6 @@ dotnet %LUBAN_DLL% ^
     -c cs-bin ^
     -d bin  ^
     --conf %CONF_ROOT%\luban.conf ^
-    -x outputCodeDir=..\Unity\Assets/Gen ^
-    -x outputDataDir=..\Unity\Assets\GenerateDatas\bytes
+    -x outputCodeDir=..\Unity\Assets/Scripts/Model/Excel/Generated ^
+    -x outputDataDir=..\Unity\Assets\Config\Excel\Gen\Bytes
 pause

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using GameUI;
+using Luban;
 using UnityEngine;
 using YooAsset;
 
@@ -192,6 +193,13 @@ namespace ET
         {
             ResourcePackage package = YooAssets.GetPackage(packageName);
             package.UnloadUnusedAssetsAsync();
+        }
+        
+        public ByteBuf LoadConfigByte(string file)
+        {
+            AssetHandle handle = YooAssets.LoadAssetSync<TextAsset>(file);
+            var textAsset = (TextAsset)handle.AssetObject;
+            return new ByteBuf(textAsset.bytes);
         }
 
         /// <summary>

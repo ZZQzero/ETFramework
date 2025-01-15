@@ -883,6 +883,9 @@
     <Reference Include="UniTask">
       <HintPath>D:\Project\ETFramework\Unity\Library\ScriptAssemblies\UniTask.dll</HintPath>
     </Reference>
+    <Reference Include="Luban.Runtime">
+      <HintPath>D:\Project\ETFramework\Unity\Library\ScriptAssemblies\Luban.Runtime.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>D:\Project\ETFramework\Unity\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
     </Reference>

@@ -6,25 +6,26 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 using System.Collections.Generic;
-using cfg.KoalaTD;
-namespace KoalaTableConfig
+
+namespace ET
 {
-    public class #Name#TDProxy : KoalaTableConfigProxyBase<#Name#>
+    public class #Name#ConfigCategory : TableConfigCategoryBase<#Name#>
     {
-        private static #Name#TDProxy instance;
-        public static #Name#TDProxy Instance { get { return instance ??= new #Name#TDProxy(); } }
+        private static #Name#ConfigCategory instance;
+        public static #Name#ConfigCategory Instance { get { return instance ??= new #Name#ConfigCategory(); } }
+        private #Name#ConfigCategory() { }
 
         public override #Name# Get(int id)
         {
-            return KoalaTableConfigManager.Instance.ConfigTables.#Name#TableData.Get(id);
+            return TableConfigManager.Instance.ConfigTables.Tb#Name#.Get(id);
         }
         public override #Name# GetOrDefault(int id)
         {
-            return KoalaTableConfigManager.Instance.ConfigTables.#Name#TableData.GetOrDefault(id);
+            return TableConfigManager.Instance.ConfigTables.Tb#Name#.GetOrDefault(id);
         }
         public override List<#Name#> GetDataList()
         {
-            return KoalaTableConfigManager.Instance.ConfigTables.#Name#TableData.DataList;
+            return TableConfigManager.Instance.ConfigTables.Tb#Name#.DataList;
         }
     }   
 }

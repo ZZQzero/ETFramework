@@ -13,8 +13,13 @@ namespace ET
         
         private ByteBuf LoadByteBuf(string file)
         {
-            //return new ByteBuf(textAsset.bytes);
+#if UNITY
             return ResourcesComponent.Instance.LoadConfigByte(file);
+#endif
+#if DOTNET
+            string configFilePath = $"Unity/Assets/Config/Excel/Gen/Bytes/{file}.bytes";
+            return new ByteBuf(File.ReadAllBytes(configFilePath));
+#endif
         }
     }
 }

@@ -43,7 +43,7 @@ namespace ET
             var test = LubanTestConfigCategory.Instance.GetDataList();
             foreach (var item in test)
             {
-                Log.Error($"{item.Name}   {item.Id}   {item.NameCN}");;
+                Log.Error($"{item.Name}   {item.Id}   {item.NameCN}");
             }
             await FiberManager.Instance.Create(SchedulerType.Main, SceneType.Main, 0, SceneType.Main, "Main");
         }

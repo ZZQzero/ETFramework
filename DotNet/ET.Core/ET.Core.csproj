@@ -48,4 +48,10 @@
       <PackageReference Include="NLog" Version="5.3.4" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="..\..\Unity\Assets\Scripts\Core\Luban\">
+        <Link>Core\Luban</Link>
+      </Folder>
+    </ItemGroup>
+
 </Project>

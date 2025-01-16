@@ -13,17 +13,32 @@ namespace ET
 {
 public partial class Tables
 {
-    public TbLubanTest TbLubanTest {get; }
+    public TbAIConfig TbAIConfig {get; }
+    public TbStartMachineConfig TbStartMachineConfig {get; }
+    public TbStartProcessConfig TbStartProcessConfig {get; }
+    public TbStartSceneConfig TbStartSceneConfig {get; }
+    public TbStartZoneConfig TbStartZoneConfig {get; }
+    public TbUnitConfig TbUnitConfig {get; }
 
     public Tables(System.Func<string, ByteBuf> loader)
     {
-        TbLubanTest = new TbLubanTest(loader("tblubantest"));
+        TbAIConfig = new TbAIConfig(loader("tbaiconfig"));
+        TbStartMachineConfig = new TbStartMachineConfig(loader("tbstartmachineconfig"));
+        TbStartProcessConfig = new TbStartProcessConfig(loader("tbstartprocessconfig"));
+        TbStartSceneConfig = new TbStartSceneConfig(loader("tbstartsceneconfig"));
+        TbStartZoneConfig = new TbStartZoneConfig(loader("tbstartzoneconfig"));
+        TbUnitConfig = new TbUnitConfig(loader("tbunitconfig"));
         ResolveRef();
     }
     
     private void ResolveRef()
     {
-        TbLubanTest.ResolveRef(this);
+        TbAIConfig.ResolveRef(this);
+        TbStartMachineConfig.ResolveRef(this);
+        TbStartProcessConfig.ResolveRef(this);
+        TbStartSceneConfig.ResolveRef(this);
+        TbStartZoneConfig.ResolveRef(this);
+        TbUnitConfig.ResolveRef(this);
     }
 }
 

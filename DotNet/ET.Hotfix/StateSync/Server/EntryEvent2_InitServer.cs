@@ -13,14 +13,14 @@
             World.Instance.AddSingleton<NavmeshComponent>();
             
             int process = root.Fiber.Process;
-            StartProcessConfig startProcessConfig = StartProcessConfigCategory.Instance.Get(process);
+            StartProcessConfig startProcessConfig = StartProcessConfigConfigCategory.Instance.Get(process);
             if (startProcessConfig.Port != 0)
             {
                 await FiberManager.Instance.Create(SchedulerType.ThreadPool, SceneType.NetInner, 0, SceneType.NetInner, "NetInner");
             }
 
             // 根据配置创建纤程
-            var scenes = StartSceneConfigCategory.Instance.GetByProcess(process);
+            var scenes = StartSceneConfigManager.Instance.GetByProcess(process);
             
             foreach (StartSceneConfig startConfig in scenes)
             {

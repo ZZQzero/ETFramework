@@ -56,10 +56,10 @@ public class LubanGenerateExcels : MonoBehaviour
 
     static void GenerateTDProxyFiles()
     {
-        string csFilePath = Path.Combine(Application.dataPath, @"Scripts\Model\Excel\Generated");
+        string csFilePath = Path.Combine(Application.dataPath, @"Scripts/Model/Core/Share/TableConfig/Excel/Generated");
         string proxyTemplateFilePath = Path.Combine(Application.dataPath.Replace("Unity/Assets",""), @"Config\TableConfigCategoryTemp.template");
         string templateContent = File.ReadAllText(proxyTemplateFilePath);
-        string templateOutputPath = Path.Combine(Application.dataPath, @"Scripts\Model\Excel\Category");
+        string templateOutputPath = Path.Combine(Application.dataPath, @"Scripts\Model\Core\Share\TableConfig\Excel\Category");
         string templateOutputFileName = "#Name#ConfigCategory.cs";
         DirectoryInfo dirInfo = new DirectoryInfo(csFilePath);
 
@@ -74,7 +74,7 @@ public class LubanGenerateExcels : MonoBehaviour
             if (fileName.StartsWith("Tb") && fileName.EndsWith(".cs") && !fileName.Contains("TableData"))
             {
                 string name = fileName.Replace("Tb","").Replace(".cs", "");
-    
+                
                 string outputContent = templateContent.Replace("#Name#", name);
                 string outputFileName = templateOutputFileName.Replace("#Name#", name);
                 string outputPath = Path.Combine(templateOutputPath, outputFileName);

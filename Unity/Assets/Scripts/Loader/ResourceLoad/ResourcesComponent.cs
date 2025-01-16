@@ -199,6 +199,7 @@ namespace ET
         {
             AssetHandle handle = YooAssets.LoadAssetSync<TextAsset>(file);
             var textAsset = (TextAsset)handle.AssetObject;
+            handle.Release();
             return new ByteBuf(textAsset.bytes);
         }
 

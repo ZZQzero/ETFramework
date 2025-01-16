@@ -11,16 +11,15 @@ namespace ET.Server
         public async ETTask Handle(Scene scene, HttpListenerContext context)
         {
             HttpGetRouterResponse httpGetRouterResponse = HttpGetRouterResponse.Create();
-            List<StartSceneConfig> realms = StartSceneConfigCategory.Instance.GetBySceneType(SceneType.Realm);
+            List<StartSceneConfig> realms = StartSceneConfigManager.Instance.GetBySceneType(SceneType.Realm);
             foreach (StartSceneConfig startSceneConfig in realms)
             {
                 // 这里是要用InnerIP，因为云服务器上realm绑定不了OuterIP的,所以realm的内网外网的socket都是监听内网地址
                 httpGetRouterResponse.Realms.Add(startSceneConfig.InnerIPPort.ToString());
             }
-            foreach (StartSceneConfig startSceneConfig in StartSceneConfigCategory.Instance.GetBySceneType(SceneType.Router))
+            foreach (StartSceneConfig startSceneConfig in StartSceneConfigManager.Instance.GetBySceneType(SceneType.Router))
             {
                 httpGetRouterResponse.Routers.Add($"{startSceneConfig.StartProcessConfig.OuterIP}:{startSceneConfig.Port}");
-                Log.Error($"{startSceneConfig.StartProcessConfig.OuterIP}:{startSceneConfig.Port}");
             }
             
             HttpListenerRequest request = context.Request;
@@ -34,7 +33,6 @@ namespace ET.Server
             }
             response.AppendHeader("Access-Control-Allow-Origin", "*");
             
-            Log.Error($"HttpGetRouterHandler : {httpGetRouterResponse}");
             try
             {
                 var json = httpGetRouterResponse.ToJson();

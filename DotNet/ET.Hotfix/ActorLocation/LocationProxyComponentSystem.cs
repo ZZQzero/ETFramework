@@ -7,7 +7,7 @@ namespace ET.Server
     {
         private static ActorId GetLocationSceneId(this LocationProxyComponent self, long key)
         {
-            List<StartSceneConfig> locationConfigs = StartSceneConfigCategory.Instance.GetBySceneType(self.Zone(), SceneType.Location);
+            List<StartSceneConfig> locationConfigs = StartSceneConfigManager.Instance.GetBySceneType(self.Zone(), SceneType.Location);
             return locationConfigs[(int)(key % locationConfigs.Count)].ActorId;
         }
 

@@ -32,7 +32,7 @@ namespace ET
                 return;
             }
 
-            var oneAI = AIConfigCategory.Instance.AIConfigs[self.AIConfigId];
+            var oneAI = AIConfigConfigCategory.Instance.GetDataList().FindAll(id => id.AIConfigId == self.AIConfigId);
 
             foreach (AIConfig aiConfig in oneAI)
             {

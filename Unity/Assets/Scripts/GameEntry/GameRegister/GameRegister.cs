@@ -18,6 +18,9 @@ namespace ET
             World.Instance.AddSingleton<OpcodeType>();
             World.Instance.AddSingleton<MessageQueue>();
             World.Instance.AddSingleton<NetServices>();
+#if DOTNET
+            World.Instance.AddSingleton<StartSceneConfigManager>();  
+#endif
             
             LogMsg logMsg = World.Instance.AddSingleton<LogMsg>();
             logMsg.AddIgnore(LoginOuter.C2G_Ping);

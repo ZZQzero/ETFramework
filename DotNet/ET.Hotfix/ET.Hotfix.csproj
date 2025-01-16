@@ -76,5 +76,8 @@
     <ItemGroup>
         <CompilerVisibleProperty Include="DotNetAssembly" />
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="DB\" />
+    </ItemGroup>
 
 </Project>

@@ -39,5 +39,10 @@ namespace ET
             MessageDispatcher.Instance.RegisterMessage<C2M_StopHandler>(SceneType.Map);
 #endif
         }
+
+        public static void RegisterHttp()
+        {
+            HttpDispatcher.Instance.HttpRegister<HttpGetRouterHandler>(SceneType.RouterManager, "/get_router");
+        }
     }
 }

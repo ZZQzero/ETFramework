@@ -9,7 +9,7 @@ namespace ET.Server
         
         public void Awake()
         {
-            HashSet<Type> types = CodeTypes.Instance.GetTypes(typeof (HttpHandlerAttribute));
+            /*HashSet<Type> types = CodeTypes.Instance.GetTypes(typeof (HttpHandlerAttribute));
 
             foreach (Type type in types)
             {
@@ -36,7 +36,18 @@ namespace ET.Server
                 }
                 
                 dict.Add(httpHandlerAttribute.SceneType, ihttpHandler);
+            }*/
+        }
+
+        public void HttpRegister<T>(int sceneType,string path) where T : IHttpHandler, new()
+        {
+            IHttpHandler http = new T();
+            if (!this.dispatcher.TryGetValue(path, out var dict))
+            {
+                dict = new Dictionary<int, IHttpHandler>();
+                this.dispatcher.Add(path, dict);
             }
+            dict.Add(sceneType, http);
         }
 
         public IHttpHandler Get(int sceneType, string path)

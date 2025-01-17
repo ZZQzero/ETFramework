@@ -24,6 +24,7 @@ namespace ET
             GameRegister.RegisterInvoke();
             GameRegister.RegisterEvent();
             GameRegister.RegisterMessage();
+            GameRegister.RegisterHttp();
             GameRegister.RegisterMessageSession();
             Entry.Start();
             

@@ -25,13 +25,14 @@ public class LubanGenerateExcels : MonoBehaviour
         process.StartInfo.WorkingDirectory = rootPath;
         // 设置重定向标准错误流
         // process.StartInfo.RedirectStandardOutput = true;
-        // process.StartInfo.UseShellExecute = false;
 #if UNITY_EDITOR_WIN
         path = Path.Combine(rootPath, "gen.bat");
 #elif UNITY_EDITOR_OSX
         path = Path.Combine(rootPath, "gen.sh");
 #endif
         process.StartInfo.FileName = path;
+        process.StartInfo.CreateNoWindow = true;
+        process.StartInfo.UseShellExecute = false;
         process.Start();
         process.WaitForExit();
         
@@ -88,5 +89,6 @@ public class LubanGenerateExcels : MonoBehaviour
             }
     
         }
+        Debug.Log($"Generate TD Files Success");
     }
 }

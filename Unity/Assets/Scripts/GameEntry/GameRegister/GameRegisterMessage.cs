@@ -42,7 +42,9 @@ namespace ET
 
         public static void RegisterHttp()
         {
+#if DOTNET
             HttpDispatcher.Instance.HttpRegister<HttpGetRouterHandler>(SceneType.RouterManager, "/get_router");
+#endif
         }
     }
 }

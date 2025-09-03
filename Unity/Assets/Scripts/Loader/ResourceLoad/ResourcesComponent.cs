@@ -51,11 +51,10 @@ namespace ET
             {
                 case EPlayMode.EditorSimulateMode:
                 {
-                    var simulateBuildParam = new EditorSimulateBuildParam();
-                    simulateBuildParam.PackageName = config.PackageName;
-                    var simulateBuildResult = EditorSimulateModeHelper.SimulateBuild(simulateBuildParam);
+                    var simulateBuildResult = EditorSimulateModeHelper.SimulateBuild(package.PackageName);
+                    var packageRoot = simulateBuildResult.PackageRootDirectory;
                     var createParameters = new EditorSimulateModeParameters();
-                    createParameters.EditorFileSystemParameters = FileSystemParameters.CreateDefaultEditorFileSystemParameters(simulateBuildResult);
+                    createParameters.EditorFileSystemParameters = FileSystemParameters.CreateDefaultEditorFileSystemParameters(packageRoot);
                     initializationOperation = package.InitializeAsync(createParameters);
                     break;
                 }
@@ -141,21 +140,23 @@ namespace ET
             int downloadingMaxNum = 10;
             int failedTryAgain = 3;
             var downloader = package.CreateResourceDownloader(downloadingMaxNum, failedTryAgain);
+            await ETTask.CompletedTask;
             return downloader;
         }
-        
+
         public void BeginDownload(ResourceDownloaderOperation downloaderOperation,
-                                                DownloaderOperation.DownloaderFinish downloaderFinish,
-                                                DownloaderOperation.DownloadUpdate progressCallback,
-                                                DownloaderOperation.DownloadError errorCallback)
+            DownloaderOperation.DownloaderFinish downloaderFinish,
+            DownloaderOperation.DownloadUpdate progressCallback,
+            DownloaderOperation.DownloadError errorCallback)
         {
             if (downloaderOperation.TotalDownloadCount == 0)
             {
                 return;
             }
+
             downloaderOperation.BeginDownload();
         }
-        
+
         private string GetHostServerURL(GlobalConfig config)
         {
             string hostServerIP = config.IPAddress;

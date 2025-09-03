@@ -1,45 +1,66 @@
-﻿using MongoDB.Bson;
+﻿using System;
+using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 
 namespace ET
 {
-    public class BsonChildrenCollectionSerializer: IBsonSerializer
+    public sealed class BsonChildrenCollectionSerializer : IBsonSerializer<ChildrenCollection>
     {
-        public object Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
-        {
-            ChildrenCollection childrenCollection = ChildrenCollection.Create(true);
-            IBsonSerializer<Entity> bsonSerializer = BsonSerializer.LookupSerializer<Entity>();
-            var bsonReader = context.Reader;
-            bsonReader.ReadStartArray();
-            while (bsonReader.ReadBsonType() != BsonType.EndOfDocument)
-            {
-                Entity entity = bsonSerializer.Deserialize(context);
-                entity.IsSerilizeWithParent = true;
-                childrenCollection.Add(entity.Id, entity);
-            }
-            bsonReader.ReadEndArray();
+        [StaticField]
+        private static readonly IBsonSerializer<Entity> EntitySer = BsonSerializer.LookupSerializer<Entity>();
+        public Type ValueType => typeof(ChildrenCollection);
 
-            return childrenCollection;
+        public ChildrenCollection Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+        {
+            var reader = context.Reader;
+            var children = ChildrenCollection.Create(true);
+
+            reader.ReadStartArray();
+            while (reader.ReadBsonType() != BsonType.EndOfDocument)
+            {
+                var entity = EntitySer.Deserialize(context);
+                entity.IsSerializeWithParent = true;
+                children.Add(entity.Id, entity);
+            }
+            reader.ReadEndArray();
+
+            return children;
         }
 
-        public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value)
+        public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, ChildrenCollection value)
         {
-            IBsonWriter bsonWriter = context.Writer;
-            bsonWriter.WriteStartArray();
-            ChildrenCollection childrenCollection = (ChildrenCollection)value;
-
-            IBsonSerializer<Entity> bsonSerializer = BsonSerializer.LookupSerializer<Entity>();
-            foreach ((long _, Entity entity) in childrenCollection)
+            var writer = context.Writer;
+            
+            if (value is null)
             {
-                if (entity is ISerializeToEntity || entity.IsSerilizeWithParent)
+                writer.WriteNull();
+                writer.WriteEndArray();
+                return;
+            }
+            
+            writer.WriteStartArray();
+            foreach (var kv in value)
+            {
+                var entity = kv.Value;
+                if (entity is null)
                 {
-                    bsonSerializer.Serialize(context, entity);
+                    continue;
+                }
+                if (entity is ISerializeToEntity || entity.IsSerializeWithParent)
+                {
+                    EntitySer.Serialize(context, entity);
                 }
             }
-            bsonWriter.WriteEndArray();
+
+            writer.WriteEndArray();
         }
 
-        public System.Type ValueType { get; }
+        // 非泛型接口转发到泛型实现，避免重复/分叉逻辑
+        object IBsonSerializer.Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+            => Deserialize(context, args);
+
+        void IBsonSerializer.Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value)
+            => Serialize(context, args, (ChildrenCollection)value);
     }
 }

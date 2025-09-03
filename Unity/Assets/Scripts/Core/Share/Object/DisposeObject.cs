@@ -26,5 +26,8 @@ namespace ET
             get;
             set;
         }
+        
+        void Reset(); // 回池时清理状态
+        
     }
 }

@@ -56,6 +56,7 @@
     <None Include="Assets\Config\Excel\Json\s\StartConfig\Localhost\StartZoneConfig.txt" />
     <None Include="Assets\Config\Excel\Json\c\UnitConfig.txt" />
     <None Include="Assets\Config\Excel\Json\s\UnitConfig.txt" />
+    <None Include="Packages\com.zzq.gameui@4e327cdc7d9c\package.json" />
     <None Include="Assets\Config\Excel\Json\s\StartConfig\Example\StartProcessConfig.txt" />
     <None Include="Assets\Config\Excel\Json\cs\StartConfig\Example\StartProcessConfig.txt" />
     <None Include="Assets\Config\Excel\Json\s\StartConfig\Release\StartMachineConfig.txt" />
@@ -72,13 +73,13 @@
     <None Include="Assets\Config\Excel\Json\cs\StartConfig\Example\StartSceneConfig.txt" />
     <None Include="Assets\Config\Excel\Json\cs\StartConfig\Localhost\StartZoneConfig.txt" />
     <Reference Include="UnityEngine">
-      <HintPath>D:\Unity\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
+      <HintPath>G:\Unity\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>D:\Unity\Editor\Data\Managed\UnityEngine\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>G:\Unity\Editor\Data\Managed\UnityEngine\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEditor">
-      <HintPath>D:\Unity\Editor\Data\Managed\UnityEngine\UnityEditor.dll</HintPath>
+      <HintPath>G:\Unity\Editor\Data\Managed\UnityEngine\UnityEditor.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

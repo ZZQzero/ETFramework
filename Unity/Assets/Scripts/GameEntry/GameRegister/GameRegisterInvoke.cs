@@ -15,8 +15,8 @@ namespace ET
             EventSystem.Instance.RegisterInvoke<MailBoxType_UnOrderedMessageHandler>(MailBoxType.UnOrderedMessage);
             EventSystem.Instance.RegisterInvoke<SessionAcceptTimeoutInvoke>(TimerCoreInvokeType.SessionAcceptTimeout);
             EventSystem.Instance.RegisterInvoke<SessionIdleCheckerInvoke>(TimerCoreInvokeType.SessionIdleChecker);
-            EventSystem.Instance.RegisterInvoke<GetAllConfigBytes>();
-            EventSystem.Instance.RegisterInvoke<GetOneConfigBytes>();
+            //EventSystem.Instance.RegisterInvoke<GetAllConfigBytes>();
+            //EventSystem.Instance.RegisterInvoke<GetOneConfigBytes>();
             EventSystem.Instance.RegisterInvoke<WaitCoroutineLockTimerInvoke>(TimerCoreInvokeType.CoroutineTimeout);
 #endif
 

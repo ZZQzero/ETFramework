@@ -21,6 +21,7 @@ namespace ET.Client
 		
 		public static void OnLogin(this UILoginComponent self)
 		{
+			Debug.LogError("UILoginComponentSystem OnLogin");
 			GlobalComponent globalComponent = self.Root().GetComponent<GlobalComponent>();
 			LoginHelper.Login(
 				self.Root(), 

@@ -73,6 +73,11 @@ namespace ET
             }
         }
 
+        public void Reset()
+        {
+            
+        }
+
         [BsonIgnore]
         protected bool IsRegister
         {
@@ -162,7 +167,7 @@ namespace ET
         }
         
         [BsonIgnore]
-        public bool IsSerilizeWithParent
+        public bool IsSerializeWithParent
         {
             get => (this.status & EntityStatus.IsSerilizeWithParent) == EntityStatus.IsSerilizeWithParent;
             set
@@ -882,7 +887,7 @@ namespace ET
                 return;
             }
             
-            if (this is not ISerializeToEntity && !this.IsSerilizeWithParent)
+            if (this is not ISerializeToEntity && !this.IsSerializeWithParent)
             {
                 return;
             }

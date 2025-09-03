@@ -27,7 +27,6 @@ namespace ET
             
             // 自动注册IgnoreExtraElements
             ConventionPack conventionPack = new() { new IgnoreExtraElementsConvention(true) };
-
             ConventionRegistry.Register("IgnoreExtraElements", conventionPack, type => true);
 
             //RegisterStruct<float2>();

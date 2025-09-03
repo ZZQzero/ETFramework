@@ -4,42 +4,50 @@ using MongoDB.Bson.Serialization;
 
 namespace ET
 {
-    public class BsonComponentsCollectionSerializer: IBsonSerializer
+    public class BsonComponentsCollectionSerializer: IBsonSerializer<ComponentsCollection>, IBsonSerializer
     {
-        public object Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+        [StaticField]
+        private static readonly IBsonSerializer<Entity> EntitySer = BsonSerializer.LookupSerializer<Entity>();
+        public System.Type ValueType => typeof(ComponentsCollection);
+        public ComponentsCollection  Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
-            ComponentsCollection componentsCollection = ComponentsCollection.Create(true);
-            IBsonSerializer<Entity> bsonSerializer = BsonSerializer.LookupSerializer<Entity>();
             IBsonReader bsonReader = context.Reader;
             bsonReader.ReadStartArray();
+            ComponentsCollection componentsCollection = ComponentsCollection.Create(true);
+            var eArgs = new BsonDeserializationArgs { NominalType = typeof(Entity) };
+
             while (bsonReader.ReadBsonType() != BsonType.EndOfDocument)
             {
-                Entity entity = bsonSerializer.Deserialize(context);
-                entity.IsSerilizeWithParent = true;
+                Entity entity = EntitySer.Deserialize(context,eArgs);
+                entity.IsSerializeWithParent = true;
                 componentsCollection.Add(entity.GetLongHashCode(), entity);
             }
+            
             bsonReader.ReadEndArray();
-
             return componentsCollection;
         }
 
-        public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value)
+        object IBsonSerializer.Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+            => Deserialize(context, args);
+        
+        public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, ComponentsCollection  value)
         {
             IBsonWriter bsonWriter = context.Writer;
             bsonWriter.WriteStartArray();
-            ComponentsCollection componentsCollection = (ComponentsCollection)value;
-
+            var eArgs = new BsonSerializationArgs { NominalType = typeof(Entity) };
+            
             IBsonSerializer<Entity> bsonSerializer = BsonSerializer.LookupSerializer<Entity>();
-            foreach ((long _, Entity entity) in componentsCollection)
+            foreach (var entity in value.Values)
             {
-                if (entity is ISerializeToEntity || entity.IsSerilizeWithParent)
+                if (entity is ISerializeToEntity || entity.IsSerializeWithParent)
                 {
-                    bsonSerializer.Serialize(context, entity);
+                    bsonSerializer.Serialize(context,eArgs,entity);
                 }
             }
             bsonWriter.WriteEndArray();
         }
 
-        public System.Type ValueType { get; }
+        void IBsonSerializer.Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value)
+            => Serialize(context, args, (ComponentsCollection)value);
     }
 }

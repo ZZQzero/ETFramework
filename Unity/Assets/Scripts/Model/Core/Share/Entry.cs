@@ -38,7 +38,7 @@ namespace ET
             // 注册Entity序列化器
             EntitySerializeRegister.Init();
             
-            await World.Instance.AddSingleton<ConfigLoader>().LoadAsync();
+            //await World.Instance.AddSingleton<ConfigLoader>().LoadAsync();
             Log.Info("Entry Start");
             var test = AIConfigConfigCategory.Instance.GetDataList();
             foreach (var item in test)

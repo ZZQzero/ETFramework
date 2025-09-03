@@ -21,7 +21,6 @@ namespace ET
         static NLogger()
         {
             LogManager.Configuration = new NLog.Config.XmlLoggingConfiguration("Config/NLog/NLog.config");
-            //LogManager.Configuration = new NLog.Config.XmlLoggingConfiguration("Packages/cn.etetet.loader/Scripts/Loader/Server/NLog.config");
             LogManager.Configuration.Variables["currentDir"] = Environment.CurrentDirectory;
         }
 

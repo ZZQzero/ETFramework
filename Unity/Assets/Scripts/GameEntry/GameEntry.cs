@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace ET
 {
@@ -14,6 +16,26 @@ namespace ET
             GameRegister.RegisterMessage();
             GameRegister.RegisterMessageSession();
             Entry.Start();
+            /*int n = 1000000;
+
+            var sw = Stopwatch.StartNew();
+            for (int i = 0; i < n; i++)
+            {
+               var obj = ObjectFastPool.Fetch<G2R_GetLoginKey>();
+               ObjectFastPool.Recycle(obj);
+            }
+            sw.Stop();
+            Debug.LogError($"耗时 {sw.ElapsedMilliseconds}ms");*/
+            
+            
+            /*sw.Restart();
+            for (int i = 0; i < n; i++)
+            {
+                var obj = ObjectPool.Fetch<G2R_GetLoginKey>();
+                ObjectPool.Recycle(obj);
+            }
+            sw.Stop();
+            Debug.LogError($"耗时 {sw.ElapsedMilliseconds}ms");*/
         }
     }
 }

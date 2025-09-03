@@ -35,7 +35,11 @@ namespace ET
         }
         
         public bool IsFromPool { get; set; }
-        
+        public void Reset()
+        {
+            
+        }
+
         public void Dispose()
         {
             if (!this.IsFromPool)

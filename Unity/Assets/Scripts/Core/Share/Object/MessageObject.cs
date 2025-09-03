@@ -13,5 +13,10 @@ namespace ET
 
         [BsonIgnore]
         public bool IsFromPool { get; set; }
+
+        public void Reset()
+        {
+            
+        }
     }
 }

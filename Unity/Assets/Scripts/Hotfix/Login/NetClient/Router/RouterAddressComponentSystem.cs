@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using MemoryPack;
 
 namespace ET.Client
 {
@@ -25,11 +26,12 @@ namespace ET.Client
         {
             string url = $"http://{self.Address}/get_router?v={RandomGenerator.RandUInt32()}";
             Log.Error($"start get router info: {url}");
-            string routerInfo = await HttpClientHelper.Get(url);
+            var routerInfo = await HttpClientHelper.Get(url);
             Log.Error($"recv router info: {routerInfo}");
-            HttpGetRouterResponse httpGetRouterResponse = MongoHelper.FromJson<HttpGetRouterResponse>(routerInfo);
+            //HttpGetRouterResponse httpGetRouterResponse = MongoHelper.FromJson<HttpGetRouterResponse>(routerInfo);
+            HttpGetRouterResponse httpGetRouterResponse = MemoryPackSerializer.Deserialize<HttpGetRouterResponse>(routerInfo);
             self.Info = httpGetRouterResponse;
-            Log.Error($"start get router info finish: {MongoHelper.ToJson(httpGetRouterResponse)}");
+            //Log.Error($"start get router info finish: {MongoHelper.ToJson(httpGetRouterResponse)}");
             
             // 打乱顺序
             RandomGenerator.BreakRank(self.Info.Routers);

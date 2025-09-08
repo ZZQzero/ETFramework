@@ -23,7 +23,6 @@ namespace ET.Server
 			response.Address = config.InnerIPPort.ToString();
 			response.Key = g2RGetLoginKey.Key;
 			response.GateId = g2RGetLoginKey.GateId;
-			
 			CloseSession(session).NoContext();
 		}
 

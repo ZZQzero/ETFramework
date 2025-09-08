@@ -5,11 +5,11 @@ namespace ET
 {
     public abstract class ProtoObject: Object, ISupportInitialize
     {
-        public object Clone()
+        /*public object Clone()
         {
-            byte[] bytes = MongoHelper.Serialize(this);
-            return MongoHelper.Deserialize(this.GetType(), bytes, 0, bytes.Length);
-        }
+            /*byte[] bytes = MongoHelper.Serialize(this);
+            return MongoHelper.Deserialize(this.GetType(), bytes, 0, bytes.Length);#1#
+        }*/
         
         public virtual void BeginInit()
         {

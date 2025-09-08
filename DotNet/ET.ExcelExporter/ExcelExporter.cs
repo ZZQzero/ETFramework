@@ -104,8 +104,8 @@ namespace ET
                 
                 template = File.ReadAllText("Template.txt");
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-                
-                PackagesLock packagesLock = PackageHelper.LoadEtPackagesLock("./");
+
+                PackagesLock packagesLock = new PackagesLock(); //PackageHelper.LoadEtPackagesLock("./");
                 PackageInfo excelPackage = packagesLock.dependencies["cn.etetet.excel"];
                 ClientClassDir = Path.Combine(excelPackage.dir, "CodeMode/Model/Client");
                 ServerClassDir = Path.Combine(excelPackage.dir, "CodeMode/Model/Server");

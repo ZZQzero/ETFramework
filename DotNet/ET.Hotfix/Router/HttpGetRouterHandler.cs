@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
+using MemoryPack;
 
 namespace ET.Server
 {
@@ -35,9 +36,7 @@ namespace ET.Server
             
             try
             {
-                var json = httpGetRouterResponse.ToJson();
-                /*var json = MongoHelper.ToJson(httpGetRouterResponse);*/
-                byte[] bytes = json.ToUtf8();
+                byte[] bytes = MemoryPackSerializer.Serialize(httpGetRouterResponse);
                 response.StatusCode = 200;
                 response.ContentEncoding = Encoding.UTF8;
                 response.ContentLength64 = bytes.Length;

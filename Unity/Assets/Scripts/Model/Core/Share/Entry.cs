@@ -31,7 +31,9 @@ namespace ET
             WinPeriod.Init();
 
             // 注册Mongo type
+#if DOTNET
             MongoRegister.Init();
+#endif
             
             MemoryPackRegister.Init();
             

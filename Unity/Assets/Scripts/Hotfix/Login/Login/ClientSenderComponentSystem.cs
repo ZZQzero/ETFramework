@@ -54,6 +54,7 @@ namespace ET.Client
         {
             A2NetClient_Message a2NetClientMessage = A2NetClient_Message.Create();
             a2NetClientMessage.MessageObject = message;
+            Log.Error($"A2NetClient_Message  {a2NetClientMessage.MessageObject}");
             self.Root().GetComponent<ProcessInnerSender>().Send(self.netClientActorId, a2NetClientMessage);
         }
 

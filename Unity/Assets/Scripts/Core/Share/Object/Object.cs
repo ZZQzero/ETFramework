@@ -13,7 +13,7 @@ namespace ET
             return ((object)this).ToJson();
         }
         
-        public string ToJson()
+        /*public string ToJson()
         {
             return MongoHelper.ToJson(this);
         }
@@ -21,6 +21,6 @@ namespace ET
         public byte[] ToBson()
         {
             return MongoHelper.Serialize(this);
-        }
+        }*/
     }
 }

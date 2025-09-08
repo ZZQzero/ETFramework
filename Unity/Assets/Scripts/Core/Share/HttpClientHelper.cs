@@ -10,18 +10,18 @@ namespace ET
 {
     public static partial class HttpClientHelper
     {
-        public static async ETTask<string> Get(string link)
+        public static async ETTask<byte[]> Get(string link)
         {
             try
             {
 #if UNITY
                 UnityEngine.Networking.UnityWebRequest req = UnityEngine.Networking.UnityWebRequest.Get(link);
                 await req.SendWebRequest();
-                return req.downloadHandler.text;
+                return req.downloadHandler.data;
 #else
                 using HttpClient httpClient = new();
                 HttpResponseMessage response =  await httpClient.GetAsync(link);
-                string result = await response.Content.ReadAsStringAsync();
+                var result = await response.Content.ReadAsByteArrayAsync();
                 return result;
 #endif
             }

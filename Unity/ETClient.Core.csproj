@@ -41,6 +41,7 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
+    <Analyzer Include="G:\UnityProject\ETFramework\Unity\Assets\Plugins\System.Runtime.CompilerServices.Unsafe.dll" />
     <Analyzer Include="G:\UnityProject\ETFramework\Unity\Assets\Plugins\ET.SourceGenerator.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
@@ -51,7 +52,6 @@
     <Compile Include="Assets\Scripts\Core\Share\Object\MessageObject.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\TimeInfo\TimeInfo.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\ITransfer.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Serialize\MongoHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Fiber\FiberInit.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Fiber\MainThreadScheduler.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\Response.cs" />
@@ -81,10 +81,8 @@
     <Compile Include="Assets\Scripts\Core\Share\ETTask\IAwaiter.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Singleton.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ListComponent.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Serialize\BsonChildrenCollectionSerializer.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\StringHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\IdGenerater\IdGenerater.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Serialize\MongoRegister.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\Entity.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Serialize\MemoryPackComponentsCollectionFormatter.cs" />
     <Compile Include="Assets\Scripts\Core\Share\MultiMap.cs" />
@@ -109,7 +107,6 @@
     <Compile Include="Assets\Scripts\Core\Share\World\Log\ILog.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\AService.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\InvokeAttribute.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Serialize\StructBsonSerialize.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Method\IStaticMethod.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\ObjectPool\ObjectFastPool.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\ResponseTypeAttribute.cs" />
@@ -175,7 +172,6 @@
     <Compile Include="Assets\Scripts\Core\Share\World\Config\IMerge.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\OpcodeType.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Serialize\MemoryPackHelper.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Serialize\BsonComponentsCollectionSerializer.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\StateMachineWrap.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\SceneTypeSingleton.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\EntityHelper.cs" />
@@ -591,7 +587,7 @@
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.code-philosophy.hybridclr@d505624c78e6\Plugins\LZ4.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\MongoDB\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
     <Reference Include="DnsClient">
       <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\MongoDB\DnsClient.dll</HintPath>

@@ -31,6 +31,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\ET.Mathematics\ET.Mathematics.csproj" />
       <ProjectReference Include="..\ET.SourceGeneratorAttribute\ET.SourceGeneratorAttribute.csproj" />
       <ProjectReference Include="..\ET.SourceGenerator\ET.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
     </ItemGroup>
@@ -38,6 +39,21 @@
     <ItemGroup>
         <Compile Include="..\..\Unity\Assets\Scripts\Core\**\*.cs">
             <Link>Core\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        </Compile>
+        <Compile Update="MongoDBSerializer\BsonChildrenCollectionSerializer.cs">
+          <Link>Core\Share\Serialize\BsonChildrenCollectionSerializer.cs</Link>
+        </Compile>
+        <Compile Update="MongoDBSerializer\BsonComponentsCollectionSerializer.cs">
+          <Link>Core\Share\Serialize\BsonComponentsCollectionSerializer.cs</Link>
+        </Compile>
+        <Compile Update="MongoDBSerializer\MongoHelper.cs">
+          <Link>Core\Share\Serialize\MongoHelper.cs</Link>
+        </Compile>
+        <Compile Update="MongoDBSerializer\MongoRegister.cs">
+          <Link>Core\Share\Serialize\MongoRegister.cs</Link>
+        </Compile>
+        <Compile Update="MongoDBSerializer\StructBsonSerialize.cs">
+          <Link>Core\Share\Serialize\StructBsonSerialize.cs</Link>
         </Compile>
     </ItemGroup>
 

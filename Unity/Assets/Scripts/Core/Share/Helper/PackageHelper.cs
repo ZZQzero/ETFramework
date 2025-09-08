@@ -32,7 +32,7 @@ namespace ET
     
     public static class PackageHelper
     {
-        public static PackagesLock LoadEtPackagesLock(string unityDir)
+        /*public static PackagesLock LoadEtPackagesLock(string unityDir)
         {
             string s = File.ReadAllText(Path.Combine(unityDir, "Packages/packages-lock.json"));
 
@@ -80,6 +80,6 @@ namespace ET
             }
             
             return packagesLock;
-        }
+        }*/
     }
 }

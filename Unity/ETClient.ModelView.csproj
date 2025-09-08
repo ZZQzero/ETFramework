@@ -41,6 +41,7 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
+    <Analyzer Include="G:\UnityProject\ETFramework\Unity\Assets\Plugins\System.Runtime.CompilerServices.Unsafe.dll" />
     <Analyzer Include="G:\UnityProject\ETFramework\Unity\Assets\Plugins\ET.SourceGenerator.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
@@ -445,7 +446,7 @@
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.code-philosophy.hybridclr@d505624c78e6\Plugins\LZ4.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\MongoDB\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
     <Reference Include="DnsClient">
       <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\MongoDB\DnsClient.dll</HintPath>

@@ -51,7 +51,9 @@ namespace ET
 		{
 			if (key == null || value == null || kv.ContainsKey(key) || vk.ContainsKey(value))
 			{
+				//TODO 这里有问题
 				return;
+				//throw new Exception($"double map add fail: {key} {value}");
 			}
 			kv.Add(key, value);
 			vk.Add(value, key);

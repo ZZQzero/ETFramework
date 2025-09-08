@@ -182,7 +182,7 @@
       "url": "https://packages.unity.com"
     },
     "com.zzq.gameui": {
-      "version": "file:com.zzq.gameui@4e327cdc7d9c",
+      "version": "file:GameUIFramework",
       "depth": 0,
       "source": "embedded",
       "dependencies": {

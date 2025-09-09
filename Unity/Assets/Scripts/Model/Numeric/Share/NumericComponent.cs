@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.Bson.Serialization.Options;
 
 namespace ET
 {
@@ -100,7 +98,7 @@ namespace ET
     [ComponentOf(typeof (Unit))]
     public class NumericComponent: Entity, IAwake, ITransfer
     {
-        [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfArrays)]
+        //[BsonDictionaryOptions(DictionaryRepresentation.ArrayOfArrays)]
         public Dictionary<int, long> NumericDic = new Dictionary<int, long>();
 
         public long this[int numericType]

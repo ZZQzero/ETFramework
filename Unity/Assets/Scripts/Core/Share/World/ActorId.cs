@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using MemoryPack;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace ET
 {
@@ -75,7 +74,7 @@ namespace ET
         [MemoryPackOrder(1)]
         public long InstanceId;
 
-        [BsonIgnore]
+        //[BsonIgnore]
         public int Process
         {
             get
@@ -88,7 +87,7 @@ namespace ET
             }
         }
         
-        [BsonIgnore]
+        //[BsonIgnore]
         public int Fiber
         {
             get

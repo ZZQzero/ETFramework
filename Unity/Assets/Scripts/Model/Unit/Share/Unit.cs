@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using MongoDB.Bson.Serialization.Attributes;
 using Unity.Mathematics;
 
 namespace ET
@@ -10,10 +9,8 @@ namespace ET
     {
         public int ConfigId { get; set; } //配置表id
 
-        [BsonElement]
         private float3 position; //坐标
 
-        [BsonIgnore]
         public float3 Position
         {
             get => this.position;
@@ -25,17 +22,14 @@ namespace ET
             }
         }
 
-        [BsonIgnore]
         public float3 Forward
         {
             get => math.mul(this.Rotation, math.forward());
             set => this.Rotation = quaternion.LookRotation(value, math.up());
         }
         
-        [BsonElement]
         private quaternion rotation;
         
-        [BsonIgnore]
         public quaternion Rotation
         {
             get => this.rotation;

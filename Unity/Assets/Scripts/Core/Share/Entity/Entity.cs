@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using MemoryPack;
-using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.Bson.Serialization.Options;
 
 namespace ET
 {
@@ -38,17 +36,14 @@ namespace ET
         }
         
 #if ENABLE_VIEW && UNITY_EDITOR
-        [BsonIgnore]
         [UnityEngine.HideInInspector]
         [MemoryPackIgnore]
         public UnityEngine.GameObject ViewGO;
 #endif
 
         [MemoryPackIgnore]
-        [BsonIgnore]
         public long InstanceId { get; protected set; }
 
-        [BsonIgnore]
         private EntityStatus status = EntityStatus.None;
         
         protected Entity()
@@ -56,7 +51,6 @@ namespace ET
         }
 
         [MemoryPackIgnore]
-        [BsonIgnore]
         public bool IsFromPool
         {
             get => (this.status & EntityStatus.IsFromPool) == EntityStatus.IsFromPool;
@@ -78,7 +72,6 @@ namespace ET
             
         }
 
-        [BsonIgnore]
         protected bool IsRegister
         {
             get => (this.status & EntityStatus.IsRegister) == EntityStatus.IsRegister;
@@ -132,7 +125,6 @@ namespace ET
             }
         }
 
-        [BsonIgnore]
         protected bool IsComponent
         {
             get => (this.status & EntityStatus.IsComponent) == EntityStatus.IsComponent;
@@ -149,7 +141,6 @@ namespace ET
             }
         }
 
-        [BsonIgnore]
         protected bool IsNew
         {
             get => (this.status & EntityStatus.IsNew) == EntityStatus.IsNew;
@@ -166,7 +157,6 @@ namespace ET
             }
         }
         
-        [BsonIgnore]
         public bool IsSerializeWithParent
         {
             get => (this.status & EntityStatus.IsSerilizeWithParent) == EntityStatus.IsSerilizeWithParent;
@@ -184,15 +174,12 @@ namespace ET
         }
 
         [MemoryPackIgnore]
-        [BsonIgnore]
         public bool IsDisposed => this.InstanceId == 0;
         
-        [BsonIgnore]
         private Entity parent;
 
         // 可以改变parent，但是不能设置为null
         [MemoryPackIgnore]
-        [BsonIgnore]
         public Entity Parent
         {
             get => this.parent;
@@ -257,7 +244,7 @@ namespace ET
         }
 
         // 该方法只能在AddComponent中调用，其他人不允许调用
-        [BsonIgnore]
+        [MemoryPackIgnore]
         private Entity ComponentParent
         {
             set
@@ -311,17 +298,12 @@ namespace ET
             return this.Parent as T;
         }
 
-        [BsonIgnoreIfDefault]
-        [BsonDefaultValue(0L)]
-        [BsonElement]
-        [BsonId]
         public long Id { get; protected set; }
 
-        [BsonIgnore]
+        [MemoryPackIgnore]
         protected IScene iScene;
 
         [MemoryPackIgnore]
-        [BsonIgnore]
         public IScene IScene
         {
             get
@@ -384,12 +366,9 @@ namespace ET
         }
 
         [MemoryPackInclude]
-        [BsonElement]
-        [BsonIgnoreIfNull]
         protected ChildrenCollection children;
 
         [MemoryPackIgnore]
-        [BsonIgnore]
         public ChildrenCollection Children
         {
             get
@@ -423,12 +402,9 @@ namespace ET
         }
 
         [MemoryPackInclude]
-        [BsonElement]
-        [BsonIgnoreIfNull]
         protected ComponentsCollection components;
 
         [MemoryPackIgnore]
-        [BsonIgnore]
         public ComponentsCollection Components
         {
             get

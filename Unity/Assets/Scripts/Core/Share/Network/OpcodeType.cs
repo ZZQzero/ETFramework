@@ -9,8 +9,13 @@ namespace ET
         private readonly DoubleMap<Type, ushort> typeOpcode = new();
         
         private readonly Dictionary<Type, Type> requestResponse = new();
-        
+
         public void Awake()
+        {
+            
+        }
+        
+        /*public void Awake()
         {
             HashSet<Type> types = CodeTypes.Instance.GetTypes(typeof (MessageAttribute));
             foreach (Type type in types)
@@ -78,6 +83,6 @@ namespace ET
             }
 
             return response;
-        }
+        }*/
     }
 }

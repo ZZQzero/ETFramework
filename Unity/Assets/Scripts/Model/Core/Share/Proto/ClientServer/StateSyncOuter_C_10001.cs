@@ -222,7 +222,9 @@ namespace ET
         [MemoryPackOrder(4)]
         public Unity.Mathematics.float3 Forward { get; set; }
 
+        #if DOTNET
         [MongoDB.Bson.Serialization.Attributes.BsonDictionaryOptions(MongoDB.Bson.Serialization.Options.DictionaryRepresentation.ArrayOfArrays)]
+        #endif
         [MemoryPackOrder(5)]
         public Dictionary<int, long> KV { get; set; } = new();
         [MemoryPackOrder(6)]

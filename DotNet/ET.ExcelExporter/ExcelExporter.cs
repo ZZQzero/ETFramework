@@ -105,11 +105,11 @@ namespace ET
                 template = File.ReadAllText("Template.txt");
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-                PackagesLock packagesLock = new PackagesLock(); //PackageHelper.LoadEtPackagesLock("./");
-                PackageInfo excelPackage = packagesLock.dependencies["cn.etetet.excel"];
-                ClientClassDir = Path.Combine(excelPackage.dir, "CodeMode/Model/Client");
-                ServerClassDir = Path.Combine(excelPackage.dir, "CodeMode/Model/Server");
-                CSClassDir = Path.Combine(excelPackage.dir, "CodeMode/Model/ClientServer");
+                /*PackagesLock packagesLock = new PackagesLock(); //PackageHelper.LoadEtPackagesLock("./");
+                PackageInfo excelPackage = packagesLock.dependencies["cn.etetet.excel"];*/
+                ClientClassDir = "";//Path.Combine(excelPackage.dir, "CodeMode/Model/Client");
+                ServerClassDir = "";//Path.Combine(excelPackage.dir, "CodeMode/Model/Server");
+                    CSClassDir = "";//Path.Combine(excelPackage.dir, "CodeMode/Model/ClientServer");
             
                 if (Directory.Exists(jsonDir))
                 {
@@ -122,7 +122,7 @@ namespace ET
                 }
                 
                 List<string> list = new();
-                foreach ((string key, PackageInfo packageInfo) in packagesLock.dependencies)
+                /*foreach ((string key, PackageInfo packageInfo) in packagesLock.dependencies)
                 {
                     string p = Path.Combine(packageInfo.dir, "Excel");
                     if (!Directory.Exists(p))
@@ -130,7 +130,7 @@ namespace ET
                         continue;
                     }
                     list.Add(p);
-                }
+                }*/
 
                 List<(string, string)> paths = new();
                 foreach (string s in list)

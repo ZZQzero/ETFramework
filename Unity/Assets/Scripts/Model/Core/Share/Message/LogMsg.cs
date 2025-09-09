@@ -23,7 +23,7 @@ namespace ET
         [Conditional("DEBUG")]
         public void Debug(Fiber fiber, object msg)
         {
-            ushort opcode = OpcodeType.Instance.GetOpcode(msg.GetType());
+            ushort opcode = MessageOpcodeTypeMap.TypeToOpcode[msg.GetType()];
             if (this.ignore.Contains(opcode))
             {
                 return;

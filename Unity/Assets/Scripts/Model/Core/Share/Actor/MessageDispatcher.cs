@@ -41,7 +41,7 @@ namespace ET
             Type handleResponseType = imHandler.GetResponseType();
             if (handleResponseType != null)
             {
-                Type responseType = OpcodeType.Instance.GetResponseType(messageType);
+                Type responseType = MessageOpcodeTypeMap.RequestResponse[messageType];
                 if (handleResponseType != responseType)
                 {
                     throw new Exception($"message handler response type error: {messageType.FullName}");

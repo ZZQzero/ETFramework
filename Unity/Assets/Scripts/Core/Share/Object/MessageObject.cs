@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace ET
 {
@@ -11,7 +10,7 @@ namespace ET
         {
         }
 
-        [BsonIgnore]
+        //[BsonIgnore]
         public bool IsFromPool { get; set; }
 
         public void Reset()

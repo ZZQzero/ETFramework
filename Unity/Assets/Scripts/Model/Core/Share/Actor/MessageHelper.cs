@@ -6,7 +6,7 @@ namespace ET
     {
         public static IResponse CreateResponse(Type requestType, int rpcId, int error)
         {
-            Type responseType = OpcodeType.Instance.GetResponseType(requestType);
+            Type responseType = MessageOpcodeTypeMap.RequestResponse[requestType];
             IResponse response = (IResponse)ObjectPool.Fetch(responseType);
             response.Error = error;
             response.RpcId = rpcId;

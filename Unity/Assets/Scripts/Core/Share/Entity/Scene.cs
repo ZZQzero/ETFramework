@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace ET
 {
@@ -7,7 +6,6 @@ namespace ET
     [ChildOf]
     public class Scene: Entity, IScene
     {
-        [BsonIgnore]
         public Fiber Fiber { get; set; }
         
         public string Name { get; }

@@ -58,7 +58,7 @@ namespace ET
             IMessageSessionHandler iMessageSessionHandler = new T();
             Type messageType = iMessageSessionHandler.GetMessageType();
 
-            ushort opcode = OpcodeType.Instance.GetOpcode(messageType);
+            ushort opcode = MessageOpcodeTypeMap.TypeToOpcode[messageType];
             if (opcode == 0)
             {
                 throw new Exception($"消息opcode为0: {messageType.Name}");
@@ -81,7 +81,7 @@ namespace ET
         public void Handle(Session session, object message)
         {
             List<MessageSessionDispatcherInfo> actions;
-            ushort opcode = OpcodeType.Instance.GetOpcode(message.GetType());
+            ushort opcode = MessageOpcodeTypeMap.TypeToOpcode[message.GetType()];
             if (!this.handlers.TryGetValue(opcode, out actions))
             {
                 Log.Error($"消息没有处理: {opcode} {message}");

@@ -23,24 +23,22 @@ namespace ET
     public static partial class InnerProto2CS
     {
         private const string protoDir = "Config/Proto/";
-        private static string clientMessagePath;
-        private static string serverMessagePath;
         private static string clientServerMessagePath;
         private static readonly char[] splitChars = [' ', '\t'];
-        private static readonly List<OpcodeInfo> msgOpcode = [];
+        private static readonly List<OpcodeInfo> msgOpcode = new();
+
+        // --- 新增：全局已用集合，保证跨文件不重复 ---
+        private static readonly HashSet<int> usedOpcodes = new();
 
         public static void Proto2CS()
         {
-            // 强制调用一下mongo，避免mongo库被裁剪
             MongoHelper.ToJson(1);
-            
+
+            usedOpcodes.Clear();
             msgOpcode.Clear();
-            /*PackagesLock packagesLock = PackageHelper.LoadEtPackagesLock("./");
-            PackageInfo protoPackage = packagesLock.dependencies["cn.etetet.proto"];*/
-            clientMessagePath = "Unity/Assets/Scripts/Model/Proto/Client/"; //Path.Combine(protoPackage.dir, "CodeMode/Model/Client");
-            serverMessagePath = "Unity/Assets/Scripts/Model/Proto/Server/";//Path.Combine(protoPackage.dir, "CodeMode/Model/Server");
-            clientServerMessagePath = "Unity/Assets/Scripts/Model/Proto/ClientServer/";//Path.Combine(protoPackage.dir, "CodeMode/Model/ClientServer");
-            
+
+            clientServerMessagePath = "Unity/Assets/Scripts/Model/Core/Share/Proto/ClientServer/";
+
             List<string> list = FileHelper.GetAllFiles(protoDir, "*proto");
             foreach (string s in list)
             {
@@ -57,36 +55,6 @@ namespace ET
                 Console.WriteLine($"{s} | {fileName} | {protoName} | {cs} | {startOpcode}");
                 ProtoFile2CS(s, "", protoName, cs, startOpcode);
             }
-            
-            //List<(string, string)> list = new ();
-            /*foreach ((string key, PackageInfo packageInfo) in packagesLock.dependencies)
-            {
-                string p = Path.Combine(packageInfo.dir, "Proto");
-                if (!Directory.Exists(p))
-                {
-                    continue;
-                }
-                
-                foreach (var f in FileHelper.GetAllFiles(p, "*.proto"))
-                {
-                    list.Add((f, packageInfo.module));
-                }
-            }
-            
-            foreach ((string s, string module) in list)
-            {
-                if (!s.EndsWith(".proto"))
-                {
-                    continue;
-                }
-
-                string fileName = Path.GetFileNameWithoutExtension(s);
-                string[] ss2 = fileName.Split('_');
-                string protoName = ss2[0];
-                string cs = ss2[1];
-                int startOpcode = int.Parse(ss2[2]);
-                ProtoFile2CS(s, module, protoName, cs, startOpcode);
-            }*/
         }
 
         private static void ProtoFile2CS(string path, string module, string protoName, string cs, int startOpcode)
@@ -150,7 +118,15 @@ namespace ET
                         parentClass = ss[1].Trim();
                     }
 
-                    msgOpcode.Add(new OpcodeInfo() { Name = msgName, Opcode = ++startOpcode });
+                    int assignedOpcode = ++startOpcode;
+
+                    while (usedOpcodes.Contains(assignedOpcode))
+                    {
+                        assignedOpcode++;
+                    }
+                    
+                    usedOpcodes.Add(assignedOpcode);
+                    msgOpcode.Add(new OpcodeInfo() { Name = msgName, Opcode = assignedOpcode });
 
                     sb.Append($"\t[MemoryPackable]\n");
                     sb.Append($"\t[Message({protoName}.{msgName})]\n");
@@ -192,7 +168,6 @@ namespace ET
                         isMsgStart = false;
                         responseType = "";
 
-                        // 加了no dispose则自己去定义dispose函数，不要自动生成
                         if (!newline.Contains("// no dispose"))
                         {
                             sb.Append($"\t\tpublic override void Dispose()\n\t\t{{\n\t\t\tif (!this.IsFromPool)\n\t\t\t{{\n\t\t\t\treturn;\n\t\t\t}}\n\n\t\t\t{sbDispose.ToString().TrimEnd('\t')}\n\t\t\tObjectPool.Recycle(this);\n\t\t}}\n");
@@ -251,19 +226,7 @@ namespace ET
 
             sb.Replace("\t", "    ");
             string result = sb.ToString().ReplaceLineEndings("\r\n");
-
-            if (cs.Contains('C'))
-            {
-                GenerateCS(result, clientMessagePath, proto);
-                GenerateCS(result, serverMessagePath, proto);
-                GenerateCS(result, clientServerMessagePath, proto);
-            }
-
-            if (cs.Contains('S'))
-            {
-                GenerateCS(result, serverMessagePath, proto);
-                GenerateCS(result, clientServerMessagePath, proto);
-            }
+            GenerateCS(result, clientServerMessagePath, proto);
         }
 
         private static void GenerateCS(string result, string path, string proto)
@@ -292,7 +255,9 @@ namespace ET
             string v = ss[0];
             int n = int.Parse(ss[2]);
 
+            sb.Append("\t\t#if DOTNET\n");
             sb.Append("\t\t[MongoDB.Bson.Serialization.Attributes.BsonDictionaryOptions(MongoDB.Bson.Serialization.Options.DictionaryRepresentation.ArrayOfArrays)]\n");
+            sb.Append("\t\t#endif\n");
             sb.Append($"\t\t[MemoryPackOrder({n - 1})]\n");
             sb.Append($"\t\tpublic Dictionary<{keyType}, {valueType}> {v} {{ get; set; }} = new();\n");
 

@@ -7,6 +7,7 @@ namespace ET.Client
     {
         protected override async ETTask Run(Scene scene, AfterUnitCreate args)
         {
+            Debug.LogError("AfterUnitCreate_CreateUnitView");
             Unit unit = args.Unit;
             // Unit View层
             string assetsName = $"Skeleton";

@@ -41,7 +41,6 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="G:\UnityProject\ETFramework\Unity\Assets\Plugins\System.Runtime.CompilerServices.Unsafe.dll" />
     <Analyzer Include="G:\UnityProject\ETFramework\Unity\Assets\Plugins\ET.SourceGenerator.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
@@ -52,14 +51,15 @@
     <Compile Include="Assets\Scripts\Model\Move\Share\MoveEventType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\StartConfigPartial\StartSceneConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageHandlerAttribute.cs" />
-    <Compile Include="Assets\Scripts\Model\Proto\ClientServer\ActorLocation_S_20100.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageDispatcher.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Client\ClientSessionErrorComponent.cs" />
-    <Compile Include="Assets\Scripts\Model\Proto\ClientServer\StateSyncInner_S_20001.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\NumericComponent.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\SceneType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\EntitySerializeRegister.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\StateSyncOuter_C_10001.cs" />
     <Compile Include="Assets\Scripts\Model\Unit\Share\Unit.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\LoginOuter_C_1000.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\OpcodeGeneratorHint.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\INumericWatcher.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\IMessageSessionHandler.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\LogMsg.cs" />
@@ -84,7 +84,6 @@
     <Compile Include="Assets\Scripts\Model\Move\Share\TimerInvokeType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbAIConfig.cs" />
     <Compile Include="Assets\Scripts\Model\YooAssets\Share\PackageType.cs" />
-    <Compile Include="Assets\Scripts\Model\Proto\ClientServer\StateSyncOuter_C_10001.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLockQueueType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\MailBoxType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\ObjectWait\ObjectWait.cs" />
@@ -92,6 +91,7 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\Mailbox\MailBoxComponent.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\ActorLocation\Share\ErrorCode.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\Message\MessageSerializeHelper.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Client\NetClient\PingComponent.cs" />
     <Compile Include="Assets\Scripts\Model\UI\UILayerComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\ProcessInnerSender.cs" />
@@ -122,17 +122,16 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\UnitConfigConfigCategory.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\PlayerComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Unit\Share\UnitEventType.cs" />
-    <Compile Include="Assets\Scripts\Model\Proto\ClientServer\RouterProto_C_1100.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLockQueue.cs" />
     <Compile Include="Assets\Scripts\Model\AI\Share\AAIHandler.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbStartZoneConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\StartSceneConfigManager.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\LoginInner_S_20001.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\TableConfigManager.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Timer\ATimer.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageHelper.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\SceneType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\MessageSessionDispatcher.cs" />
-    <Compile Include="Assets\Scripts\Model\Proto\ClientServer\LoginOuter_C_1000.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\CurrentScenesComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\ClientSenderComponent.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Client\Main\AI\XunLuoPathComponent.cs" />
@@ -142,17 +141,19 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\WaitCoroutineLock.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\NetComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Unit\Share\UnitType.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\StateSyncInner_S_20001.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\TableConfigCategoryBase.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLock.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\StartZoneConfigConfigCategory.cs" />
     <Compile Include="Assets\Scripts\Model\Router\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\StartSceneConfigConfigCategory.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\RouterProto_C_1100.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\ActorLocation_S_20100.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\ErrorCode.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Client\NetClient\Router\RouterConnector.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\StartSceneConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Router\Share\ErrorCode.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Client\NetClient\Router\RouterAddressComponent.cs" />
-    <Compile Include="Assets\Scripts\Model\Proto\ClientServer\LoginInner_S_20001.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\TimerInvokeType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\WaitCoroutineLockTimerInvoke.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\PackageType.cs" />
@@ -172,18 +173,6 @@
     <Reference Include="ReportGeneratorMerged">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.testtools.codecoverage@205a02cbcb39\lib\ReportGenerator\ReportGeneratorMerged.dll</HintPath>
     </Reference>
-    <Reference Include="SharpCompress">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\MongoDB\SharpCompress.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Text.Encoding.CodePages">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\MongoDB\System.Text.Encoding.CodePages.dll</HintPath>
-    </Reference>
-    <Reference Include="MongoDB.Driver.Core">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\MongoDB\MongoDB.Driver.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="MongoDB.Bson">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\MongoDB\MongoDB.Bson.dll</HintPath>
-    </Reference>
     <Reference Include="dnlib">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.code-philosophy.hybridclr@d505624c78e6\Plugins\dnlib.dll</HintPath>
     </Reference>
@@ -198,15 +187,6 @@
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
       <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
-    <Reference Include="DnsClient">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\MongoDB\DnsClient.dll</HintPath>
-    </Reference>
-    <Reference Include="MongoDB.Libmongocrypt">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\MongoDB\MongoDB.Libmongocrypt.dll</HintPath>
-    </Reference>
-    <Reference Include="MongoDB.Driver">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\MongoDB\MongoDB.Driver.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Android.Types">
       <HintPath>G:\Unity\Editor\Data\PlaybackEngines\AndroidPlayer\Unity.Android.Types.dll</HintPath>

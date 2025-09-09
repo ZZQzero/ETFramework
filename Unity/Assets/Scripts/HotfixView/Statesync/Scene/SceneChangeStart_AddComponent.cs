@@ -21,6 +21,7 @@ namespace ET.Client
                 //await SceneManager.LoadSceneAsync(currentScene.Name);
 
                 currentScene.AddComponent<OperaComponent>();
+                Log.Error("SceneChangeStart 切换到map场景");
             }
             catch (Exception e)
             {

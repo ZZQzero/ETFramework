@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace ET
 {
-    public class PackagesLock
+    /*public class PackagesLock
     {
         [BsonIgnore]
         public string unityDir;
@@ -28,7 +27,7 @@ namespace ET
         public string url;
         public string dir;
         public Dictionary<string, string> dependencies = new();
-    }
+    }*/
     
     public static class PackageHelper
     {

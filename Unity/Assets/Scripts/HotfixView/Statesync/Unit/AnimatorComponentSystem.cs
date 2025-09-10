@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace ET.Client
+namespace ET
 {
 	[EntitySystemOf(typeof(AnimatorComponent))]
 	public static partial class AnimatorComponentSystem

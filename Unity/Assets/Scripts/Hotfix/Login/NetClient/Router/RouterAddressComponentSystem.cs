@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using MemoryPack;
 
-namespace ET.Client
+namespace ET
 {
     [EntitySystemOf(typeof(RouterAddressComponent))]
     public static partial class RouterAddressComponentSystem

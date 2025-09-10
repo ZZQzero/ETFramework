@@ -1,4 +1,4 @@
-﻿namespace ET.Client
+﻿namespace ET
 {
 	[MessageHandler(SceneType.StateSync)]
 	public class M2C_RemoveUnitsHandler: MessageHandler<Scene, M2C_RemoveUnits>

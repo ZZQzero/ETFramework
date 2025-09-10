@@ -1,6 +1,6 @@
 using Unity.Mathematics;
 
-namespace ET.Client
+namespace ET
 {
     public class AI_XunLuo: AAIHandler
     {

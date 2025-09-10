@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 
-namespace ET.Client
+namespace ET
 {
     [EntitySystemOf(typeof(RouterConnector))]
     public static partial class RouterConnectorSystem

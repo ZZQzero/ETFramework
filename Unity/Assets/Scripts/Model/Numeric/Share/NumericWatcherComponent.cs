@@ -20,45 +20,47 @@ namespace ET
     /// </summary>
     public class NumericWatcherComponent : Singleton<NumericWatcherComponent>, ISingletonAwake
     {
-        private readonly Dictionary<int, List<NumericWatcherInfo>> allWatchers = new();
-        
+        private readonly Dictionary<int, List<NumericWatcherInfo>> _allWatchers = new();
+
         public void Awake()
         {
-            HashSet<Type> types = CodeTypes.Instance.GetTypes(typeof(NumericWatcherAttribute));
-            foreach (Type type in types)
-            {
-                object[] attrs = type.GetCustomAttributes(typeof(NumericWatcherAttribute), false);
-
-                foreach (object attr in attrs)
-                {
-                    NumericWatcherAttribute numericWatcherAttribute = (NumericWatcherAttribute)attr;
-                    INumericWatcher obj = (INumericWatcher)Activator.CreateInstance(type);
-                    NumericWatcherInfo numericWatcherInfo = new(numericWatcherAttribute.SceneType, obj);
-                    if (!this.allWatchers.ContainsKey(numericWatcherAttribute.NumericType))
-                    {
-                        this.allWatchers.Add(numericWatcherAttribute.NumericType, new List<NumericWatcherInfo>());
-                    }
-                    this.allWatchers[numericWatcherAttribute.NumericType].Add(numericWatcherInfo);
-                }
-            }
         }
-        
+
+        /// <summary>
+        /// 注册数值
+        /// </summary>
+        public void RegisterNumeric<T>(int numericType, int sceneType) where T : INumericWatcher, new()
+        {
+            var obj = new T();
+            var watcherInfo = new NumericWatcherInfo(sceneType, obj);
+
+            if (!_allWatchers.TryGetValue(numericType, out var list))
+            {
+                list = new List<NumericWatcherInfo>();
+                _allWatchers[numericType] = list;
+            }
+
+            list.Add(watcherInfo);
+        }
+
+        /// <summary>
+        /// 分发事件
+        /// </summary>
         public void Run(Unit unit, NumbericChange args)
         {
-            List<NumericWatcherInfo> list;
-            if (!this.allWatchers.TryGetValue(args.NumericType, out list))
+            if (!this._allWatchers.TryGetValue(args.NumericType, out var list))
             {
                 return;
             }
 
             int unitDomainSceneType = unit.IScene.SceneType;
-            foreach (NumericWatcherInfo numericWatcher in list)
+            foreach (NumericWatcherInfo watcher in list)
             {
-                if (!SceneTypeSingleton.IsSame(numericWatcher.SceneType, unitDomainSceneType))
+                if (!SceneTypeSingleton.IsSame(watcher.SceneType, unitDomainSceneType))
                 {
                     continue;
                 }
-                numericWatcher.INumericWatcher.Run(unit, args);
+                watcher.INumericWatcher.Run(unit, args);
             }
         }
     }

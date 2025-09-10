@@ -1,4 +1,4 @@
-﻿namespace ET.Client
+﻿namespace ET
 {
     [EntitySystemOf(typeof(ClientSessionErrorComponent))]
     public static partial class ClientSessionErrorComponentSystem

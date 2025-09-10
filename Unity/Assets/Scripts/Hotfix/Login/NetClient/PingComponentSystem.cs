@@ -1,6 +1,6 @@
 using System;
 
-namespace ET.Client
+namespace ET
 {
     [EntitySystemOf(typeof(PingComponent))]
     public static partial class PingComponentSystem

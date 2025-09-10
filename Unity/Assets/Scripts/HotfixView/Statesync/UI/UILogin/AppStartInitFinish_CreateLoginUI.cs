@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using GameUI;
+using UnityEngine;
 
-namespace ET.Client
+namespace ET
 {
 	[Event(SceneType.StateSync)]
 	public class AppStartInitFinish_CreateLoginUI: AEvent<Scene, AppStartInitFinish>
@@ -8,7 +9,8 @@ namespace ET.Client
 		protected override async ETTask Run(Scene root, AppStartInitFinish args)
 		{
 			Debug.LogError("AppStartInitFinish_CreateLoginUI");
-			await UIHelper.Create(root, UIType.UILogin, UILayer.Mid);
+			//await UIHelper.Create(root, UIType.UILogin, UILayer.Mid);
+			await GameUIManager.Instance.OpenUI(GameUIName.UILogin, root);
 		}
 	}
 }

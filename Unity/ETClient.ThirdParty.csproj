@@ -288,8 +288,8 @@
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Recast\RcHeightPatch.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour\IDtPolyQuery.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Recast\RcCompactCell.cs" />
-    <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour.Extras\Jumplink\PolyQueryInvoker.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Recast\ObjImporter.cs" />
+    <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour.Extras\Jumplink\PolyQueryInvoker.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour.TileCache\ObstacleRequestAction.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour.TileCache\Io\Compress\DtTileCacheCompressorFactory.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Core\RcHashCodes.cs" />

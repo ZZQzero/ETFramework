@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using Unity.Mathematics;
 
-namespace ET.Client
+namespace ET
 {
     public static partial class MoveHelper
     {

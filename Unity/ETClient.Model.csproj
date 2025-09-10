@@ -74,8 +74,8 @@
     <Compile Include="Assets\Scripts\Model\Unit\Share\UnitComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\AIConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Move\Share\MoveComponent.cs" />
-    <Compile Include="Assets\Scripts\Model\Login\Client\LoginEvent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLockComponent.cs" />
+    <Compile Include="Assets\Scripts\Model\AI\Share\AIDispatcherSingle.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbStartProcessConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\Session.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\ErrorCode.cs" />
@@ -164,7 +164,6 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\UnitConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\IMHandler.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\StartConfigPartial\StartProcessConfig.cs" />
-    <Compile Include="Assets\Scripts\Model\AI\Share\AIDispatcherComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\DB\PackageType.cs" />
     <None Include="Assets\Scripts\Model\ETClient.Model.asmdef" />
     <Reference Include="nunit.framework">

@@ -1,4 +1,4 @@
-﻿namespace ET.Client
+﻿namespace ET
 {
     [Invoke(SceneType.Robot)]
     public class FiberInit_Robot: AInvokeHandler<FiberInit, ETTask>

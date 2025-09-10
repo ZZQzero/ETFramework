@@ -1,4 +1,4 @@
-﻿namespace ET.Client
+﻿namespace ET
 {
     public struct Wait_SceneChangeFinish: IWaitType
     {

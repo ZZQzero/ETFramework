@@ -12,6 +12,8 @@ namespace ET
             GameRegister.RegisterInvoke();
             GameRegister.RegisterMessage();
             GameRegister.RegisterMessageSession();
+            GameRegister.RegisterAI();
+            GameRegister.RegisterEntitySystem();
             Entry.Start();
             /*int n = 1000000;
 

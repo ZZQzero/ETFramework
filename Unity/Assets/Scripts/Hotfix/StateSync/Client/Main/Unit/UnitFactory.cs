@@ -1,6 +1,6 @@
 ﻿using Unity.Mathematics;
 
-namespace ET.Client
+namespace ET
 {
     public static partial class UnitFactory
     {

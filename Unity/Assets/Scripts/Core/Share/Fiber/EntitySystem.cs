@@ -22,7 +22,7 @@ namespace ET
         {
             Type type = component.GetType();
 
-            TypeSystems.OneTypeSystems oneTypeSystems = EntitySystemSingleton.Instance.TypeSystems.GetOneTypeSystems(type);
+            TypeSystems.OneTypeSystems oneTypeSystems = EntitySystemSingleton.TypeSystems.GetOneTypeSystems(type);
             if (oneTypeSystems == null)
             {
                 return;
@@ -57,7 +57,7 @@ namespace ET
                 }
                 try
                 {
-                    List<SystemObject> systems = EntitySystemSingleton.Instance.TypeSystems.GetSystems(component.GetType(), systemType);
+                    List<SystemObject> systems = EntitySystemSingleton.TypeSystems.GetSystems(component.GetType(), systemType);
                     if (systems == null)
                     {
                         continue;

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 
-namespace ET.Client
+namespace ET
 {
     public static partial class RouterHelper
     {

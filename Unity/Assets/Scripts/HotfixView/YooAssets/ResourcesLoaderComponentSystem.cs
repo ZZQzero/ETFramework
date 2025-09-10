@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using YooAsset;
 
-namespace ET.Client
+namespace ET
 {
     [EntitySystemOf(typeof(ResourcesLoaderComponent))]
     public static partial class ResourcesLoaderComponentSystem

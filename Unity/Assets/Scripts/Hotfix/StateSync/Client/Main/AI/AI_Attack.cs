@@ -1,4 +1,4 @@
-namespace ET.Client
+namespace ET
 {
     public class AI_Attack: AAIHandler
     {

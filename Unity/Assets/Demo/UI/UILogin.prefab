@@ -88,7 +88,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 224438795553994780}
-  - component: {fileID: 6577578112327576355}
+  - component: {fileID: 2714445701061781044}
   m_Layer: 5
   m_Name: UILogin
   m_TagString: Untagged
@@ -116,7 +116,7 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &6577578112327576355
+--- !u!114 &2714445701061781044
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -125,16 +125,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1386170326414932}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af073eaea61bcb94c921fae589dbea40, type: 3}
+  m_Script: {fileID: 11500000, guid: 0650809d6ffd8e74d8ddb6466855ce0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  data:
-  - key: LoginBtn
-    gameObject: {fileID: 1920061237828514}
-  - key: Password
-    gameObject: {fileID: 1568484768885604}
-  - key: Account
-    gameObject: {fileID: 1670632076201042}
+  GameUILayer: 1
+  GameUIMode: 0
+  accountInputField: {fileID: 114341495829030012}
+  passwordInputField: {fileID: 114663064108016614}
+  loginBtnButton: {fileID: 114630311973242952}
 --- !u!1 &1568484768885604
 GameObject:
   m_ObjectHideFlags: 0
@@ -148,7 +146,7 @@ GameObject:
   - component: {fileID: 114107327146574444}
   - component: {fileID: 114663064108016614}
   m_Layer: 5
-  m_Name: Password
+  m_Name: '@Password'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -294,7 +292,7 @@ GameObject:
   - component: {fileID: 114899069937167200}
   - component: {fileID: 114341495829030012}
   m_Layer: 5
-  m_Name: Account
+  m_Name: '@Account'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -519,7 +517,7 @@ GameObject:
   - component: {fileID: 114719520540637998}
   - component: {fileID: 114630311973242952}
   m_Layer: 5
-  m_Name: LoginBtn
+  m_Name: '@LoginBtn'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

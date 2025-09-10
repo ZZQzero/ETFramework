@@ -1,4 +1,4 @@
-﻿namespace ET.Client
+﻿namespace ET
 {
     [MessageHandler(SceneType.All)]
     public class NetClient2Main_SessionDisposeHandler: MessageHandler<Scene, NetClient2Main_SessionDispose>

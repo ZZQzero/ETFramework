@@ -1,4 +1,4 @@
-﻿namespace ET.Client
+﻿namespace ET
 {
     public static partial class UnitHelper
     {
@@ -6,13 +6,15 @@
         {
             PlayerComponent playerComponent = root.GetComponent<PlayerComponent>();
             Scene currentScene = root.GetComponent<CurrentScenesComponent>().Scene;
-            return currentScene.GetComponent<UnitComponent>().Get(playerComponent.MyId);
+            //return currentScene.GetComponent<UnitComponent>().Get(playerComponent.MyId);
+            return null;
         }
         
         public static Unit GetMyUnitFromCurrentScene(Scene currentScene)
         {
             PlayerComponent playerComponent = currentScene.Root().GetComponent<PlayerComponent>();
-            return currentScene.GetComponent<UnitComponent>().Get(playerComponent.MyId);
+            //return currentScene.GetComponent<UnitComponent>().Get(playerComponent.MyId);
+            return null;
         }
     }
 }

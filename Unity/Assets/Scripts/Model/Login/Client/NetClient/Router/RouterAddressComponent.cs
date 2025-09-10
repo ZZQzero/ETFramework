@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 
-namespace ET.Client
+namespace ET
 {
     [ComponentOf(typeof(Scene))]
     public class RouterAddressComponent: Entity, IAwake<string>

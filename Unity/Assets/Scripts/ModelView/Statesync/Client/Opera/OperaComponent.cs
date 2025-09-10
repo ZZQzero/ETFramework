@@ -2,7 +2,7 @@
 
 using UnityEngine;
 
-namespace ET.Client
+namespace ET
 {
 	[ComponentOf(typeof(Scene))]
 	public class OperaComponent: Entity, IAwake, IUpdate

@@ -1,4 +1,8 @@
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 using System.Threading;
 using UnityEditor;
 using UnityEditor.Build.Player;
@@ -65,7 +69,7 @@ namespace ET
                 return;
             }
 
-            CopyHotUpdateDlls();
+            //CopyHotUpdateDlls();
             
             Log.Info($"Compile Finish!");
         }
@@ -123,6 +127,73 @@ namespace ET
             }
 
             AssetDatabase.Refresh();
+        }
+        
+        [MenuItem("ET/Loader/生成EntitySystem注册代码")]
+        public static void Generate()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("//-----------自动生成------------");
+            sb.AppendLine("namespace ET");
+            sb.AppendLine("{");
+            sb.AppendLine("    public static partial class GameRegister");
+            sb.AppendLine("    {");
+            sb.AppendLine("        public static void RegisterEntitySystem()");
+            sb.AppendLine("        {");
+
+            // 遍历 DLL
+            var dllFiles = Directory.GetFiles(Define.BuildOutputDir, "*.dll", SearchOption.AllDirectories);
+            Dictionary<string, string> curPath = new();
+            foreach (var path in dllFiles)
+            {
+                var fileName = Path.GetFileName(path);
+                for (int i = 0; i < DllNames.Length; i++)
+                {
+                    if (fileName.Contains("ETClient"))
+                    {
+                        curPath.TryAdd(fileName, path);
+                    }
+                }
+            }
+            foreach (var dllPath in curPath)
+            {
+                var assembly = Assembly.LoadFile(Path.GetFullPath(dllPath.Value));
+                foreach (var type in assembly.GetTypes())
+                {
+                    // 排除 abstract 类、接口
+                    if (type.IsAbstract || type.IsInterface)
+                    {
+                        continue;
+                    }
+
+                    // 找到标记 [EntitySystem] 的类
+                    var hasAttr = type.GetCustomAttributes(false).Any(a => a.GetType().Name == "EntitySystemAttribute");
+                    if (!hasAttr)
+                    {
+                        continue;
+                    }
+
+                    // 修正内部类名称，用 . 替代 +
+                    var typeName = type.FullName.Replace('+', '.');
+                    sb.AppendLine($"            EntitySystemSingleton.RegisterEntitySystem<{typeName}>();");
+                }
+            }
+
+            sb.AppendLine("        }");
+            sb.AppendLine("    }");
+            sb.AppendLine("}");
+
+            // 保存到文件
+            var dir = Path.GetDirectoryName(Define.EntitySystemRegisterDir);
+            if (!Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            File.WriteAllText(Define.EntitySystemRegisterDir, sb.ToString(), Encoding.UTF8);
+            AssetDatabase.Refresh();
+
+            Debug.Log($"EntitySystemRegisterAll generated at {Define.EntitySystemRegisterDir}");
         }
     }
 }

@@ -4,7 +4,7 @@ namespace ET
 {
     [EntitySystemOf(typeof(AIComponent))]
     [FriendOf(typeof(AIComponent))]
-    [FriendOf(typeof(AIDispatcherComponent))]
+    [FriendOf(typeof(AIDispatcherSingle))]
     public static partial class AIComponentSystem
     {
         [EntitySystem]
@@ -37,7 +37,7 @@ namespace ET
             foreach (AIConfig aiConfig in oneAI)
             {
 
-                AAIHandler aaiHandler = AIDispatcherComponent.Instance.Get(aiConfig.Name);
+                AAIHandler aaiHandler = AIDispatcherSingle.Instance.Get(aiConfig.Name);
 
                 if (aaiHandler == null)
                 {

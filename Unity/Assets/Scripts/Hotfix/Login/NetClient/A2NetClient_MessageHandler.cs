@@ -1,4 +1,4 @@
-﻿namespace ET.Client
+﻿namespace ET
 {
     [MessageHandler(SceneType.NetClient)]
     public class A2NetClient_MessageHandler: MessageHandler<Scene, A2NetClient_Message>

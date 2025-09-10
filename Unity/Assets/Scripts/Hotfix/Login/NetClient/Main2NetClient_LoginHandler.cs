@@ -2,7 +2,7 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace ET.Client
+namespace ET
 {
     [MessageHandler(SceneType.NetClient)]
     public class Main2NetClient_LoginHandler: MessageHandler<Scene, Main2NetClient_Login, NetClient2Main_Login>

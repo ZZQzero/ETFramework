@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ET.Client
+namespace ET
 {
     [EntitySystemOf(typeof(OperaComponent))]
     public static partial class OperaComponentSystem

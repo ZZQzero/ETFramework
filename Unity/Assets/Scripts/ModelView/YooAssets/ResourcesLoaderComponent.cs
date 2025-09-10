@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using YooAsset;
 
-namespace ET.Client
+namespace ET
 {
     /// <summary>
     /// 用来管理资源，生命周期跟随Parent，比如CurrentScene用到的资源应该用CurrentScene的ResourcesLoaderComponent来加载

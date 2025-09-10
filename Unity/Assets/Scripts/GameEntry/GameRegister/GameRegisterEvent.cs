@@ -1,4 +1,4 @@
-﻿using ET.Client;
+﻿using ET;
 #if DOTNET
 using ET.Server;
 #endif

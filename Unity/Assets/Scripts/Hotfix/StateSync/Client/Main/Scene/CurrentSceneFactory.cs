@@ -1,4 +1,4 @@
-namespace ET.Client
+namespace ET
 {
     public static class CurrentSceneFactory
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ET.Client
+namespace ET
 {
     [EntitySystemOf(typeof(GameObjectComponent))]
     public static partial class GameObjectComponentSystem

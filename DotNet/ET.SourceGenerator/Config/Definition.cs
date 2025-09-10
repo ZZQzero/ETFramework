@@ -38,7 +38,7 @@ namespace ET
 
         public const string ETTaskCompleteTask = "ETTask.CompletedTask";
 
-        public const string ETClientNameSpace = "ET.Client";
+        public const string ETClientNameSpace = "ET";
 
         public const string ClientDirInServer = @"Unity\Assets\Scripts\Hotfix\";
 

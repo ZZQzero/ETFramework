@@ -1,4 +1,4 @@
-﻿namespace ET.Client
+﻿namespace ET
 {
     [ChildOf(typeof(NetComponent))]
     public class RouterConnector: Entity, IAwake, IDestroy

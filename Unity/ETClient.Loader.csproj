@@ -65,7 +65,7 @@
     <Compile Include="Assets\Scripts\Loader\ResourceLoad\StreamingAssetsHelper\StreamingAssetsHelper.cs" />
     <Compile Include="Assets\Scripts\Loader\Client\UnityLogInvoke.cs" />
     <Compile Include="Assets\Scripts\Loader\ReferenceCollector\ReferenceCollector.cs" />
-    <Compile Include="Assets\Scripts\Loader\ResourceLoad\UI\GameUIName.cs" />
+    <Compile Include="Assets\Scripts\Loader\ResourceLoad\UI\GameUIName1.cs" />
     <Compile Include="Assets\Scripts\Loader\ResourceLoad\UI\PatchPanelPanel.cs" />
     <Compile Include="Assets\Scripts\Loader\ResourceLoad\ResourcesComponent.cs" />
     <Compile Include="Assets\Scripts\Loader\Client\Define.cs" />

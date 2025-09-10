@@ -1,6 +1,6 @@
 using Unity.Mathematics;
 
-namespace ET.Client
+namespace ET
 {
     [ComponentOf(typeof(Unit))]
     public class XunLuoPathComponent: Entity, IAwake

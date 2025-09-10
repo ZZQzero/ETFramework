@@ -48,23 +48,12 @@
     <Analyzer Include="G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.cysharp.memorypack@a2ba73829fea\Runtime\MemoryPack.Generator\MemoryPack.Generator.Roslyn3.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\ModelView\GameUI\UIScript\GameUIName.cs" />
     <Compile Include="Assets\Scripts\ModelView\Statesync\Client\Unit\AnimatorComponent.cs" />
-    <Compile Include="Assets\Scripts\ModelView\Statesync\Client\UI\UILoading\UILoadingComponent.cs" />
-    <Compile Include="Assets\Scripts\ModelView\Statesync\Client\UI\UILobby\UILobbyComponent.cs" />
-    <Compile Include="Assets\Scripts\ModelView\UI\UIEventAttribute.cs" />
-    <Compile Include="Assets\Scripts\ModelView\Statesync\Client\UI\UIHelp\UIHelpComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\YooAssets\ResourcesLoaderComponent.cs" />
-    <Compile Include="Assets\Scripts\ModelView\UI\UIComponent.cs" />
-    <Compile Include="Assets\Scripts\ModelView\Statesync\Client\UI\UILogin\UILoginComponent.cs" />
-    <Compile Include="Assets\Scripts\ModelView\UI\UI.cs" />
-    <Compile Include="Assets\Scripts\ModelView\UI\UIEventComponent.cs" />
-    <Compile Include="Assets\Scripts\ModelView\UI\LayerNames.cs" />
     <Compile Include="Assets\Scripts\ModelView\Statesync\Client\Opera\OperaComponent.cs" />
-    <Compile Include="Assets\Scripts\ModelView\Statesync\Client\UI\UIType.cs" />
     <Compile Include="Assets\Scripts\ModelView\Statesync\Client\Unit\GameObjectComponent.cs" />
-    <Compile Include="Assets\Scripts\ModelView\UI\UIGlobalComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\Loader\GlobalComponent.cs" />
-    <Compile Include="Assets\Scripts\ModelView\UI\AUIEvent.cs" />
     <None Include="Assets\Scripts\ModelView\ETClient.ModelView.asmdef" />
     <Reference Include="UnityEngine">
       <HintPath>G:\Unity\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>

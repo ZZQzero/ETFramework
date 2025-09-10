@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ET.Client
+namespace ET
 {
     [ComponentOf(typeof(Unit))]
     public class GameObjectComponent: Entity, IAwake, IDestroy

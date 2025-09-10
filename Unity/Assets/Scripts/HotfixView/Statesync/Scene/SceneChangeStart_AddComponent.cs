@@ -1,7 +1,7 @@
 using System;
 using UnityEngine.SceneManagement;
 
-namespace ET.Client
+namespace ET
 {
     [Event(SceneType.StateSync)]
     public class SceneChangeStart_AddComponent: AEvent<Scene, SceneChangeStart>

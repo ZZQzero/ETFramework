@@ -11,6 +11,10 @@
         /// VS或Rider工程生成dll的所在目录, 使用HybridCLR打包时需要使用
         /// </summary>
         public const string BuildOutputDir = "Temp/Bin/Debug";
+        /// <summary>
+        /// EntitySystem注册代码路径
+        /// </summary>
+        public const string EntitySystemRegisterDir = "Assets/Scripts/GameEntry/GameRegister/GameRegisterEventSystem.cs";
 
 #if DEBUG
         public static bool IsDebug = true;

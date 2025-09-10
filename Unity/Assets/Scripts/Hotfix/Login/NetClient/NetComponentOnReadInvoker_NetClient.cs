@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ET.Client
+namespace ET
 {
     [Invoke(SceneType.NetClient)]
     public class NetComponentOnReadInvoker_NetClient: AInvokeHandler<NetComponentOnRead>

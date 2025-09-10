@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace ET.Client
+namespace ET
 {
     [Event(SceneType.Current)]
     public class AfterUnitCreate_CreateUnitView: AEvent<Scene, AfterUnitCreate>

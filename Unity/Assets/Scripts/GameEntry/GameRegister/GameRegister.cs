@@ -1,5 +1,5 @@
 ﻿using System;
-using ET.Client;
+using ET;
 #if DOTNET
 using ET.Server;
 #endif
@@ -10,7 +10,7 @@ namespace ET
     {
         public static void RegisterSingleton()
         {
-            World.Instance.AddSingleton<CodeTypes>();
+            //World.Instance.AddSingleton<CodeTypes>();
             World.Instance.AddSingleton<TableConfigManager>();
             World.Instance.AddSingleton<SceneTypeSingleton, Type>(typeof(SceneType));
             World.Instance.AddSingleton<ObjectPool>();
@@ -35,10 +35,9 @@ namespace ET
             World.Instance.AddSingleton<EntitySystemSingleton>();
             World.Instance.AddSingleton<MessageSessionDispatcher>();
             World.Instance.AddSingleton<MessageDispatcher>();
-            World.Instance.AddSingleton<AIDispatcherComponent>();
+            World.Instance.AddSingleton<AIDispatcherSingle>();
             World.Instance.AddSingleton<NumericWatcherComponent>();
 #if UNITY
-            World.Instance.AddSingleton<UIEventComponent>();
 #endif
 
 #if DOTNET

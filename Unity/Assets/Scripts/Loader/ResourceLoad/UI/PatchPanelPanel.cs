@@ -58,7 +58,7 @@ namespace GameUI
 				{
 					ResourcesComponent.Instance.BeginDownload(_downloader,OnDownLoadFinish,OnDownloadProgress,OnDownError);
 				};
-				GameUIManager.Instance.OpenUI(GameUIName.MessageBoxPanel, messageBoxData);
+				GameUIManager.Instance.OpenUI(GameUIName1.MessageBoxPanel, messageBoxData);
 			}
 		}
 
@@ -66,7 +66,7 @@ namespace GameUI
 		{
 			MessageBoxData messageBoxData = new MessageBoxData();
 			messageBoxData.Content = $"下载失败，{data.FileName} , {data.ErrorInfo}";
-			GameUIManager.Instance.OpenUI(GameUIName.MessageBoxPanel, messageBoxData).Forget();
+			GameUIManager.Instance.OpenUI(GameUIName1.MessageBoxPanel, messageBoxData).Forget();
 		}
 
 		private void OnDownloadProgress(DownloadUpdateData data)
@@ -90,7 +90,7 @@ namespace GameUI
 		private void ChangeScene()
 		{
 			YooAssets.LoadSceneAsync("scene_home");
-			GameUIManager.Instance.OpenUI(GameUIName.UIHome,null).Forget();
+			GameUIManager.Instance.OpenUI(GameUIName1.UIHome,null).Forget();
 			CloseSelf();
 		}
 

@@ -132,7 +132,9 @@ namespace ET
                 return;
             }
 
-            using ListComponent<ETTask> list = ListComponent<ETTask>.Create();
+            //TODO 
+            //using ListComponent<ETTask> list = ListComponent<ETTask>.Create();
+            List<ETTask> list = new List<ETTask>();
             
             foreach (EventInfo eventInfo in iEvents)
             {

@@ -106,14 +106,12 @@
     <Compile Include="Assets\Scripts\Core\Share\Network\AService.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\InvokeAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Method\IStaticMethod.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\World\ObjectPool\ObjectFastPool.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\ResponseTypeAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\ActorId.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\BaseAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\RandomGenerator.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\IUpdateSystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\Kcp\KcpPatial.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\HashSetComponent.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ErrorCore.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Config\ConfigProcessAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\TService.cs" />
@@ -176,6 +174,7 @@
     <Compile Include="Assets\Scripts\Core\Share\Method\StaticMethod.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\OpcodeRangeDefine.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Object\HandlerObject.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\World\ObjectPool\ObjectPool1.cs" />
     <None Include="Assets\Scripts\Core\ETClient.Core.asmdef" />
     <Reference Include="UnityEngine">
       <HintPath>G:\Unity\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>

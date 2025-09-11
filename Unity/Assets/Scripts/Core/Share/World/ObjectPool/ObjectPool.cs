@@ -1,129 +1,138 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace ET
 {
-    public class ObjectPool: Singleton<ObjectPool>, ISingletonAwake
+    public class ObjectPool : Singleton<ObjectPool> ,ISingletonAwake
     {
-        private ConcurrentDictionary<Type, Pool> objPool;
-
-        private readonly Func<Type, Pool> AddPoolFunc = type => new Pool(type, 1000);
-
         public void Awake()
         {
-            objPool = new ConcurrentDictionary<Type, Pool>();
-        }
-
-        public static T Fetch<T>(bool isFromPool = true) where T : class, IPool
-        {
-            return Fetch(typeof (T), isFromPool) as T;
-        }
-
-        // 这里改成静态方法，主要为了兼容Unity Editor模式下没有初始化ObjectPool的情况
-        public static object Fetch(Type type, bool isFromPool = true)
-        {
-            if (Instance == null)
-            {
-                return Activator.CreateInstance(type);
-            }
             
+        }
+        private static class PoolHolder<T> where T : class, IPool, new()
+        {
+            // 视负载调整：capacity/fastSlotsCount
+            [StaticField]
+            public static readonly Pool<T> Instance = new Pool<T>(capacity: 200, fastSlotsCount: 16);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T Fetch<T>(bool isFromPool = true) where T : class, IPool, new()
+        {
             if (!isFromPool)
             {
-                return Activator.CreateInstance(type);
+                var fresh = new T();
+                fresh.IsFromPool = false;
+                return fresh;
             }
-            
-            Pool pool = Instance.GetPool(type);
-            object obj = pool.Get();
-            if (obj is IPool p)
-            {
-                p.IsFromPool = true;
-            }
-            return obj;
-        }
+            return PoolHolder<T>.Instance.Get();
+        } 
 
-        public static void Recycle<T>(ref T obj) where T : class, IPool
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Recycle<T>(T obj) where T : class, IPool, new()
         {
-            Recycle(obj);
-            obj = default;
+            if (obj == null) return;
+            PoolHolder<T>.Instance.Return(obj);
         }
-
-        public static void Recycle(object obj)
+        
+        // —— 池实现：FastSlots（无锁） + 环形缓冲区（锁保护） —— //
+        private class Pool<T> where T : class, IPool, new()
         {
-            if (Instance == null)
+            private readonly T[] buffer;
+            private readonly int capacity;
+            private int head; // 写入位置（受锁保护）
+            private int tail; // 读取位置（受锁保护）
+            private int count; // 当前数量（锁内）
+            private readonly object _sync = new object();
+            private readonly T[] fastSlots;// 一级缓存（无锁，减少锁竞争）
+
+            public Pool(int capacity, int fastSlotsCount)
             {
-                return;
+                if (capacity <= 0)
+                {
+                    capacity = 1;
+                }
+
+                if (fastSlotsCount <= 0)
+                {
+                    fastSlotsCount = 1;
+                }
+
+                this.capacity = capacity;
+                this.buffer = new T[capacity];
+                this.fastSlots = new T[fastSlotsCount];
             }
-            
-            if (obj is IPool p)
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public T Get()
             {
-                if (!p.IsFromPool)
+                // 1) FastSlots：无锁快路
+                for (int i = 0; i < fastSlots.Length; i++)
+                {
+                    var inst = Interlocked.Exchange(ref fastSlots[i], null);
+                    if (inst != null)
+                    {
+                        inst.IsFromPool = true;
+                        return inst;
+                    }
+                }
+
+                // 2) 环形缓冲区（锁内保证 head/tail/count 一致性）
+                lock (_sync)
+                {
+                    if (count > 0)
+                    {
+                        var inst = buffer[tail];
+                        buffer[tail] = null;
+                        tail = (tail + 1) % capacity;
+                        count--;
+                        inst.IsFromPool = true;
+                        return inst;
+                    }
+                }
+
+                // 3) 最后：新建
+                var created = new T();
+                created.IsFromPool = true;
+                return created;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Return(T obj)
+            {
+                // 防御：空或非池对象直接忽略
+                if (obj == null || !obj.IsFromPool)
                 {
                     return;
                 }
 
-                // 防止多次入池
-                p.IsFromPool = false;
-            }
+                // 约定：Recycle 后引用不可再用，因此先复位标志，再 Reset
+                obj.IsFromPool = false;
+                obj.Reset(); // 池中保持干净对象
 
-            Type type = obj.GetType();
-            Pool pool = Instance.GetPool(type);
-            pool.Return(obj);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private Pool GetPool(Type type)
-        {
-            return this.objPool.GetOrAdd(type, AddPoolFunc);
-        }
-
-        /// <summary>
-        /// 线程安全的无锁对象池
-        /// </summary>
-        private class Pool
-        {
-            private readonly Type ObjectType;
-            private readonly int MaxCapacity;
-            private int NumItems;
-            private readonly ConcurrentQueue<object> _items = new();
-            private object FastItem;
-
-            public Pool(Type objectType, int maxCapacity)
-            {
-                ObjectType = objectType;
-                MaxCapacity = maxCapacity;
-            }
-
-            public object Get()
-            {
-                object item = FastItem;
-                if (item == null || Interlocked.CompareExchange(ref FastItem, null, item) != item)
+                // 1) 尝试放入 FastSlots（无锁，低冲突）
+                for (int i = 0; i < fastSlots.Length; i++)
                 {
-                    if (_items.TryDequeue(out item))
+                    if (Interlocked.CompareExchange(ref fastSlots[i], obj, null) == null)
                     {
-                        Interlocked.Decrement(ref NumItems);
-                        return item;
-                    }
-
-                    return Activator.CreateInstance(this.ObjectType);
-                }
-
-                return item;
-            }
-
-            public void Return(object obj)
-            {
-                if (FastItem != null || Interlocked.CompareExchange(ref FastItem, obj, null) != null)
-                {
-                    if (Interlocked.Increment(ref NumItems) <= MaxCapacity)
-                    {
-                        _items.Enqueue(obj);
                         return;
                     }
-
-                    Interlocked.Decrement(ref NumItems);
                 }
+
+                // 2) 放入环形缓冲区（锁内维护）
+                lock (_sync)
+                {
+                    if (count < capacity)
+                    {
+                        buffer[head] = obj;
+                        head = (head + 1) % capacity;
+                        count++;
+                        return;
+                    }
+                }
+
+                // 3) 超容量丢弃（如需释放非托管资源，可在这里做 Dispose）
             }
         }
     }

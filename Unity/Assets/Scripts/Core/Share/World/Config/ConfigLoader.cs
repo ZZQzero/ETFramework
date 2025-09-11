@@ -37,7 +37,7 @@ namespace ET
             Dictionary<Type, byte[]> configBytes = await EventSystem.Instance.Invoke<GetAllConfigBytes, ETTask<Dictionary<Type, byte[]>>>(new GetAllConfigBytes());
 
 #if DOTNET || UNITY_STANDALONE
-            using ListComponent<Task> listTasks = ListComponent<Task>.Create();
+            /*using ListComponent<Task> listTasks = ListComponent<Task>.Create();
 
             foreach (Type type in configBytes.Keys)
             {
@@ -46,7 +46,7 @@ namespace ET
                 listTasks.Add(task);
             }
 
-            await Task.WhenAll(listTasks.ToArray());
+            await Task.WhenAll(listTasks.ToArray());*/
 #else
             foreach (Type type in configBytes.Keys)
             {

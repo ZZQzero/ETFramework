@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using MemoryPack;
 
 namespace ET
 {
@@ -27,6 +28,12 @@ namespace ET
             object o = ObjectPool.Fetch(type);
             MemoryPackHelper.Deserialize(type, stream, ref o);
             return o as MessageObject;
+        }
+
+        public static MessageObject Deserialize<T>(MemoryBuffer stream)
+        {
+            var obj = MemoryPackSerializer.Deserialize<T>(stream.GetBuffer());
+            return obj as MessageObject;
         }
         
         public static ushort MessageToStream(MemoryBuffer stream, MessageObject message, int headOffset = 0)

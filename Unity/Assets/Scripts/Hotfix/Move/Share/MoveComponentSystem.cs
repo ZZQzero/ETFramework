@@ -46,7 +46,8 @@ namespace ET
             
             Unit unit = self.GetParent<Unit>();
 
-            using ListComponent<float3> path = ListComponent<float3>.Create();
+            //using ListComponent<float3> path = ListComponent<float3>.Create();
+            List<float3> path = new List<float3>();
             
             self.MoveForward(false);
                 

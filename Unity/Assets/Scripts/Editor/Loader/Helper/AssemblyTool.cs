@@ -23,11 +23,11 @@ namespace ET
         /// </summary>
         public static readonly string[] DllNames = { "ETClient.Hotfix", "ETClient.HotfixView", "ETClient.Model", "ETClient.ModelView" };
 
-        [InitializeOnLoadMethod]
+        /*[InitializeOnLoadMethod]
         static void Initialize()
         {
             unitySynchronizationContext = SynchronizationContext.Current;
-        }
+        }*/
 
         /// <summary>
         /// 菜单和快捷键编译按钮

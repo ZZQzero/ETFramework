@@ -39,7 +39,7 @@ namespace ET
         }
     }
     
-    public abstract class MessageSessionHandler<Request, Response>: HandlerObject, IMessageSessionHandler where Request : MessageObject, IRequest where Response : MessageObject, IResponse
+    public abstract class MessageSessionHandler<Request, Response>: HandlerObject, IMessageSessionHandler where Request : MessageObject, IRequest where Response : MessageObject, IResponse, new()
     {
         protected abstract ETTask Run(Session session, Request request, Response response);
 

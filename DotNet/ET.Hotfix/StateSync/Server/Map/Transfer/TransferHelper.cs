@@ -22,14 +22,14 @@ namespace ET.Server
             
             M2M_UnitTransferRequest request = M2M_UnitTransferRequest.Create();
             request.OldActorId = unit.GetActorId();
-            request.Unit = unit.ToBson();
+            /*request.Unit = unit.ToBson();
             foreach (Entity entity in unit.Components.Values)
             {
                 if (entity is ITransfer)
                 {
                     request.Entitys.Add(entity.ToBson());
                 }
-            }
+            }*/
             unit.Dispose();
             
             await root.GetComponent<LocationProxyComponent>().Lock(LocationType.Unit, unitId, request.OldActorId);

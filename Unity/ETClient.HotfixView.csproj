@@ -72,9 +72,6 @@
     <Compile Include="Assets\Scripts\HotfixView\Statesync\UI\UILogin\AppStartInitFinish_CreateLoginUI.cs" />
     <Compile Include="Assets\Scripts\HotfixView\GameUI\UIScript\UIHelpPanel.cs" />
     <None Include="Assets\Scripts\HotfixView\ETClient.HotfixView.asmdef" />
-    <Reference Include="UniTask">
-      <HintPath>Library\ScriptAssemblies\UniTask.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>G:\Unity\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>
@@ -824,6 +821,9 @@
     </Reference>
     <Reference Include="Unity.Mathematics">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\Unity.Mathematics.dll</HintPath>
+    </Reference>
+    <Reference Include="UniTask">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\UniTask.dll</HintPath>
     </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>

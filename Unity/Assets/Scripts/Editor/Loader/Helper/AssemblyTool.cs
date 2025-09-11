@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -141,23 +142,9 @@ namespace ET
             sb.AppendLine("        public static void RegisterEntitySystem()");
             sb.AppendLine("        {");
 
-            // 遍历 DLL
-            var dllFiles = Directory.GetFiles(Define.BuildOutputDir, "*.dll", SearchOption.AllDirectories);
-            Dictionary<string, string> curPath = new();
-            foreach (var path in dllFiles)
+            var assemblis = AppDomain.CurrentDomain.GetAssemblies();
+            foreach (var assembly in assemblis)
             {
-                var fileName = Path.GetFileName(path);
-                for (int i = 0; i < DllNames.Length; i++)
-                {
-                    if (fileName.Contains("ETClient"))
-                    {
-                        curPath.TryAdd(fileName, path);
-                    }
-                }
-            }
-            foreach (var dllPath in curPath)
-            {
-                var assembly = Assembly.LoadFile(Path.GetFullPath(dllPath.Value));
                 foreach (var type in assembly.GetTypes())
                 {
                     // 排除 abstract 类、接口

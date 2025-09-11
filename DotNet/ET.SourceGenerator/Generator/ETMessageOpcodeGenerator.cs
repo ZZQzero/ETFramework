@@ -285,9 +285,16 @@ namespace ET
             // RequestResponse
             sb.AppendLine("        public static readonly Dictionary<Type, Type> RequestResponse = new Dictionary<Type, Type>");
             sb.AppendLine("        {");
-            foreach (var m in messages.Where(x => x.IsRequest && !string.IsNullOrEmpty(x.ResponseTypeFullName)))
+            foreach (var m in messages)
             {
-                sb.AppendLine($"            {{ typeof({m.TypeFullName}), typeof({m.ResponseTypeFullName}) }},");
+                if (m.IsRequest && !string.IsNullOrEmpty(m.ResponseTypeFullName))
+                {
+                    sb.AppendLine($"            {{ typeof({m.TypeFullName}), typeof({m.ResponseTypeFullName}) }},");
+                }
+                else if (m.IsRequest && string.IsNullOrEmpty(m.ResponseTypeFullName))
+                {
+                    sb.AppendLine($"            {{ typeof({m.TypeFullName}), typeof(ET.MessageResponse) }},");
+                }
             }
             sb.AppendLine("        };");
 

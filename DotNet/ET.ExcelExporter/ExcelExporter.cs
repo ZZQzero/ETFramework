@@ -100,7 +100,7 @@ namespace ET
             try
             {
                 // 强制调用一下mongo，避免mongo库被裁剪
-                MongoHelper.ToJson(1);
+                //MongoHelper.ToJson(1);
                 
                 template = File.ReadAllText("Template.txt");
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;

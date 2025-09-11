@@ -14,7 +14,7 @@
         /// <summary>
         /// EntitySystem注册代码路径
         /// </summary>
-        public const string EntitySystemRegisterDir = "Assets/Scripts/GameEntry/GameRegister/GameRegisterEventSystem.cs";
+        public const string EntitySystemRegisterDir = "Assets/Scripts/GameEntry/GameRegisterEventSystem.cs";
 
 #if DEBUG
         public static bool IsDebug = true;

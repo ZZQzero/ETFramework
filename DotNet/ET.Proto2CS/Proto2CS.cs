@@ -32,7 +32,7 @@ namespace ET
 
         public static void Proto2CS()
         {
-            MongoHelper.ToJson(1);
+            //MongoHelper.ToJson(1);
 
             usedOpcodes.Clear();
             msgOpcode.Clear();

@@ -53,7 +53,6 @@
     <Compile Include="Assets\Scripts\Core\Share\Entity\ITransfer.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Fiber\FiberInit.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Fiber\MainThreadScheduler.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Network\Response.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\EventSystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\KChannel.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Serialize\MemoryPackChildrenCollectionFormatter.cs" />
@@ -151,7 +150,6 @@
     <Compile Include="Assets\Scripts\Core\Share\World\Code\CodeProcessAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\ETCancellationToken.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\ProcessHelper.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\HttpClientHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\StringHashHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\IGetComponentSysSystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\PackageHelper.cs" />

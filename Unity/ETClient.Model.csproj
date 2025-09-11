@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Model\Move\Share\MoveEventType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\StartConfigPartial\StartSceneConfig.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\Message\Response.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageHandlerAttribute.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageDispatcher.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Client\ClientSessionErrorComponent.cs" />

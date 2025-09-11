@@ -31,6 +31,9 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ET.Core\ET.Core.csproj" />
+      <ProjectReference Include="..\ET.Hotfix\ET.Hotfix.csproj" />
+      <ProjectReference Include="..\ET.Loader\ET.Loader.csproj" />
+      <ProjectReference Include="..\ET.Model\ET.Model.csproj" />
     </ItemGroup>
 
     <ItemGroup>

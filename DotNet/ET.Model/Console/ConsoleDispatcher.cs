@@ -9,7 +9,7 @@ namespace ET.Server
         
         public void Awake()
         {
-            HashSet<Type> types = CodeTypes.Instance.GetTypes(typeof (ConsoleHandlerAttribute));
+            /*HashSet<Type> types = CodeTypes.Instance.GetTypes(typeof (ConsoleHandlerAttribute));
 
             foreach (Type type in types)
             {
@@ -29,9 +29,15 @@ namespace ET.Server
                     throw new Exception($"ConsoleHandler handler not inherit IConsoleHandler class: {obj.GetType().FullName}");
                 }
                 this.handlers.Add(consoleHandlerAttribute.Mode, iConsoleHandler);
-            }
+            }*/
         }
 
+        public void RegisterConsole<T>(string model) where T : IConsoleHandler,new()
+        {
+            IConsoleHandler handler = new T();
+            handlers.Add(model, handler);
+        }
+        
         public IConsoleHandler Get(string key)
         {
             return this.handlers[key];

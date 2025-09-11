@@ -26,6 +26,8 @@ namespace ET
             GameRegister.RegisterMessage();
             GameRegister.RegisterHttp();
             GameRegister.RegisterMessageSession();
+            GameRegister.RegisterEntitySystem();
+            GameRegister.RegisterConsole();
             Entry.Start();
             
             while (true)

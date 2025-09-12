@@ -63,8 +63,9 @@ namespace ET
             
             Unit unit = self.GetParent<Unit>();
 
-            using ListComponent<float3> path = ListComponent<float3>.Create();
-            
+            //TODO 后面优化
+            //using ListComponent<float3> path = ListComponent<float3>.Create();
+            List<float3> path = new List<float3>();
             self.MoveForward(false);
                 
             path.Add(unit.Position); // 第一个是Unit的pos

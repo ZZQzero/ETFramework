@@ -6,8 +6,8 @@ namespace ET
     {
         public static IResponse CreateResponse(Type requestType, int rpcId, int error)
         {
-            Type responseType = MessageOpcodeTypeMap.RequestResponse[requestType];
-            IResponse response = (IResponse)ObjectPool.Fetch(responseType);
+            //Type responseType = MessageOpcodeTypeMap.RequestResponse[requestType];
+            IResponse response = MessageOpcodeTypeMap.RequestResponse[requestType]();//(IResponse)ObjectPool.Fetch(responseType);
             response.Error = error;
             response.RpcId = rpcId;
             return response;

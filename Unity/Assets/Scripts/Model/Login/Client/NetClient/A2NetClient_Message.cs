@@ -5,7 +5,7 @@
     {
         public static A2NetClient_Message Create()
         {
-            return ObjectPool.Fetch(typeof(A2NetClient_Message)) as A2NetClient_Message;
+            return ObjectPool.Fetch<A2NetClient_Message>();
         }
 
         public override void Dispose()
@@ -23,7 +23,7 @@
     {
         public static A2NetClient_Request Create()
         {
-            return ObjectPool.Fetch(typeof(A2NetClient_Request)) as A2NetClient_Request;
+            return ObjectPool.Fetch<A2NetClient_Request>();
         }
 
         public override void Dispose()
@@ -42,7 +42,7 @@
     {
         public static A2NetClient_Response Create()
         {
-            return ObjectPool.Fetch(typeof(A2NetClient_Response)) as A2NetClient_Response;
+            return ObjectPool.Fetch<A2NetClient_Response>();
         }
 
         public override void Dispose()
@@ -66,8 +66,9 @@
     {
         public static NetClient2Main_SessionDispose Create()
         {
-            return ObjectPool.Fetch(typeof(NetClient2Main_SessionDispose)) as NetClient2Main_SessionDispose;
+            return ObjectPool.Fetch<NetClient2Main_SessionDispose>();
         }
+        
 
         public override void Dispose()
         {

@@ -16,7 +16,7 @@ namespace ET
             MemoryPackHelper.Serialize(message, stream);
         }
 		
-        public static MessageObject Deserialize(Type type, byte[] bytes, int index, int count)
+        /*public static MessageObject Deserialize(Type type, byte[] bytes, int index, int count)
         {
             object o = ObjectPool.Fetch(type);
             MemoryPackHelper.Deserialize(type, bytes, index, count, ref o);
@@ -28,7 +28,7 @@ namespace ET
             object o = ObjectPool.Fetch(type);
             MemoryPackHelper.Deserialize(type, stream, ref o);
             return o as MessageObject;
-        }
+        }*/
 
         public static MessageObject Deserialize<T>(MemoryBuffer stream)
         {
@@ -75,7 +75,7 @@ namespace ET
         
         public static (ActorId, object) ToMessage(AService service, MemoryBuffer memoryStream)
         {
-            object message = null;
+            MessageObject message = null;
             ActorId actorId = default;
             switch (service.ServiceType)
             {
@@ -83,8 +83,8 @@ namespace ET
                 {
                     memoryStream.Seek(Packet.OpcodeLength, SeekOrigin.Begin);
                     ushort opcode = BitConverter.ToUInt16(memoryStream.GetBuffer(), 0);
-                    Type type = MessageOpcodeTypeMap.OpcodeToType[opcode];
-                    message = Deserialize(type, memoryStream);
+                    //Type type = MessageOpcodeTypeMap.OpcodeToType[opcode];
+                    message = MessageOpcodeTypeMap.OpcodeToMessage[opcode](memoryStream); //Deserialize(type, memoryStream);
                     break;
                 }
                 case ServiceType.Inner:
@@ -95,8 +95,9 @@ namespace ET
                     actorId.Fiber = BitConverter.ToInt32(buffer, Packet.ActorIdIndex + 4);
                     actorId.InstanceId = BitConverter.ToInt64(buffer, Packet.ActorIdIndex + 8);
                     ushort opcode = BitConverter.ToUInt16(buffer, Packet.ActorIdLength);
-                    Type type = MessageOpcodeTypeMap.OpcodeToType[opcode];
-                    message = Deserialize(type, memoryStream);
+                    /*Type type = MessageOpcodeTypeMap.OpcodeToType[opcode];
+                    message = Deserialize(type, memoryStream);*/
+                    message = MessageOpcodeTypeMap.OpcodeToMessage[opcode](memoryStream);
                     break;
                 }
             }

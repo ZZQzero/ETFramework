@@ -41,8 +41,9 @@ namespace ET.Server
 
         private static void Check(this MessageLocationSenderOneType self)
         {
-            using ListComponent<long> list = ListComponent<long>.Create();
-            
+            //TODO 后面看看怎么优化
+            //using ListComponent<long> list = ListComponent<long>.Create();
+            List<long> list = new List<long>();
             long timeNow = TimeInfo.Instance.ServerNow();
             foreach ((long key, Entity value) in self.Children)
             {

@@ -20,11 +20,10 @@ namespace ET
     public abstract partial class Entity: DisposeObject, IPool
     {
         // 给source generater调用的
-        public static T Fetch<T>() where T : Entity
+        public static T Fetch<T>() where T : Entity, new()
         {
-            //TODO 先暂时注释
-            //return ObjectPool.Fetch<T>();
-            return null;
+            //TODO 不确定是否有问题
+            return ObjectPool.Fetch<T>();
         }
         
         public virtual long GetLongHashCode()

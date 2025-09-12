@@ -7,7 +7,7 @@ namespace ET
     {
         public static A2NetInner_Message Create()
         {
-            return ObjectPool.Fetch(typeof(A2NetInner_Message)) as A2NetInner_Message;
+            return ObjectPool.Fetch<A2NetInner_Message>();
         }
 
         public override void Dispose()
@@ -29,7 +29,7 @@ namespace ET
     {
         public static A2NetInner_Request Create()
         {
-            return ObjectPool.Fetch(typeof(A2NetInner_Request)) as A2NetInner_Request;
+            return ObjectPool.Fetch<A2NetInner_Request>();
         }
 
         public override void Dispose()
@@ -51,7 +51,7 @@ namespace ET
     {
         public static A2NetInner_Response Create()
         {
-            return ObjectPool.Fetch(typeof(A2NetInner_Response)) as A2NetInner_Response;
+            return ObjectPool.Fetch<A2NetInner_Response>();
         }
 
         public override void Dispose()

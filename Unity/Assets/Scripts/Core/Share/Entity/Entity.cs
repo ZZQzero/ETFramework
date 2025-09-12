@@ -16,7 +16,6 @@ namespace ET
         IsSerilizeWithParent = 1 << 4,
     }
 
-    [MemoryPackable(GenerateType.NoGenerate)]
     public abstract partial class Entity: DisposeObject, IPool
     {
         // 给source generater调用的
@@ -845,7 +844,7 @@ namespace ET
             return component;
         }
 
-        public override void BeginInit()
+        /*public override void BeginInit()
         {
             // 如果没有挂到树上，不用执行SerializeSystem
             if (this.iScene == null)
@@ -875,6 +874,6 @@ namespace ET
                     entity.BeginInit();
                 }
             }
-        }
+        }*/
     }
 }

@@ -3,19 +3,13 @@ using System.ComponentModel;
 
 namespace ET
 {
-    public abstract class DisposeObject: Object, IDisposable, ISupportInitialize
+    public abstract class DisposeObject: IDisposable
     {
         public virtual void Dispose()
         {
         }
         
-        public virtual void BeginInit()
-        {
-        }
-        
-        public virtual void EndInit()
-        {
-        }
+
     }
 
     public interface IPool: IDisposable
@@ -27,6 +21,5 @@ namespace ET
         }
         
         void Reset(); // 回池时清理状态
-        
     }
 }

@@ -2,7 +2,7 @@
 
 namespace ET
 {
-    [EnableClass]
+    /*[EnableClass]
     public abstract class Object
     {
         /*public override string ToString()
@@ -11,7 +11,7 @@ namespace ET
             // 如果MongoHelper.ToJson会调用BeginInit,就出大事了
             // return MongoHelper.ToJson(this);
             //return ((object)this).ToJson();
-        }*/
+        }#1#
         
         /*public string ToJson()
         {
@@ -21,6 +21,6 @@ namespace ET
         public byte[] ToBson()
         {
             return MongoHelper.Serialize(this);
-        }*/
-    }
+        }#1#
+    }*/
 }

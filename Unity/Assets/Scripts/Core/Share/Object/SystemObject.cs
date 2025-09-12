@@ -1,6 +1,7 @@
 ﻿namespace ET
 {
-    public abstract class SystemObject: Object
+    //TODO 修改了这里，不知道会不会有问题
+    public abstract class SystemObject //: Object
     {
 
     }

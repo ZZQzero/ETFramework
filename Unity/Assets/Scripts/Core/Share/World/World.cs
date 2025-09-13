@@ -17,6 +17,7 @@ namespace ET
             }
         }
 
+        private readonly object _syncRoot = new();
         private readonly Stack<Type> stack = new();
         private readonly Dictionary<Type, ASingleton> singletons = new();
         
@@ -28,7 +29,7 @@ namespace ET
         {
             instance = null;
             
-            lock (this)
+            lock (_syncRoot)
             {
                 while (this.stack.Count > 0)
                 {
@@ -44,6 +45,7 @@ namespace ET
                 {
                     kv.Value.Dispose();
                 }
+                singletons.Clear();
             }
         }
 
@@ -105,13 +107,13 @@ namespace ET
 
         public void AddSingleton(ASingleton singleton,Type type)
         {
-            lock (this)
+            lock (_syncRoot)
             {
                 if (singleton is ISingletonReverseDispose)
                 {
                     this.stack.Push(type);
                 }
-                singletons.Add(singleton.GetType(), singleton);
+                singletons.Add(type, singleton);
             }
 
             singleton.Register();

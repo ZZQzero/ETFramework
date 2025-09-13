@@ -15,7 +15,7 @@ namespace ET
             return MemoryPackSerializer.Serialize(message.GetType(), message);
         }
 
-        public static void Serialize(object message, MemoryBuffer stream)
+        public static void Serialize(MessageObject message, MemoryBuffer stream)
         {
             if (message is ISupportInitialize supportInitialize)
             {

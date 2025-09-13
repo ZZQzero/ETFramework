@@ -14,13 +14,6 @@
       "dependencies": {},
       "hash": "005c365bac0b245048050d48d27df098739a6f8f"
     },
-    "com.cysharp.memorypack": {
-      "version": "https://github.com/Cysharp/MemoryPack.git?path=src/MemoryPack.Unity/Assets/Plugins/MemoryPack#1.10.0",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "2554e81f0315ddf835026940ccc4ba8175edfda3"
-    },
     "com.cysharp.unitask": {
       "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
       "depth": 0,
@@ -28,8 +21,15 @@
       "dependencies": {},
       "hash": "64285ae060c9fe2aeb2a73b076b160939ce3be1a"
     },
+    "com.github-glitchenzo.nugetforunity": {
+      "version": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "a7c6b49a0141a5bff9b1983e38137522ef61977d"
+    },
     "com.tuyoogame.yooasset": {
-      "version": "2.3.14",
+      "version": "2.3.15",
       "depth": 0,
       "source": "registry",
       "dependencies": {

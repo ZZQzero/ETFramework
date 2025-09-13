@@ -13,7 +13,7 @@ namespace ET.Server
                     contex.Parent.RemoveComponent<ModeContex>();
                     Log.Console("C must have config name, like: C UnitConfig");
                     break;
-                default:
+                /*default:
                     string[] ss = content.Split(" ");
                     string configName = ss[1];
                     string category = $"{configName}Category";
@@ -25,7 +25,7 @@ namespace ET.Server
                     }
                     await ConfigLoader.Instance.Reload(type);
                     Log.Console($"reload config {configName} finish!");
-                    break;
+                    break;*/
             }
             
             await ETTask.CompletedTask;

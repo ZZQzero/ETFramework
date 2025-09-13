@@ -3,13 +3,13 @@ using System.ComponentModel;
 
 namespace ET
 {
-    public abstract class ProtoObject: Object, ISupportInitialize
+    /*public abstract class ProtoObject: Object, ISupportInitialize
     {
         /*public object Clone()
         {
             /*byte[] bytes = MongoHelper.Serialize(this);
-            return MongoHelper.Deserialize(this.GetType(), bytes, 0, bytes.Length);#1#
-        }*/
+            return MongoHelper.Deserialize(this.GetType(), bytes, 0, bytes.Length);#2#
+        }#1#
         
         public virtual void BeginInit()
         {
@@ -19,5 +19,5 @@ namespace ET
         public virtual void EndInit()
         {
         }
-    }
+    }*/
 }

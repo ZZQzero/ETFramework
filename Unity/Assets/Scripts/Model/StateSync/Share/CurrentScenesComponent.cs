@@ -8,14 +8,8 @@
 
         public Scene Scene
         {
-            get
-            {
-                return this.scene;
-            }
-            set
-            {
-                this.scene = value;
-            }
+            get => scene;
+            set => scene = value;
         }
     }
 }

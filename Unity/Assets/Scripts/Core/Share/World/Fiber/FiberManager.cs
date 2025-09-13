@@ -70,7 +70,7 @@ namespace ET
             
             try
             {
-                Fiber fiber = new(fiberId, zone, sceneType, name);
+                Fiber fiber = new(fiberId, zone, sceneType, name,schedulerType);
 
                 if (!this.fibers.TryAdd(fiberId, fiber))
                 {
@@ -78,7 +78,7 @@ namespace ET
                 }
                 this.schedulers[(int) schedulerType].Add(fiberId);
                 
-                TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
+                TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
                 fiber.ThreadSynchronizationContext.Post(() =>
                 {

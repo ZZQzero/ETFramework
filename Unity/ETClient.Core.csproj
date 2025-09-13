@@ -41,11 +41,11 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
+    <Analyzer Include="G:\UnityProject\ETFramework\Unity\Assets\Packages\MemoryPack.Generator.1.21.4\analyzers\dotnet\cs\MemoryPack.Generator.dll" />
     <Analyzer Include="G:\UnityProject\ETFramework\Unity\Assets\Plugins\ET.SourceGenerator.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
-    <Analyzer Include="G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.cysharp.memorypack@a2ba73829fea\Runtime\MemoryPack.Generator\MemoryPack.Generator.Roslyn3.dll" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Core\Share\Object\MessageObject.cs" />
@@ -575,6 +575,15 @@
     <Reference Include="Unity.VisualScripting.TextureAssets">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
     </Reference>
+    <Reference Include="NuGetForUnity.PluginAPI">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.github-glitchenzo.nugetforunity@b8a65750503c\Editor\PluginAPI\NuGetForUnity.PluginAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Packages\System.Collections.Immutable.6.0.0\lib\netstandard2.0\System.Collections.Immutable.dll</HintPath>
+    </Reference>
+    <Reference Include="MemoryPack.Core">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Packages\MemoryPack.Core.1.21.4\lib\netstandard2.1\MemoryPack.Core.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.Android.Types">
       <HintPath>G:\Unity\Editor\Data\PlaybackEngines\AndroidPlayer\Unity.Android.Types.dll</HintPath>
     </Reference>
@@ -946,9 +955,6 @@
     </Reference>
     <Reference Include="System.Xml.Serialization">
       <HintPath>G:\Unity\Editor\Data\NetStandard\compat\2.1.0\shims\netfx\System.Xml.Serialization.dll</HintPath>
-    </Reference>
-    <Reference Include="MemoryPack">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\MemoryPack.dll</HintPath>
     </Reference>
     <Reference Include="Luban.Runtime">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\Luban.Runtime.dll</HintPath>

@@ -38,7 +38,7 @@ namespace ET
             MemoryPackRegister.Init();
             
             // 注册Entity序列化器
-            EntitySerializeRegister.Init();
+            //EntitySerializeRegister.Init();
             
             //await World.Instance.AddSingleton<ConfigLoader>().LoadAsync();
             Log.Info("Entry Start");

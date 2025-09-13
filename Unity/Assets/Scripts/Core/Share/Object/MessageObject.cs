@@ -4,7 +4,7 @@ using System.ComponentModel;
 namespace ET
 {
     [DisableNew]
-    public abstract class MessageObject: ProtoObject, IMessage, IPool
+    public abstract class MessageObject: IMessage, IPool
     {
         public virtual void Dispose()
         {

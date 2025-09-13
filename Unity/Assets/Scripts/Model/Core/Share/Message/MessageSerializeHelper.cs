@@ -45,7 +45,8 @@ namespace ET
             
             stream.GetBuffer().WriteTo(headOffset, opcode);
             
-            MessageSerializeHelper.Serialize(message, stream);
+            //MessageSerializeHelper.Serialize(message, stream);
+            MemoryPackHelper.Serialize(message, stream);
             
             stream.Seek(0, SeekOrigin.Begin);
             return opcode;

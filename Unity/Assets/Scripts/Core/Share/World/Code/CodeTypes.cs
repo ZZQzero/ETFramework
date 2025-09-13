@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -89,7 +89,7 @@ namespace ET
                 }
             }
         }
-        */
+        #1#
 
         public HashSet<Type> GetTypes(Type systemAttributeType)
         {
@@ -121,7 +121,7 @@ namespace ET
                 object obj = Activator.CreateInstance(type);
                 ((ISingletonAwake)obj).Awake();
                 World.Instance.AddSingleton((ASingleton)obj);
-            }*/
+            }#1#
         }
     }
-}
+}*/

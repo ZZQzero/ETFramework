@@ -6,5 +6,6 @@
         public string SceneName;
         public int Process;
         public int Fiber;
+        public SchedulerType SchedulerType;
     }
 }

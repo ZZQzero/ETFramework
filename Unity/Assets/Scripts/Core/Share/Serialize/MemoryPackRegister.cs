@@ -6,8 +6,8 @@ namespace ET
     {
         public static void Init()
         {
-            MemoryPackFormatterProvider.Register(new MemoryPackChildrenCollectionFormatter());
-            MemoryPackFormatterProvider.Register(new MemoryPackComponentsCollectionFormatter());
+            //MemoryPackFormatterProvider.Register(new MemoryPackChildrenCollectionFormatter());
+            //MemoryPackFormatterProvider.Register(new MemoryPackComponentsCollectionFormatter());
         }
     }
 }

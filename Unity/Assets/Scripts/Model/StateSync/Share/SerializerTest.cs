@@ -1,4 +1,4 @@
-﻿using MemoryPack;
+﻿/*using MemoryPack;
 
 namespace ET
 {
@@ -23,4 +23,4 @@ namespace ET
         [MemoryPackInclude]
         public int C { get; set; }
     }
-}
+}*/

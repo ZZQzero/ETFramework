@@ -20,49 +20,36 @@ namespace ET
         [ThreadStatic]
         public static Fiber Instance;
         
-        public bool IsDisposed;
-        
-        public int Id;
-
-        public int Zone;
-
+        public int Id { get; }
+        public int Zone { get; }
+        public SchedulerType SchedulerType { get; }
         public Scene Root { get; }
-
-        public Address Address
-        {
-            get
-            {
-                return new Address(this.Process, this.Id);
-            }
-        }
-
-        public int Process
-        {
-            get
-            {
-                return Options.Instance.Process;
-            }
-        }
-
+        public Address Address => new(this.Process, this.Id);
+        public int Process => Options.Instance.Process;
         public EntitySystem EntitySystem { get; }
         public Mailboxes Mailboxes { get; private set; }
         public ThreadSynchronizationContext ThreadSynchronizationContext { get; }
         public ILog Log { get; }
-
+        public bool IsDisposed;
         private readonly Queue<ETTask> frameFinishTasks = new();
         
-        internal Fiber(int id, int zone, int sceneType, string name)
+        internal Fiber(int id, int zone, int sceneType, string name,SchedulerType schedulerType)
         {
             this.Id = id;
             this.Zone = zone;
+            SchedulerType = schedulerType;
             this.EntitySystem = new EntitySystem();
             this.Mailboxes = new Mailboxes();
             this.ThreadSynchronizationContext = new ThreadSynchronizationContext();
 
             LogInvoker logInvoker = new()
-                    { Fiber = this.Id, Process = this.Process, SceneName = SceneTypeSingleton.Instance.GetSceneName(sceneType) };
+            {
+                Fiber = this.Id,
+                Process = this.Process, 
+                SceneName = SceneTypeSingleton.Instance.GetSceneName(sceneType),
+                SchedulerType = schedulerType
+            };
             this.Log = EventSystem.Instance.Invoke<LogInvoker, ILog>(logInvoker);
-            
             this.Root = new Scene(this, id, 1, sceneType, name);
         }
 
@@ -84,7 +71,6 @@ namespace ET
             {
                 this.EntitySystem.Publish(new LateUpdateEvent());
                 FrameFinishUpdate();
-                
                 this.ThreadSynchronizationContext.Update();
             }
             catch (Exception e)

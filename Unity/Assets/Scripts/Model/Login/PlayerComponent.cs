@@ -1,6 +1,6 @@
 ﻿namespace ET
 {
-    [ComponentOf(typeof(Scene))]
+    //[ComponentOf(typeof(Scene))]
     public class PlayerComponent: Entity, IAwake
     {
         public long MyId { get; set; }

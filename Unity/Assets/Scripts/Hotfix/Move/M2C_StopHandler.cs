@@ -7,7 +7,7 @@ namespace ET
 	{
 		protected override async ETTask Run(Scene root, M2C_Stop message)
 		{
-			/*Unit unit = root.CurrentScene().GetComponent<UnitComponent>().Get(message.Id);
+			Unit unit = root.CurrentScene().GetComponent<UnitComponent>().Get(message.Id);
 			if (unit == null)
 			{
 				return;
@@ -17,7 +17,7 @@ namespace ET
 			moveComponent.Stop(message.Error == 0);
 			unit.Position = message.Position;
 			unit.Rotation = message.Rotation;
-			unit.GetComponent<ObjectWait>()?.Notify(new Wait_UnitStop() {Error = message.Error});*/
+			unit.GetComponent<ObjectWait>()?.Notify(new Wait_UnitStop() {Error = message.Error});
 			await ETTask.CompletedTask;
 		}
 	}

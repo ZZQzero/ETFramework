@@ -26,16 +26,14 @@
 
         public static async ETTask<CoroutineLock> Wait(this CoroutineLockQueueType self, long key, int time)
         {
-            /*CoroutineLockQueue queue = self.Get(key) ?? self.New(key);
-            return await queue.Wait(time);*/
-            await ETTask.CompletedTask;
-            return null;
+            CoroutineLockQueue queue = self.Get(key) ?? self.New(key);
+            return await queue.Wait(time);
         }
 
         public static void Notify(this CoroutineLockQueueType self, long key, int level)
         {
-            //CoroutineLockQueue queue = self.Get(key);
-            /*if (queue == null)
+            CoroutineLockQueue queue = self.Get(key);
+            if (queue == null)
             {
                 return;
             }
@@ -43,7 +41,7 @@
             if (!queue.Notify(level))
             {
                 self.Remove(key);
-            }*/
+            }
         }
     }
 }

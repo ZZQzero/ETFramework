@@ -10,11 +10,11 @@
 			
 			foreach (UnitInfo unitInfo in message.Units)
 			{
-				/*if (component.Get(unitInfo.UnitId) != null)
+				if (component.Get(unitInfo.UnitId) != null)
 				{
 					continue;
 				}
-				Unit unit = UnitFactory.Create(currentScene, unitInfo);*/
+				Unit unit = UnitFactory.Create(currentScene, unitInfo);
 			}
 			await ETTask.CompletedTask;
 		}

@@ -39,62 +39,65 @@
 
     <ItemGroup>
         <Compile Include="..\..\Unity\Assets\Scripts\Model\ActorLocation\Share\**\*.cs">
-            <Link>ActorLocation\%(RecursiveDir)%(FileName)%(Extension)</Link>
+            <Link>ActorLocation\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="ActorLocation\" />
     </ItemGroup>
 
     <ItemGroup>
         <Compile Include="..\..\Unity\Assets\Scripts\Model\AI\Share\**\*.cs">
-            <Link>AI\%(RecursiveDir)%(FileName)%(Extension)</Link>
+            <Link>AI\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="AI\" />
     </ItemGroup>
 
     <ItemGroup>
         <Compile Include="..\..\Unity\Assets\Scripts\Model\Core\Share\**\*.cs">
-            <Link>Core\%(RecursiveDir)%(FileName)%(Extension)</Link>
+            <Link>Core\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="Core\" />
     </ItemGroup>
 
     <ItemGroup>
         <Compile Include="..\..\Unity\Assets\Scripts\Model\Login\Share\**\*.cs">
             <Link>Login\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="Login\" />
     </ItemGroup>
 
     <ItemGroup>
         <Compile Include="..\..\Unity\Assets\Scripts\Model\Move\Share\**\*.cs">
             <Link>Move\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="Move\" />
     </ItemGroup>
 
     <ItemGroup>
         <Compile Include="..\..\Unity\Assets\Scripts\Model\Numeric\Share\**\*.cs">
             <Link>Numeric\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="Numeric\" />
     </ItemGroup>
 
     <ItemGroup>
         <Compile Include="..\..\Unity\Assets\Scripts\Model\Router\Share\**\*.cs">
             <Link>Router\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="Router\" />
     </ItemGroup>
 
     <ItemGroup>
         <Compile Include="..\..\Unity\Assets\Scripts\Model\StateSync\Share\**\*.cs">
             <Link>StateSync\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="StateSync\" />
     </ItemGroup>
 
     <ItemGroup>
         <Compile Include="..\..\Unity\Assets\Scripts\Model\Unit\Share\**\*.cs">
             <Link>Unit\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Compile Include="..\..\Unity\Assets\Scripts\Model\YooAssets\Share\**\*.cs">
-            <Link>YooAssets\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
-        </Compile>
+        <Folder Include="Unit\" />
     </ItemGroup>
 
     <!-- sourcegenerator use -->

@@ -29,8 +29,9 @@
 
     <ItemGroup>
         <Compile Include="..\..\Unity\Assets\Scripts\ThirdParty\Recast\**\*.cs">
-            <Link>Recast\%(RecursiveDir)%(FileName)%(Extension)</Link>
+            <Link>Recast\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="Recast\" />
     </ItemGroup>
 
 </Project>

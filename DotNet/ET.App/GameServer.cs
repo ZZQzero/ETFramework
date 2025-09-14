@@ -1,14 +1,12 @@
 ﻿#if DOTNET
 
-using System;
-using System.Threading;
 using CommandLine;
 
 namespace ET
 {
-    public class Init
+    public class GameServer
     {
-        public void Start()
+        public static void Start()
         {
             try
             {
@@ -29,8 +27,6 @@ namespace ET
                 ETTask.ExceptionHandler += Log.Error;
                 World.Instance.AddSingleton<TimeInfo>();
                 World.Instance.AddSingleton<FiberManager>();
-
-                //World.Instance.AddSingleton<CodeLoader>().Start();
             }
             catch (Exception e)
             {
@@ -38,13 +34,25 @@ namespace ET
             }
         }
 
-        public void Update()
+        public static void Register()
+        {
+            GameRegister.RegisterSingleton();
+            GameRegister.RegisterInvoke();
+            GameRegister.RegisterEvent();
+            GameRegister.RegisterMessage();
+            GameRegister.RegisterHttp();
+            GameRegister.RegisterMessageSession();
+            GameRegister.RegisterEntitySystem();
+            GameRegister.RegisterConsole();
+        }
+
+        public static void Update()
         {
             TimeInfo.Instance.Update();
             FiberManager.Instance.Update();
         }
 
-        public void LateUpdate()
+        public static void LateUpdate()
         {
             FiberManager.Instance.LateUpdate();
         }

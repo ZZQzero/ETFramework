@@ -37,47 +37,50 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\..\Unity\Assets\Scripts\Hotfix\AI\**\*.cs">
-            <Link>AI\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        <Compile Include="..\..\Unity\Assets\Scripts\Hotfix\AI\Share\**\*.cs">
+            <Link>AI\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="AI\" />
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\..\Unity\Assets\Scripts\Hotfix\Core\**\*.cs">
-            <Link>Core\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        <Compile Include="..\..\Unity\Assets\Scripts\Hotfix\Core\Share\**\*.cs">
+            <Link>Core\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="Core\" />
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\..\Unity\Assets\Scripts\Hotfix\Numeric\**\*.cs">
-            <Link>Numeric\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        <Compile Include="..\..\Unity\Assets\Scripts\Hotfix\Numeric\Share\**\*.cs">
+            <Link>Numeric\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="Numeric\" />
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\..\Unity\Assets\Scripts\Hotfix\StateSync\Share\*.cs">
-            <Link>StateSync\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        <Compile Include="..\..\Unity\Assets\Scripts\Hotfix\StateSync\Share\**\*.cs">
+            <Link>StateSync\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="StateSync\" />
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\..\Unity\Assets\Scripts\Hotfix\Unit\**\*.cs">
-            <Link>Unit\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        <Compile Include="..\..\Unity\Assets\Scripts\Hotfix\Unit\Share\**\*.cs">
+            <Link>Unit\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="Unit\" />
     </ItemGroup>
 
     <ItemGroup>
         <Compile Include="..\..\Unity\Assets\Scripts\Hotfix\Login\Share\**\*.cs">
             <Link>Login\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
+        <Folder Include="Login\" />
     </ItemGroup>
 
     <!-- sourcegenerator use -->
     <ItemGroup>
         <CompilerVisibleProperty Include="DotNetAssembly" />
-    </ItemGroup>
-    <ItemGroup>
-      <Folder Include="DB\" />
     </ItemGroup>
 
 </Project>

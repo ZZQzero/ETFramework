@@ -37,24 +37,10 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\..\Unity\Assets\Scripts\Core\**\*.cs">
-            <Link>Core\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        <Compile Include="..\..\Unity\Assets\Scripts\Core\Share\**\*.cs">
+            <Link>Core\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
-        <Compile Update="MongoDBSerializer\BsonChildrenCollectionSerializer.cs">
-          <Link>Core\Share\Serialize\BsonChildrenCollectionSerializer.cs</Link>
-        </Compile>
-        <Compile Update="MongoDBSerializer\BsonComponentsCollectionSerializer.cs">
-          <Link>Core\Share\Serialize\BsonComponentsCollectionSerializer.cs</Link>
-        </Compile>
-        <Compile Update="MongoDBSerializer\MongoHelper.cs">
-          <Link>Core\Share\Serialize\MongoHelper.cs</Link>
-        </Compile>
-        <Compile Update="MongoDBSerializer\MongoRegister.cs">
-          <Link>Core\Share\Serialize\MongoRegister.cs</Link>
-        </Compile>
-        <Compile Update="MongoDBSerializer\StructBsonSerialize.cs">
-          <Link>Core\Share\Serialize\StructBsonSerialize.cs</Link>
-        </Compile>
+        <Folder Include="Core\" />
     </ItemGroup>
 
     <ItemGroup>

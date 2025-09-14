@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Threading;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
+using CommandLine;
 
 namespace ET
 {
-    public static class Program
+    public static class ServerLauncher
     {
         public static void Main()
         {
@@ -16,18 +15,8 @@ namespace ET
             //model并没有用到，就不会加载，结果会导致CodeLoader反射调用model失败。
             //客户端服务端不热更不共享的组件可以写到Loader中，比如表现层需要一个组件不需要热更，可以写在Loader中，这样性能更高。如果客户端跟服务端共享的并且不需要热更的
             //的组件可以写在Core中
-            Init init = new();
-            init.Start();
-            HotfixInit hotfix = new HotfixInit();
-            hotfix.Init();
-            GameRegister.RegisterSingleton();
-            GameRegister.RegisterInvoke();
-            GameRegister.RegisterEvent();
-            GameRegister.RegisterMessage();
-            GameRegister.RegisterHttp();
-            GameRegister.RegisterMessageSession();
-            GameRegister.RegisterEntitySystem();
-            GameRegister.RegisterConsole();
+            GameServer.Start();
+            GameServer.Register();
             Entry.Start();
             
             while (true)
@@ -35,8 +24,8 @@ namespace ET
                 Thread.Sleep(1);
                 try
                 {
-                    init.Update();
-                    init.LateUpdate();
+                    GameServer.Update();
+                    GameServer.LateUpdate();
                 }
                 catch (Exception e)
                 {

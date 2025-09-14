@@ -29,7 +29,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="..\..\Unity\Library\PackageCache\com.unity.mathematics*\Unity.Mathematics\**\*.cs" 
+        <Compile Include="..\..\Unity\Library\PackageCache\com.unity.mathematics*\Unity.Mathematics\**\*.cs"
                  Exclude="..\..\Unity\Library\PackageCache\com.unity.mathematics*\Unity.Mathematics\PropertyAttributes.cs">
             <Link>Unity.Mathematics\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>

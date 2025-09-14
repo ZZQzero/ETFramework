@@ -1,4 +1,4 @@
-﻿#if DOTNET
+﻿/*#if DOTNET
 using System;
 using System.IO;
 using System.Reflection;
@@ -33,7 +33,7 @@ namespace ET
             //World.Instance.AddSingleton<CodeTypes, Assembly[]>([typeof (World).Assembly, typeof(Init).Assembly, this.assembly, hotfixAssembly]);
 
             /*IStaticMethod start = new StaticMethod(this.assembly, "ET.Entry", "Start");
-            start.Run();*/
+            start.Run();#1#
         }
 
         private Assembly LoadHotfix()
@@ -54,9 +54,9 @@ namespace ET
             /*CodeTypes codeTypes = World.Instance.AddSingleton<CodeTypes, Assembly[]>([typeof (World).Assembly, typeof(Init).Assembly, this.assembly, hotfixAssembly
             ]);
 
-            codeTypes.CodeProcess();*/
+            codeTypes.CodeProcess();#1#
             Log.Debug($"reload dll finish!");
         }
     }
 }
-#endif
+#endif*/

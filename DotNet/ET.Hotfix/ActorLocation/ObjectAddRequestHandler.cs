@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ET.Server
+namespace ET
 {
     [MessageHandler(SceneType.Location)]
     public class ObjectAddRequestHandler: MessageHandler<Scene, ObjectAddRequest, ObjectAddResponse>

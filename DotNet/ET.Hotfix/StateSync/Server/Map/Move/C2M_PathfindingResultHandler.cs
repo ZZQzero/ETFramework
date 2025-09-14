@@ -1,5 +1,5 @@
 ﻿
-namespace ET.Server
+namespace ET
 {
 	[MessageHandler(SceneType.Map)]
 	public class C2M_PathfindingResultHandler : MessageLocationHandler<Unit, C2M_PathfindingResult>

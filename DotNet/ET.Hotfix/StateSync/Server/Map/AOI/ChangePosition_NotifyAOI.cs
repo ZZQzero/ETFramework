@@ -1,6 +1,6 @@
 ﻿using Unity.Mathematics;
 
-namespace ET.Server
+namespace ET
 {
     [Event(SceneType.Map)]
     public class ChangePosition_NotifyAOI: AEvent<Scene, ChangePosition>

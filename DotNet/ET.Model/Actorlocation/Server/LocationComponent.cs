@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace ET.Server
+namespace ET
 {
     [ChildOf(typeof(LocationOneType))]
     public class LockInfo: Entity, IAwake<ActorId, CoroutineLock>, IDestroy

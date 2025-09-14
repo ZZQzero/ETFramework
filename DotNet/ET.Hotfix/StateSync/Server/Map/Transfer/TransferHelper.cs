@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using MongoDB.Bson;
 
-namespace ET.Server
+namespace ET
 {
     public static partial class TransferHelper
     {

@@ -5,10 +5,41 @@ namespace ET
     {
         public static void RegisterEntitySystem()
         {
+            EntitySystemSingleton.RegisterEntitySystem<ET.LockInfoSystem.ET_LockInfo_ET_ActorId_ET_CoroutineLock_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.LockInfoSystem.ET_LockInfo_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.LocationOneTypeSystem.ET_LocationOneType_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.LocationComoponentSystem.ET_LocationManagerComoponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MessageLocationSenderComponentSystem.ET_MessageLocationSenderOneType_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MessageLocationSenderComponentSystem.ET_MessageLocationSenderOneType_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MessageLocationSenderManagerComponentSystem.ET_MessageLocationSenderComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MessageLocationSenderSystem.ET_MessageLocationSender_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MessageLocationSenderSystem.ET_MessageLocationSender_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.AOIEntitySystem2.ET_AOIEntity_int_Unity_Mathematics_float3_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.AOIEntitySystem2.ET_AOIEntity_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.CellSystem.ET_Cell_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.CellSystem.ET_Cell_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.ConsoleComponentSystem.ET_ConsoleComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.DBComponentSystem.ET_DBComponent_string_string_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.HttpComponentSystem.ET_HttpComponent_string_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.HttpComponentSystem.ET_HttpComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.PlayerSystem.ET_Player_string_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.SessionPlayerComponentSystem.ET_SessionPlayerComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.SessionPlayerComponentSystem.ET_SessionPlayerComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MoveComponentSystem.ET_MoveComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MoveComponentSystem.ET_MoveComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.ProcessOuterSenderSystem.ET_ProcessOuterSender_System_Net_IPEndPoint_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.ProcessOuterSenderSystem.ET_ProcessOuterSender_UpdateSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.ProcessOuterSenderSystem.ET_ProcessOuterSender_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.PathfindingComponentSystem.ET_PathfindingComponent_string_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.PathfindingComponentSystem.ET_PathfindingComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.RouterComponentSystem.ET_RouterComponent_System_Net_IPEndPoint_string_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.RouterComponentSystem.ET_RouterComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.RouterComponentSystem.ET_RouterComponent_UpdateSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.RouterNodeSystem.ET_RouterNode_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.RouterNodeSystem.ET_RouterNode_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.RobotManagerComponentSystem.ET_RobotManagerComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.RobotManagerComponentSystem.ET_RobotManagerComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.WatcherComponentSystem.ET_WatcherComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.AIComponentSystem.ET_AIComponent_int_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.AIComponentSystem.ET_AIComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ProcessInnerSenderSystem.ET_ProcessInnerSender_DestroySystem>();
@@ -35,41 +66,10 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.TimerComponentSystem.ET_TimerComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.TimerComponentSystem.ET_TimerComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.UnitSystem.ET_Unit_int_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.LockInfoSystem.ET_Server_LockInfo_ET_ActorId_ET_CoroutineLock_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.LockInfoSystem.ET_Server_LockInfo_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.LocationOneTypeSystem.ET_Server_LocationOneType_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.LocationComoponentSystem.ET_Server_LocationManagerComoponent_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.MessageLocationSenderComponentSystem.ET_Server_MessageLocationSenderOneType_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.MessageLocationSenderComponentSystem.ET_Server_MessageLocationSenderOneType_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.MessageLocationSenderManagerComponentSystem.ET_Server_MessageLocationSenderComponent_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.MessageLocationSenderSystem.ET_Server_MessageLocationSender_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.MessageLocationSenderSystem.ET_Server_MessageLocationSender_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.AOIEntitySystem2.ET_Server_AOIEntity_int_Unity_Mathematics_float3_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.AOIEntitySystem2.ET_Server_AOIEntity_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.CellSystem.ET_Server_Cell_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.CellSystem.ET_Server_Cell_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.ConsoleComponentSystem.ET_Server_ConsoleComponent_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.DBComponentSystem.ET_Server_DBComponent_string_string_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.HttpComponentSystem.ET_Server_HttpComponent_string_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.HttpComponentSystem.ET_Server_HttpComponent_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.PlayerSystem.ET_Server_Player_string_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.SessionPlayerComponentSystem.ET_Server_SessionPlayerComponent_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.SessionPlayerComponentSystem.ET_Server_SessionPlayerComponent_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.ProcessOuterSenderSystem.ET_Server_ProcessOuterSender_System_Net_IPEndPoint_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.ProcessOuterSenderSystem.ET_Server_ProcessOuterSender_UpdateSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.ProcessOuterSenderSystem.ET_Server_ProcessOuterSender_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.RouterComponentSystem.ET_Server_RouterComponent_System_Net_IPEndPoint_string_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.RouterComponentSystem.ET_Server_RouterComponent_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.RouterComponentSystem.ET_Server_RouterComponent_UpdateSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.RouterNodeSystem.ET_Server_RouterNode_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.RouterNodeSystem.ET_Server_RouterNode_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.RobotManagerComponentSystem.ET_Server_RobotManagerComponent_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.RobotManagerComponentSystem.ET_Server_RobotManagerComponent_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.WatcherComponentSystem.ET_Server_WatcherComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.ModeContexSystem.ET_ModeContex_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.ModeContexSystem.ET_ModeContex_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MailBoxComponentSystem.ET_MailBoxComponent_int_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MailBoxComponentSystem.ET_MailBoxComponent_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.ModeContexSystem.ET_Server_ModeContex_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.Server.ModeContexSystem.ET_Server_ModeContex_DestroySystem>();
         }
     }
 }

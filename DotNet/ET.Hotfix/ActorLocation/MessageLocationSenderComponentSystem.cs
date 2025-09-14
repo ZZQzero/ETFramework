@@ -2,7 +2,7 @@
 using System.IO;
 using MongoDB.Bson;
 
-namespace ET.Server
+namespace ET
 {
     [EntitySystemOf(typeof(MessageLocationSenderOneType))]
     [FriendOf(typeof(MessageLocationSenderOneType))]

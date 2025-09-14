@@ -1,4 +1,4 @@
-﻿namespace ET.Server
+﻿namespace ET
 {
     [EntitySystemOf(typeof(RouterNode))]
     public static partial class RouterNodeSystem

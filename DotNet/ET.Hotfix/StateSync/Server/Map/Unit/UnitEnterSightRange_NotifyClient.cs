@@ -1,4 +1,4 @@
-﻿namespace ET.Server
+﻿namespace ET
 {
     // 进入视野通知
     [Event(SceneType.Map)]

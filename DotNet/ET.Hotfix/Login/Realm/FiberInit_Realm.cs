@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace ET.Server
+namespace ET
 {
     [Invoke(SceneType.Realm)]
     public class FiberInit_Realm: AInvokeHandler<FiberInit, ETTask>

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 
-namespace ET.Server
+namespace ET
 {
     [ComponentOf(typeof(Scene))]
     public class ProcessOuterSender: Entity, IAwake<IPEndPoint>, IUpdate, IDestroy

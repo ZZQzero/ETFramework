@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ET.Server
+namespace ET
 {
     [FriendOf(typeof(DBManagerComponent))]
     public static partial class DBManagerComponentSystem

@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Diagnostics;
 
-namespace ET.Server
+namespace ET
 {
     [EntitySystemOf(typeof(WatcherComponent))]
     public static partial class WatcherComponentSystem

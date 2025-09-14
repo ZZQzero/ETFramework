@@ -1,6 +1,6 @@
 ﻿
 
-namespace ET.Server
+namespace ET
 {
 	[MessageHandler(SceneType.Map)]
 	public class G2M_SessionDisconnectHandler : MessageLocationHandler<Unit, G2M_SessionDisconnect>

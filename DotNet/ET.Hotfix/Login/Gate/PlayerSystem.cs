@@ -1,4 +1,4 @@
-﻿namespace ET.Server
+﻿namespace ET
 {
     [EntitySystemOf(typeof(Player))]
     public static partial class PlayerSystem

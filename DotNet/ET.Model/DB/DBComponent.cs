@@ -1,6 +1,6 @@
 ﻿using MongoDB.Driver;
 
-namespace ET.Server
+namespace ET
 {
     /// <summary>
     /// 用来缓存数据

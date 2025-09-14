@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 
-namespace ET.Server
+namespace ET
 {
     [EntitySystemOf(typeof(ProcessOuterSender))]
     public static partial class ProcessOuterSenderSystem

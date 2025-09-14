@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using CommandLine;
 
-namespace ET.Server
+namespace ET
 {
     [ConsoleHandler(ConsoleMode.CreateRobot)]
     public class CreateRobotConsoleHandler: IConsoleHandler

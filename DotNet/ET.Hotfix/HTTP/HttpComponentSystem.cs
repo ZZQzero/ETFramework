@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 
-namespace ET.Server
+namespace ET
 {
     [EntitySystemOf(typeof(HttpComponent))]
     public static partial class HttpComponentSystem

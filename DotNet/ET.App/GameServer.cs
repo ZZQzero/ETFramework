@@ -6,7 +6,7 @@ namespace ET
 {
     public class GameServer
     {
-        public static void Start()
+        public static void Init()
         {
             try
             {
@@ -32,6 +32,13 @@ namespace ET
             {
                 Log.Error(e);
             }
+        }
+        
+        public static async ETTask StartAsync()
+        {
+            WinPeriod.Init();
+            MongoRegister.Init();
+            await FiberManager.Instance.Create(SchedulerType.Main, SceneType.Main, 0, SceneType.Main, "Main");
         }
 
         public static void Register()

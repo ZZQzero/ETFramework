@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ET.Server
+namespace ET
 {
     [MessageHandler(SceneType.Location)]
     public class ObjectUnLockRequestHandler: MessageHandler<Scene, ObjectUnLockRequest, ObjectUnLockResponse>

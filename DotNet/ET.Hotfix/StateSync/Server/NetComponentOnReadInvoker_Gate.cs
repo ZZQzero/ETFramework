@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ET.Server
+namespace ET
 {
     [Invoke(SceneType.Gate)]
     public class NetComponentOnReadInvoker_Gate: AInvokeHandler<NetComponentOnRead>

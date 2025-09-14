@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace ET.Server
+namespace ET
 {
     [MessageHandler(SceneType.NetInner)]
     public class A2NetInner_RequestHandler: MessageHandler<Scene, A2NetInner_Request, A2NetInner_Response>

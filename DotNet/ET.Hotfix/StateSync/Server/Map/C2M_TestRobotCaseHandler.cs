@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ET.Server
+namespace ET
 {
 	[MessageHandler(SceneType.Map)]
 	public class C2M_TestRobotCaseHandler : MessageLocationHandler<Unit, C2M_TestRobotCase, M2C_TestRobotCase>

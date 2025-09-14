@@ -1,7 +1,7 @@
 ﻿using System;
 using Unity.Mathematics;
 
-namespace ET.Server
+namespace ET
 {
     public static partial class UnitFactory
     {

@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 
-namespace ET.Server
+namespace ET
 {
     [EntitySystemOf(typeof(Cell))]
     public static partial class CellSystem
     {
         [EntitySystem]
-        private static void Awake(this ET.Server.Cell self)
+        private static void Awake(this ET.Cell self)
         {
 
         }

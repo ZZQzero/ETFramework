@@ -1,4 +1,4 @@
-﻿namespace ET.Server
+﻿namespace ET
 {
     [MessageHandler(SceneType.Map)]
     public class C2M_StopHandler: MessageLocationHandler<Unit, C2M_Stop>

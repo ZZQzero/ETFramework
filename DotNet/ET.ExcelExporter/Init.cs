@@ -7,7 +7,7 @@ namespace ET
     [EnableClass]
     internal static class Init
     {
-        private static string path = "DotNet/ET.App/GameRegisterEventSystem.cs";
+        private static string path = "DotNet/ET.App/GameRegister/GameRegisterEventSystem.cs";
         private static int Main(string[] args)
         {
             try

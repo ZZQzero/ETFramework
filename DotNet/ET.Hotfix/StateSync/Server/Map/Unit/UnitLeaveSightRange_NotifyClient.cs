@@ -1,4 +1,4 @@
-﻿namespace ET.Server
+﻿namespace ET
 {
     // 离开视野
     [Event(SceneType.Map)]

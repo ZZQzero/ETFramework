@@ -2,7 +2,7 @@
 using System.Net;
 
 
-namespace ET.Server
+namespace ET
 {
 	[MessageSessionHandler(SceneType.Realm)]
 	public class C2R_LoginHandler : MessageSessionHandler<C2R_Login, R2C_Login>

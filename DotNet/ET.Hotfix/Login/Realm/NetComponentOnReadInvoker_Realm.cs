@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ET.Server
+namespace ET
 {
     [Invoke(SceneType.Realm)]
     public class NetComponentOnReadInvoker_Realm: AInvokeHandler<NetComponentOnRead>

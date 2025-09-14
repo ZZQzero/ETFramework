@@ -1,6 +1,6 @@
 using System;
 
-namespace ET.Server
+namespace ET
 {
     [EntitySystemOf(typeof(MessageLocationSender))]
     public static partial class MessageLocationSenderSystem

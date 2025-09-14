@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Unity.Mathematics;
 
-namespace ET.Server
+namespace ET
 {
     [FriendOf(typeof(MoveComponent))]
     [FriendOf(typeof(NumericComponent))]

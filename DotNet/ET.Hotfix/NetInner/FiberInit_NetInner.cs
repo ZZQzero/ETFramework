@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace ET.Server
+namespace ET
 {
     [Invoke(SceneType.NetInner)]
     public class FiberInit_NetInner: AInvokeHandler<FiberInit, ETTask>

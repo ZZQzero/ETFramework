@@ -1,4 +1,4 @@
-﻿namespace ET.Server
+﻿namespace ET
 {
     [Invoke(MailBoxType.GateSession)]
     public class MailBoxType_GateSessionHandler: AInvokeHandler<MailBoxInvoker>

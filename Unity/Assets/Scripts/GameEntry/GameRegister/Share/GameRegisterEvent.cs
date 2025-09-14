@@ -1,8 +1,4 @@
-﻿using ET;
-#if DOTNET
-using ET.Server;
-#endif
-
+﻿
 namespace ET
 {
     public static partial class GameRegister

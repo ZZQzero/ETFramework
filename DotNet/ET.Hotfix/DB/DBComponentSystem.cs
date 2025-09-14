@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using MongoDB.Driver;
 
-namespace ET.Server
+namespace ET
 {
 	[EntitySystemOf(typeof(DBComponent))]
 	[FriendOf(typeof(DBComponent))]

@@ -4,7 +4,7 @@ using System.Net;
 using System.Text;
 using MemoryPack;
 
-namespace ET.Server
+namespace ET
 {
     [HttpHandler(SceneType.RouterManager, "/get_router")]
     public class HttpGetRouterHandler : IHttpHandler

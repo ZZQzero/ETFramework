@@ -1,4 +1,4 @@
-﻿namespace ET.Server
+﻿namespace ET
 {
     [EntitySystemOf(typeof(SessionPlayerComponent))]
     public static partial class SessionPlayerComponentSystem

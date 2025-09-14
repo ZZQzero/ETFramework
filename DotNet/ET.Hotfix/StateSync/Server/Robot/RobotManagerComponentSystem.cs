@@ -1,4 +1,4 @@
-﻿namespace ET.Server
+﻿namespace ET
 {
     [EntitySystemOf(typeof(RobotManagerComponent))]
     [FriendOf(typeof(RobotManagerComponent))]

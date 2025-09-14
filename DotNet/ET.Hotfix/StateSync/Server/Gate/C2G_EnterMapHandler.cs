@@ -1,4 +1,4 @@
-﻿namespace ET.Server
+﻿namespace ET
 {
 	[MessageSessionHandler(SceneType.Gate)]
 	public class C2G_EnterMapHandler : MessageSessionHandler<C2G_EnterMap, G2C_EnterMap>

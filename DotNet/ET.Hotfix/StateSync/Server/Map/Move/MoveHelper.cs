@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Unity.Mathematics;
 
-namespace ET.Server
+namespace ET
 {
     public static partial class MoveHelper
     {

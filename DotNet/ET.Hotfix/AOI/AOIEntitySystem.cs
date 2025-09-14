@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Unity.Mathematics;
 
-namespace ET.Server
+namespace ET
 {
     [EntitySystemOf(typeof(AOIEntity))]
     [FriendOf(typeof(Cell))]

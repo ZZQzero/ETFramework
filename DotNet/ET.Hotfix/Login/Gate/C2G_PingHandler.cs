@@ -1,7 +1,7 @@
 ﻿using System;
 
 
-namespace ET.Server
+namespace ET
 {
 	[MessageSessionHandler(SceneType.Gate)]
 	public class C2G_PingHandler : MessageSessionHandler<C2G_Ping, G2C_Ping>

@@ -1,5 +1,5 @@
 ﻿#if DOTNET
-using ET.Server;
+using ET;
 #endif
 
 namespace ET

@@ -1,4 +1,4 @@
-﻿namespace ET.Server
+﻿namespace ET
 {
     [Event(SceneType.StateSync)]
     public class EntryEvent2_InitServer: AEvent<Scene, EntryEvent2>

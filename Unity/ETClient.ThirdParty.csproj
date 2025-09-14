@@ -134,8 +134,8 @@
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Core\Loader.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour\DtNavMesh.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Recast\RcContourHoleComparer.cs" />
-    <Compile Include="Assets\Scripts\ThirdParty\Recast\Recast\RcHeightfieldLayerSet.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Core\RcSortedQueue.cs" />
+    <Compile Include="Assets\Scripts\ThirdParty\Recast\Recast\RcHeightfieldLayerSet.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour\Io\IOUtils.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour.TileCache\Io\Compress\IDtTileCacheCompressorFactory.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\SourceGeneratorAttribute\UniqueIdAttribute.cs" />
@@ -296,8 +296,8 @@
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour.Dynamic\Colliders\ConvexTrimeshCollider.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\SourceGeneratorAttribute\DisableNewAttribute.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Recast\RecastBuilder.cs" />
-    <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour\DtQueryDefaultFilter.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Recast\PolyUtils.cs" />
+    <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour\DtQueryDefaultFilter.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Recast\RecastArea.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour.Crowd\DtPathQueue.cs" />
     <None Include="Assets\Scripts\ThirdParty\ETClient.ThirdParty.asmdef" />
@@ -340,17 +340,17 @@
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
       <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.VisualScripting.TextureAssets">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
-    </Reference>
-    <Reference Include="NuGetForUnity.PluginAPI">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.github-glitchenzo.nugetforunity@b8a65750503c\Editor\PluginAPI\NuGetForUnity.PluginAPI.dll</HintPath>
-    </Reference>
     <Reference Include="System.Collections.Immutable">
       <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Packages\System.Collections.Immutable.6.0.0\lib\netstandard2.0\System.Collections.Immutable.dll</HintPath>
     </Reference>
     <Reference Include="MemoryPack.Core">
       <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Packages\MemoryPack.Core.1.21.4\lib\netstandard2.1\MemoryPack.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="NuGetForUnity.PluginAPI">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.github-glitchenzo.nugetforunity@b8a65750503c\Editor\PluginAPI\NuGetForUnity.PluginAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.VisualScripting.TextureAssets">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Android.Types">
       <HintPath>G:\Unity\Editor\Data\PlaybackEngines\AndroidPlayer\Unity.Android.Types.dll</HintPath>

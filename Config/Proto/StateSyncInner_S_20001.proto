@@ -21,7 +21,7 @@ message M2M_UnitTransferRequest // IRequest
 {
 	int32 RpcId = 1;
 	ActorId OldActorId = 2;
-	bytes Unit = 3;
+	UnitInfo UnitInfo = 3;
 	repeated bytes Entitys = 4;
 }
 

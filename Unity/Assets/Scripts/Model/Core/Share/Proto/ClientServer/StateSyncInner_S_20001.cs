@@ -79,7 +79,7 @@ namespace ET
         public ActorId OldActorId { get; set; }
 
         [MemoryPackOrder(2)]
-        public byte[] Unit { get; set; }
+        public UnitInfo UnitInfo { get; set; }
 
         [MemoryPackOrder(3)]
         public List<byte[]> Entitys { get; set; } = new();
@@ -93,7 +93,7 @@ namespace ET
 
             this.RpcId = default;
             this.OldActorId = default;
-            this.Unit = default;
+            this.UnitInfo = default;
             this.Entitys.Clear();
 
             ObjectPool.Recycle(this);

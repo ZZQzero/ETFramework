@@ -9,18 +9,18 @@ namespace ET
         protected override async ETTask Run(Scene scene, M2M_UnitTransferRequest request, M2M_UnitTransferResponse response)
         {
             UnitComponent unitComponent = scene.GetComponent<UnitComponent>();
-            Unit unit = MongoHelper.Deserialize<Unit>(request.Unit);
-
+            /*Unit unit = MongoHelper.Deserialize<Unit>(request.Unit);*/
+			Unit unit = UnitFactory.Create(scene, request.UnitInfo.UnitId, UnitType.Player);
             unitComponent.AddChild(unit);
             unitComponent.Add(unit);
 
-            foreach (byte[] bytes in request.Entitys)
+            /*foreach (byte[] bytes in request.Entitys)
             {
                 Entity entity = MongoHelper.Deserialize<Entity>(bytes);
                 unit.AddComponent(entity);
-            }
+            }*/
 
-            unit.AddComponent<MoveComponent>();
+            //unit.AddComponent<MoveComponent>();
             unit.AddComponent<PathfindingComponent, string>(scene.Name);
             unit.Position = new float3(-10, 0, -10);
 

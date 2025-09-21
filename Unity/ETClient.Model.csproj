@@ -57,8 +57,8 @@
     <Compile Include="Assets\Scripts\Model\StateSync\Share\SceneType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\EntitySerializeRegister.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\StateSyncOuter_C_10001.cs" />
-    <Compile Include="Assets\Scripts\Model\Unit\Share\Unit.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Move\Wait_UnitStop.cs" />
+    <Compile Include="Assets\Scripts\Model\Unit\Share\Unit.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\LoginOuter_C_1000.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\OpcodeGeneratorHint.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Router\RouterCheckComponent.cs" />
@@ -73,8 +73,8 @@
     <Compile Include="Assets\Scripts\Model\StateSync\Share\EventType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\SessionIdleCheckerComponent.cs" />
     <Compile Include="Assets\Scripts\Model\AI\Share\AIComponent.cs" />
-    <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\AIConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Unit\Share\UnitComponent.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\AIConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Move\Share\MoveComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLockComponent.cs" />
     <Compile Include="Assets\Scripts\Model\AI\Share\AIDispatcherSingle.cs" />
@@ -89,9 +89,9 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLockQueueType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\MailBoxType.cs" />
     <Compile Include="Assets\Scripts\Model\Login\ClientSessionErrorComponent.cs" />
+    <Compile Include="Assets\Scripts\Model\Login\FiberParentComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\ObjectWait\ObjectWait.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\StartMachineConfigConfigCategory.cs" />
-    <Compile Include="Assets\Scripts\Model\Login\FiberParentComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Mailbox\MailBoxComponent.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\Login\NetClient\A2NetClient_Message.cs" />

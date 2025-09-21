@@ -77,6 +77,8 @@ namespace ET
                 {
                     // 这里不能返回堆栈给客户端
                     Log.Error(exception.ToString());
+                    Log.Error($"{exception.Message} \n {exception.StackTrace} \n  {request}   {response}");
+                    
                     response.Error = ErrorCode.ERR_RpcFail;
                 }
                 

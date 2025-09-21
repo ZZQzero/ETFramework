@@ -61,7 +61,7 @@ namespace ET
             this.fibers = null;
         }
 
-        public async ETTask<int> Create(SchedulerType schedulerType, int fiberId, int zone, int sceneType, string name)
+        public async ETTask<Fiber> Create(SchedulerType schedulerType, int fiberId, int zone, int sceneType, string name)
         {
             if (sceneType == 0)
             {
@@ -76,7 +76,7 @@ namespace ET
                 {
                     throw new Exception($"same fiber already existed, if you remove, please await Remove then Create fiber! {fiberId}");
                 }
-                this.schedulers[(int) schedulerType].Add(fiberId);
+                this.schedulers[(int) schedulerType].Add(fiber);
                 
                 TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -86,7 +86,7 @@ namespace ET
                 });
 
                 await tcs.Task;
-                return fiberId;
+                return fiber;
 
                 async ETTask Action()
                 {
@@ -108,7 +108,7 @@ namespace ET
             }
         }
         
-        public async ETTask<int> Create(SchedulerType schedulerType, int zone, int sceneType, string name)
+        public async ETTask<Fiber> Create(SchedulerType schedulerType, int zone, int sceneType, string name)
         {
             int fiberId = Interlocked.Increment(ref this.idGenerator);
             return await this.Create(schedulerType, fiberId, zone, sceneType, name);

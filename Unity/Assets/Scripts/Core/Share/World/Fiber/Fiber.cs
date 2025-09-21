@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -15,11 +16,6 @@ namespace ET
     
     public class Fiber: IDisposable
     {
-        // 该字段只能框架使用，绝对不能改成public，改了后果自负
-        [StaticField]
-        [ThreadStatic]
-        public static Fiber Instance;
-        
         public int Id { get; }
         public int Zone { get; }
         public SchedulerType SchedulerType { get; }
@@ -29,9 +25,11 @@ namespace ET
         public EntitySystem EntitySystem { get; }
         public Mailboxes Mailboxes { get; private set; }
         public ThreadSynchronizationContext ThreadSynchronizationContext { get; }
-        public ILog Log { get; }
+        //public ILog Log { get; }
         public bool IsDisposed;
-        private readonly Queue<ETTask> frameFinishTasks = new();
+        private readonly ConcurrentQueue<ETTask> frameFinishTasks = new();
+
+        public bool HasWork => this.frameFinishTasks.Count > 0 || this.ThreadSynchronizationContext.QueueCount > 0;
         
         internal Fiber(int id, int zone, int sceneType, string name,SchedulerType schedulerType)
         {
@@ -49,7 +47,8 @@ namespace ET
                 SceneName = SceneTypeSingleton.Instance.GetSceneName(sceneType),
                 SchedulerType = schedulerType
             };
-            this.Log = EventSystem.Instance.Invoke<LogInvoker, ILog>(logInvoker);
+            //this.Log = EventSystem.Instance.Invoke<LogInvoker, ILog>(logInvoker);
+            Log.Info($"Fiber -->id:{id},process:{Process},sceneName:{logInvoker.SceneName},schedulerType:{schedulerType}");
             this.Root = new Scene(this, id, 1, sceneType, name);
         }
 
@@ -61,7 +60,7 @@ namespace ET
             }
             catch (Exception e)
             {
-                this.Log.Error(e);
+                Log.Error(e);
             }
         }
         
@@ -90,8 +89,10 @@ namespace ET
         {
             while (this.frameFinishTasks.Count > 0)
             {
-                ETTask task = this.frameFinishTasks.Dequeue();
-                task.SetResult();
+                if (this.frameFinishTasks.TryDequeue(out var task))
+                {
+                    task.SetResult();
+                }
             }
         }
 

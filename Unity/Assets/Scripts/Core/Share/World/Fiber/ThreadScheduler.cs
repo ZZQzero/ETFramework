@@ -8,7 +8,7 @@ namespace ET
     // 一个Fiber一个固定的线程
     internal class ThreadScheduler: IScheduler
     {
-        private readonly ConcurrentDictionary<int, Thread> dictionary = new();
+        private readonly ConcurrentDictionary<Fiber, Thread> fiberDic = new();
         
         private readonly FiberManager fiberManager;
 
@@ -17,29 +17,20 @@ namespace ET
             this.fiberManager = fiberManager;
         }
 
-        private void Loop(int fiberId)
+        private void Loop(Fiber fiber)
         {
-            Fiber fiber = fiberManager.Get(fiberId);
-            Fiber.Instance = fiber;
             SynchronizationContext.SetSynchronizationContext(fiber.ThreadSynchronizationContext);
             
             while (true)
             {
-                if (this.fiberManager.IsDisposed())
+                if (fiberManager.IsDisposed())
                 {
-                    return;
-                }
-                
-                fiber = fiberManager.Get(fiberId);
-                if (fiber == null)
-                {
-                    this.dictionary.Remove(fiberId, out _);
                     return;
                 }
                 
                 if (fiber.IsDisposed)
                 {
-                    this.dictionary.Remove(fiberId, out _);
+                    fiberDic.Remove(fiber, out _);
                     return;
                 }
                 
@@ -52,16 +43,16 @@ namespace ET
 
         public void Dispose()
         {
-            foreach (var kv in this.dictionary.ToArray())
+            foreach (var kv in this.fiberDic.ToArray())
             {
                 kv.Value.Join();
             }
         }
 
-        public void Add(int fiberId)
+        public void Add(Fiber fiber)
         {
-            Thread thread = new(() => this.Loop(fiberId));
-            this.dictionary.TryAdd(fiberId, thread);
+            Thread thread = new(() => this.Loop(fiber));
+            this.fiberDic.TryAdd(fiber, thread);
             thread.Start();
         }
     }

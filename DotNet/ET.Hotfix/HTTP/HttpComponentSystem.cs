@@ -64,8 +64,16 @@ namespace ET
         {
             try
             {
-                IHttpHandler handler = HttpDispatcher.Instance.Get(self.IScene.SceneType, context.Request.Url.AbsolutePath);
-                await handler.Handle(self.Scene(), context);
+                if (context.Request.Url != null)
+                {
+                    string path = context.Request.Url.AbsolutePath;
+                    IHttpHandler handler = HttpDispatcher.Instance.Get(self.IScene.SceneType, path);
+                    await handler.Handle(self.Scene(), context);
+                }
+                else
+                {
+                    Log.Error("context.Request.Url isNull");
+                }
             }
             catch (Exception e)
             {

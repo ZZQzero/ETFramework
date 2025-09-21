@@ -1,9 +1,9 @@
 using System;
 using System.IO;
 using System.Net.Http;
-using System.Threading;
 #if UNITY
 using UnityEngine;
+using UnityEngine.Networking;
 #endif
 
 namespace ET
@@ -15,8 +15,10 @@ namespace ET
             try
             {
 #if UNITY
-                UnityEngine.Networking.UnityWebRequest req = UnityEngine.Networking.UnityWebRequest.Get(link);
+                using UnityEngine.Networking.UnityWebRequest req = UnityEngine.Networking.UnityWebRequest.Get(link);
+                Log.Error("HttpClientHelper111");
                 await req.SendWebRequest();
+                Log.Error("HttpClientHelper");
                 return req.downloadHandler.data;
 #else
                 using HttpClient httpClient = new();
@@ -30,5 +32,6 @@ namespace ET
                 throw new Exception($"http request fail: {link.Substring(0,link.IndexOf('?'))}\n{e}");
             }
         }
+        
     }
 }

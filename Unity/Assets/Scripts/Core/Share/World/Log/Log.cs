@@ -10,9 +10,11 @@ namespace ET
         private const int InfoLevel = 3;
         private const int WarningLevel = 4;
 
+        private static ILog log => Logger.Instance.Log;
+
         private static ILog GetLog()
         {
-            return Fiber.Instance != null? Fiber.Instance.Log : Logger.Instance.Log;
+            return log; //Fiber.Instance != null? Fiber.Instance.Log : Logger.Instance.Log;
         }
         
         [Conditional("DEBUG")]

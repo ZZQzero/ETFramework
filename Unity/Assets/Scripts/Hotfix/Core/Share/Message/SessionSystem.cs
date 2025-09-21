@@ -80,9 +80,9 @@ namespace ET
             return ret;
         }
 
-        public static async ETTask<IResponse> Call(this Session self, IRequest request, int timeout)
+        public static async ETTask<IResponse> Call(this Session self, IRequest request, Scene scene,int timeout)
         {
-            return await self.Call(request).TimeoutAsync(timeout);
+            return await self.Call(request).TimeoutAsync(scene,timeout);
         }
 
         public static void Send(this Session self, IMessage message)

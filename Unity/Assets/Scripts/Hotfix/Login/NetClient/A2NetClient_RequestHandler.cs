@@ -6,6 +6,7 @@
         protected override async ETTask Run(Scene root, A2NetClient_Request request, A2NetClient_Response response)
         {
             int rpcId = request.RpcId;
+            Log.Error($"A2NetClient_RequestHandler  {request.MessageObject}  {response}");
             IResponse res = await root.GetComponent<SessionComponent>().Session.Call(request.MessageObject);
             res.RpcId = rpcId;
             response.MessageObject = res;

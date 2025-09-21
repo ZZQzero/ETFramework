@@ -134,8 +134,8 @@
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Core\Loader.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour\DtNavMesh.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Recast\RcContourHoleComparer.cs" />
-    <Compile Include="Assets\Scripts\ThirdParty\Recast\Core\RcSortedQueue.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Recast\RcHeightfieldLayerSet.cs" />
+    <Compile Include="Assets\Scripts\ThirdParty\Recast\Core\RcSortedQueue.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour\Io\IOUtils.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\Recast\Detour.TileCache\Io\Compress\IDtTileCacheCompressorFactory.cs" />
     <Compile Include="Assets\Scripts\ThirdParty\SourceGeneratorAttribute\UniqueIdAttribute.cs" />

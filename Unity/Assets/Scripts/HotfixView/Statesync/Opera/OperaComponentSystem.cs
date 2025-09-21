@@ -6,9 +6,10 @@ namespace ET
     public static partial class OperaComponentSystem
     {
         [EntitySystem]
-        private static void Awake(this OperaComponent self)
+        private static void Awake(this OperaComponent self,Scene scene)
         {
             self.mapMask = LayerMask.GetMask("Map");
+            self.Scene = scene;
         }
 
         [EntitySystem]
@@ -82,7 +83,7 @@ namespace ET
             
             Log.Debug($"TestCancelAfter start");
             ETCancellationToken newCancellationToken = new();
-            await self.Root().GetComponent<TimerComponent>().WaitAsync(3000).TimeoutAsync(newCancellationToken, 1000);
+            await self.Root().GetComponent<TimerComponent>().WaitAsync(3000).TimeoutAsync(self.Scene,newCancellationToken, 1000);
             if (newCancellationToken.IsCancel())
             {
                 Log.Debug($"TestCancelAfter newCancellationToken is cancel!");

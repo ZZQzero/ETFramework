@@ -19,7 +19,6 @@ namespace ET
             this.ActorId = actorId;
             
             this.RequestType = requestType;
-            
             this.tcs = ETTask<IResponse>.Create(true);
             this.NeedException = needException;
         }

@@ -26,6 +26,7 @@ namespace ET
 
             unit.AddComponent<MailBoxComponent, int>(MailBoxType.OrderedMessage);
 
+            Log.Debug("M2M_UnitTransferRequestHandler");
             // 通知客户端开始切场景
             M2C_StartSceneChange m2CStartSceneChange = M2C_StartSceneChange.Create();
             m2CStartSceneChange.SceneInstanceId = scene.InstanceId;

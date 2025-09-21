@@ -121,6 +121,7 @@ namespace ET
 
             this.RpcId = default;
 
+            Log.Error("销毁C2G_EnterMap");
             ObjectPool.Recycle(this);
         }
     }

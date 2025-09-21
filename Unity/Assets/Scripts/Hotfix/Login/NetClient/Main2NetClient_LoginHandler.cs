@@ -14,8 +14,7 @@ namespace ET
             // 创建一个ETModel层的Session
             root.RemoveComponent<RouterAddressComponent>();
             // 获取路由跟realmDispatcher地址
-            RouterAddressComponent routerAddressComponent =
-                    root.AddComponent<RouterAddressComponent, string>(request.Address);
+            RouterAddressComponent routerAddressComponent = root.AddComponent<RouterAddressComponent, string>(request.Address);
             await routerAddressComponent.Init();
 #if UNITY_WEBGL
             root.AddComponent<NetComponent, IKcpTransport>(new WebSocketTransport(routerAddressComponent.AddressFamily));

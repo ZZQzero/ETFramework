@@ -6,70 +6,76 @@ namespace ET
 {
     internal class MainThreadScheduler: IScheduler
     {
-        private readonly ConcurrentQueue<int> idQueue = new();
-        private readonly ConcurrentQueue<int> addIds = new();
+        private readonly ConcurrentQueue<Fiber> fiberQueue = new();
+        private readonly ConcurrentQueue<Fiber> addfiberQueue = new();
+        
         private readonly FiberManager fiberManager;
-        private readonly ThreadSynchronizationContext threadSynchronizationContext = new();
+        private readonly ThreadSynchronizationContext mainThreadSynchronizationContext = new();
         private Fiber firstFiber;
 
         public MainThreadScheduler(FiberManager fiberManager)
         {
-            SynchronizationContext.SetSynchronizationContext(this.threadSynchronizationContext);
+            SynchronizationContext.SetSynchronizationContext(this.mainThreadSynchronizationContext);
             this.fiberManager = fiberManager;
         }
 
         public void Dispose()
         {
-            this.addIds.Clear();
-            this.idQueue.Clear();
+            foreach (var fiber in fiberQueue)
+            {
+                if (fiber == null || fiber.IsDisposed)
+                {
+                    continue;
+                }
+                fiber.Dispose();
+            }
+
+            foreach (var fiber in addfiberQueue)
+            {
+                if (fiber == null || fiber.IsDisposed)
+                {
+                    continue;
+                }
+                fiber.Dispose();
+            }
+            fiberQueue.Clear();
+            addfiberQueue.Clear();
         }
 
         public void Update()
         {
-            SynchronizationContext.SetSynchronizationContext(this.threadSynchronizationContext);
-            this.threadSynchronizationContext.Update();
-            
-            int count = this.idQueue.Count;
+            SynchronizationContext.SetSynchronizationContext(this.mainThreadSynchronizationContext);
+            mainThreadSynchronizationContext.Update();
+
+            int count = fiberQueue.Count;
             while (count-- > 0)
             {
-                if (!this.idQueue.TryDequeue(out int id))
+                if (!fiberQueue.TryDequeue(out var fiber))
                 {
                     continue;
                 }
 
-                Fiber fiber = this.fiberManager.Get(id);
                 if (fiber == null)
                 {
                     continue;
                 }
-                
-                if (fiber.IsDisposed)
-                {
-                    continue;
-                }
-                
-                Fiber.Instance = fiber;
                 SynchronizationContext.SetSynchronizationContext(fiber.ThreadSynchronizationContext);
                 fiber.Update();
-                this.idQueue.Enqueue(id);
+                fiberQueue.Enqueue(fiber);
             }
-            
-            Fiber.Instance = this.firstFiber;
-            // Fiber调度完成，要还原成默认的上下文，否则unity的回调会找不到正确的上下文
-            SynchronizationContext.SetSynchronizationContext(this.threadSynchronizationContext);
+            SynchronizationContext.SetSynchronizationContext(mainThreadSynchronizationContext);
         }
 
         public void LateUpdate()
         {
-            int count = this.idQueue.Count;
+            int count = fiberQueue.Count;
             while (count-- > 0)
             {
-                if (!this.idQueue.TryDequeue(out int id))
+                if (!fiberQueue.TryDequeue(out var fiber))
                 {
                     continue;
                 }
 
-                Fiber fiber = this.fiberManager.Get(id);
                 if (fiber == null)
                 {
                     continue;
@@ -79,29 +85,23 @@ namespace ET
                 {
                     continue;
                 }
-
-                Fiber.Instance = fiber;
                 SynchronizationContext.SetSynchronizationContext(fiber.ThreadSynchronizationContext);
                 fiber.LateUpdate();
-                this.idQueue.Enqueue(id);
-            }
-
-            while (this.addIds.Count > 0)
-            {
-                this.addIds.TryDequeue(out int result);
-                this.idQueue.Enqueue(result);
+                fiberQueue.Enqueue(fiber);
             }
             
-            Fiber.Instance = this.firstFiber;
+            while (this.addfiberQueue.Count > 0)
+            {
+                this.addfiberQueue.TryDequeue(out Fiber result);
+                this.fiberQueue.Enqueue(result);
+            }
             // Fiber调度完成，要还原成默认的上下文，否则unity的回调会找不到正确的上下文
-            SynchronizationContext.SetSynchronizationContext(this.threadSynchronizationContext);
+            SynchronizationContext.SetSynchronizationContext(this.mainThreadSynchronizationContext);
         }
-
-
-        public void Add(int fiberId = 0)
+        
+        public void Add(Fiber fiber)
         {
-            this.addIds.Enqueue(fiberId);
-            this.firstFiber ??= this.fiberManager.Get(fiberId);
+            addfiberQueue.Enqueue(fiber);
         }
     }
 }

@@ -509,6 +509,9 @@
     <Reference Include="Unity.Mathematics">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\Unity.Mathematics.dll</HintPath>
     </Reference>
+    <Reference Include="UniTask">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\UniTask.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="ETClient.Core.csproj">

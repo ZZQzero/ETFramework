@@ -5,22 +5,26 @@ using System.Threading;
 
 namespace ET
 {
-    internal class ThreadPoolScheduler: IScheduler
+    internal class ThreadPoolScheduler : IScheduler
     {
         private readonly List<Thread> threads;
-
-        private readonly ConcurrentQueue<int> idQueue = new();
-        
+        private readonly ConcurrentQueue<Fiber> fiberQueue = new();
         private readonly FiberManager fiberManager;
+        private bool disposed;
 
         public ThreadPoolScheduler(FiberManager fiberManager)
         {
             this.fiberManager = fiberManager;
             int threadCount = Environment.ProcessorCount;
             this.threads = new List<Thread>(threadCount);
+            
             for (int i = 0; i < threadCount; ++i)
             {
-                Thread thread = new(this.Loop);
+                Thread thread = new Thread(Loop)
+                {
+                    IsBackground = true,
+                    Name = $"ThreadPoolScheduler-{i}"
+                };
                 this.threads.Add(thread);
                 thread.Start();
             }
@@ -34,57 +38,50 @@ namespace ET
                 if (count <= 0)
                 {
                     Thread.Sleep(1);
-                    
                     // count最小为1
-                    count = this.idQueue.Count / this.threads.Count + 1;
+                    count = this.fiberQueue.Count / this.threads.Count + 1;
                 }
 
                 --count;
-                
-                if (this.fiberManager.IsDisposed())
+                if (fiberManager.IsDisposed())
                 {
                     return;
                 }
                 
-                if (!this.idQueue.TryDequeue(out int id))
+                if (!fiberQueue.TryDequeue(out Fiber fiber))
                 {
                     Thread.Sleep(1);
                     continue;
                 }
-
-                Fiber fiber = this.fiberManager.Get(id);
-                if (fiber == null)
+                if(fiber == null || fiber.IsDisposed)
                 {
                     continue;
                 }
-
-                if (fiber.IsDisposed)
-                {
-                    continue;
-                }
-
-                Fiber.Instance = fiber;
+                var prevCtx = SynchronizationContext.Current;
                 SynchronizationContext.SetSynchronizationContext(fiber.ThreadSynchronizationContext);
                 fiber.Update();
                 fiber.LateUpdate();
-                SynchronizationContext.SetSynchronizationContext(null);
-                Fiber.Instance = null;
-
-                this.idQueue.Enqueue(id);
+                SynchronizationContext.SetSynchronizationContext(prevCtx);
+                fiberQueue.Enqueue(fiber);
             }
+        }
+
+        public void Add(Fiber fiber)
+        {
+            fiberQueue.Enqueue(fiber);
         }
 
         public void Dispose()
         {
+            if (disposed)
+            {
+                return;
+            }
+            disposed = true;
             foreach (Thread thread in this.threads)
             {
                 thread.Join();
             }
-        }
-
-        public void Add(int fiberId)
-        {
-            this.idQueue.Enqueue(fiberId);
         }
     }
 }

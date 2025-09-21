@@ -20,7 +20,7 @@ namespace ET
 
                 //await SceneManager.LoadSceneAsync(currentScene.Name);
 
-                currentScene.AddComponent<OperaComponent>();
+                currentScene.AddComponent<OperaComponent,Scene>(currentScene);
                 Log.Error("SceneChangeStart 切换到map场景");
             }
             catch (Exception e)

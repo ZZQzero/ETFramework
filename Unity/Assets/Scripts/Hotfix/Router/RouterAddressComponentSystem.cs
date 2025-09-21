@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using Cysharp.Threading.Tasks;
 using MemoryPack;
 
 namespace ET
@@ -38,6 +39,22 @@ namespace ET
             
             self.WaitTenMinGetAllRouter().NoContext();
         }
+
+        /*private static async UniTask GetAllRouter(this RouterAddressComponent self)
+        {
+            string url = $"http://{self.Address}/get_router?v={RandomGenerator.RandUInt32()}";
+            Log.Error($"start get router info: {url}");
+            //var routerInfo = HttpClientHelper.GetHttp(url);
+            var routerInfo = await HttpClientHelper.Get(url);
+            Log.Error($"recv router info: {routerInfo}");
+            //HttpGetRouterResponse httpGetRouterResponse = MongoHelper.FromJson<HttpGetRouterResponse>(routerInfo);
+            HttpGetRouterResponse httpGetRouterResponse = MemoryPackSerializer.Deserialize<HttpGetRouterResponse>(routerInfo);
+            self.Info = httpGetRouterResponse;
+            //Log.Error($"start get router info finish: {MongoHelper.ToJson(httpGetRouterResponse)}");
+            
+            // 打乱顺序
+            RandomGenerator.BreakRank(self.Info.Routers);
+        }*/
         
         // 等10分钟再获取一次
         public static async ETTask WaitTenMinGetAllRouter(this RouterAddressComponent self)

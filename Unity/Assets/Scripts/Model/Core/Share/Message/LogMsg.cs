@@ -28,7 +28,7 @@ namespace ET
             {
                 return;
             }
-            fiber.Log.Debug(msg.ToString());
+            Log.Debug(msg.ToString());
         }
     }
 }

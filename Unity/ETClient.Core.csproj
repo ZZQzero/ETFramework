@@ -74,7 +74,6 @@
     <Compile Include="Assets\Scripts\Core\Share\World\World.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\AChannel.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\RpcException.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\ThreadSynchronizationContext.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\FileHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\IAwaiter.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Singleton.cs" />
@@ -86,6 +85,7 @@
     <Compile Include="Assets\Scripts\Core\Share\MultiMap.cs" />
     <Compile Include="Assets\Scripts\Core\Share\MultiMapSet.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\ByteHelper.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\Network\Mailboxes.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Config\ConfigAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\ChildrenCollection.cs" />
     <Compile Include="Assets\Scripts\Core\Share\MultiDictionary.cs" />
@@ -105,7 +105,9 @@
     <Compile Include="Assets\Scripts\Core\Share\World\Log\ILog.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\AService.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\InvokeAttribute.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\World\Fiber\Fiber.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Method\IStaticMethod.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\Entity\EntitySystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\ResponseTypeAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\ActorId.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\BaseAttribute.cs" />
@@ -119,7 +121,6 @@
     <Compile Include="Assets\Scripts\Core\Share\Entity\ComponentView.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\IKcpTransport.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Object\SystemObject.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Fiber\Fiber.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\Kcp\ikcph.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\IDestroySystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\UnOrderMultiMap.cs" />
@@ -134,12 +135,12 @@
     <Compile Include="Assets\Scripts\Core\Share\Serialize\MemoryBuffer.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Log\Logger.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\ETVoid.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\World\Fiber\ThreadSynchronizationContext.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\ISerializeToEntity.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\EntitySystemAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\AssemblyHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\ObjectHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Log\LogInvoker.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Fiber\Mailboxes.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\EntitySceneFactory.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\Scene.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Config\IConfig.cs" />
@@ -156,7 +157,6 @@
     <Compile Include="Assets\Scripts\Core\Share\SortedSet.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Fiber\FiberManager.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\ILocationMessage.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Fiber\EntitySystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Fiber\ThreadPoolScheduler.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\MessageAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Object\DisposeObject.cs" />

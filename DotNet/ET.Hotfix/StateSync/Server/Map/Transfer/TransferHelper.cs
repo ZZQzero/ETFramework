@@ -33,7 +33,7 @@ namespace ET
                 }
             }*/
             unit.Dispose();
-            Log.Debug("Transfer");
+            Log.Info("Transfer");
             await root.GetComponent<LocationProxyComponent>().Lock(LocationType.Unit, unitId, request.OldActorId);
             await root.GetComponent<MessageSender>().Call(sceneInstanceId, request);
         }

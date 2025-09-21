@@ -1,9 +1,9 @@
 ﻿namespace ET;
 
 [EnableClass]
-public class HotfixInit
+public static class HotfixInit
 {
-    public void Init()
+    public static void Run()
     {
         
     }

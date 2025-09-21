@@ -52,7 +52,6 @@ namespace ET
         {
             this.ActorId = new ActorId(this.Process, this.Id, 1);
             this.Type = SceneTypeSingleton.Instance.GetSceneType(this.SceneType);
-            Log.Error($"{this.Process}  | {this.Id}  |  {this.Type}  | {this.SceneType}");
         }
     }
 }

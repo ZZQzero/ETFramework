@@ -26,7 +26,7 @@ namespace ET
 
             unit.AddComponent<MailBoxComponent, int>(MailBoxType.OrderedMessage);
 
-            Log.Debug("M2M_UnitTransferRequestHandler");
+            Log.Info("M2M_UnitTransferRequestHandler");
             // 通知客户端开始切场景
             M2C_StartSceneChange m2CStartSceneChange = M2C_StartSceneChange.Create();
             m2CStartSceneChange.SceneInstanceId = scene.InstanceId;
@@ -38,7 +38,7 @@ namespace ET
             m2CCreateUnits.Unit = UnitHelper.CreateUnitInfo(unit);
             MapMessageHelper.SendToClient(unit, m2CCreateUnits);
 
-            Log.Error("通知客户端创建My Unit");
+            Log.Info("通知客户端创建My Unit");
             // 加入aoi
             unit.AddComponent<AOIEntity, int, float3>(9 * 1000, unit.Position);
 

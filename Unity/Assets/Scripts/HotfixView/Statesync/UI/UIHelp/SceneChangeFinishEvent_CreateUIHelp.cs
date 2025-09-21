@@ -9,6 +9,7 @@ namespace ET
         {
             //await UIHelper.Create(scene, UIType.UIHelp, UILayer.Mid);
             await GameUIManager.Instance.OpenUI(GameUIName.UIHelp, null);
+            GameUIManager.Instance.CloseAndDestroyUI(GameUIName.UILobby);
         }
     }
 }

@@ -23,7 +23,8 @@ namespace ET
                 unit.SendStop(3);
                 return;
             }
-                
+            
+            Log.Info($"广播寻路 {m2CPathfindingResult}");
             // 广播寻路路径
             m2CPathfindingResult.Id = unit.Id;
             MapMessageHelper.Broadcast(unit, m2CPathfindingResult);

@@ -54,6 +54,7 @@
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawer\LongTypeDrawer.cs" />
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawerAttribute.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\Helper\AssemblyTool.cs" />
+    <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\ETSceneNodeGraph.cs" />
     <Compile Include="Assets\Scripts\Editor\Excel\LubanGenerateExcels.cs" />
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawer\ISceneTypeDrawer.cs" />
     <Compile Include="Assets\Scripts\Editor\Proto\ProtoEditor.cs" />

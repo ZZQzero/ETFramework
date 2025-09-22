@@ -141,5 +141,10 @@ namespace ET
         {
             return this.fibers.Count;
         }
+
+        public ConcurrentDictionary<int, Fiber> GetFibers()
+        {
+            return fibers;
+        }
     }
 }

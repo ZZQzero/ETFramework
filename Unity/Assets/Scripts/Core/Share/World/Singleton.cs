@@ -1,13 +1,19 @@
-﻿namespace ET
+﻿using System;
+
+namespace ET
 {
     public interface ISingletonReverseDispose
     {
         
     }
     
-    public abstract class ASingleton: DisposeObject
+    public abstract class ASingleton : IDisposable
     {
         internal abstract void Register();
+        public virtual void Dispose()
+        {
+            
+        }
     }
     
     public abstract class Singleton<T>: ASingleton where T: Singleton<T>
@@ -55,9 +61,8 @@
             this.isDisposed = true;
 
             this.Destroy();
-            
-            Instance = null;
             base.Dispose();
+            Instance = null;
         }
     }
 }

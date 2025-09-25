@@ -4,5 +4,6 @@
     {
         Fiber Fiber { get; set; }
         int SceneType { get; set; }
+        string Name { get; set; }
     }
 }

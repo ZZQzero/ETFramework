@@ -7,18 +7,8 @@ namespace ET
     public class Scene: Entity, IScene
     {
         public Fiber Fiber { get; set; }
-        
-        public string Name { get; }
-        
-        public int SceneType
-        {
-            get;
-            set;
-        }
-
-        public Scene()
-        {
-        }
+        public int SceneType { get; set; }
+        public string Name { get; set; }
 
         public Scene(Fiber fiber, long id, long instanceId, int sceneType, string name)
         {
@@ -30,9 +20,10 @@ namespace ET
             this.Fiber = fiber;
             this.IScene = this;
             this.IsRegister = true;
+            TypeId = TypeId<Scene>.Id;
         }
 
-        public override void Dispose()
+        public new void Dispose()
         {
             base.Dispose();
             

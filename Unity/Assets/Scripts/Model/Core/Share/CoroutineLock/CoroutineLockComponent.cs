@@ -9,6 +9,8 @@ namespace ET
         public Fiber Fiber { get; set; }
         public int SceneType { get; set; }
         
+        public string Name { get; set; }
+
         public readonly Queue<(long, long, int)> nextFrameRun = new();
     }
 }

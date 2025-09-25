@@ -13,26 +13,22 @@ namespace ET
         IsComponent = 1 << 2,
         IsNew = 1 << 3,
     }
-    public abstract partial class Entity : DisposeObject, IPool
+    public abstract partial class Entity : IPool
     {
-        #region 静态方法
-        public static T Fetch<T>() where T : Entity, new()
-        {
-            return ObjectPool.Fetch<T>();
-        }
-        #endregion
-
         #region 基础属性
+        //实例化Id
         public long InstanceId { get; protected set; }
-        public long Id { get; protected set; }
+        //EntityId
+        public long Id { get; set; }
+        //类型Id (T)即使销毁也不变
+        public long TypeId { get; set; }
         public bool IsDisposed => this.InstanceId == 0;
         
         private EntityStatus status = EntityStatus.None;
         private Entity parent;
-        protected IScene iScene;
-
-        protected ChildrenCollection children;
-        protected ComponentsCollection components;
+        private IScene iScene;
+        private ChildrenCollection children;
+        private ComponentsCollection components;
         #endregion
 
         #region Unity编辑器支持
@@ -82,7 +78,7 @@ namespace ET
             set => SetStatusFlag(EntityStatus.IsComponent, value);
         }
 
-        protected bool IsNew
+        public bool IsNew
         {
             get => HasStatusFlag(EntityStatus.IsNew);
             set => SetStatusFlag(EntityStatus.IsNew, value);
@@ -136,25 +132,11 @@ namespace ET
         }
         #endregion
 
-        #region 哈希码生成
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public virtual long GetLongHashCode()
-        {
-            return this.GetType().TypeHandle.Value.ToInt64();
-        }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public virtual long GetComponentLongHashCode(Type type)
-        {
-            return type.TypeHandle.Value.ToInt64();
-        }
-        #endregion
-
         #region 父级管理
         public Entity Parent
         {
             get => this.parent;
-            protected set
+            private set
             {
                 this.ValidateParent(value);
                 this.SetParentInternal(value, false);
@@ -199,6 +181,7 @@ namespace ET
                     this.parent.RemoveChildNoDispose(this);
             }
 
+            
             // 设置新的父子关系
             this.parent = value;
             this.IsComponent = isComponent;
@@ -208,7 +191,7 @@ namespace ET
             else
                 this.parent.AddToChildren(this);
 
-            // 设置场景引用
+            // 设置场景引用,如果组件本身继承了IScene,它本身就是场景（有点问题，又是组件，又是场景）
             if (this is IScene scene)
             {
                 scene.Fiber = this.parent.iScene.Fiber;
@@ -289,39 +272,9 @@ namespace ET
                 }
 
                 this.IsRegister = true;
-                this.RestoreRelationships();
-                
-                if (!this.IsNew)
-                {
-                    EntitySystemSingleton.Instance.Deserialize(this);
-                }
             }
         }
-
-        private void RestoreRelationships()
-        {
-            // 恢复组件关系
-            if (this.components != null)
-            {
-                foreach ((long _, Entity component) in this.components)
-                {
-                    component.IsComponent = true;
-                    component.parent = this;
-                    component.IScene = this.iScene;
-                }
-            }
-
-            // 恢复子级关系
-            if (this.children != null)
-            {
-                foreach ((long _, Entity child) in this.children)
-                {
-                    child.IsComponent = false;
-                    child.parent = this;
-                    child.IScene = this.iScene;
-                }
-            }
-        }
+        
         #endregion
 
         #region 子级管理
@@ -372,12 +325,12 @@ namespace ET
 
         private void AddToComponents(Entity component)
         {
-            this.Components.Add(component.GetLongHashCode(), component);
+            Components.Add(component.TypeId,component);
         }
 
         private void RemoveComponentNoDispose(Entity component)
         {
-            if (this.components?.Remove(component.GetLongHashCode()) == true && this.components.Count == 0)
+            if (this.components?.Remove(component.TypeId) == true && this.components.Count == 0)
             {
                 this.components.Dispose();
                 this.components = null;
@@ -394,64 +347,54 @@ namespace ET
                 EntitySystemSingleton.Instance.GetComponentSys(this, typeof(K));
             }
             
-            return this.components.TryGetValue(this.GetComponentLongHashCode(typeof(K)), out Entity component) 
-                ? (K)component : null;
+            return this.components.TryGetValue(TypeId<K>.Id, out Entity component) ? (K)component : null;
         }
 
-        public Entity GetComponent(Type type)
+        public void RemoveComponent<K>() where K : Entity, new()
         {
-            if (this.components == null) return null;
-
-            // 触发GetComponentSystem
-            if (this is IGetComponentSys)
-            {
-                EntitySystemSingleton.Instance.GetComponentSys(this, type);
-            }
+            if (this.IsDisposed || this.components == null) return;
             
-            return this.components.TryGetValue(this.GetComponentLongHashCode(type), out Entity component) 
-                ? component : null;
-        }
-
-        public void RemoveComponent<K>() where K : Entity
-        {
-            if (this.IsDisposed || this.components == null) return;
-
-            if (this.components.Remove(this.GetComponentLongHashCode(typeof(K)), out Entity component))
+            if (components.Remove(TypeId<K>.Id,out Entity component))
             {
-                component.Dispose();
+                var type = typeof(K);
+                if (component.IsFromPool)
+                {
+                    ObjectPool.Recycle<K>((K)component);
+                }
+                else
+                {
+                    component.Dispose();
+                }
             }
         }
 
-        public void RemoveComponent(Type type)
+        public void RemoveComponent(long typeId)
         {
             if (this.IsDisposed || this.components == null) return;
-
-            if (this.components.Remove(this.GetComponentLongHashCode(type), out Entity component))
+            
+            if (components.Remove(typeId,out Entity component))
             {
-                component.Dispose();
+                if (component.IsFromPool)
+                {
+                    //ObjectPool.Recycle();
+                }
+                else
+                {
+                    component.Dispose();
+                }
             }
         }
+        
         #endregion
 
         #region 组件创建和添加
         private static T Create<T>(bool isFromPool) where T : Entity, new()
         {
             T component = ObjectPool.Fetch<T>(isFromPool);
+            component.TypeId = TypeId<T>.Id;
             component.IsFromPool = isFromPool;
             component.IsNew = true;
             component.Id = 0;
-            return component;
-        }
-
-        public Entity AddComponent(Entity component)
-        {
-            Type type = component.GetType();
-            if (this.components?.ContainsKey(this.GetComponentLongHashCode(type)) == true)
-            {
-                throw new Exception($"Entity already has component: {type.FullName}");
-            }
-
-            component.ComponentParent = this;
             return component;
         }
 
@@ -478,8 +421,11 @@ namespace ET
         private K CreateAndAddComponent<K>(long id, bool isFromPool, Action<K> awakeAction) where K : Entity, new()
         {
             this.ValidateComponentNotExists<K>();
+            return EntityObjectPool.Instance.GetEntity<K>(TypeId<K>.Id);
+            
             K component = Create<K>(isFromPool);
             component.Id = id;
+            Log.Error($"CreateAndAddComponent {id}  {typeof(K)}");
             component.ComponentParent = this;
             awakeAction(component);
             return component;
@@ -517,7 +463,7 @@ namespace ET
 
         private void ValidateComponentNotExists<K>() where K : Entity
         {
-            if (this.components?.ContainsKey(this.GetComponentLongHashCode(typeof(K))) == true)
+            if (this.components?.ContainsKey(TypeId<K>.Id) == true)
             {
                 throw new Exception($"Entity already has component: {typeof(K).FullName}");
             }
@@ -601,6 +547,7 @@ namespace ET
             T component = Create<T>(isFromPool);
             component.Id = id;
             component.Parent = this;
+            Log.Error($"CreateAndAddChild {id}");
             awakeAction(component);
             return component;
         }
@@ -634,13 +581,10 @@ namespace ET
         #endregion
 
         #region 资源清理
-        public void Reset()
-        {
-            // 子类可以重写此方法进行重置
-        }
 
-        public override void Dispose()
+        public void Dispose()
         {
+            //TODO 有点问题
             if (this.IsDisposed) return;
 
             this.IsRegister = false;
@@ -662,6 +606,7 @@ namespace ET
             {
                 foreach (var kv in this.components)
                 {
+                    EntityObjectPool.Instance.RecycleEntity(kv.Value);
                     kv.Value.Dispose();
                 }
                 this.components.Dispose();
@@ -686,18 +631,11 @@ namespace ET
             }
 
             this.parent = null;
-
             // 清理视图
             this.CleanupView();
-
-            base.Dispose();
             
-            // 重置状态（保留IsFromPool标记）
-            bool isFromPool = this.IsFromPool;
+            // 重置状态
             this.status = EntityStatus.None;
-            this.IsFromPool = isFromPool;
-            //TODO 少一步对象池回收，先暂时注释
-            //ObjectPool.Recycle(this);
         }
 
         #endregion

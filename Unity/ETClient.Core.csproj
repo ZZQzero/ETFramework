@@ -112,6 +112,7 @@
     <Compile Include="Assets\Scripts\Core\Share\World\ActorId.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\BaseAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\RandomGenerator.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\UtilityMethod.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\IUpdateSystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\Kcp\KcpPatial.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ErrorCore.cs" />
@@ -122,6 +123,7 @@
     <Compile Include="Assets\Scripts\Core\Share\Network\IKcpTransport.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Object\SystemObject.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\Kcp\ikcph.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\World\ObjectPool\EntityObjectPool.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\IDestroySystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\UnOrderMultiMap.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\ISingletonAwake.cs" />

@@ -10,12 +10,6 @@ namespace ET
         {
             
         }
-        private static class PoolHolder<T> where T : class, IPool, new()
-        {
-            // 视负载调整：capacity/fastSlotsCount
-            [StaticField]
-            public static readonly Pool<T> Instance = new Pool<T>(capacity: 200, fastSlotsCount: 16);
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Fetch<T>(bool isFromPool = true) where T : class, IPool, new()
@@ -32,8 +26,18 @@ namespace ET
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Recycle<T>(T obj) where T : class, IPool, new()
         {
-            if (obj == null) return;
+            if (obj == null)
+            {
+                return;
+            }
             PoolHolder<T>.Instance.Return(obj);
+        }
+        
+        private static class PoolHolder<T> where T : class, IPool, new()
+        {
+            // 视负载调整：capacity/fastSlotsCount
+            [StaticField]
+            public static readonly Pool<T> Instance = new Pool<T>(capacity: 256, fastSlotsCount: 16);
         }
         
         // —— 池实现：FastSlots（无锁） + 环形缓冲区（锁保护） —— //
@@ -70,7 +74,12 @@ namespace ET
                 // 1) FastSlots：无锁快路
                 for (int i = 0; i < fastSlots.Length; i++)
                 {
+#if DOTNET
                     var inst = Interlocked.Exchange(ref fastSlots[i], null);
+#elif UNITY
+                    var inst = fastSlots[i];
+                    fastSlots[i] = null;
+#endif
                     if (inst != null)
                     {
                         inst.IsFromPool = true;
@@ -114,10 +123,18 @@ namespace ET
                 // 1) 尝试放入 FastSlots（无锁，低冲突）
                 for (int i = 0; i < fastSlots.Length; i++)
                 {
+#if UNITY
+                    if (fastSlots[i] == null)
+                    {
+                        fastSlots[i] = obj;
+                        return;
+                    }
+#elif DOTNET
                     if (Interlocked.CompareExchange(ref fastSlots[i], obj, null) == null)
                     {
                         return;
                     }
+#endif
                 }
 
                 // 2) 放入环形缓冲区（锁内维护）
@@ -132,7 +149,8 @@ namespace ET
                     }
                 }
 
-                // 3) 超容量丢弃（如需释放非托管资源，可在这里做 Dispose）
+                // 3) 超容量丢弃
+                obj.Dispose();
             }
         }
     }

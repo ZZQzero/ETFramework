@@ -176,7 +176,6 @@
     <Compile Include="Assets\Scripts\Core\Share\Method\StaticMethod.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\OpcodeRangeDefine.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Object\HandlerObject.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\World\ObjectPool\ObjectPool1.cs" />
     <None Include="Assets\Scripts\Core\ETClient.Core.asmdef" />
     <Reference Include="UnityEngine">
       <HintPath>G:\Unity\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>

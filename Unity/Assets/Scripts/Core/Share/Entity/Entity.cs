@@ -176,9 +176,9 @@ namespace ET
             if (this.parent != null)
             {
                 if (this.IsComponent)
-                    this.parent.RemoveComponentNoDispose(this);
+                    this.parent.RemoveComponent(this);
                 else
-                    this.parent.RemoveChildNoDispose(this);
+                    this.parent.RemoveChild(this);
             }
 
             
@@ -288,15 +288,6 @@ namespace ET
             this.Children.Add(entity.Id, entity);
         }
 
-        private void RemoveChildNoDispose(Entity entity)
-        {
-            if (this.children?.Remove(entity.Id) == true && this.children.Count == 0)
-            {
-                this.children.Dispose();
-                this.children = null;
-            }
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public K GetChild<K>(long id) where K : Entity
         {
@@ -307,12 +298,15 @@ namespace ET
         {
             if (this.children?.Remove(id, out Entity child) == true)
             {
-                if (this.children.Count == 0)
-                {
-                    this.children.Dispose();
-                    this.children = null;
-                }
-                child.Dispose();
+                EntityObjectPool.Instance.RecycleEntity(child);
+            }
+        }
+        
+        private void RemoveChild(Entity entity)
+        {
+            if (this.children?.Remove(entity.Id) == true)
+            {
+                EntityObjectPool.Instance.RecycleEntity(entity);
             }
         }
         #endregion
@@ -327,16 +321,7 @@ namespace ET
         {
             Components.Add(component.TypeId,component);
         }
-
-        private void RemoveComponentNoDispose(Entity component)
-        {
-            if (this.components?.Remove(component.TypeId) == true && this.components.Count == 0)
-            {
-                this.components.Dispose();
-                this.components = null;
-            }
-        }
-
+        
         public K GetComponent<K>() where K : Entity
         {
             if (this.components == null) return null;
@@ -356,47 +341,21 @@ namespace ET
             
             if (components.Remove(TypeId<K>.Id,out Entity component))
             {
-                var type = typeof(K);
-                if (component.IsFromPool)
-                {
-                    ObjectPool.Recycle<K>((K)component);
-                }
-                else
-                {
-                    component.Dispose();
-                }
+                EntityObjectPool.Instance.RecycleEntity(component);
             }
         }
-
-        public void RemoveComponent(long typeId)
+        
+        private void RemoveComponent(Entity component)
         {
-            if (this.IsDisposed || this.components == null) return;
-            
-            if (components.Remove(typeId,out Entity component))
+            if (this.components.Remove(component.TypeId,out var entity))
             {
-                if (component.IsFromPool)
-                {
-                    //ObjectPool.Recycle();
-                }
-                else
-                {
-                    component.Dispose();
-                }
+                EntityObjectPool.Instance.RecycleEntity(entity);
             }
         }
         
         #endregion
 
         #region 组件创建和添加
-        private static T Create<T>(bool isFromPool) where T : Entity, new()
-        {
-            T component = ObjectPool.Fetch<T>(isFromPool);
-            component.TypeId = TypeId<T>.Id;
-            component.IsFromPool = isFromPool;
-            component.IsNew = true;
-            component.Id = 0;
-            return component;
-        }
 
         public K AddComponentWithId<K>(long id, bool isFromPool = false) where K : Entity, IAwake, new()
         {
@@ -421,11 +380,8 @@ namespace ET
         private K CreateAndAddComponent<K>(long id, bool isFromPool, Action<K> awakeAction) where K : Entity, new()
         {
             this.ValidateComponentNotExists<K>();
-            return EntityObjectPool.Instance.GetEntity<K>(TypeId<K>.Id);
-            
-            K component = Create<K>(isFromPool);
+            K component = EntityObjectPool.Instance.GetEntity<K>(TypeId<K>.Id,isFromPool);
             component.Id = id;
-            Log.Error($"CreateAndAddComponent {id}  {typeof(K)}");
             component.ComponentParent = this;
             awakeAction(component);
             return component;
@@ -434,7 +390,7 @@ namespace ET
         private K CreateAndAddComponent<K, P1>(long id, bool isFromPool, Action<K, P1> awakeAction, P1 p1) where K : Entity, new()
         {
             this.ValidateComponentNotExists<K>();
-            K component = Create<K>(isFromPool);
+            K component = EntityObjectPool.Instance.GetEntity<K>(TypeId<K>.Id,isFromPool);
             component.Id = id;
             component.ComponentParent = this;
             awakeAction(component, p1);
@@ -444,7 +400,7 @@ namespace ET
         private K CreateAndAddComponent<K, P1, P2>(long id, bool isFromPool, Action<K, P1, P2> awakeAction, P1 p1, P2 p2) where K : Entity, new()
         {
             this.ValidateComponentNotExists<K>();
-            K component = Create<K>(isFromPool);
+            K component = EntityObjectPool.Instance.GetEntity<K>(TypeId<K>.Id,isFromPool);
             component.Id = id;
             component.ComponentParent = this;
             awakeAction(component, p1, p2);
@@ -454,7 +410,7 @@ namespace ET
         private K CreateAndAddComponent<K, P1, P2, P3>(long id, bool isFromPool, Action<K, P1, P2, P3> awakeAction, P1 p1, P2 p2, P3 p3) where K : Entity, new()
         {
             this.ValidateComponentNotExists<K>();
-            K component = Create<K>(isFromPool);
+            K component = EntityObjectPool.Instance.GetEntity<K>(TypeId<K>.Id,isFromPool);
             component.Id = id;
             component.ComponentParent = this;
             awakeAction(component, p1, p2, p3);
@@ -544,7 +500,7 @@ namespace ET
 
         private T CreateAndAddChild<T>(bool isFromPool, long id, Action<T> awakeAction) where T : Entity, new()
         {
-            T component = Create<T>(isFromPool);
+            T component = EntityObjectPool.Instance.GetEntity<T>(TypeId<T>.Id,isFromPool);
             component.Id = id;
             component.Parent = this;
             Log.Error($"CreateAndAddChild {id}");
@@ -554,7 +510,7 @@ namespace ET
 
         private T CreateAndAddChild<T, A>(bool isFromPool, long id, Action<T, A> awakeAction, A a) where T : Entity, new()
         {
-            T component = Create<T>(isFromPool);
+            T component = EntityObjectPool.Instance.GetEntity<T>(TypeId<T>.Id,isFromPool);
             component.Id = id;
             component.Parent = this;
             awakeAction(component, a);
@@ -563,7 +519,7 @@ namespace ET
 
         private T CreateAndAddChild<T, A, B>(bool isFromPool, long id, Action<T, A, B> awakeAction, A a, B b) where T : Entity, new()
         {
-            T component = Create<T>(isFromPool);
+            T component = EntityObjectPool.Instance.GetEntity<T>(TypeId<T>.Id,isFromPool);
             component.Id = id;
             component.Parent = this;
             awakeAction(component, a, b);
@@ -572,7 +528,7 @@ namespace ET
 
         private T CreateAndAddChild<T, A, B, C>(bool isFromPool, long id, Action<T, A, B, C> awakeAction, A a, B b, C c) where T : Entity, new()
         {
-            T component = Create<T>(isFromPool);
+            T component = EntityObjectPool.Instance.GetEntity<T>(TypeId<T>.Id,isFromPool);
             component.Id = id;
             component.Parent = this;
             awakeAction(component, a, b, c);
@@ -625,9 +581,9 @@ namespace ET
             if (this.parent?.IsDisposed == false)
             {
                 if (this.IsComponent)
-                    this.parent.RemoveComponentNoDispose(this);
+                    this.parent.RemoveComponent(this);
                 else
-                    this.parent.RemoveChildNoDispose(this);
+                    this.parent.RemoveChild(this);
             }
 
             this.parent = null;

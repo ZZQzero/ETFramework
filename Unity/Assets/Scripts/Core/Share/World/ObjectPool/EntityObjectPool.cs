@@ -42,7 +42,7 @@ namespace ET
                 }
             }
             
-            return CreateEntity<T>(isFromPool);;
+            return CreateEntity<T>(isFromPool);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

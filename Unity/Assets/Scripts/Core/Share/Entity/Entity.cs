@@ -27,8 +27,10 @@ namespace ET
         private EntityStatus status = EntityStatus.None;
         private Entity parent;
         private IScene iScene;
-        private ChildrenCollection children;
-        private ComponentsCollection components;
+        /*private ChildrenCollection children;
+        private ComponentsCollection components;*/
+        private SortedDictionary<long, Entity> children;
+        private SortedDictionary<long, Entity> components;
         #endregion
 
         #region Unity编辑器支持
@@ -176,9 +178,13 @@ namespace ET
             if (this.parent != null)
             {
                 if (this.IsComponent)
-                    this.parent.RemoveComponent(this);
+                {
+                    this.parent.RemoveComponent(TypeId);
+                }
                 else
+                {
                     this.parent.RemoveChild(this);
+                }
             }
 
             
@@ -278,7 +284,7 @@ namespace ET
         #endregion
 
         #region 子级管理
-        public ChildrenCollection Children => this.children ??= ObjectPool.Fetch<ChildrenCollection>();
+        public SortedDictionary<long,Entity> Children => this.children ??= new SortedDictionary<long, Entity>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ChildrenCount() => this.children?.Count ?? 0;
@@ -312,7 +318,7 @@ namespace ET
         #endregion
 
         #region 组件管理
-        public ComponentsCollection Components => this.components ??= ObjectPool.Fetch<ComponentsCollection>();
+        public SortedDictionary<long,Entity> Components => this.components ??= new SortedDictionary<long, Entity>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ComponentsCount() => this.components?.Count ?? 0;
@@ -345,9 +351,9 @@ namespace ET
             }
         }
         
-        private void RemoveComponent(Entity component)
+        private void RemoveComponent(long typeId)
         {
-            if (this.components.Remove(component.TypeId,out var entity))
+            if (this.components.Remove(typeId,out var entity))
             {
                 EntityObjectPool.Instance.RecycleEntity(entity);
             }
@@ -549,24 +555,21 @@ namespace ET
             // 清理子级
             if (this.children != null)
             {
-                foreach (Entity child in this.children.Values)
+                var keys = new List<long>(children.Keys);
+                foreach (var child in keys)
                 {
-                    child.Dispose();
+                    RemoveChild(child);
                 }
-                this.children.Dispose();
-                this.children = null;
             }
 
             // 清理组件
             if (this.components != null)
             {
-                foreach (var kv in this.components)
+                var keys = new List<long>(components.Keys);
+                foreach (var component in keys)
                 {
-                    EntityObjectPool.Instance.RecycleEntity(kv.Value);
-                    kv.Value.Dispose();
+                    RemoveComponent(component);
                 }
-                this.components.Dispose();
-                this.components = null;
             }
 
             // 触发Destroy事件
@@ -581,9 +584,13 @@ namespace ET
             if (this.parent?.IsDisposed == false)
             {
                 if (this.IsComponent)
-                    this.parent.RemoveComponent(this);
+                {
+                    parent.RemoveComponent(TypeId);
+                }
                 else
-                    this.parent.RemoveChild(this);
+                {
+                    parent.RemoveChild(this);
+                }
             }
 
             this.parent = null;

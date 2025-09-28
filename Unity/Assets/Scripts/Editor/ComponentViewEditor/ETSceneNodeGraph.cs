@@ -114,7 +114,7 @@ public class ETSceneNodeGraph: EditorWindow
         }
     }
 
-    private void FiberComponent(ComponentsCollection components, NodeData nodeData)
+    private void FiberComponent(SortedDictionary<long,Entity> components, NodeData nodeData)
     {
         if (components is { Count: > 0 })
         {
@@ -157,7 +157,7 @@ public class ETSceneNodeGraph: EditorWindow
             }
         }
     }
-    private void FiberChildComponent(ChildrenCollection components,NodeData nodeData)
+    private void FiberChildComponent(SortedDictionary<long,Entity> components,NodeData nodeData)
     {
         if(components is { Count: > 0 })
         {

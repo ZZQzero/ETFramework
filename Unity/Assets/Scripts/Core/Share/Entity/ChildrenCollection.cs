@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿/*using System.Diagnostics;
 
 namespace ET
 {
@@ -53,4 +53,4 @@ namespace ET
             ObjectPool.Recycle(this);
         }
     }
-}
+}*/

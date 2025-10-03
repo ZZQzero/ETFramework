@@ -56,10 +56,7 @@
     <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\EventSystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\KChannel.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Serialize\MemoryPackChildrenCollectionFormatter.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Object\Object.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\NetServices.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Object\ProtoObject.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\World\Config\ConfigLoader.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\IClassEventSystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\IMessage.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Fiber\ThreadScheduler.cs" />
@@ -86,7 +83,6 @@
     <Compile Include="Assets\Scripts\Core\Share\MultiMapSet.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\ByteHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\Mailboxes.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\World\Config\ConfigAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\ChildrenCollection.cs" />
     <Compile Include="Assets\Scripts\Core\Share\MultiDictionary.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\EntityRef.cs" />
@@ -97,7 +93,6 @@
     <Compile Include="Assets\Scripts\Core\Share\World\Fiber\IScheduler.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\PacketParser.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\ETTaskHelper.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\World\Code\CodeTypes.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\AsyncETTaskMethodBuilder.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\EventAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\Kcp\ikcpc.cs" />
@@ -116,7 +111,6 @@
     <Compile Include="Assets\Scripts\Core\Share\Entity\IUpdateSystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\Kcp\KcpPatial.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ErrorCore.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\World\Config\ConfigProcessAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\TService.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\NetworkHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\ComponentView.cs" />
@@ -145,10 +139,8 @@
     <Compile Include="Assets\Scripts\Core\Share\World\Log\LogInvoker.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\EntitySceneFactory.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\Scene.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\World\Config\IConfig.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\IPEndPointNonAlloc.cs" />
     <Compile Include="Assets\Scripts\Core\Share\TimerCoreInvokeType.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\World\Code\CodeProcessAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\ETCancellationToken.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\ProcessHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\StringHashHelper.cs" />
@@ -165,7 +157,6 @@
     <Compile Include="Assets\Scripts\Core\Share\Network\KService.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\IInvoke.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\TChannel.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\World\Config\IMerge.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\OpcodeType.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Serialize\MemoryPackHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\StateMachineWrap.cs" />

@@ -1,5 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
+#if DOTNET
+using MongoDB.Bson.Serialization.Attributes;
+#endif
 
 namespace ET
 {
@@ -9,13 +12,9 @@ namespace ET
         public virtual void Dispose()
         {
         }
-
-        //[BsonIgnore]
+#if DOTNET
+        [BsonIgnore]
+#endif
         public bool IsFromPool { get; set; }
-
-        public void Reset()
-        {
-            
-        }
     }
 }

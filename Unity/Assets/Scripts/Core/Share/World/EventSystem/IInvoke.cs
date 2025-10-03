@@ -9,13 +9,7 @@ namespace ET
     
     public abstract class AInvokeHandler<A>: HandlerObject, IInvoke where A: struct
     {
-        public Type Type
-        {
-            get
-            {
-                return typeof (A);
-            }
-        }
+        public Type Type => typeof (A);
 
         public abstract void Handle(A args);
     }

@@ -1,3 +1,4 @@
+using System;
 using ET;
 using UnityEngine;
 using UnityEngine.UI;
@@ -30,6 +31,7 @@ namespace GameUI
 				globalComponent = scene.GetComponent<GlobalComponent>();
 			}
 		}
+
 		public override void OnRefreshUI()
 		{
 			base.OnRefreshUI();

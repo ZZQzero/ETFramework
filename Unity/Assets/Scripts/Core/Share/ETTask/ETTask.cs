@@ -160,10 +160,7 @@ namespace ET
         public bool IsCompleted
         {
             [DebuggerHidden]
-            get
-            {
-                return this.state != AwaiterStatus.Pending;
-            }
+            get => this.state != AwaiterStatus.Pending;
         }
 
         [DebuggerHidden]

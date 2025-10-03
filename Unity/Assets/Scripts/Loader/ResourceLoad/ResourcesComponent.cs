@@ -41,10 +41,9 @@ namespace ET
             YooAssets.Initialize();
         }
 
-        public async ETTask CreatePackageAsync(GameUIBase uiBase)
+        public async ETTask CreatePackageAsync(GameUIBase uiBase,GlobalConfig config)
         {
             _uiBase = uiBase;
-            var config = Resources.Load<GlobalConfig>("GlobalConfig");
             ResourcePackage package = YooAssets.CreatePackage(config.PackageName);
             InitializationOperation initializationOperation = null;
             switch (config.PlayMode)

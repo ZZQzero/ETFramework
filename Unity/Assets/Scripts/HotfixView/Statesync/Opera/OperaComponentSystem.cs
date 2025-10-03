@@ -30,7 +30,7 @@ namespace ET
             
             if (Input.GetKeyDown(KeyCode.R))
             {
-                CodeLoader.Instance.Reload();
+                //CodeLoader.Instance.Reload();
             }
             
             if (Input.GetKeyDown(KeyCode.Q))

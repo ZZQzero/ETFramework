@@ -9,13 +9,7 @@ namespace ET
 	
 	public abstract class AEvent<S, A>: IEvent where S: class, IScene where A: struct
 	{
-		public Type Type
-		{
-			get
-			{
-				return typeof (A);
-			}
-		}
+		public Type Type => typeof (A);
 
 		protected abstract ETTask Run(S scene, A a);
 

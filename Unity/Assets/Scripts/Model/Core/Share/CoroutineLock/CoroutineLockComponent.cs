@@ -12,5 +12,6 @@ namespace ET
         public string Name { get; set; }
 
         public readonly Queue<(long, long, int)> nextFrameRun = new();
+        
     }
 }

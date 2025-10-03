@@ -17,10 +17,10 @@ namespace ET
 
         public static void Serialize(MessageObject message, MemoryBuffer stream)
         {
-            if (message is ISupportInitialize supportInitialize)
+            /*if (message is ISupportInitialize supportInitialize)
             {
                 supportInitialize.BeginInit();
-            }
+            }*/
             MemoryPackSerializer.Serialize(message.GetType(), stream, message);
         }
         

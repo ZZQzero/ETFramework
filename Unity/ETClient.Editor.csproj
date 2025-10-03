@@ -60,6 +60,7 @@
     <Compile Include="Assets\Scripts\Editor\Proto\ProtoEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawer\CharTypeDrawer.cs" />
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawer\Vector3TypeDrawer.cs" />
+    <Compile Include="Assets\Scripts\Editor\Define.cs" />
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\TypeDrawer\IntTypeDrawer.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\InitEditor\DefineHelper.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\BuildEditor\BuildEditor.cs" />

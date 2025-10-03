@@ -49,7 +49,7 @@ namespace ET
         {
             if (Application.isPlaying)
             {
-                CodeLoader.Instance?.Reload();
+                //CodeLoader.Instance?.Reload();
             }
         }
 

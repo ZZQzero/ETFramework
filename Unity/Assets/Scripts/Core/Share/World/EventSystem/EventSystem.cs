@@ -21,66 +21,8 @@ namespace ET
         
         private readonly Dictionary<Type, List<EventInfo>> _allEventDic = new();
         
-        //private readonly Dictionary<Type, Dictionary<long, object>> allInvokers = new(); 
-        
         public void Awake()
         {
-            /*CodeTypes codeTypes = CodeTypes.Instance;
-            foreach (Type type in codeTypes.GetTypes(typeof (EventAttribute)))
-            {
-                IEvent obj = Activator.CreateInstance(type) as IEvent;
-                if (obj == null)
-                {
-                    throw new Exception($"type not is AEvent: {type.Name}");
-                }
-                
-                object[] attrs = type.GetCustomAttributes(typeof(EventAttribute), false);
-                foreach (object attr in attrs)
-                {
-                    EventAttribute eventAttribute = attr as EventAttribute;
-
-                    Type eventType = obj.Type;
-
-                    EventInfo eventInfo = new(obj, eventAttribute.SceneType);
-
-                    if (!this._allEventDic.ContainsKey(eventType))
-                    {
-                        this._allEventDic.Add(eventType, new List<EventInfo>());
-                    }
-                    this._allEventDic[eventType].Add(eventInfo);
-                }
-            }*/
-
-            /*foreach (Type type in codeTypes.GetTypes(typeof (InvokeAttribute)))
-            {
-                object obj = Activator.CreateInstance(type);
-                IInvoke iInvoke = obj as IInvoke;
-                if (iInvoke == null)
-                {
-                    throw new Exception($"type not is callback: {type.Name}");
-                }
-                
-                object[] attrs = type.GetCustomAttributes(typeof(InvokeAttribute), false);
-                foreach (object attr in attrs)
-                {
-                    if (!this.allInvokers.TryGetValue(iInvoke.Type, out var dict))
-                    {
-                        dict = new Dictionary<long, object>();
-                        this.allInvokers.Add(iInvoke.Type, dict);
-                    }
-                    
-                    InvokeAttribute invokeAttribute = attr as InvokeAttribute;
-                    
-                    try
-                    {
-                        dict.Add(invokeAttribute.Type, obj);
-                    }
-                    catch (Exception e)
-                    {
-                        throw new Exception($"action type duplicate: {iInvoke.Type.Name} {invokeAttribute.Type}", e);
-                    }
-                }
-            }*/
         }
 
         public void RegisterEvent<T>(int sceneType) where T : IEvent, new()
@@ -132,10 +74,7 @@ namespace ET
                 return;
             }
 
-            //TODO 
-            //using ListComponent<ETTask> list = ListComponent<ETTask>.Create();
-            List<ETTask> list = new List<ETTask>();
-            
+            using ListComponent<ETTask> list = ListComponent<ETTask>.Create();
             foreach (EventInfo eventInfo in iEvents)
             {
                 if (!SceneTypeSingleton.IsSame(scene.SceneType, eventInfo.SceneType))
@@ -155,6 +94,7 @@ namespace ET
             try
             {
                 await ETTaskHelper.WaitAll(list);
+                ObjectPool.Recycle(list);
             }
             catch (Exception e)
             {

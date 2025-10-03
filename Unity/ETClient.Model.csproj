@@ -54,7 +54,6 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageHandlerAttribute.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageDispatcher.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\NumericComponent.cs" />
-    <Compile Include="Assets\Scripts\Model\StateSync\Share\SceneType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\EntitySerializeRegister.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\StateSyncOuter_C_10001.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Move\Wait_UnitStop.cs" />
@@ -83,9 +82,7 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\ErrorCode.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\SessionAcceptTimeoutComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageSenderStruct.cs" />
-    <Compile Include="Assets\Scripts\Model\Move\Share\TimerInvokeType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbAIConfig.cs" />
-    <Compile Include="Assets\Scripts\Model\YooAssets\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLockQueueType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\MailBoxType.cs" />
     <Compile Include="Assets\Scripts\Model\Login\ClientSessionErrorComponent.cs" />
@@ -93,9 +90,7 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\ObjectWait\ObjectWait.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\StartMachineConfigConfigCategory.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Mailbox\MailBoxComponent.cs" />
-    <Compile Include="Assets\Scripts\Model\StateSync\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\Login\NetClient\A2NetClient_Message.cs" />
-    <Compile Include="Assets\Scripts\Model\ActorLocation\Share\ErrorCode.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\MessageSerializeHelper.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\ProcessInnerSender.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Scene\Wait_SceneChangeFinish.cs" />
@@ -103,18 +98,10 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\SceneType.cs" />
     <Compile Include="Assets\Scripts\Model\YooAssets\Share\CoroutineLockType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbUnitConfig.cs" />
-    <Compile Include="Assets\Scripts\Model\Unit\Share\PackageType.cs" />
-    <Compile Include="Assets\Scripts\Model\Move\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\NumericWatcherAttribute.cs" />
-    <Compile Include="Assets\Scripts\Model\AI\Share\TimerInvokeType.cs" />
-    <Compile Include="Assets\Scripts\Model\ActorLocation\Share\SceneType.cs" />
-    <Compile Include="Assets\Scripts\Model\AI\Share\PackageType.cs" />
-    <Compile Include="Assets\Scripts\Model\ActorLocation\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\StartMachineConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\StartProcessConfigConfigCategory.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLockType.cs" />
-    <Compile Include="Assets\Scripts\Model\StateSync\Share\SerializerTest.cs" />
-    <Compile Include="Assets\Scripts\Model\Login\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\Tables.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbStartMachineConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\UnitConfigConfigCategory.cs" />
@@ -129,7 +116,6 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\TableConfigManager.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Timer\ATimer.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageHelper.cs" />
-    <Compile Include="Assets\Scripts\Model\Login\Share\SceneType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\MessageSessionDispatcher.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\CurrentScenesComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\ClientSenderComponent.cs" />
@@ -146,13 +132,10 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\TableConfigCategoryBase.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLock.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\StartZoneConfigConfigCategory.cs" />
-    <Compile Include="Assets\Scripts\Model\Router\Share\PackageType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\StartSceneConfigConfigCategory.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\RouterProto_C_1100.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\ActorLocation_S_20100.cs" />
-    <Compile Include="Assets\Scripts\Model\Login\Share\ErrorCode.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\StartSceneConfig.cs" />
-    <Compile Include="Assets\Scripts\Model\Router\Share\ErrorCode.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\TimerInvokeType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\WaitCoroutineLockTimerInvoke.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\PackageType.cs" />
@@ -164,7 +147,6 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\StartConfigPartial\StartProcessConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Login\NetClient\PingComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\EventDefine.cs" />
-    <Compile Include="Assets\Scripts\Model\Core\Share\DB\PackageType.cs" />
     <None Include="Assets\Scripts\Model\ETClient.Model.asmdef" />
     <Reference Include="nunit.framework">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.ext.nunit@031a54704bff\net40\unity-custom\nunit.framework.dll</HintPath>

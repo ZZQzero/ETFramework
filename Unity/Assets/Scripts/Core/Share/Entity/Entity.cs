@@ -74,7 +74,7 @@ namespace ET
             }
         }
 
-        protected bool IsComponent
+        private bool IsComponent
         {
             get => HasStatusFlag(EntityStatus.IsComponent);
             set => SetStatusFlag(EntityStatus.IsComponent, value);
@@ -291,7 +291,10 @@ namespace ET
 
         private void AddToChildren(Entity entity)
         {
-            this.Children.Add(entity.Id, entity);
+            if (!Children.TryAdd(entity.Id, entity))
+            {
+                Log.Error($"已经存在相同的key {entity.GetType()}");
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -509,7 +512,6 @@ namespace ET
             T component = EntityObjectPool.Instance.GetEntity<T>(TypeId<T>.Id,isFromPool);
             component.Id = id;
             component.Parent = this;
-            Log.Error($"CreateAndAddChild {id}");
             awakeAction(component);
             return component;
         }
@@ -546,11 +548,11 @@ namespace ET
 
         public void Dispose()
         {
-            //TODO 有点问题
             if (this.IsDisposed) return;
 
-            this.IsRegister = false;
-            this.InstanceId = 0;
+            IsRegister = false;
+            InstanceId = 0;
+            Id = 0;
 
             // 清理子级
             if (this.children != null)

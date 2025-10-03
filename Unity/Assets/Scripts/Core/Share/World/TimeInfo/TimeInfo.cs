@@ -8,10 +8,7 @@ namespace ET
         
         public int TimeZone
         {
-            get
-            {
-                return this.timeZone;
-            }
+            get => this.timeZone;
             set
             {
                 this.timeZone = value;

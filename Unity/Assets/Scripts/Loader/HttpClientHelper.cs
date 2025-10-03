@@ -16,9 +16,7 @@ namespace ET
             {
 #if UNITY
                 using UnityEngine.Networking.UnityWebRequest req = UnityEngine.Networking.UnityWebRequest.Get(link);
-                Log.Error("HttpClientHelper111");
                 await req.SendWebRequest();
-                Log.Error("HttpClientHelper");
                 return req.downloadHandler.data;
 #else
                 using HttpClient httpClient = new();

@@ -16,7 +16,6 @@ namespace ET
                 return;
             }
 
-            // 这里用了Fiber.Instance是因为我知道有什么后果, 你们千万不能乱用这个Fiber.Instance
             await scene.GetComponent<TimerComponent>().WaitAsync(afterTimeCancel);
             if (self.IsCancel())
             {

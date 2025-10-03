@@ -46,9 +46,7 @@ namespace ET
             
             Unit unit = self.GetParent<Unit>();
 
-            //using ListComponent<float3> path = ListComponent<float3>.Create();
-            List<float3> path = new List<float3>();
-            
+            using ListComponent<float3> path = ListComponent<float3>.Create();
             self.MoveForward(false);
                 
             path.Add(unit.Position); // 第一个是Unit的pos
@@ -57,6 +55,7 @@ namespace ET
                 path.Add(self.Targets[i]);
             }
             self.MoveToAsync(path, speed).NoContext();
+            ObjectPool.Recycle(path);
             return true;
         }
 

@@ -10,7 +10,7 @@ namespace ET
             
             int sceneType = SceneTypeSingleton.Instance.GetSceneType(Options.Instance.SceneName);
             root.SceneType = sceneType;
-            Log.Info($"FiberInit_Main {root.SceneType}  {root.Name}");
+            Log.Info($"FiberInit_Main {root.SceneType}  {root.Name}  {sceneType}  {Options.Instance.SceneName}");
             await EventSystem.Instance.PublishAsync(root, new EntryEvent1());
             await EventSystem.Instance.PublishAsync(root, new EntryEvent2());
 #if UNITY

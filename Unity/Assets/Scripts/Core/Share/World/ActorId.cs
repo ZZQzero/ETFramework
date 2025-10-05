@@ -77,27 +77,15 @@ namespace ET
         //[BsonIgnore]
         public int Process
         {
-            get
-            {
-                return this.Address.Process;
-            }
-            set
-            {
-                this.Address.Process = value;
-            }
+            get => this.Address.Process;
+            set => this.Address.Process = value;
         }
         
         //[BsonIgnore]
         public int Fiber
         {
-            get
-            {
-                return this.Address.Fiber;
-            }
-            set
-            {
-                this.Address.Fiber = value;
-            }
+            get => this.Address.Fiber;
+            set => this.Address.Fiber = value;
         }
         
         public ActorId(int process, int fiber)

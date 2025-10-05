@@ -4,6 +4,7 @@
 	{
 		public static void Add(this UnitComponent self, Unit unit)
 		{
+			self.AddChild(unit);
 		}
 
 		public static Unit Get(this UnitComponent self, long id)

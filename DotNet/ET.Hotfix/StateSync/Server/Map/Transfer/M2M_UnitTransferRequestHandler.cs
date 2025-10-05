@@ -8,11 +8,10 @@ namespace ET
     {
         protected override async ETTask Run(Scene scene, M2M_UnitTransferRequest request, M2M_UnitTransferResponse response)
         {
-            UnitComponent unitComponent = scene.GetComponent<UnitComponent>();
+            //UnitComponent unitComponent = scene.GetComponent<UnitComponent>();
             /*Unit unit = MongoHelper.Deserialize<Unit>(request.Unit);*/
 			Unit unit = UnitFactory.Create(scene, request.UnitInfo.UnitId, UnitType.Player);
-            unitComponent.AddChild(unit);
-            unitComponent.Add(unit);
+            //unitComponent.Add(unit);
 
             /*foreach (byte[] bytes in request.Entitys)
             {
@@ -40,7 +39,7 @@ namespace ET
 
             Log.Info("通知客户端创建My Unit");
             // 加入aoi
-            unit.AddComponent<AOIEntity, int, float3>(9 * 1000, unit.Position);
+            //unit.AddComponent<AOIEntity, int, float3>(9 * 1000, unit.Position);
 
             // 解锁location，可以接收发给Unit的消息
             await scene.Root().GetComponent<LocationProxyComponent>().UnLock(LocationType.Unit, unit.Id, request.OldActorId, unit.GetActorId());

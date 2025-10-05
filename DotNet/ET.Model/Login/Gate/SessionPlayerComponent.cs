@@ -7,14 +7,8 @@
 
 		public Player Player
 		{
-			get
-			{
-				return this.player;
-			}
-			set
-			{
-				this.player = value;
-			}
+			get => this.player;
+			set => this.player = value;
 		}
 	}
 }

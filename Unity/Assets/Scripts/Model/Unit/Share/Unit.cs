@@ -40,12 +40,6 @@ namespace ET
             }
         }
 
-        protected override string ViewName
-        {
-            get
-            {
-                return $"{this.GetType().FullName} ({this.Id})";
-            }
-        }
+        protected override string ViewName => $"{this.GetType().FullName} ({this.Id})";
     }
 }

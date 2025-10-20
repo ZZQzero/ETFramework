@@ -1,3 +1,4 @@
+/*
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -106,7 +107,7 @@ namespace ET
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
                 /*PackagesLock packagesLock = new PackagesLock(); //PackageHelper.LoadEtPackagesLock("./");
-                PackageInfo excelPackage = packagesLock.dependencies["cn.etetet.excel"];*/
+                PackageInfo excelPackage = packagesLock.dependencies["cn.etetet.excel"];#1#
                 ClientClassDir = "";//Path.Combine(excelPackage.dir, "CodeMode/Model/Client");
                 ServerClassDir = "";//Path.Combine(excelPackage.dir, "CodeMode/Model/Server");
                     CSClassDir = "";//Path.Combine(excelPackage.dir, "CodeMode/Model/ClientServer");
@@ -130,7 +131,7 @@ namespace ET
                         continue;
                     }
                     list.Add(p);
-                }*/
+                }#1#
 
                 List<(string, string)> paths = new();
                 foreach (string s in list)
@@ -869,3 +870,4 @@ namespace ET
         }
     }
 }
+*/

@@ -61,7 +61,7 @@ namespace ET
                 }
 
                 //Type responseType = MessageOpcodeTypeMap.RequestResponse[action.RequestType];
-                IResponse response = MessageOpcodeTypeMap.RequestResponse[action.RequestType]();//(IResponse) Activator.CreateInstance(responseType);
+                IResponse response = MessageOpcodeTypeMap.RequestResponse[action.RequestType](false);//(IResponse) Activator.CreateInstance(responseType);
                 response.Error = ErrorCode.ERR_Cancel;
                 action.SetResult(response);
             }

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using UnityEditor;
 using UnityEditor.Build.Player;
+using UnityEditor.Compilation;
 using UnityEngine;
 
 namespace ET
@@ -23,11 +24,17 @@ namespace ET
         /// </summary>
         public static readonly string[] DllNames = { "ETClient.Hotfix", "ETClient.HotfixView", "ETClient.Model", "ETClient.ModelView" };
 
-        /*[InitializeOnLoadMethod]
+        [InitializeOnLoadMethod]
         static void Initialize()
         {
-            unitySynchronizationContext = SynchronizationContext.Current;
-        }*/
+            //unitySynchronizationContext = SynchronizationContext.Current;
+            CompilationPipeline.compilationFinished += OnCompilationFinished;
+        }
+
+        private static void OnCompilationFinished(object obj)
+        {
+            GenerateEntity();
+        }
 
         /// <summary>
         /// 菜单和快捷键编译按钮
@@ -131,7 +138,7 @@ namespace ET
         }
         
         [MenuItem("ET/Loader/生成EntitySystem注册代码")]
-        public static void Generate()
+        public static void GenerateEntity()
         {
             var sb = new StringBuilder();
             sb.AppendLine("//-----------自动生成------------");

@@ -286,7 +286,7 @@ namespace ET
             sb.AppendLine();
 
             // TypeToOpcode (Dictionary<Type, ushort>)
-            sb.AppendLine("        public static readonly Dictionary<Type, ushort> TypeToOpcode = new Dictionary<Type, ushort>");
+            sb.AppendLine("        public static readonly Dictionary<Type, ushort> TypeToOpcode = new(256)");
             sb.AppendLine("        {");
             foreach (var m in messages.Where(x => x.Opcode != 0).OrderBy(x => x.TypeFullName))
             {
@@ -296,19 +296,18 @@ namespace ET
             sb.AppendLine();
 
             // RequestResponse
-            sb.AppendLine("        public static readonly Dictionary<Type, Func<IResponse>> RequestResponse = new(256)");
+            sb.AppendLine("        public static readonly Dictionary<Type, Func<bool,IResponse>> RequestResponse = new(256)");
             sb.AppendLine("        {");
             foreach (var m in messages)
             {
                 if (m.IsRequest && !string.IsNullOrEmpty(m.ResponseTypeFullName))
                 {
-                    sb.AppendLine($"            {{ typeof({m.TypeFullName}), () => ObjectPool.Fetch<{m.ResponseTypeFullName}>() }},");
-                    //sb.AppendLine($"            {{ typeof({m.TypeFullName}), typeof({m.ResponseTypeFullName}) }},");
+                    sb.AppendLine($"            {{ typeof({m.TypeFullName}), (isFromPool) => ObjectPool.Fetch<{m.ResponseTypeFullName}>(isFromPool) }},");
+                    //sb.AppendLine($"            {{ typeof({m.TypeFullName}), () => ObjectPool.Fetch<{m.ResponseTypeFullName}>() }},");
                 }
                 else if (m.IsRequest && string.IsNullOrEmpty(m.ResponseTypeFullName))
                 {
-                    //sb.AppendLine($"            {{ typeof({m.TypeFullName}), typeof(ET.MessageResponse) }},");
-                    sb.AppendLine($"            {{ typeof({m.TypeFullName}), () => ObjectPool.Fetch<ET.MessageResponse>() }},");
+                    sb.AppendLine($"            {{ typeof({m.TypeFullName}), (isFromPool) => ObjectPool.Fetch<ET.MessageResponse>(isFromPool) }},");
                 }
             }
             sb.AppendLine("        };");

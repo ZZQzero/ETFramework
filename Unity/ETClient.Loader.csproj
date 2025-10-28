@@ -48,18 +48,19 @@
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\Loader\Init.cs" />
+    <Compile Include="Assets\Scripts\Loader\Core\HttpClientHelper.cs" />
     <Compile Include="Assets\Scripts\Loader\UI\GameUIName1.cs" />
+    <Compile Include="Assets\Scripts\Loader\Core\Init.cs" />
     <Compile Include="Assets\Scripts\Loader\UI\PatchPanelPanelComponent.cs" />
-    <Compile Include="Assets\Scripts\Loader\GlobalConfig.cs" />
     <Compile Include="Assets\Scripts\Loader\UI\MessageBoxPanelPanelComponent.cs" />
-    <Compile Include="Assets\Scripts\Loader\UnityLogger.cs" />
-    <Compile Include="Assets\Scripts\Loader\HttpClientHelper.cs" />
-    <Compile Include="Assets\Scripts\Loader\UnityLogInvoke.cs" />
+    <Compile Include="Assets\Scripts\Loader\Core\GlobalConfig.cs" />
     <Compile Include="Assets\Scripts\Loader\UI\MessageBoxPanelPanel.cs" />
+    <Compile Include="Assets\Scripts\Loader\Core\UnityLogInvoke.cs" />
     <Compile Include="Assets\Scripts\Loader\UI\PatchPanelPanel.cs" />
-    <Compile Include="Assets\Scripts\Loader\CoroutineHelper.cs" />
+    <Compile Include="Assets\Scripts\Loader\Core\GlobalConfigManager.cs" />
     <Compile Include="Assets\Scripts\Loader\ResourceLoad\ResourcesComponent.cs" />
+    <Compile Include="Assets\Scripts\Loader\Core\CoroutineHelper.cs" />
+    <Compile Include="Assets\Scripts\Loader\Core\UnityLogger.cs" />
     <None Include="Assets\Scripts\Loader\ETClient.Loader.asmdef" />
     <Reference Include="UnityEngine">
       <HintPath>G:\Unity\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>

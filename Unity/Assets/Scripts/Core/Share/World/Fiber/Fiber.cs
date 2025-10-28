@@ -25,7 +25,6 @@ namespace ET
         public EntitySystem EntitySystem { get; }
         public Mailboxes Mailboxes { get; private set; }
         public ThreadSynchronizationContext ThreadSynchronizationContext { get; }
-        //public ILog Log { get; }
         public bool IsDisposed;
         private readonly ConcurrentQueue<ETTask> frameFinishTasks = new();
 
@@ -39,16 +38,7 @@ namespace ET
             this.EntitySystem = new EntitySystem();
             this.Mailboxes = new Mailboxes();
             this.ThreadSynchronizationContext = new ThreadSynchronizationContext();
-
-            LogInvoker logInvoker = new()
-            {
-                Fiber = this.Id,
-                Process = this.Process, 
-                SceneName = SceneTypeSingleton.Instance.GetSceneName(sceneType),
-                SchedulerType = schedulerType
-            };
-            //this.Log = EventSystem.Instance.Invoke<LogInvoker, ILog>(logInvoker);
-            Log.Info($"Fiber -->id:{id},process:{Process},sceneName:{logInvoker.SceneName},schedulerType:{schedulerType}");
+            Log.Info($"Fiber -->id:{id},process:{Process},sceneName:{SceneTypeSingleton.Instance.GetSceneName(sceneType)},schedulerType:{schedulerType}  name:{name}");
             this.Root = new Scene(this, id, 1, sceneType, name);
         }
 

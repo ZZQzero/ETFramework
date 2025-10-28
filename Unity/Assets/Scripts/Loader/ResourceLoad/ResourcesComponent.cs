@@ -41,9 +41,10 @@ namespace ET
             YooAssets.Initialize();
         }
 
-        public async ETTask CreatePackageAsync(GameUIBase uiBase,GlobalConfig config)
+        public async ETTask CreatePackageAsync(GameUIBase uiBase)
         {
             _uiBase = uiBase;
+            var config = GlobalConfigManager.Instance.Config;
             ResourcePackage package = YooAssets.CreatePackage(config.PackageName);
             InitializationOperation initializationOperation = null;
             switch (config.PlayMode)
@@ -101,8 +102,10 @@ namespace ET
                 }
 
                 var succeed = await UpdatePackageVersion(package);
-                if (!succeed) return;
-                
+                if (!succeed)
+                {
+                    Log.Error($"{initializationOperation.Error}");
+                }
             }
         }
 

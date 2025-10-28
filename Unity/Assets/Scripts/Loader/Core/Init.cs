@@ -22,26 +22,27 @@ namespace ET
             {
                 Log.Error(e.ExceptionObject.ToString());
             };
-
+            
             // 命令行参数
             string[] args = "".Split(" ");
             Parser.Default.ParseArguments<Options>(args)
-                    .WithNotParsed(error => throw new Exception($"命令行格式错误! {error}"))
-                    .WithParsed((o)=>World.Instance.AddSingleton(o, typeof(Options)));
-
-            GlobalConfig globalConfig = Resources.Load<GlobalConfig>("GlobalConfig");
-            Options.Instance.SceneName = globalConfig.SceneName;
-			
-            World.Instance.AddSingleton<Logger>().Log = new UnityLogger();
-            ETTask.ExceptionHandler += Log.Error;
-			
-            World.Instance.AddSingleton<TimeInfo>();
-            World.Instance.AddSingleton<FiberManager>();
+                .WithNotParsed(error => throw new Exception($"命令行格式错误! {error}"))
+                .WithParsed((o)=>World.Instance.AddSingleton(o, typeof(Options)));
             
-            await World.Instance.AddSingleton<ResourcesComponent>().CreatePackageAsync(loadUI,globalConfig);
-            Debug.LogError("init");
+            AddSingleton();
+            await World.Instance.AddSingleton<ResourcesComponent>().CreatePackageAsync(loadUI);
         }
 
+        private void AddSingleton()
+        {
+            World.Instance.AddSingleton<GlobalConfigManager>();
+            Options.Instance.SceneName = GlobalConfigManager.Instance.Config.SceneName;
+            
+            World.Instance.AddSingleton<Logger>().Log = new UnityLogger();
+            ETTask.ExceptionHandler += Log.Error;
+            World.Instance.AddSingleton<TimeInfo>();
+            World.Instance.AddSingleton<FiberManager>();
+        }
         private void LoadUI()
         {
             var parent = GameUIManager.Instance.GetUILayer(EGameUILayer.Loading);

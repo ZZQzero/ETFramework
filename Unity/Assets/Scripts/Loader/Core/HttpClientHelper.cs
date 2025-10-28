@@ -31,5 +31,19 @@ namespace ET
             }
         }
         
+        public static async ETTask<string> HttpGet(string link)
+        {
+            try
+            {
+                UnityWebRequest req = UnityWebRequest.Get(link);
+                await req.SendWebRequest();
+                return req.downloadHandler.text;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"http request fail: {link.Substring(0,link.IndexOf('?'))}\n{e}");
+            }
+        }
+        
     }
 }

@@ -13,13 +13,7 @@ namespace ET
 
         public StartProcessConfig StartProcessConfig => StartProcessConfigConfigCategory.Instance.Get(this.Process);
 
-        public StartZoneConfig StartZoneConfig
-        {
-            get
-            {
-                return StartZoneConfigConfigCategory.Instance.Get(this.Zone);
-            }
-        }
+        public StartZoneConfig StartZoneConfig => StartZoneConfigConfigCategory.Instance.Get(this.Zone);
 
         // 内网地址外网端口，通过防火墙映射端口过来
         private IPEndPoint innerIPPort;

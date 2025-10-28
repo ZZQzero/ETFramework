@@ -29,6 +29,15 @@ namespace ET
         {
             //unitySynchronizationContext = SynchronizationContext.Current;
             CompilationPipeline.compilationFinished += OnCompilationFinished;
+            CompilationPipeline.compilationStarted += OnCompilationStarted;
+        }
+
+        private static void OnCompilationStarted(object obj)
+        {
+            if (Application.isPlaying)
+            {
+                EditorApplication.ExitPlaymode();
+            }
         }
 
         private static void OnCompilationFinished(object obj)

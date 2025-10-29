@@ -44,13 +44,7 @@ namespace ET
             }
         }
 
-        public bool IsDisposed
-        {
-            get
-            {
-                return this.Id == 0;	
-            }
-        }
+        public bool IsDisposed => this.Id == 0;
 
         public abstract void Dispose();
     }

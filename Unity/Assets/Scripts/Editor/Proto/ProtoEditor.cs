@@ -10,8 +10,7 @@ namespace ET
         public static void Run()
         {
             string path = Application.dataPath.Replace("Unity/Assets", "DotNet/ET.Proto2CS/Exe/ET.Proto2CS.dll");
-
-            Log.Error(path);
+            
             Process process = ProcessHelper.DotNet(path, "./", true);
 
             UnityEngine.Debug.Log(process.StandardOutput.ReadToEnd());

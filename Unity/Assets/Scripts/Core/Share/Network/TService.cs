@@ -13,6 +13,7 @@ namespace ET
 		StartSend,
 		StartRecv,
 		Connect,
+		Accept,//表示 accept 事件的队列记录
 	}
 	
 	public struct TArgs
@@ -20,6 +21,9 @@ namespace ET
 		public TcpOp Op;
 		public long ChannelId;
 		public SocketAsyncEventArgs SocketAsyncEventArgs;
+		// 用于 Accept 事件的携带字段（避免把复用的 innArgs 入队）
+		public Socket AcceptSocket;
+		public SocketError AcceptSocketError;
 	}
 	
 	public sealed class TService : AService
@@ -63,10 +67,24 @@ namespace ET
 			switch (e.LastOperation)
 			{
 				case SocketAsyncOperation.Accept:
-					this.Queue.Enqueue(new TArgs() {SocketAsyncEventArgs = e});
+					var acceptSocket = e.AcceptSocket;
+					var acceptError = e.SocketError;
+					// 清理 innArgs 中的 AcceptSocket 以便立即复用
+					e.AcceptSocket = null;
+					this.Queue.Enqueue(new TArgs
+					{
+						Op = TcpOp.Accept,
+						AcceptSocket = acceptSocket,
+						AcceptSocketError = acceptError
+					});
 					break;
 				default:
-					throw new Exception($"socket error: {e.LastOperation}");
+					this.Queue.Enqueue(new TArgs()
+					{
+						SocketAsyncEventArgs = e,
+						ChannelId = e.UserToken is TChannel ch ? ch.Id : 0
+					});
+					break;
 			}
 		}
 
@@ -148,6 +166,8 @@ namespace ET
 				TChannel channel = this.idChannels[id];
 				channel.Dispose();
 			}
+			idChannels.Clear();
+			Queue = new ConcurrentQueue<TArgs>();
 		}
 
 		public override void Remove(long id, int error = 0)
@@ -187,7 +207,12 @@ namespace ET
 				{
 					break;
 				}
-				
+				if (result.Op == TcpOp.Accept)
+				{
+					// 调用 accept 完成处理（将 acceptSocket 交给 OnAcceptComplete）
+					this.OnAcceptComplete(result.AcceptSocketError, result.AcceptSocket);
+					continue;
+				}
 				SocketAsyncEventArgs e = result.SocketAsyncEventArgs;
 				if (e == null)
 				{

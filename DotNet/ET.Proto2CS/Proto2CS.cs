@@ -22,7 +22,7 @@ namespace ET
 
     public static partial class InnerProto2CS
     {
-        private const string protoDir = "Config/Proto/";
+        private static string protoDir => GetProtoDir();
         private static string clientServerMessagePath;
         private static readonly char[] splitChars = [' ', '\t'];
         private static readonly List<OpcodeInfo> msgOpcode = new();
@@ -30,10 +30,26 @@ namespace ET
         // --- 新增：全局已用集合，保证跨文件不重复 ---
         private static readonly HashSet<int> usedOpcodes = new();
 
+        private static string GetProtoDir()
+        {
+            string[] tryPaths =
+            {
+                Path.Combine(AppContext.BaseDirectory, "Config/Proto/"),
+                Path.Combine(AppContext.BaseDirectory, "../Config/Proto/"),
+                Path.Combine(Directory.GetCurrentDirectory(), "Config/Proto/"),
+                Path.Combine(Directory.GetCurrentDirectory(), "../Config/Proto/"),
+            };
+
+            foreach (var path in tryPaths)
+            {
+                if (Directory.Exists(path))
+                    return path;
+            }
+
+            throw new DirectoryNotFoundException("找不到 Proto 目录！");
+        }
         public static void Proto2CS()
         {
-            //MongoHelper.ToJson(1);
-
             usedOpcodes.Clear();
             msgOpcode.Clear();
 
@@ -52,7 +68,6 @@ namespace ET
                 string protoName = ss2[0];
                 string cs = ss2[1];
                 int startOpcode = int.Parse(ss2[2]);
-                Console.WriteLine($"{s} | {fileName} | {protoName} | {cs} | {startOpcode}");
                 ProtoFile2CS(s, "", protoName, cs, startOpcode);
             }
         }

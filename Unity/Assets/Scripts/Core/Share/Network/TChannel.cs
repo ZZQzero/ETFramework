@@ -222,12 +222,23 @@ namespace ET
 				this.OnError(ErrorCore.ERR_PeerDisconnect);
 				return;
 			}
-
-			this.recvBuffer.LastIndex += e.BytesTransferred;
-			if (this.recvBuffer.LastIndex == this.recvBuffer.ChunkSize)
+			
+			if (ReferenceEquals(e.Buffer, this.recvBuffer.Last))
 			{
-				this.recvBuffer.AddLast();
-				this.recvBuffer.LastIndex = 0;
+				// 绝大多数情况：socket 写到了我们提供的缓冲区，直接推进索引
+				this.recvBuffer.LastIndex += e.BytesTransferred;
+
+				// 处理跨 chunk（理论上 e.BytesTransferred <= 原先传给 socket 的 size，但这里防御性处理）
+				while (this.recvBuffer.LastIndex >= this.recvBuffer.ChunkSize)
+				{
+					this.recvBuffer.LastIndex -= this.recvBuffer.ChunkSize;
+					this.recvBuffer.AddLast();
+				}
+			}
+			else
+			{
+				// 防御性分支：如果 buffer 不同（极少发生），把数据安全地写入 CircularBuffer
+				this.recvBuffer.Write(e.Buffer, e.Offset, e.BytesTransferred);
 			}
 
 			// 收到消息回调
@@ -291,14 +302,9 @@ namespace ET
 					}
 
 					this.isSending = true;
-
-					int sendSize = this.sendBuffer.ChunkSize - this.sendBuffer.FirstIndex;
-					if (sendSize > this.sendBuffer.Length)
-					{
-						sendSize = (int)this.sendBuffer.Length;
-					}
+					int sendSize = (int)Math.Min(this.sendBuffer.Length, this.sendBuffer.ChunkSize - this.sendBuffer.FirstIndex);
 					this.outArgs.SetBuffer(this.sendBuffer.First, this.sendBuffer.FirstIndex, sendSize);
-					
+
 					if (this.socket.SendAsync(this.outArgs))
 					{
 						return;
@@ -308,6 +314,7 @@ namespace ET
 				}
 				catch (Exception e)
 				{
+					this.isSending = false;
 					throw new Exception($"socket set buffer error: {this.sendBuffer.First.Length}, {this.sendBuffer.FirstIndex}", e);
 				}
 			}
@@ -331,22 +338,25 @@ namespace ET
 
 			if (e.SocketError != SocketError.Success)
 			{
+				this.isSending = false;
 				this.OnError((int)e.SocketError);
 				return;
 			}
 			
 			if (e.BytesTransferred == 0)
 			{
+				this.isSending = false;
 				this.OnError(ErrorCore.ERR_PeerDisconnect);
 				return;
 			}
 			
 			this.sendBuffer.FirstIndex += e.BytesTransferred;
-			if (this.sendBuffer.FirstIndex == this.sendBuffer.ChunkSize)
+			while (this.sendBuffer.FirstIndex >= this.sendBuffer.ChunkSize)
 			{
-				this.sendBuffer.FirstIndex = 0;
+				this.sendBuffer.FirstIndex -= this.sendBuffer.ChunkSize;
 				this.sendBuffer.RemoveFirst();
 			}
+			
 		}
 		
 		private void OnRead(MemoryBuffer memoryStream)

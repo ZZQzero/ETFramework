@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace ET
 {
@@ -45,9 +46,8 @@ namespace ET
                 }
                 finally
                 {
-                    --this.count;
-                
-                    if (this.count <= 0 && this.tcs != null)
+                    int newCount = Interlocked.Decrement(ref this.count);
+                    if (newCount <= 0 && this.tcs != null)
                     {
                         ETTask t = this.tcs;
                         this.tcs = null;

@@ -1,10 +1,14 @@
-﻿namespace ET
+﻿using Nino.Core;
+
+namespace ET
 {
     // 不需要返回消息
+    [NinoType]
     public interface IMessage
     {
     }
 
+    [NinoType]
     public interface IRequest: IMessage
     {
         int RpcId
@@ -14,6 +18,7 @@
         }
     }
 
+    [NinoType]
     public interface IResponse: IMessage
     {
         int Error

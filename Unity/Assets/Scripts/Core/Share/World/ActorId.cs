@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using MemoryPack;
+using Nino.Core;
 
 namespace ET
 {
-    [MemoryPackable]
+    [NinoType(false)]
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public partial struct Address
     {
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int Process;
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public int Fiber;
         
         public bool Equals(Address other)
@@ -50,7 +50,7 @@ namespace ET
         }
     }
     
-    [MemoryPackable]
+    [NinoType(false)]
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public partial struct ActorId
     {
@@ -69,9 +69,9 @@ namespace ET
             return HashCode.Combine(this.Address, this.InstanceId);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public Address Address;
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public long InstanceId;
 
         //[BsonIgnore]

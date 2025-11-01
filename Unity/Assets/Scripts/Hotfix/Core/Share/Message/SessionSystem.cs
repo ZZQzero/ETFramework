@@ -93,8 +93,7 @@ namespace ET
         public static void Send(this Session self, ActorId actorId, IMessage message)
         {
             self.LastSendTime = TimeInfo.Instance.ClientNow();
-            LogMsg.Instance.Debug(self.Fiber(), message);
-
+            Log.Debug($"SendMessage： Fiber:{self.Fiber()} | message: {message}");
             (ushort opcode, MemoryBuffer memoryBuffer) = MessageSerializeHelper.ToMemoryBuffer(self.AService, actorId, message);
             self.AService.Send(self.Id, memoryBuffer);
         }

@@ -7,6 +7,14 @@ namespace ET
     {
         private void Awake()
         {
+            ETClient.Model.NinoGen.Deserializer.Init();
+            ETClient.Model.NinoGen.Serializer.Init();
+            ETClient.Model.NinoGen.NinoBuiltInTypesRegistration.Init();
+            
+            ETClient.Hotfix.NinoGen.Deserializer.Init();
+            ETClient.Hotfix.NinoGen.Serializer.Init();
+            ETClient.Hotfix.NinoGen.NinoBuiltInTypesRegistration.Init();
+            
             GameRegister.RegisterSingleton();
             GameRegister.RegisterEvent();
             GameRegister.RegisterInvoke();

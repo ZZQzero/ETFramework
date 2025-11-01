@@ -1,5 +1,5 @@
 ﻿namespace ET
 {
     [EnableClass]
-    internal static class OpcodeGeneratorHint {} //标记是否生成Opcode代码
+    internal static class OpcodeGeneratorHint {} //标记是否生成Opcode代码，禁止删除
 }

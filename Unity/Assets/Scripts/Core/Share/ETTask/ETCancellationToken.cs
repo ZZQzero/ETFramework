@@ -11,6 +11,10 @@ namespace ET
         public void Add(Action callback)
         {
             // 如果action是null，绝对不能添加,要抛异常，说明有协程泄漏
+            if (callback == null)
+            {
+                throw new ArgumentNullException(nameof(callback));
+            }
             this.actions.Add(callback);
         }
         

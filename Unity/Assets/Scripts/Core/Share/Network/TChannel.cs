@@ -25,7 +25,6 @@ namespace ET
 		private readonly PacketParser parser;
 
 		private readonly byte[] sendCache = new byte[Packet.OpcodeLength + Packet.ActorIdLength];
-		
 		private void OnComplete(object sender, SocketAsyncEventArgs e)
 		{
 			this.Service.Queue.Enqueue(new TArgs() {ChannelId = this.Id, SocketAsyncEventArgs = e});
@@ -82,6 +81,20 @@ namespace ET
 			long id = this.Id;
 			this.Id = 0;
 			this.Service.Remove(id);
+			try
+			{
+				recvBuffer?.Dispose();
+			}
+			catch
+			{
+			}
+			try
+			{
+				sendBuffer?.Dispose();
+			}
+			catch
+			{
+			}
 			this.socket.Close();
 			this.innArgs.Dispose();
 			this.outArgs.Dispose();

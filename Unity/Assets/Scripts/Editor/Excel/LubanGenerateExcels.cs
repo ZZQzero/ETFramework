@@ -8,7 +8,7 @@ using Debug = UnityEngine.Debug;
 
 public class LubanGenerateExcels : MonoBehaviour
 {
-    [MenuItem("Tools/导表工具",false, 1)]
+    [MenuItem("ET/Excel/ExcelExporter")]
     public static void GenerateExcelTools()
     {
         string path = Application.dataPath;

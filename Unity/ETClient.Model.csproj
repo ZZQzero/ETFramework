@@ -41,7 +41,7 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="G:\UnityProject\ETFramework\Unity\Assets\Packages\MemoryPack.Generator.1.21.4\analyzers\dotnet\cs\MemoryPack.Generator.dll" />
+    <Analyzer Include="G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@34f567815f5d\Runtime\Nino.Generator.dll" />
     <Analyzer Include="G:\UnityProject\ETFramework\Unity\Assets\Plugins\ET.SourceGenerator.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
@@ -54,7 +54,6 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageHandlerAttribute.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageDispatcher.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\NumericComponent.cs" />
-    <Compile Include="Assets\Scripts\Model\Core\Share\EntitySerializeRegister.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\StateSyncOuter_C_10001.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Move\Wait_UnitStop.cs" />
     <Compile Include="Assets\Scripts\Model\Unit\Share\Unit.cs" />
@@ -64,10 +63,8 @@
     <Compile Include="Assets\Scripts\Model\StateSync\Scene\Wait_CreateMyUnit.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\INumericWatcher.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\IMessageSessionHandler.cs" />
-    <Compile Include="Assets\Scripts\Model\Core\Share\Message\LogMsg.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\StartZoneConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\NumericType.cs" />
-    <Compile Include="Assets\Scripts\Model\Core\Share\Message\MessageSessionHandlerAttribute.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbStartSceneConfig.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\EventType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\SessionIdleCheckerComponent.cs" />
@@ -91,7 +88,6 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\StartMachineConfigConfigCategory.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Mailbox\MailBoxComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\NetClient\A2NetClient_Message.cs" />
-    <Compile Include="Assets\Scripts\Model\Core\Share\Message\MessageSerializeHelper.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\ProcessInnerSender.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Scene\Wait_SceneChangeFinish.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\ISessionMessage.cs" />
@@ -116,7 +112,6 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\TableConfigManager.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Timer\ATimer.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageHelper.cs" />
-    <Compile Include="Assets\Scripts\Model\Core\Share\Message\MessageSessionDispatcher.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\CurrentScenesComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Share\ClientSenderComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Router\RouterConnector.cs" />
@@ -154,8 +149,14 @@
     <Reference Include="ReportGeneratorMerged">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.testtools.codecoverage@205a02cbcb39\lib\ReportGenerator\ReportGeneratorMerged.dll</HintPath>
     </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@34f567815f5d\Runtime\ThirdParty\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="Nino.Core">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@34f567815f5d\Runtime\Nino.Core.dll</HintPath>
+    </Reference>
     <Reference Include="dnlib">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.code-philosophy.hybridclr@d505624c78e6\Plugins\dnlib.dll</HintPath>
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.code-philosophy.hybridclr@01754c8fb47b\Plugins\dnlib.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Antlr3.Runtime">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
@@ -164,16 +165,7 @@
       <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\CommandLine.dll</HintPath>
     </Reference>
     <Reference Include="LZ4">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.code-philosophy.hybridclr@d505624c78e6\Plugins\LZ4.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime.CompilerServices.Unsafe">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Collections.Immutable">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Packages\System.Collections.Immutable.6.0.0\lib\netstandard2.0\System.Collections.Immutable.dll</HintPath>
-    </Reference>
-    <Reference Include="MemoryPack.Core">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Packages\MemoryPack.Core.1.21.4\lib\netstandard2.1\MemoryPack.Core.dll</HintPath>
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.code-philosophy.hybridclr@01754c8fb47b\Plugins\LZ4.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Android.Types">
       <HintPath>G:\Unity\Editor\Data\PlaybackEngines\AndroidPlayer\Unity.Android.Types.dll</HintPath>

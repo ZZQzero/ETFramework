@@ -5,31 +5,31 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "d505624c78e6d1d2d53efd716abe7349b611681e"
+      "hash": "01754c8fb47bd49697b3428993109e7a972a7968"
     },
     "com.code-philosophy.luban": {
       "version": "https://github.com/focus-creative-games/luban_unity.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "005c365bac0b245048050d48d27df098739a6f8f"
+      "hash": "d870def77ce13ea942786a6f9e6e55112b46c331"
     },
     "com.cysharp.unitask": {
       "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "64285ae060c9fe2aeb2a73b076b160939ce3be1a"
+      "hash": "73a63b7f672b88f7e9992f6917eb458a8cbb6fa9"
     },
-    "com.github-glitchenzo.nugetforunity": {
-      "version": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity",
+    "com.jasonxudeveloper.nino": {
+      "version": "4.0.0-preview.138",
       "depth": 0,
-      "source": "git",
+      "source": "registry",
       "dependencies": {},
-      "hash": "a7c6b49a0141a5bff9b1983e38137522ef61977d"
+      "url": "https://package.openupm.com"
     },
     "com.tuyoogame.yooasset": {
-      "version": "2.3.15",
+      "version": "2.3.17",
       "depth": 0,
       "source": "registry",
       "dependencies": {

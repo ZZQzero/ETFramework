@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.IO;
 
 namespace ET
@@ -19,7 +20,7 @@ namespace ET
 		public const int InnerPacketSizeLength = 4;
 		public const int OuterPacketSizeLength = 2;
 		public MemoryBuffer MemoryBuffer;
-
+		private const int MaxPacketSize = ushort.MaxValue * 16;
 		public PacketParser(CircularBuffer buffer, AService service)
 		{
 			this.buffer = buffer;
@@ -44,8 +45,9 @@ namespace ET
 
 							this.buffer.Read(this.cache, 0, InnerPacketSizeLength);
 
-							this.packetSize = BitConverter.ToInt32(this.cache, 0);
-							if (this.packetSize > ushort.MaxValue * 16 || this.packetSize < Packet.MinPacketSize)
+							//this.packetSize = BitConverter.ToInt32(this.cache, 0);
+							this.packetSize = BinaryPrimitives.ReadInt32LittleEndian(this.cache.AsSpan(0, InnerPacketSizeLength));
+							if (this.packetSize > MaxPacketSize || this.packetSize < Packet.MinPacketSize)
 							{
 								throw new Exception($"recv packet size error, 可能是外网探测端口: {this.packetSize}");
 							}
@@ -60,7 +62,8 @@ namespace ET
 
 							this.buffer.Read(this.cache, 0, OuterPacketSizeLength);
 
-							this.packetSize = BitConverter.ToUInt16(this.cache, 0);
+							//this.packetSize = BitConverter.ToUInt16(this.cache, 0);
+							this.packetSize = BinaryPrimitives.ReadUInt16LittleEndian(this.cache.AsSpan(0, OuterPacketSizeLength));
 							if (this.packetSize < Packet.MinPacketSize)
 							{
 								throw new Exception($"recv packet size error, 可能是外网探测端口: {this.packetSize}");

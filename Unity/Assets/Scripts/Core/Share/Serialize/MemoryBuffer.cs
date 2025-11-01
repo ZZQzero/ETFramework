@@ -41,9 +41,14 @@ namespace ET
 
         public Memory<byte> GetMemory(int sizeHint = 0)
         {
-            if (this.Length - this.Position < sizeHint)
+            if (sizeHint < 0)
             {
-                this.SetLength(this.Position + sizeHint);
+                sizeHint = 0;
+            }
+            long required = this.Position + sizeHint;
+            if (required > this.Length)
+            {
+                this.SetLength(required);
             }
             var memory = this.GetBuffer().AsMemory((int)this.Position + this.origin, (int)(this.Length - this.Position));
             return memory;
@@ -51,9 +56,14 @@ namespace ET
 
         public Span<byte> GetSpan(int sizeHint = 0)
         {
-            if (this.Length - this.Position < sizeHint)
+            if (sizeHint < 0)
             {
-                this.SetLength(this.Position + sizeHint);
+                sizeHint = 0;
+            }
+            long required = this.Position + sizeHint;
+            if (required > this.Length)
+            {
+                this.SetLength(required);
             }
             var span = this.GetBuffer().AsSpan((int)this.Position + this.origin, (int)(this.Length - this.Position));
             return span;

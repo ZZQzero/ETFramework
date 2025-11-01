@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
-using MemoryPack;
+using Nino.Core;
 
 namespace ET
 {
@@ -45,7 +45,7 @@ namespace ET
 
             try
             {
-                byte[] bytes = MemoryPackSerializer.Serialize(httpGetRouterResponse);
+                byte[] bytes = NinoSerializer.Serialize(httpGetRouterResponse);
                 response.ContentLength64 = bytes.Length;
                 await response.OutputStream.WriteAsync(bytes, 0, bytes.Length);
             }

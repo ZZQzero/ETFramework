@@ -16,11 +16,6 @@ namespace ET
 #if DOTNET
             World.Instance.AddSingleton<StartSceneConfigManager>();  
 #endif
-            
-            LogMsg logMsg = World.Instance.AddSingleton<LogMsg>();
-            logMsg.AddIgnore(LoginOuter.C2G_Ping);
-            logMsg.AddIgnore(LoginOuter.G2C_Ping);
-            
             ReloadSingleton();
         }
 

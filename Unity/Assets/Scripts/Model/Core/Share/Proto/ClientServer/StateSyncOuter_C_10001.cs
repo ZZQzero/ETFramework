@@ -1,9 +1,9 @@
-using MemoryPack;
+using Nino.Core;
 using System.Collections.Generic;
 
 namespace ET
 {
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.RouterSync)]
     public partial class RouterSync : MessageObject
     {
@@ -12,10 +12,10 @@ namespace ET
             return ObjectPool.Fetch<RouterSync>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public uint ConnectId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public string Address { get; set; }
 
         public override void Dispose()
@@ -32,7 +32,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.C2M_TestRequest)]
     [ResponseType(nameof(M2C_TestResponse))]
     public partial class C2M_TestRequest : MessageObject, ILocationRequest
@@ -42,10 +42,10 @@ namespace ET
             return ObjectPool.Fetch<C2M_TestRequest>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public string request { get; set; }
 
         public override void Dispose()
@@ -62,7 +62,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.M2C_TestResponse)]
     public partial class M2C_TestResponse : MessageObject, IResponse
     {
@@ -71,16 +71,16 @@ namespace ET
             return ObjectPool.Fetch<M2C_TestResponse>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public int Error { get; set; }
 
-        [MemoryPackOrder(2)]
+        [NinoMember(2)]
         public string Message { get; set; }
 
-        [MemoryPackOrder(3)]
+        [NinoMember(3)]
         public string response { get; set; }
 
         public override void Dispose()
@@ -99,7 +99,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.C2G_EnterMap)]
     [ResponseType(nameof(G2C_EnterMap))]
     public partial class C2G_EnterMap : MessageObject, ISessionRequest
@@ -109,7 +109,7 @@ namespace ET
             return ObjectPool.Fetch<C2G_EnterMap>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
         public override void Dispose()
@@ -125,7 +125,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.G2C_EnterMap)]
     public partial class G2C_EnterMap : MessageObject, ISessionResponse
     {
@@ -134,19 +134,19 @@ namespace ET
             return ObjectPool.Fetch<G2C_EnterMap>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public int Error { get; set; }
 
-        [MemoryPackOrder(2)]
+        [NinoMember(2)]
         public string Message { get; set; }
 
         /// <summary>
         /// 自己的UnitId
         /// </summary>
-        [MemoryPackOrder(3)]
+        [NinoMember(3)]
         public long MyId { get; set; }
 
         public override void Dispose()
@@ -165,7 +165,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.MoveInfo)]
     public partial class MoveInfo : MessageObject
     {
@@ -174,13 +174,13 @@ namespace ET
             return ObjectPool.Fetch<MoveInfo>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public List<Unity.Mathematics.float3> Points { get; set; } = new();
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public Unity.Mathematics.quaternion Rotation { get; set; }
 
-        [MemoryPackOrder(2)]
+        [NinoMember(2)]
         public int TurnSpeed { get; set; }
 
         public override void Dispose()
@@ -198,7 +198,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.UnitInfo)]
     public partial class UnitInfo : MessageObject
     {
@@ -207,27 +207,27 @@ namespace ET
             return ObjectPool.Fetch<UnitInfo>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public long UnitId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public int ConfigId { get; set; }
 
-        [MemoryPackOrder(2)]
+        [NinoMember(2)]
         public int Type { get; set; }
 
-        [MemoryPackOrder(3)]
+        [NinoMember(3)]
         public Unity.Mathematics.float3 Position { get; set; }
 
-        [MemoryPackOrder(4)]
+        [NinoMember(4)]
         public Unity.Mathematics.float3 Forward { get; set; }
 
         #if DOTNET
         [MongoDB.Bson.Serialization.Attributes.BsonDictionaryOptions(MongoDB.Bson.Serialization.Options.DictionaryRepresentation.ArrayOfArrays)]
         #endif
-        [MemoryPackOrder(5)]
+        [NinoMember(5)]
         public Dictionary<int, long> KV { get; set; } = new();
-        [MemoryPackOrder(6)]
+        [NinoMember(6)]
         public MoveInfo MoveInfo { get; set; }
 
         public override void Dispose()
@@ -249,7 +249,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.M2C_CreateUnits)]
     public partial class M2C_CreateUnits : MessageObject, IMessage
     {
@@ -258,7 +258,7 @@ namespace ET
             return ObjectPool.Fetch<M2C_CreateUnits>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public List<UnitInfo> Units { get; set; } = new();
 
         public override void Dispose()
@@ -274,7 +274,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.M2C_CreateMyUnit)]
     public partial class M2C_CreateMyUnit : MessageObject, IMessage
     {
@@ -283,7 +283,7 @@ namespace ET
             return ObjectPool.Fetch<M2C_CreateMyUnit>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public UnitInfo Unit { get; set; }
 
         public override void Dispose()
@@ -299,7 +299,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.M2C_StartSceneChange)]
     public partial class M2C_StartSceneChange : MessageObject, IMessage
     {
@@ -308,10 +308,10 @@ namespace ET
             return ObjectPool.Fetch<M2C_StartSceneChange>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public long SceneInstanceId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public string SceneName { get; set; }
 
         public override void Dispose()
@@ -328,7 +328,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.M2C_RemoveUnits)]
     public partial class M2C_RemoveUnits : MessageObject, IMessage
     {
@@ -337,7 +337,7 @@ namespace ET
             return ObjectPool.Fetch<M2C_RemoveUnits>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public List<long> Units { get; set; } = new();
 
         public override void Dispose()
@@ -353,7 +353,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.C2M_PathfindingResult)]
     public partial class C2M_PathfindingResult : MessageObject, ILocationMessage
     {
@@ -362,10 +362,10 @@ namespace ET
             return ObjectPool.Fetch<C2M_PathfindingResult>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public Unity.Mathematics.float3 Position { get; set; }
 
         public override void Dispose()
@@ -382,7 +382,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.C2M_Stop)]
     public partial class C2M_Stop : MessageObject, ILocationMessage
     {
@@ -391,7 +391,7 @@ namespace ET
             return ObjectPool.Fetch<C2M_Stop>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
         public override void Dispose()
@@ -407,7 +407,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.M2C_PathfindingResult)]
     public partial class M2C_PathfindingResult : MessageObject, IMessage
     {
@@ -416,13 +416,13 @@ namespace ET
             return ObjectPool.Fetch<M2C_PathfindingResult>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public long Id { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public Unity.Mathematics.float3 Position { get; set; }
 
-        [MemoryPackOrder(2)]
+        [NinoMember(2)]
         public List<Unity.Mathematics.float3> Points { get; set; } = new();
 
         public override void Dispose()
@@ -440,7 +440,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.M2C_Stop)]
     public partial class M2C_Stop : MessageObject, IMessage
     {
@@ -449,16 +449,16 @@ namespace ET
             return ObjectPool.Fetch<M2C_Stop>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int Error { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public long Id { get; set; }
 
-        [MemoryPackOrder(2)]
+        [NinoMember(2)]
         public Unity.Mathematics.float3 Position { get; set; }
 
-        [MemoryPackOrder(3)]
+        [NinoMember(3)]
         public Unity.Mathematics.quaternion Rotation { get; set; }
 
         public override void Dispose()
@@ -477,7 +477,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.G2C_Test)]
     public partial class G2C_Test : MessageObject, ISessionMessage
     {
@@ -498,7 +498,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.C2M_Reload)]
     [ResponseType(nameof(M2C_Reload))]
     public partial class C2M_Reload : MessageObject, ISessionRequest
@@ -508,13 +508,13 @@ namespace ET
             return ObjectPool.Fetch<C2M_Reload>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public string Account { get; set; }
 
-        [MemoryPackOrder(2)]
+        [NinoMember(2)]
         public string Password { get; set; }
 
         public override void Dispose()
@@ -532,7 +532,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.M2C_Reload)]
     public partial class M2C_Reload : MessageObject, ISessionResponse
     {
@@ -541,13 +541,13 @@ namespace ET
             return ObjectPool.Fetch<M2C_Reload>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public int Error { get; set; }
 
-        [MemoryPackOrder(2)]
+        [NinoMember(2)]
         public string Message { get; set; }
 
         public override void Dispose()
@@ -565,7 +565,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.G2C_TestHotfixMessage)]
     public partial class G2C_TestHotfixMessage : MessageObject, ISessionMessage
     {
@@ -574,7 +574,7 @@ namespace ET
             return ObjectPool.Fetch<G2C_TestHotfixMessage>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public string Info { get; set; }
 
         public override void Dispose()
@@ -590,7 +590,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.C2M_TestRobotCase)]
     [ResponseType(nameof(M2C_TestRobotCase))]
     public partial class C2M_TestRobotCase : MessageObject, ILocationRequest
@@ -600,10 +600,10 @@ namespace ET
             return ObjectPool.Fetch<C2M_TestRobotCase>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public int N { get; set; }
 
         public override void Dispose()
@@ -620,7 +620,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.M2C_TestRobotCase)]
     public partial class M2C_TestRobotCase : MessageObject, ILocationResponse
     {
@@ -629,16 +629,16 @@ namespace ET
             return ObjectPool.Fetch<M2C_TestRobotCase>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public int Error { get; set; }
 
-        [MemoryPackOrder(2)]
+        [NinoMember(2)]
         public string Message { get; set; }
 
-        [MemoryPackOrder(3)]
+        [NinoMember(3)]
         public int N { get; set; }
 
         public override void Dispose()
@@ -657,7 +657,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.C2M_TestRobotCase2)]
     public partial class C2M_TestRobotCase2 : MessageObject, ILocationMessage
     {
@@ -666,10 +666,10 @@ namespace ET
             return ObjectPool.Fetch<C2M_TestRobotCase2>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public int N { get; set; }
 
         public override void Dispose()
@@ -686,7 +686,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.M2C_TestRobotCase2)]
     public partial class M2C_TestRobotCase2 : MessageObject, ILocationMessage
     {
@@ -695,10 +695,10 @@ namespace ET
             return ObjectPool.Fetch<M2C_TestRobotCase2>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public int N { get; set; }
 
         public override void Dispose()
@@ -715,7 +715,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.C2M_TransferMap)]
     [ResponseType(nameof(M2C_TransferMap))]
     public partial class C2M_TransferMap : MessageObject, ILocationRequest
@@ -725,7 +725,7 @@ namespace ET
             return ObjectPool.Fetch<C2M_TransferMap>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
         public override void Dispose()
@@ -741,7 +741,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.M2C_TransferMap)]
     public partial class M2C_TransferMap : MessageObject, ILocationResponse
     {
@@ -750,13 +750,13 @@ namespace ET
             return ObjectPool.Fetch<M2C_TransferMap>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public int Error { get; set; }
 
-        [MemoryPackOrder(2)]
+        [NinoMember(2)]
         public string Message { get; set; }
 
         public override void Dispose()
@@ -774,7 +774,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.C2G_Benchmark)]
     [ResponseType(nameof(G2C_Benchmark))]
     public partial class C2G_Benchmark : MessageObject, ISessionRequest
@@ -784,7 +784,7 @@ namespace ET
             return ObjectPool.Fetch<C2G_Benchmark>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
         public override void Dispose()
@@ -800,7 +800,7 @@ namespace ET
         }
     }
 
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(StateSyncOuter.G2C_Benchmark)]
     public partial class G2C_Benchmark : MessageObject, ISessionResponse
     {
@@ -809,13 +809,13 @@ namespace ET
             return ObjectPool.Fetch<G2C_Benchmark>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public int RpcId { get; set; }
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public int Error { get; set; }
 
-        [MemoryPackOrder(2)]
+        [NinoMember(2)]
         public string Message { get; set; }
 
         public override void Dispose()

@@ -41,10 +41,7 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="Assets\Packages\MemoryPack.Core.1.21.4\lib\netstandard2.1\MemoryPack.Core.xml" />
     <None Include="Packages\GameUIFramework\package.json" />
-    <None Include="Assets\Packages\System.Collections.Immutable.6.0.0\useSharedDesignerContext.txt" />
-    <None Include="Assets\Packages\System.Collections.Immutable.6.0.0\lib\netstandard2.0\System.Collections.Immutable.xml" />
     <Reference Include="UnityEngine">
       <HintPath>G:\Unity\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>

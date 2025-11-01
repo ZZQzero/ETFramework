@@ -1,16 +1,16 @@
-using MemoryPack;
+using Nino.Core;
 
 namespace ET
 {
     [Message(ushort.MaxValue)]
-    [MemoryPackable]
+    [NinoType(false)]
     public partial class MessageResponse: MessageObject, IResponse
     {
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public int RpcId { get; set; }
-        [MemoryPackOrder(2)]
+        [NinoMember(2)]
         public int Error { get; set; }
-        [MemoryPackOrder(3)]
+        [NinoMember(3)]
         public string Message { get; set; }
     }
 }

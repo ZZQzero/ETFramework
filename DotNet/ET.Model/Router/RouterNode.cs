@@ -14,7 +14,6 @@ namespace ET
         public string InnerAddress;
         public IPEndPoint InnerIpEndPoint;
         public IPEndPoint OuterIpEndPoint;
-        public IPEndPoint SyncIpEndPoint;
         public IKcpTransport KcpTransport;
 
         public uint OuterConn
@@ -32,12 +31,12 @@ namespace ET
         public int RouterSyncCount;
         public int SyncCount;
 
-#region 限制外网消息数量，一秒最多50个包
+        #region 限制外网消息数量，一秒最多50个包
 
         public long LastCheckTime;
         public int LimitCountPerSecond;
 
-#endregion
+        #endregion
 
         public RouterStatus Status;
     }

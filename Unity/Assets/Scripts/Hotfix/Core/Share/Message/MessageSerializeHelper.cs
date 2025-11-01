@@ -1,41 +1,12 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.IO;
-using MemoryPack;
+using Nino.Core;
 
 namespace ET
 {
     public static class MessageSerializeHelper
     {
-        public static byte[] Serialize(MessageObject message)
-        {
-            return MemoryPackHelper.Serialize(message);
-        }
-
-        public static void Serialize(MessageObject message, MemoryBuffer stream)
-        {
-            MemoryPackHelper.Serialize(message, stream);
-        }
-		
-        /*public static MessageObject Deserialize(Type type, byte[] bytes, int index, int count)
-        {
-            object o = ObjectPool.Fetch(type);
-            MemoryPackHelper.Deserialize(type, bytes, index, count, ref o);
-            return o as MessageObject;
-        }
-
-        public static MessageObject Deserialize(Type type, MemoryBuffer stream)
-        {
-            object o = ObjectPool.Fetch(type);
-            MemoryPackHelper.Deserialize(type, stream, ref o);
-            return o as MessageObject;
-        }*/
-
-        public static MessageObject Deserialize<T>(MemoryBuffer stream)
-        {
-            var obj = MemoryPackSerializer.Deserialize<T>(stream.GetBuffer());
-            return obj as MessageObject;
-        }
-        
         public static ushort MessageToStream(MemoryBuffer stream, MessageObject message, int headOffset = 0)
         {
             ushort opcode = MessageOpcodeTypeMap.TypeToOpcode[message.GetType()];
@@ -45,9 +16,9 @@ namespace ET
             
             stream.GetBuffer().WriteTo(headOffset, opcode);
             
-            //MessageSerializeHelper.Serialize(message, stream);
-            MemoryPackHelper.Serialize(message, stream);
-            
+            //MemoryPackSerializer.Serialize(message.GetType(), stream, message);
+            var data = NinoSerializer.Serialize(message);
+            stream.Write(data, 0, data.Length);
             stream.Seek(0, SeekOrigin.Begin);
             return opcode;
         }
@@ -77,27 +48,24 @@ namespace ET
         public static (ActorId, object) ToMessage(AService service, MemoryBuffer memoryStream)
         {
             MessageObject message = null;
+            var buf = memoryStream.GetBuffer();
             ActorId actorId = default;
             switch (service.ServiceType)
             {
                 case ServiceType.Outer:
                 {
+                    ushort opcode = BinaryPrimitives.ReadUInt16LittleEndian(buf.AsSpan(0, Packet.OpcodeLength));
                     memoryStream.Seek(Packet.OpcodeLength, SeekOrigin.Begin);
-                    ushort opcode = BitConverter.ToUInt16(memoryStream.GetBuffer(), 0);
-                    //Type type = MessageOpcodeTypeMap.OpcodeToType[opcode];
-                    message = MessageOpcodeTypeMap.OpcodeToMessage[opcode](memoryStream); //Deserialize(type, memoryStream);
+                    message = MessageOpcodeTypeMap.OpcodeToMessage[opcode](memoryStream);
                     break;
                 }
                 case ServiceType.Inner:
                 {
+                    actorId.Process = BinaryPrimitives.ReadInt32LittleEndian(buf.AsSpan(0, 4));
+                    actorId.Fiber = BinaryPrimitives.ReadInt32LittleEndian(buf.AsSpan(4, 4));
+                    actorId.InstanceId = BinaryPrimitives.ReadInt64LittleEndian(buf.AsSpan(8, 8));
+                    ushort opcode = BinaryPrimitives.ReadUInt16LittleEndian(buf.AsSpan(Packet.ActorIdLength, Packet.OpcodeLength));
                     memoryStream.Seek(Packet.ActorIdLength + Packet.OpcodeLength, SeekOrigin.Begin);
-                    byte[] buffer = memoryStream.GetBuffer();
-                    actorId.Process = BitConverter.ToInt32(buffer, Packet.ActorIdIndex);
-                    actorId.Fiber = BitConverter.ToInt32(buffer, Packet.ActorIdIndex + 4);
-                    actorId.InstanceId = BitConverter.ToInt64(buffer, Packet.ActorIdIndex + 8);
-                    ushort opcode = BitConverter.ToUInt16(buffer, Packet.ActorIdLength);
-                    /*Type type = MessageOpcodeTypeMap.OpcodeToType[opcode];
-                    message = Deserialize(type, memoryStream);*/
                     message = MessageOpcodeTypeMap.OpcodeToMessage[opcode](memoryStream);
                     break;
                 }

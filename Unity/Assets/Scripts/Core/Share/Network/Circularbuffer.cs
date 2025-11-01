@@ -8,7 +8,8 @@ namespace ET
     public class CircularBuffer : Stream
     {
         public int ChunkSize = 8192;
-
+        
+        private const int MaxCacheBlocks = 32; // 限制缓存块数，避免无限膨胀
         private readonly Queue<byte[]> _bufferQueue = new Queue<byte[]>();
         private readonly Queue<byte[]> _bufferCache = new Queue<byte[]>();
         private readonly ArrayPool<byte> _pool = ArrayPool<byte>.Shared;
@@ -42,12 +43,23 @@ namespace ET
             if (_bufferQueue.Count == 0) return;
 
             var buf = _bufferQueue.Dequeue();
-            _bufferCache.Enqueue(buf);
+            if (_bufferCache.Count < MaxCacheBlocks)
+            {
+	            _bufferCache.Enqueue(buf);
+            }
+            else
+            {
+	            _pool.Return(buf, clearArray: false);
+            }
 
             if (_bufferQueue.Count > 0)
-                FirstIndex = 0;
+            {
+	            FirstIndex = 0;
+            }
             else
-                FirstIndex = LastIndex = 0;
+            {
+	            FirstIndex = LastIndex = 0;
+            }
         }
 
         public byte[] First

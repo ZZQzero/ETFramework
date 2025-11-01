@@ -32,7 +32,10 @@ namespace ET
         
         public void Recycle()
         {
-            if (Interlocked.CompareExchange(ref poolSize, 0, 0) > 100) return;
+            if (Interlocked.CompareExchange(ref poolSize, 0, 0) > 100)
+            {
+                return;
+            }
             this.StateMachine = default;
             queue.Enqueue(this);
             Interlocked.Increment(ref poolSize);

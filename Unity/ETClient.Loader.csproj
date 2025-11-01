@@ -41,7 +41,7 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="G:\UnityProject\ETFramework\Unity\Assets\Packages\MemoryPack.Generator.1.21.4\analyzers\dotnet\cs\MemoryPack.Generator.dll" />
+    <Analyzer Include="G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@34f567815f5d\Runtime\Nino.Generator.dll" />
     <Analyzer Include="G:\UnityProject\ETFramework\Unity\Assets\Plugins\ET.SourceGenerator.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
@@ -434,6 +434,9 @@
     <Reference Include="Unity.Plastic.Antlr3.Runtime">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Lib\Editor\Unity.Plastic.Antlr3.Runtime.dll</HintPath>
     </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@34f567815f5d\Runtime\ThirdParty\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.Plastic.Newtonsoft.Json">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Lib\Editor\Unity.Plastic.Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -443,8 +446,11 @@
     <Reference Include="Unity.VisualScripting.IonicZip">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Editor\VisualScripting.Core\Dependencies\DotNetZip\Unity.VisualScripting.IonicZip.dll</HintPath>
     </Reference>
+    <Reference Include="Nino.Core">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@34f567815f5d\Runtime\Nino.Core.dll</HintPath>
+    </Reference>
     <Reference Include="dnlib">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.code-philosophy.hybridclr@d505624c78e6\Plugins\dnlib.dll</HintPath>
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.code-philosophy.hybridclr@01754c8fb47b\Plugins\dnlib.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Antlr3.Runtime">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
@@ -453,19 +459,7 @@
       <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\CommandLine.dll</HintPath>
     </Reference>
     <Reference Include="LZ4">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.code-philosophy.hybridclr@d505624c78e6\Plugins\LZ4.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime.CompilerServices.Unsafe">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Plugins\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Collections.Immutable">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Packages\System.Collections.Immutable.6.0.0\lib\netstandard2.0\System.Collections.Immutable.dll</HintPath>
-    </Reference>
-    <Reference Include="MemoryPack.Core">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Assets\Packages\MemoryPack.Core.1.21.4\lib\netstandard2.1\MemoryPack.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="NuGetForUnity.PluginAPI">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.github-glitchenzo.nugetforunity@b8a65750503c\Editor\PluginAPI\NuGetForUnity.PluginAPI.dll</HintPath>
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.code-philosophy.hybridclr@01754c8fb47b\Plugins\LZ4.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.TextureAssets">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>

@@ -1,9 +1,9 @@
-using MemoryPack;
+using Nino.Core;
 using System.Collections.Generic;
 
 namespace ET
 {
-    [MemoryPackable]
+    [NinoType(false)]
     [Message(RouterProto.HttpGetRouterResponse)]
     public partial class HttpGetRouterResponse : MessageObject
     {
@@ -12,10 +12,10 @@ namespace ET
             return ObjectPool.Fetch<HttpGetRouterResponse>(isFromPool);
         }
 
-        [MemoryPackOrder(0)]
+        [NinoMember(0)]
         public List<string> Realms { get; set; } = new();
 
-        [MemoryPackOrder(1)]
+        [NinoMember(1)]
         public List<string> Routers { get; set; } = new();
 
         public override void Dispose()

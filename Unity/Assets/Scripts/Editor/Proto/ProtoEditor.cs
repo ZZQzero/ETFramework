@@ -15,10 +15,5 @@ namespace ET
 
             UnityEngine.Debug.Log(process.StandardOutput.ReadToEnd());
         }
-        
-        public static void Init()
-        {
-            Run();
-        }
     }
 }

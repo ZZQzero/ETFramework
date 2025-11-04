@@ -11,6 +11,7 @@ namespace ET
         private readonly ConcurrentDictionary<Fiber, Thread> fiberDic = new();
         
         private readonly FiberManager fiberManager;
+        private volatile bool stopRequested;
 
         public ThreadScheduler(FiberManager fiberManager)
         {
@@ -21,9 +22,9 @@ namespace ET
         {
             SynchronizationContext.SetSynchronizationContext(fiber.ThreadSynchronizationContext);
             
-            while (true)
+            while (!stopRequested)
             {
-                if (fiberManager.IsDisposed())
+                if (fiberManager.IsDisposed() || stopRequested)
                 {
                     return;
                 }
@@ -43,6 +44,7 @@ namespace ET
 
         public void Dispose()
         {
+            stopRequested = true;
             foreach (var kv in this.fiberDic.ToArray())
             {
                 kv.Value.Join();

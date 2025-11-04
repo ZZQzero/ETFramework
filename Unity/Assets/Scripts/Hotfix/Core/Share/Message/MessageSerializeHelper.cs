@@ -16,9 +16,8 @@ namespace ET
             
             stream.GetBuffer().WriteTo(headOffset, opcode);
             
-            //MemoryPackSerializer.Serialize(message.GetType(), stream, message);
-            var data = NinoSerializer.Serialize(message);
-            stream.Write(data, 0, data.Length);
+            // 序列化 payload（零拷贝）
+            NinoSerializer.Serialize(message, stream);
             stream.Seek(0, SeekOrigin.Begin);
             return opcode;
         }

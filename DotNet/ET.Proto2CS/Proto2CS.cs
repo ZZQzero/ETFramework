@@ -48,12 +48,65 @@ namespace ET
 
             throw new DirectoryNotFoundException("找不到 Proto 目录！");
         }
+        
+        private static string GetSolutionRoot()
+        {
+            string current = Directory.GetCurrentDirectory();
+            for (int i = 0; i < 8 && !string.IsNullOrEmpty(current); i++)
+            {
+                string unityDir = Path.Combine(current, "Unity");
+                string dotnetDir = Path.Combine(current, "DotNet");
+                if (Directory.Exists(unityDir) && Directory.Exists(dotnetDir))
+                {
+                    return current;
+                }
+
+                DirectoryInfo parent = Directory.GetParent(current);
+                if (parent == null)
+                {
+                    break;
+                }
+                current = parent.FullName;
+            }
+
+            // 兜底：尝试从 AppContext.BaseDirectory 往上找
+            current = AppContext.BaseDirectory;
+            for (int i = 0; i < 8 && !string.IsNullOrEmpty(current); i++)
+            {
+                string unityDir = Path.Combine(current, "Unity");
+                string dotnetDir = Path.Combine(current, "DotNet");
+                if (Directory.Exists(unityDir) && Directory.Exists(dotnetDir))
+                {
+                    return current;
+                }
+
+                DirectoryInfo parent = Directory.GetParent(current);
+                if (parent == null)
+                {
+                    break;
+                }
+                current = parent.FullName;
+            }
+
+            // 如果仍未找到，就返回当前工作目录
+            return Directory.GetCurrentDirectory();
+        }
         public static void Proto2CS()
         {
             usedOpcodes.Clear();
             msgOpcode.Clear();
 
-            clientServerMessagePath = "Unity/Assets/Scripts/Model/Core/Share/Proto/ClientServer/";
+            string solutionRoot = GetSolutionRoot();
+            clientServerMessagePath = Path.Combine(
+                solutionRoot,
+                "Unity",
+                "Assets",
+                "Scripts",
+                "Model",
+                "Core",
+                "Share",
+                "Proto",
+                "ClientServer");
 
             List<string> list = FileHelper.GetAllFiles(protoDir, "*proto");
             foreach (string s in list)

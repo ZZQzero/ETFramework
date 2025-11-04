@@ -1,10 +1,11 @@
 using System;
 using System.Buffers;
 using System.IO;
+using Nino.Core;
 
 namespace ET
 {
-    public class MemoryBuffer: MemoryStream, IBufferWriter<byte>
+    public class MemoryBuffer: MemoryStream, INinoBufferWriter
     {
         private int origin;
         
@@ -29,6 +30,8 @@ namespace ET
 
         public ReadOnlySpan<byte> WrittenSpan => this.GetBuffer().AsSpan(this.origin, (int)this.Position);
 
+        public int WrittenCount => (int)this.Position;
+
         public void Advance(int count)
         {
             long newLength = this.Position + count;
@@ -41,9 +44,9 @@ namespace ET
 
         public Memory<byte> GetMemory(int sizeHint = 0)
         {
-            if (sizeHint < 0)
+            if (sizeHint <= 0)
             {
-                sizeHint = 0;
+                sizeHint = 1; // IBufferWriter 允许 0，但返回 0 长度对上层不友好
             }
             long required = this.Position + sizeHint;
             if (required > this.Length)
@@ -56,9 +59,9 @@ namespace ET
 
         public Span<byte> GetSpan(int sizeHint = 0)
         {
-            if (sizeHint < 0)
+            if (sizeHint <= 0)
             {
-                sizeHint = 0;
+                sizeHint = 1; // 确保返回非空 Span，便于上层直接写入
             }
             long required = this.Position + sizeHint;
             if (required > this.Length)

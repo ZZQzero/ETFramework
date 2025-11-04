@@ -7,7 +7,7 @@ namespace ET
     [EnableClass]
     internal static class Init
     {
-        private static int Main(string[] args)
+        private static void Main(string[] args)
         {
             try
             {
@@ -18,7 +18,6 @@ namespace ET
                 Console.WriteLine(e.ToString());
             }
             Console.WriteLine("Finish OK!");
-            return 1;
         }
     }
 }

@@ -99,6 +99,7 @@ namespace ET
                     catch (Exception e)
                     {
                         Log.Error($"init fiber fail: {sceneType} {e}");
+                        tcs.SetException(e);
                     }
                 }
             }
@@ -117,6 +118,10 @@ namespace ET
         public async ETTask Remove(int id)
         {
             Fiber fiber = this.Get(id);
+            if (fiber == null)
+            {
+                return;
+            }
             TaskCompletionSource<bool> tcs = new();
             // 要扔到fiber线程执行，否则会出现线程竞争
             fiber.ThreadSynchronizationContext.Post(() =>

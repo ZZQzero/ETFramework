@@ -5,6 +5,10 @@ namespace ET
     {
         public static void RegisterEntitySystem()
         {
+            EntitySystemSingleton.RegisterEntitySystem<ET.ModeContexSystem.ET_ModeContex_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.ModeContexSystem.ET_ModeContex_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MailBoxComponentSystem.ET_MailBoxComponent_int_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MailBoxComponentSystem.ET_MailBoxComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.LockInfoSystem.ET_LockInfo_ET_ActorId_ET_CoroutineLock_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.LockInfoSystem.ET_LockInfo_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.LocationOneTypeSystem.ET_LocationOneType_AwakeSystem>();
@@ -66,10 +70,6 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.TimerComponentSystem.ET_TimerComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.TimerComponentSystem.ET_TimerComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.UnitSystem.ET_Unit_int_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.ModeContexSystem.ET_ModeContex_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.ModeContexSystem.ET_ModeContex_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.MailBoxComponentSystem.ET_MailBoxComponent_int_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.MailBoxComponentSystem.ET_MailBoxComponent_DestroySystem>();
         }
     }
 }

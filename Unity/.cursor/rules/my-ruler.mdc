@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+客户端代码路径是G:\UnityProject\ETFramework\Unity\Assets\Scripts
+服务端项目路径是G:\UnityProject\ETFramework\DotNet
+客户端文件名是Share的目录下，是客户端和服务端共用的代码，需要特别注意，比如G:\UnityProject\ETFramework\Unity\Assets\Scripts\Core\Share，服务端通过链接引用了客户端的代码
+在修改代码时需要结合代码上下文和相关调用的地方，或者查找客户端和服务端的相关代码，确保代码逻辑正确

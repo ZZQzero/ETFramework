@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
@@ -37,7 +38,7 @@ namespace ET
             self.OuterUdp?.Update();
             self.OuterTcp?.Update();
             self.InnerSocket.Update();
-            long timeNow = TimeInfo.Instance.ClientNow();
+            long timeNow = TimeInfo.Instance.ServerNow();
             self.RecvOuterUdp(timeNow);
             self.RecvOuterTcp(timeNow);
             self.RecvInner(timeNow);
@@ -53,6 +54,10 @@ namespace ET
         private static IPEndPoint CloneAddress(this RouterComponent self)
         {
             IPEndPoint ipEndPoint = (IPEndPoint) self.IPEndPoint;
+            if (ipEndPoint == null)
+            {
+                return null;
+            }
             return new IPEndPoint(ipEndPoint.Address, ipEndPoint.Port);
         }
         
@@ -92,7 +97,8 @@ namespace ET
 
         private static void CheckConnectTimeout(this RouterComponent self, long timeNow)
         {
-            int n = self.checkTimeout.Count < 10? self.checkTimeout.Count : 10;
+            int total = self.checkTimeout.Count;
+            int n = total <= 10? total : Math.Max(10, total / 10);
             for (int i = 0; i < n; ++i)
             {
                 uint id = self.checkTimeout.Dequeue();
@@ -126,6 +132,21 @@ namespace ET
                 }
                 self.checkTimeout.Enqueue(id);
             }
+        }
+
+        private static bool SameAddress(IPAddress a, IPAddress b)
+        {
+            if (a == null || b == null)
+            {
+                return false;
+            }
+            if (a.Equals(b))
+            {
+                return true;
+            }
+            IPAddress aa = a.AddressFamily == AddressFamily.InterNetworkV6? a : a.MapToIPv6();
+            IPAddress bb = b.AddressFamily == AddressFamily.InterNetworkV6? b : b.MapToIPv6();
+            return aa.Equals(bb);
         }
 
         private static void RecvInner(this RouterComponent self, long timeNow)
@@ -171,8 +192,14 @@ namespace ET
                     RouterNode routerNode = self.GetChild<RouterNode>(outerConn);
                     if (routerNode == null)
                     {
+                        IPEndPoint clonedAddress = self.CloneAddress();
+                        if (clonedAddress == null)
+                        {
+                            Log.Error($"router create reconnect failed: IPEndPoint is null {realAddress} {outerConn} {innerConn}");
+                            break;
+                        }
                         Log.Info($"router create reconnect: {self.IPEndPoint} {realAddress} {outerConn} {innerConn}");
-                        routerNode = self.New(realAddress, outerConn, innerConn, connectId, self.CloneAddress());
+                        routerNode = self.New(realAddress, outerConn, innerConn, connectId, clonedAddress);
                     }
                     
                     // 不是自己的，outerConn冲突, 直接break,也就是说这个软路由上有个跟自己outerConn冲突的连接，就不能连接了
@@ -197,6 +224,19 @@ namespace ET
                         break;
                     }
                     
+                    // Reconnect来源IP校验，增强来源一致性
+                    IPEndPoint ipEndPointReconnect = self.IPEndPoint as IPEndPoint;
+                    if (ipEndPointReconnect == null)
+                    {
+                        Log.Warning($"router reconnect IPEndPoint is null or invalid type: {self.IPEndPoint}");
+                        break;
+                    }
+                    if (!SameAddress(routerNode.OuterIpEndPoint.Address, ipEndPointReconnect.Address))
+                    {
+                        Log.Warning($"kcp router reconnect ip is diff: {routerNode.OuterIpEndPoint.Address} {ipEndPointReconnect.Address}");
+                        break;
+                    }
+
                     // 校验内网地址
                     if (routerNode.InnerAddress != realAddress)
                     {
@@ -210,16 +250,17 @@ namespace ET
                         break;
                     }
                     routerNode.KcpTransport = transport;
+                    // 限流前置
+                    if (!routerNode.CheckOuterCount(timeNow))
+                    {
+                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterTooManyPackets);
+                        break;
+                    }
                     // 转发到内网
                     self.Cache.WriteTo(0, KcpProtocalType.RouterReconnectSYN);
                     self.Cache.WriteTo(1, outerConn);
                     self.Cache.WriteTo(5, innerConn);
                     self.InnerSocket.Send(self.Cache, 0, 9, routerNode.InnerIpEndPoint, ChannelType.Connect);
-
-                    if (!routerNode.CheckOuterCount(timeNow))
-                    {
-                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterTooManyPackets);
-                    }
 
                     break;
                 }
@@ -243,7 +284,13 @@ namespace ET
                     RouterNode routerNode = self.GetChild<RouterNode>(outerConn);
                     if (routerNode == null)
                     {
-                        routerNode = self.New(realAddress, outerConn, innerConn, connectId, self.CloneAddress());
+                        IPEndPoint clonedAddress = self.CloneAddress();
+                        if (clonedAddress == null)
+                        {
+                            Log.Error($"router create failed: IPEndPoint is null {realAddress} {outerConn} {innerConn}");
+                            break;
+                        }
+                        routerNode = self.New(realAddress, outerConn, innerConn, connectId, clonedAddress);
                         Log.Info($"router create: {realAddress} {outerConn} {innerConn} {routerNode.OuterIpEndPoint}");
                     }
 
@@ -281,21 +328,22 @@ namespace ET
                     }
                     
                     routerNode.KcpTransport = transport;
+                    // 限流前置
+                    if (!routerNode.CheckOuterCount(timeNow))
+                    {
+                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterTooManyPackets);
+                        break;
+                    }
                     self.Cache.WriteTo(0, KcpProtocalType.RouterACK);
                     self.Cache.WriteTo(1, routerNode.InnerConn);
                     self.Cache.WriteTo(5, routerNode.OuterConn);
                     routerNode.KcpTransport.Send(self.Cache, 0, 9, routerNode.OuterIpEndPoint, ChannelType.Accept);
 
-                    if (!routerNode.CheckOuterCount(timeNow))
-                    {
-                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterTooManyPackets);
-                    }
-
                     break;
                 }
                 case KcpProtocalType.SYN:
                 {
-                    // 长度!=13，不是accpet消息
+                    // 长度!=9，不是SYN消息
                     if (messageLength != 9)
                     {
                         break;
@@ -317,8 +365,13 @@ namespace ET
                     }
 
                     // 校验ip，连接过程中ip不能变化, 主要防止第三方攻击，一般问题不大
-                    IPEndPoint ipEndPoint = (IPEndPoint) self.IPEndPoint;
-                    if (!Equals(routerNode.OuterIpEndPoint.Address, ipEndPoint.Address))
+                    IPEndPoint ipEndPoint = self.IPEndPoint as IPEndPoint;
+                    if (ipEndPoint == null)
+                    {
+                        Log.Warning($"router syn IPEndPoint is null or invalid type: {self.IPEndPoint}");
+                        break;
+                    }
+                    if (!SameAddress(routerNode.OuterIpEndPoint.Address, ipEndPoint.Address))
                     {
                         Log.Warning($"kcp router syn ip is diff3: {routerNode.OuterIpEndPoint.Address} {ipEndPoint.Address}");
                     }
@@ -327,6 +380,12 @@ namespace ET
                     
                     routerNode.LastRecvOuterTime = timeNow;
                     
+                    // 限流前置
+                    if (!routerNode.CheckOuterCount(timeNow))
+                    {
+                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterTooManyPackets);
+                        break;
+                    }
                     // 转发到内网, 带上客户端的地址
                     self.Cache.WriteTo(0, KcpProtocalType.SYN);
                     self.Cache.WriteTo(1, outerConn);
@@ -335,10 +394,6 @@ namespace ET
                     Array.Copy(addressBytes, 0, self.Cache, 9, addressBytes.Length);
                     Log.Info($"kcp router syn: {outerConn} {innerConn} {routerNode.InnerIpEndPoint} {routerNode.OuterIpEndPoint}");
                     self.InnerSocket.Send(self.Cache, 0, 9 + addressBytes.Length, routerNode.InnerIpEndPoint, ChannelType.Connect);
-                    if (!routerNode.CheckOuterCount(timeNow))
-                    {
-                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterTooManyPackets);
-                    }
 
                     break;
                 }
@@ -370,12 +425,13 @@ namespace ET
 
                     routerNode.LastRecvOuterTime = timeNow;
                     Log.Info($"kcp router outer fin: {outerConn} {innerConn} {routerNode.InnerIpEndPoint}");
-                    self.InnerSocket.Send(self.Cache, 0, messageLength, routerNode.InnerIpEndPoint, ChannelType.Accept);
-
+                    // 限流前置
                     if (!routerNode.CheckOuterCount(timeNow))
                     {
                         self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterTooManyPackets);
+                        break;
                     }
+                    self.InnerSocket.Send(self.Cache, 0, messageLength, routerNode.InnerIpEndPoint, ChannelType.Accept);
 
                     break;
                 }
@@ -415,12 +471,13 @@ namespace ET
                     
                     routerNode.LastRecvOuterTime = timeNow;
 
-                    self.InnerSocket.Send(self.Cache, 0, messageLength, routerNode.InnerIpEndPoint, ChannelType.Connect);
-
+                    // 限流前置
                     if (!routerNode.CheckOuterCount(timeNow))
                     {
                         self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterTooManyPackets);
+                        break;
                     }
+                    self.InnerSocket.Send(self.Cache, 0, messageLength, routerNode.InnerIpEndPoint, ChannelType.Connect);
 
                     break;
                 }
@@ -471,6 +528,11 @@ namespace ET
                     routerNode.LastRecvInnerTime = timeNow;
 
                     // 转发出去
+                    if (routerNode.KcpTransport == null)
+                    {
+                        Log.Warning($"router node KcpTransport is null: {outerConn} {innerConn}");
+                        break;
+                    }
                     self.Cache.WriteTo(0, KcpProtocalType.RouterReconnectACK);
                     self.Cache.WriteTo(1, routerNode.InnerConn);
                     self.Cache.WriteTo(5, routerNode.OuterConn);
@@ -497,6 +559,11 @@ namespace ET
 
                     routerNode.LastRecvInnerTime = timeNow;
                     // 转发出去
+                    if (routerNode.KcpTransport == null)
+                    {
+                        Log.Warning($"router node KcpTransport is null: {outerConn} {innerConn}");
+                        break;
+                    }
                     Log.Info($"kcp router ack: {outerConn} {innerConn} {routerNode.OuterIpEndPoint}");
                     routerNode.KcpTransport.Send(self.Cache, 0, messageLength, routerNode.OuterIpEndPoint, ChannelType.Accept);
                     break;
@@ -527,6 +594,11 @@ namespace ET
                     }
 
                     routerNode.LastRecvInnerTime = timeNow;
+                    if (routerNode.KcpTransport == null)
+                    {
+                        Log.Warning($"router node KcpTransport is null: {outerConn} {innerConn}");
+                        break;
+                    }
                     Log.Info($"kcp router inner fin: {outerConn} {innerConn} {routerNode.OuterIpEndPoint}");
                     routerNode.KcpTransport.Send(self.Cache, 0, messageLength, routerNode.OuterIpEndPoint, ChannelType.Accept);
 
@@ -565,6 +637,11 @@ namespace ET
                     }
 
                     routerNode.LastRecvInnerTime = timeNow;
+                    if (routerNode.KcpTransport == null)
+                    {
+                        Log.Warning($"router node KcpTransport is null: {outerConn} {innerConn}");
+                        break;
+                    }
                     routerNode.KcpTransport.Send(self.Cache, 0, messageLength, routerNode.OuterIpEndPoint, ChannelType.Accept);
                     break;
                 }
@@ -579,7 +656,7 @@ namespace ET
             routerNode.InnerIpEndPoint = NetworkHelper.ToIPEndPoint(innerAddress);
             routerNode.OuterIpEndPoint = outerIpEndPoint;
             routerNode.InnerAddress = innerAddress;
-            routerNode.LastRecvInnerTime = TimeInfo.Instance.ClientNow();
+            routerNode.LastRecvInnerTime = TimeInfo.Instance.ServerNow();
             
             self.checkTimeout.Enqueue(outerConn);
 
@@ -611,6 +688,31 @@ namespace ET
             }
             
             Log.Info($"router remove: {routerNode.Id} outerConn: {routerNode.OuterConn} innerConn: {routerNode.InnerConn}");
+
+            // 从checkTimeout队列中移除，避免僵尸id
+            // 由于队列可能很大，使用临时队列重建
+            // 注意：如果队列为空或id不在队列中，可以快速返回
+            if (self.checkTimeout.Count == 0)
+            {
+                routerNode.Dispose();
+                return;
+            }
+
+            Queue<uint> tempQueue = new Queue<uint>();
+            while (self.checkTimeout.Count > 0)
+            {
+                uint queuedId = self.checkTimeout.Dequeue();
+                if (queuedId != id)
+                {
+                    tempQueue.Enqueue(queuedId);
+                }
+            }
+            
+            // 重建队列
+            while (tempQueue.Count > 0)
+            {
+                self.checkTimeout.Enqueue(tempQueue.Dequeue());
+            }
 
             routerNode.Dispose();
         }

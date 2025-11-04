@@ -22,24 +22,47 @@ namespace ET
             IPEndPoint realAddress = session.RemoteAddress;
             NetComponent netComponent = root.GetComponent<NetComponent>();
             
+            // 失败计数和退避策略
+            int consecutiveFailures = 0;
+            const int maxFailures = 3;
+            const int backoffDelayMs = 5000; // 失败后等待更长时间再重试
+            
             while (true)
             {
-                if (self.InstanceId != instanceId)
+                if (self.InstanceId != instanceId || self.IsDisposed)
                 {
                     return;
                 }
 
                 await fiber.Root.GetComponent<TimerComponent>().WaitAsync(1000);
                 
-                if (self.InstanceId != instanceId)
+                if (self.InstanceId != instanceId || self.IsDisposed)
                 {
+                    return;
+                }
+
+                // 检查session是否仍然有效
+                if (session.IsDisposed)
+                {
+                    Log.Warning("Session已释放，RouterCheck退出");
                     return;
                 }
 
                 long time = TimeInfo.Instance.ClientFrameTime();
 
+                // 如果最近有收到消息，不需要重连
                 if (time - session.LastRecvTime < 7 * 1000)
                 {
+                    consecutiveFailures = 0; // 重置失败计数
+                    continue;
+                }
+                
+                // 如果连续失败太多次，增加等待时间
+                if (consecutiveFailures >= maxFailures)
+                {
+                    Log.Warning($"路由重连连续失败{consecutiveFailures}次，等待{backoffDelayMs}ms后重试");
+                    await fiber.Root.GetComponent<TimerComponent>().WaitAsync(backoffDelayMs);
+                    consecutiveFailures = 0; // 重置计数，给一次机会
                     continue;
                 }
                 
@@ -47,8 +70,16 @@ namespace ET
                 {
                     long sessionId = session.Id;
 
+                    // GetChannelConn可能抛出异常（channel不存在）
                     (uint localConn, uint remoteConn) = session.AService.GetChannelConn(sessionId);
                     
+                    // 验证连接ID有效性
+                    if (localConn == 0 && remoteConn == 0)
+                    {
+                        Log.Warning($"连接ID无效: localConn={localConn}, remoteConn={remoteConn}");
+                        consecutiveFailures++;
+                        continue;
+                    }
                     
                     Log.Info($"get recvLocalConn start: {root.Id} {realAddress} {localConn} {remoteConn}");
 
@@ -56,18 +87,38 @@ namespace ET
                     if (recvLocalConn == 0)
                     {
                         Log.Error($"get recvLocalConn fail: {root.Id} {routerAddress} {realAddress} {localConn} {remoteConn}");
+                        consecutiveFailures++;
                         continue;
                     }
                     
                     Log.Info($"get recvLocalConn ok: {root.Id} {routerAddress} {realAddress} {recvLocalConn} {localConn} {remoteConn}");
                     
+                    // 更新LastRecvTime，防止立即再次触发检查
                     session.LastRecvTime = TimeInfo.Instance.ClientNow();
                     
+                    // ChangeAddress可能失败（channel不存在），但不会抛异常，只是静默返回
                     session.AService.ChangeAddress(sessionId, routerAddress);
+                    
+                    // 验证ChangeAddress是否成功（检查remoteAddress是否更新）
+                    // 注意：这里不能立即检查，因为ChangeAddress可能是异步的
+                    // 但我们可以通过下次检查时是否还有数据来判断
+                    
+                    consecutiveFailures = 0; // 成功，重置失败计数
+                    
+                    // 切换地址后，等待一小段时间让连接稳定
+                    await fiber.Root.GetComponent<TimerComponent>().WaitAsync(500);
                 }
                 catch (Exception e)
                 {
-                    Log.Error(e);
+                    consecutiveFailures++;
+                    Log.Error($"路由重连检查异常 (失败{consecutiveFailures}次): {e}");
+                    
+                    // 如果是session相关的异常，可能session已经断开，退出检查
+                    if (session.IsDisposed)
+                    {
+                        Log.Warning("Session已断开，RouterCheck退出");
+                        return;
+                    }
                 }
             }
         }

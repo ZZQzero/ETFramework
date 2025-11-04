@@ -49,4 +49,8 @@
         <Folder Include="GameRegister\" />
     </ItemGroup>
 
+    <Target Name="RunCodeGenerator" AfterTargets="Build">
+        <Exec Command="dotnet run --project ../ET.ExcelExporter/ET.ExcelExporter.csproj --no-build" />
+    </Target>
+
 </Project>

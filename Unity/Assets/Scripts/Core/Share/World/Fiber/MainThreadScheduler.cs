@@ -11,7 +11,7 @@ namespace ET
         
         private readonly FiberManager fiberManager;
         private readonly ThreadSynchronizationContext mainThreadSynchronizationContext = new();
-        private Fiber firstFiber;
+        // removed unused field
 
         public MainThreadScheduler(FiberManager fiberManager)
         {
@@ -56,6 +56,10 @@ namespace ET
                 }
 
                 if (fiber == null)
+                {
+                    continue;
+                }
+                if (fiber.IsDisposed)
                 {
                     continue;
                 }

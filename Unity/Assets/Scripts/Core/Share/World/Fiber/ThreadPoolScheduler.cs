@@ -10,7 +10,8 @@ namespace ET
         private readonly List<Thread> threads;
         private readonly ConcurrentQueue<Fiber> fiberQueue = new();
         private readonly FiberManager fiberManager;
-        private bool disposed;
+        private volatile bool disposed;
+        private volatile bool stopRequested;
 
         public ThreadPoolScheduler(FiberManager fiberManager)
         {
@@ -33,7 +34,7 @@ namespace ET
         private void Loop()
         {
             int count = 0;
-            while (true)
+            while (!stopRequested)
             {
                 if (count <= 0)
                 {
@@ -43,7 +44,7 @@ namespace ET
                 }
 
                 --count;
-                if (fiberManager.IsDisposed())
+                if (fiberManager.IsDisposed() || stopRequested)
                 {
                     return;
                 }
@@ -78,6 +79,7 @@ namespace ET
                 return;
             }
             disposed = true;
+            stopRequested = true;
             foreach (Thread thread in this.threads)
             {
                 thread.Join();

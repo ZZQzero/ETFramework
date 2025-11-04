@@ -4,7 +4,10 @@ namespace ET;
 
 public class GenerateEntitySystem
 {
-    private static string path = "DotNet/ET.App/GameRegister/GameRegisterEventSystem.cs";
+    private static string appProjectPath = Directory.GetCurrentDirectory();
+
+    private static string outputDir = Path.Combine(appProjectPath, "GameRegister/GameRegisterEventSystem.cs");
+
 
     private static void Init()
     {
@@ -59,13 +62,13 @@ public class GenerateEntitySystem
         sb.AppendLine("}");
 
         // 保存到文件
-        var dir = Path.GetDirectoryName(path);
+        var dir = Path.GetDirectoryName(outputDir);
         if (!Directory.Exists(dir))
         {
             Directory.CreateDirectory(dir);
         }
 
-        File.WriteAllText(path, sb.ToString(), Encoding.UTF8);
+        File.WriteAllText(outputDir, sb.ToString(), Encoding.UTF8);
 
     }
 }

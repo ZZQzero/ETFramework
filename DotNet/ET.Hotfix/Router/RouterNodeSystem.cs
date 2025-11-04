@@ -13,6 +13,9 @@
             self.InnerIpEndPoint = null;
             self.RouterSyncCount = 0;
             self.InnerConn = 0;
+            // 限流计数与时间戳初始化，避免实体复用导致误判
+            self.LastCheckTime = 0;
+            self.LimitCountPerSecond = 0;
         }
 
         [EntitySystem]
@@ -26,6 +29,8 @@
             self.InnerAddress = null;
             self.RouterSyncCount = 0;
             self.SyncCount = 0;
+            self.LastCheckTime = 0;
+            self.LimitCountPerSecond = 0;
         }
         
         public static bool CheckOuterCount(this RouterNode self, long timeNow)
@@ -42,7 +47,7 @@
                 self.LastCheckTime = timeNow;
             }
 
-            if (++self.LimitCountPerSecond > 1000)
+            if (++self.LimitCountPerSecond > 50)
             {
                 return false;
             }

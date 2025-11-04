@@ -93,8 +93,8 @@ namespace ET
                 return;
             }
             this.IsDisposed = true;
-            
             this.Root.Dispose();
+            this.ThreadSynchronizationContext.Dispose();
         }
     }
 }

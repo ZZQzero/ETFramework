@@ -11,10 +11,5 @@
     public struct EntryEvent3
     {
     }
-
-    public class EventDefine
-    {
-    
-    }
 }
 

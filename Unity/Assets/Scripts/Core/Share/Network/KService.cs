@@ -79,6 +79,12 @@ namespace ET
 
         public void AddRouterAckCallback(long id, Action<byte> action)
         {
+            // 如果已存在相同的ID，先移除旧的（避免冲突）
+            if (this.routerAckCallback.ContainsKey(id))
+            {
+                Log.Warning($"RouterAckCallback已存在，先移除: {id}");
+                this.routerAckCallback.Remove(id);
+            }
             this.routerAckCallback.Add(id, action);
         }
         

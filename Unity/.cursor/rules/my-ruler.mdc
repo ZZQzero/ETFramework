@@ -1,7 +1,180 @@
 ---
 alwaysApply: true
 ---
-客户端代码路径是G:\UnityProject\ETFramework\Unity\Assets\Scripts
-服务端项目路径是G:\UnityProject\ETFramework\DotNet
-客户端文件名是Share的目录下，是客户端和服务端共用的代码，需要特别注意，比如G:\UnityProject\ETFramework\Unity\Assets\Scripts\Core\Share，服务端通过链接引用了客户端的代码
-在修改代码时需要结合代码上下文和相关调用的地方，或者查找客户端和服务端的相关代码，确保代码逻辑正确
+
+# 项目基本信息
+
+这是一个商业级的游戏工程，包含前端代码、后端代码，前后端都是使用的C#，所以有一部分代码是共享的（在Share文件夹里面）。
+- 客户端代码根目录：G:\UnityProject\ETFramework\Unity\Assets\Scripts
+- 服务端代码根目录：G:\UnityProject\ETFramework\DotNet，里面包含多个.net项目
+- 线程模型：Unity客户端使用单线程，服务端使用多线程
+
+重要目录说明：
+- Scripts/Core：框架的核心代码文件，客户端和服务端共用的
+- Scripts/Model：定义数据和相关字段属性的地方，不包含Unity代码，客户端和服务端共享
+- Scripts/Hotfix：Model中定义数据的具体实现逻辑，不包含Unity代码，客户端和服务端共享
+- 消息协议目录：Unity\Assets\Scripts\Model\Core\Share\Proto\ClientServer（基于根目录G:\UnityProject\ETFramework），这是客户端和服务端共享的代码
+
+# 工作流程规范
+
+## 修改代码前
+- 检查工作目录是否正确，确保在正确的目录下工作
+- 查找代码的相关引用，理解完整的调用链和依赖关系
+- 仔细思考，可以延长思考时间，一次性给出最好的结果
+
+## 修改代码时
+- 不要硬编码数据，可以在接口中暂时提供假数据（这是正式工程，不是demo）
+- 尽量保证代码干净整洁，在保证性能和逻辑正确的前提下修改
+- 注意代码风格一致性，保持与现有代码风格一致
+- 避免代码冗余，始终保持简洁，高效，易维护
+
+## 修改代码后
+- 添加好注释并保存到本地仓库，以便回滚
+- 检查是否有编译错误和警告
+- 验证修改是否影响其他功能
+
+# 技术栈和规范
+
+## 消息协议
+- 序列化和反序列化使用Nino库，Github地址：https://github.com/JasonXuDeveloper/Nino
+- 消息协议命名规则：消息协议是Main2NetClient_Login，消息发送后，消息的接收的地方是Main2NetClient_LoginHandler
+- 消息协议定义在Model中，Handler实现在Hotfix中
+
+## 消息系统架构（核心要点）
+
+### 两套独立的消息系统
+ET框架使用**两套独立的消息系统**，用途不同，不能混用：
+
+1. **Actor消息系统（进程内通信）**
+   - 用途：同一进程内不同Fiber之间的通信
+   - 接口：`IRequest`/`IResponse`（RPC）、`IMessage`（单向消息）
+   - 组件：`ProcessInnerSender`、`MailBoxComponent`、`MessageQueue`
+   - 特点：进程内、FIFO队列、支持RPC、高性能
+   - 使用场景：Main Fiber 与 NetClient Fiber 通信、服务端内部通信
+
+2. **Session消息系统（网络通信）**
+   - 用途：客户端与服务端之间的网络通信
+   - 接口：`ISessionRequest`/`ISessionResponse`（RPC）、`ISessionMessage`（单向消息）
+   - 组件：`Session`、`NetComponent`、`Router`
+   - 特点：跨进程、基于KCP/TCP、支持RPC、通过Router转发
+   - 使用场景：客户端登录、游戏逻辑通信
+
+### MailBoxComponent 工作原理
+- **任何Entity都可以成为Actor**：只需添加`MailBoxComponent`组件
+- **Entity自带ActorId**：通过`entity.GetActorId()`获取，包含Process、Fiber、InstanceId
+- **消息接收流程**：
+  1. 消息通过`ProcessInnerSender.Send/Call`发送到目标Actor
+  2. 消息进入`MessageQueue`（按Fiber分组）
+  3. 目标Fiber的`ProcessInnerSender.Update`每帧批量取出消息（最多1000条）
+  4. 根据`ActorId.InstanceId`查找对应的`MailBoxComponent`（存储在`Fiber.Mailboxes`中）
+  5. `MailBoxComponent.Add`触发`EventSystem.Invoke`，根据`MailBoxType`分发
+  6. `MessageHandler`处理消息，传入的entity是`MailBoxComponent.Parent`（即添加了MailBoxComponent的Entity）
+- **MailBoxComponent存储**：存储在`Fiber.Mailboxes`中，key是`MailBoxComponent.Parent.InstanceId`，value是MailBoxComponent本身（EntityRef<Entity>）
+- **MailBoxType**：决定消息分发方式，目前有`UnOrderedMessage`（无序消息）等
+
+### Actor消息发送要点
+- **获取ActorId**：使用`entity.GetActorId()`获取Entity的ActorId
+- **发送消息**：通过`ProcessInnerSender.Send(actorId, message)`或`ProcessInnerSender.Call(actorId, request)`
+- **消息路由**：消息根据`ActorId.Address.Fiber`路由到目标Fiber的消息队列
+- **消息查找**：根据`ActorId.InstanceId`在`Fiber.Mailboxes`中查找MailBoxComponent
+- **RPC响应**：通过`ProcessInnerSender.Reply`回复，自动匹配`requestCallback`中的等待者
+
+### Session消息发送要点
+- **Session创建**：通过`NetComponent.CreateRouterSession`创建路由Session
+- **发送消息**：通过`Session.Call(request)`（RPC）或`Session.Send(message)`（单向）
+- **消息序列化**：使用`MessageSerializeHelper.ToMemoryBuffer`序列化
+- **网络传输**：通过KCP/UDP或TCP传输，支持Router转发
+- **消息接收**：服务端`NetComponent.OnRead`接收，反序列化后分发到`MessageSessionDispatcher`
+- **Handler自动回复**：`MessageSessionHandler`自动处理RPC响应，通过`Session.Send(response)`回复
+
+### 消息Handler注册
+- **Actor消息Handler**：继承`MessageHandler<Entity, Request, Response>`，通过`MessageDispatcher.Instance.RegisterMessage<HandlerType>(SceneType)`注册
+- **Session消息Handler**：继承`MessageSessionHandler<Request, Response>`，通过`MessageSessionDispatcher.Instance.RegisterMessageSession<HandlerType>(SceneType)`注册
+- **注册位置**：Handler实现在Hotfix中，在`GameRegister.RegisterMessage()`和`GameRegister.RegisterMessageSession()`中注册
+- **注册示例**：`MessageDispatcher.Instance.RegisterMessage<A2NetClient_MessageHandler>(SceneType.NetClient)`
+
+### 关键组件说明
+- **ProcessInnerSender**：挂载在Scene上，负责Actor消息的发送和接收，Update中每帧处理消息队列
+- **MailBoxComponent**：挂载在需要接收Actor消息的Entity上，表示该Entity是一个Actor
+- **MessageQueue**：全局单例，按Fiber分组存储消息，支持批量获取
+- **Session**：网络连接的抽象，支持RPC和单向消息
+- **NetComponent**：网络组件，管理Session的创建和消息收发
+
+### 消息流程注意事项
+- **Actor消息是进程内的**：不能用于跨进程通信，跨进程必须使用Session
+- **消息顺序**：Actor消息在同一Fiber内保证FIFO顺序，但`UnOrderedMessage`可能不保证
+- **异步处理**：`MailBoxType_UnOrderedMessageHandler`使用`NoContext()`，不等待完成，注意异常处理
+- **消息超时**：Actor RPC默认40秒超时，Session RPC需要在调用时设置超时
+- **Entity生命周期**：确保发送消息时目标Entity及其MailBoxComponent仍然存在
+
+## Actor模型和Fiber
+- Fiber是Actor模型的调度单位，每个Fiber有自己的线程或调度器
+- 跨Fiber通信必须通过ProcessInnerSender发送消息，不能直接访问其他Fiber的Entity
+- 消息顺序由MessageQueue保证FIFO顺序，修改消息处理逻辑时要注意保持消息顺序，避免影响其他消息的处理顺序
+- Fiber创建后需要等待FiberInit完成才能发送消息，注意时序问题，避免在Fiber未初始化完成时发送消息导致失败
+- MainThreadScheduler在Unity的Update/LateUpdate中调度，注意Unity生命周期的影响
+
+## 异步操作规范
+- 使用ETTask进行异步操作，避免使用Task或Thread
+- 使用await时注意上下文，确保在正确的Fiber线程中执行
+- 长时间运行的异步操作要设置超时机制，避免无限等待导致死锁
+- 异步操作中的异常要正确传播，避免静默失败
+
+## 资源管理
+- 对象池使用：
+  - EntityObjectPool：主要用于Entity的创建和回收
+  - ObjectPool：主要用于非Entity对象的创建和回收
+- 使用ObjectPool管理对象生命周期，避免频繁创建销毁，特别是消息对象和临时Entity
+- 实现IDisposable的组件要在Destroy中正确释放资源，包括ThreadSynchronizationContext、网络连接等
+- 使用using语句管理临时对象，特别是消息对象（MessageObject）
+
+## 异常处理
+- 关键路径要有异常捕获和日志记录，避免异常导致程序崩溃
+- 异步操作中要确保异常能正确传播，避免静默失败，特别是await FiberManager.Create和ProcessInnerSender.Call等关键操作
+- 网络操作和IO操作必须有超时和重试机制，避免因网络问题导致长时间等待
+- 异常信息要包含足够的上下文信息，便于问题定位
+
+## 性能注意事项
+- 避免在Update中执行耗时操作，特别是网络请求、HTTP请求和IO操作，这些应该在异步方法中执行
+- 批量操作优先使用批处理，减少单次调用开销，例如MessageQueue.Fetch的批量处理
+- 注意消息队列的批量处理限制，避免消息堆积导致延迟，每帧最多处理1000条消息
+- 避免在游戏循环中频繁分配内存，特别是字符串拼接、集合操作等
+- 注意Unity的GC影响，合理使用对象池减少GC压力
+
+## 线程安全
+- Unity客户端是单线程的，但Fiber调度器可能在不同线程
+- 服务端使用多线程，需要特别注意线程安全问题
+- 修改前检查是否有线程安全问题，特别是涉及ConcurrentQueue、ConcurrentDictionary等并发集合的操作
+- 跨线程访问数据时要注意同步机制，避免竞态条件
+
+# 代码审查检查点
+
+## 修改前检查
+- 检查是否有线程安全问题
+- 检查是否会影响消息顺序
+- 检查是否会影响Fiber调度时序
+- 检查是否有潜在的竞态条件
+
+## 修改后验证
+- 验证消息顺序是否受影响，确保不会导致消息乱序
+- 验证Fiber的创建、初始化和消息处理的时序是否正确
+- 验证资源是否正确释放，避免内存泄漏
+- 验证异常处理是否完整，避免程序崩溃
+- 避免代码冗余
+
+# 常见问题注意事项
+
+## Entity系统
+- Entity的创建和销毁要遵循正确的生命周期
+- 使用EntitySystem的[EntitySystem]特性标记系统方法
+- Component的Awake和Destroy要正确配对
+
+## 网络相关
+- 网络连接要正确处理超时和重连
+- Session的创建和销毁要正确管理
+- 网络消息的序列化和反序列化要使用Nino库
+
+## 日志和调试
+- 使用Log.Info、Log.Warning、Log.Error记录日志
+- 重要操作要有日志记录，便于问题排查
+- 生产环境要控制日志级别，避免日志过多影响性能

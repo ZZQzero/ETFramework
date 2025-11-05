@@ -145,15 +145,22 @@ namespace ET
             MessageSenderStruct messageSenderStruct = new(actorId, requestType, needException);
             self.requestCallback.Add(rpcId, messageSenderStruct);
             
+            // 创建取消令牌，用于取消超时任务
+            ETCancellationToken timeoutCancelToken = new();
+            
             async ETTask Timeout()
             {
-                await fiber.Root.GetComponent<TimerComponent>().WaitAsync(ProcessInnerSender.TIMEOUT_TIME);
+                // 使用 NewContext 传递取消令牌，这样可以被外部取消
+                // 注意：Cancel 时会通过 SetResult 正常完成，不会抛异常
+                await fiber.Root.GetComponent<TimerComponent>().WaitAsync(ProcessInnerSender.TIMEOUT_TIME).NewContext(timeoutCancelToken);
 
+                // 尝试移除回调，如果返回 false 说明已经被正常返回处理了（被 Cancel 了）
                 if (!self.requestCallback.Remove(rpcId, out MessageSenderStruct action))
                 {
                     return;
                 }
                 
+                // 执行到这里说明真的超时了
                 if (needException)
                 {
                     action.SetException(new Exception($"actor sender timeout: {requestType.FullName}"));
@@ -170,6 +177,9 @@ namespace ET
             long beginTime = TimeInfo.Instance.ServerFrameTime();
 
             response = await messageSenderStruct.Wait();
+            
+            // 重要：正常返回时立即取消 Timeout 任务
+            timeoutCancelToken.Cancel();
             
             long endTime = TimeInfo.Instance.ServerFrameTime();
 

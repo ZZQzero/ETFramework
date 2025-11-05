@@ -27,7 +27,7 @@ namespace ET
         void SetResult();
     }
     
-    public class ResultCallback<K>: Object, IDestroyRun where K : struct, IWaitType
+    public class ResultCallback<K>: IDestroyRun where K : struct, IWaitType
     {
         private ETTask<K> tcs;
 

@@ -45,6 +45,12 @@ namespace ET
 
             // 注意，session也以localConn作为id，所以这里不能用localConn作为id
             long id = (long)(((ulong)localConn << 32) | remoteConn);
+
+            if (netComponent.GetChild<RouterConnector>(id) != null)
+            {
+                Log.Warning("router connector exist，先移除");
+                netComponent.RemoveChild(id);
+            }
             using RouterConnector routerConnector = netComponent.AddChildWithId<RouterConnector>(id);
             
             int count = 20;

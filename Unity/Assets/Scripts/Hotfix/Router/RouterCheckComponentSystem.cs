@@ -22,10 +22,22 @@ namespace ET
             IPEndPoint realAddress = session.RemoteAddress;
             NetComponent netComponent = root.GetComponent<NetComponent>();
             
-            // 失败计数和退避策略
-            int consecutiveFailures = 0;
-            const int maxFailures = 3;
-            const int backoffDelayMs = 5000; // 失败后等待更长时间再重试
+            // 失败计数策略
+            const int maxTotalFailures = 5; // 总失败次数达到5次后断开连接
+            int totalFailures = 0;
+            
+            // 检查是否达到失败上限并断开Session
+            bool CheckAndDisconnectIfNeeded()
+            {
+                if (totalFailures >= maxTotalFailures)
+                {
+                    Log.Error($"路由重连总失败次数达到{maxTotalFailures}次，主动断开Session");
+                    session.Error = ErrorCore.ERR_KcpConnectTimeout;
+                    session.Dispose();
+                    return true; // 已断开
+                }
+                return false; // 未断开
+            }
             
             while (true)
             {
@@ -53,16 +65,7 @@ namespace ET
                 // 如果最近有收到消息，不需要重连
                 if (time - session.LastRecvTime < 7 * 1000)
                 {
-                    consecutiveFailures = 0; // 重置失败计数
-                    continue;
-                }
-                
-                // 如果连续失败太多次，增加等待时间
-                if (consecutiveFailures >= maxFailures)
-                {
-                    Log.Warning($"路由重连连续失败{consecutiveFailures}次，等待{backoffDelayMs}ms后重试");
-                    await fiber.Root.GetComponent<TimerComponent>().WaitAsync(backoffDelayMs);
-                    consecutiveFailures = 0; // 重置计数，给一次机会
+                    totalFailures = 0; // 重置总失败计数
                     continue;
                 }
                 
@@ -77,7 +80,12 @@ namespace ET
                     if (localConn == 0 && remoteConn == 0)
                     {
                         Log.Warning($"连接ID无效: localConn={localConn}, remoteConn={remoteConn}");
-                        consecutiveFailures++;
+                        totalFailures++;
+                        
+                        if (CheckAndDisconnectIfNeeded())
+                        {
+                            return;
+                        }
                         continue;
                     }
                     
@@ -87,7 +95,12 @@ namespace ET
                     if (recvLocalConn == 0)
                     {
                         Log.Error($"get recvLocalConn fail: {root.Id} {routerAddress} {realAddress} {localConn} {remoteConn}");
-                        consecutiveFailures++;
+                        totalFailures++;
+                        
+                        if (CheckAndDisconnectIfNeeded())
+                        {
+                            return;
+                        }
                         continue;
                     }
                     
@@ -102,16 +115,20 @@ namespace ET
                     // 验证ChangeAddress是否成功（检查remoteAddress是否更新）
                     // 注意：这里不能立即检查，因为ChangeAddress可能是异步的
                     // 但我们可以通过下次检查时是否还有数据来判断
-                    
-                    consecutiveFailures = 0; // 成功，重置失败计数
+                    totalFailures = 0; // 成功，重置总失败计数
                     
                     // 切换地址后，等待一小段时间让连接稳定
                     await fiber.Root.GetComponent<TimerComponent>().WaitAsync(500);
                 }
                 catch (Exception e)
                 {
-                    consecutiveFailures++;
-                    Log.Error($"路由重连检查异常 (失败{consecutiveFailures}次): {e}");
+                    totalFailures++;
+                    Log.Error($"路由重连检查异常 (总失败{totalFailures}次): {e}");
+                    
+                    if (CheckAndDisconnectIfNeeded())
+                    {
+                        return;
+                    }
                     
                     // 如果是session相关的异常，可能session已经断开，退出检查
                     if (session.IsDisposed)

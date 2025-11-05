@@ -138,6 +138,8 @@ public class ETSceneNodeGraph: EditorWindow
                     nodeData.Index_X = prevIndexX + 1;
                     nodeData.Index_Y = prevIndexY;
                     FiberComponent(component.Value.Components, nodeData);
+                    // 确保递归后 StartNode 恢复为当前节点，以便 Children 能正确连接
+                    nodeData.StartNode = etNode;
                 }
 
                 // 如果有 Children，也以当前节点为父节点，X 向右一列，Y 从 prevIndexY 开始
@@ -147,6 +149,8 @@ public class ETSceneNodeGraph: EditorWindow
                     nodeData.Index_X = prevIndexX + 1;
                     nodeData.Index_Y = prevIndexY;
                     FiberChildComponent(component.Value.Children, nodeData);
+                    // 确保递归后 StartNode 恢复为当前节点
+                    nodeData.StartNode = etNode;
                 }
 
                 // 恢复上下文，并把 Y 增 1 作为下一个兄弟节点的起始行
@@ -179,7 +183,9 @@ public class ETSceneNodeGraph: EditorWindow
                     nodeData.StartNode = etNode;
                     nodeData.Index_X = prevIndexX + 1;
                     nodeData.Index_Y = prevIndexY;
-                    FiberComponent(component.Value.Components,nodeData);
+                    FiberComponent(component.Value.Components, nodeData);
+                    // 确保递归后 StartNode 恢复为当前节点，以便 Children 能正确连接
+                    nodeData.StartNode = etNode;
                 }
 
                 if (component.Value.Children != null && component.Value.Children.Count > 0)
@@ -187,7 +193,9 @@ public class ETSceneNodeGraph: EditorWindow
                     nodeData.StartNode = etNode;
                     nodeData.Index_X = prevIndexX + 1;
                     nodeData.Index_Y = prevIndexY;
-                    FiberChildComponent(component.Value.Children,nodeData);
+                    FiberChildComponent(component.Value.Children, nodeData);
+                    // 确保递归后 StartNode 恢复为当前节点
+                    nodeData.StartNode = etNode;
                 }
 
                 // 恢复并为下一个兄弟节点准备行号

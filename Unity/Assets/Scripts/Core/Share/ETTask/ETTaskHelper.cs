@@ -47,11 +47,14 @@ namespace ET
                 finally
                 {
                     int newCount = Interlocked.Decrement(ref this.count);
-                    if (newCount <= 0 && this.tcs != null)
+                    if (newCount <= 0)
                     {
-                        ETTask t = this.tcs;
-                        this.tcs = null;
-                        t.SetResult();
+                        // 使用原子交换，只有一个线程能成功获得非 null 的 tcs
+                        ETTask t = Interlocked.Exchange(ref this.tcs, null);
+                        if (t != null)
+                        {
+                            t.SetResult();
+                        }
                     }
                 }
             }

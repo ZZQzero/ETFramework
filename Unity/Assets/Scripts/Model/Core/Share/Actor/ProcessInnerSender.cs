@@ -6,7 +6,7 @@ namespace ET
     [ComponentOf(typeof(Scene))]
     public class ProcessInnerSender: Entity, IAwake, IDestroy, IUpdate
     {
-        public const long TIMEOUT_TIME = 40 * 1000;
+        public const long TIMEOUT_TIME = 3 * 1000;
         
         public int RpcId;
 

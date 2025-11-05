@@ -62,7 +62,17 @@ namespace ET
         
         public void RemoveQueue(int fiberId)
         {
-            this.messages.TryRemove(fiberId, out _);
+            if (this.messages.TryRemove(fiberId, out var queue))
+            {
+                // 清理队列中剩余的消息对象
+                while (queue.TryDequeue(out MessageInfo messageInfo))
+                {
+                    if (messageInfo.MessageObject != null && messageInfo.MessageObject.IsFromPool)
+                    {
+                        messageInfo.MessageObject.Dispose();
+                    }
+                }
+            }
         }
     }
 }

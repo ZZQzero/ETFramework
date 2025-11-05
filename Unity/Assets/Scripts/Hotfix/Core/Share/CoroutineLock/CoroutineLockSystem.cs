@@ -9,7 +9,6 @@
             self.type = type;
             self.key = k;
             self.level = count;
-            Log.Error($"{type}  {k}  {count}");
         }
         
         [EntitySystem]

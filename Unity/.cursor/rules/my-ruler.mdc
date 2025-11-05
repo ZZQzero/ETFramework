@@ -114,6 +114,51 @@ ET框架使用**两套独立的消息系统**，用途不同，不能混用：
 - Fiber创建后需要等待FiberInit完成才能发送消息，注意时序问题，避免在Fiber未初始化完成时发送消息导致失败
 - MainThreadScheduler在Unity的Update/LateUpdate中调度，注意Unity生命周期的影响
 
+## Fiber线程模型和线程安全
+
+### Fiber内部单线程保证
+- **每个Fiber内部是单线程的**：同一Fiber的所有Update、Timer回调、消息处理都在同一线程顺序执行
+- **不同Fiber可能在不同线程**：服务端使用ThreadScheduler时，每个Fiber有独立线程
+- **组件属于Fiber**：挂在Scene上的组件（如TimerComponent、CoroutineLockComponent）都属于同一Fiber
+- **Update执行顺序**：Fiber.Update → EntitySystem.Publish(UpdateEvent) → 按注册顺序调用IUpdate组件
+- **Timer回调在Fiber线程**：Timer超时回调在该Fiber的Update中执行，与其他组件顺序执行
+
+### 跨Fiber并发场景
+- **不同Fiber的对象不共享**：每个Fiber有自己的TimerComponent、CoroutineLockComponent等
+- **ThreadSynchronizationContext保证安全**：跨线程调用通过Post投递到目标Fiber线程执行
+- **避免直接访问其他Fiber的Entity**：必须通过消息通信
+
+### 线程安全编程规范
+- **Fiber内组件**：通常不需要线程同步（单线程保证）
+- **可能并发的点**：
+  - 同一对象的多个回调（如超时和正常回调）可能在时序上接近
+  - 使用`Interlocked.Exchange`防止重复调用SetResult/SetException
+  - 使用`Volatile.Read`确保内存可见性
+- **已知并发安全模式**：
+  - WaitCoroutineLock：使用Interlocked.Exchange原子交换tcs
+  - CoroutineBlocker：使用Interlocked.Exchange防止重复SetResult
+  - MessageQueue：使用ConcurrentQueue保证线程安全
+
+## ETTask异步框架要点
+
+### ETTask vs C# Task
+- **避免使用C# Task**：会引入线程池，与Fiber模型冲突
+- **使用ETTask**：轻量级异步，无线程池开销，支持对象池
+- **ETTask对象池**：谨慎使用，await后不能再操作ETTask
+- **SetResult前置空tcs**：避免多次SetResult，使用Interlocked.Exchange模式
+
+### 并发原语使用
+- **Interlocked.Exchange**：原子交换，防止并发重复调用
+- **Interlocked.Decrement/Increment**：原子计数操作
+- **Volatile.Read/Write**：确保内存可见性，防止CPU缓存问题
+- **性能影响**：这些操作开销极小（~50纳秒），在异步等待场景中可忽略（<0.01%）
+
+### 取消和超时机制
+- **ETCancellationToken**：通过回调机制取消，不抛异常
+- **Cancel调用SetResult**：取消时正常完成Task，不是异常完成
+- **超时任务优化**：RPC正常返回时立即Cancel超时任务，避免资源占用
+- **超时时间**：Actor RPC默认4秒，根据业务调整
+
 ## 异步操作规范
 - 使用ETTask进行异步操作，避免使用Task或Thread
 - 使用await时注意上下文，确保在正确的Fiber线程中执行

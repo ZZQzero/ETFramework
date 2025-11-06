@@ -57,7 +57,6 @@ namespace ET
                     _allInvokeDic.Add(iInvoke.Type, dict);
                 }
                 dict.Add(attributeType, obj);
-                //Debug.LogError($"type : {typeof(T)}   {iInvoke.Type}  {attributeType}   {obj}");
             }
             catch (Exception e)
             {
@@ -138,9 +137,7 @@ namespace ET
         {
             if (!this._allInvokeDic.TryGetValue(typeof(A), out var invokeHandlers))
             {
-                throw new Exception($"Invoke error1: {type} {typeof(A).FullName} + " +
-                                    $"如果同一个类型来自不同的程序集，即使它们的名称相同，它们在类型比较时也会被视为不同的类型。" +
-                                    $"这是因为类型比较不仅考虑类型名称，还包括程序集信息");
+                throw new Exception($"Invoke error1: {type} {typeof(A).FullName}");
             }
             if (!invokeHandlers.TryGetValue(type, out var invokeHandler))
             {
@@ -158,12 +155,9 @@ namespace ET
         
         public T Invoke<A, T>(long type, A args) where A: struct
         {
-            //<LogInvoker, ILog>(logInvoker);
             if (!this._allInvokeDic.TryGetValue(typeof(A), out var invokeHandlers))
             {
-                throw new Exception($"Invoke error4: {type} {typeof(A).FullName} + " +
-                                    $"如果同一个类型来自不同的程序集，即使它们的名称相同，它们在类型比较时也会被视为不同的类型。" +
-                                    $"这是因为类型比较不仅考虑类型名称，还包括程序集信息");
+                throw new Exception($"Invoke error4: {type} {typeof(A).FullName}");
             }
             
             if (!invokeHandlers.TryGetValue(type, out var invokeHandler))

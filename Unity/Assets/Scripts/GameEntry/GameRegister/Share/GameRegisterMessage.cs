@@ -20,6 +20,7 @@ namespace ET
 
 #if DOTNET
             MessageDispatcher.Instance.RegisterMessage<ObjectAddRequestHandler>(SceneType.Location);
+            MessageDispatcher.Instance.RegisterMessage<ObjectAddBatchRequestHandler>(SceneType.Location);
             MessageDispatcher.Instance.RegisterMessage<ObjectGetRequestHandler>(SceneType.Location);
             MessageDispatcher.Instance.RegisterMessage<ObjectLockRequestHandler>(SceneType.Location);
             MessageDispatcher.Instance.RegisterMessage<ObjectRemoveRequestHandler>(SceneType.Location);

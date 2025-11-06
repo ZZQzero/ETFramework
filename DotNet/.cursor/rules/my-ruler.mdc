@@ -1,7 +1,743 @@
 ---
 alwaysApply: true
 ---
-客户端代码路径是G:\UnityProject\ETFramework\Unity\Assets\Scripts
-服务端项目路径是G:\UnityProject\ETFramework\DotNet
-客户端文件名是Share的目录下，是客户端和服务端共用的代码，需要特别注意，比如G:\UnityProject\ETFramework\Unity\Assets\Scripts\Core\Share，服务端通过链接引用了客户端的代码
-在修改代码时需要结合代码上下文和相关调用的地方，或者查找客户端和服务端的相关代码，确保代码逻辑正确
+
+# 项目基本信息
+
+这是一个商业级的游戏服务端工程，前后端都是使用的C#，所以有一部分代码是共享的（在Share文件夹里面）。
+- 客户端代码根目录：G:\UnityProject\ETFramework\Unity\Assets\Scripts
+- 服务端代码根目录：G:\UnityProject\ETFramework\DotNet，里面包含多个.net项目
+- 线程模型：Unity客户端使用单线程，服务端使用多线程
+
+重要目录说明：
+- Scripts/Core：框架的核心代码文件，客户端和服务端共用的
+- Scripts/Model：定义数据和相关字段属性的地方，不包含Unity代码，客户端和服务端共享
+- Scripts/Hotfix：Model中定义数据的具体实现逻辑，不包含Unity代码，客户端和服务端共享
+- 消息协议目录：Unity\Assets\Scripts\Model\Core\Share\Proto\ClientServer（基于根目录G:\UnityProject\ETFramework），这是客户端和服务端共享的代码
+
+# 工作流程规范
+
+## 修改代码前
+- 检查工作目录是否正确，确保在正确的目录下工作
+- 查找代码的相关引用，理解完整的调用链和依赖关系
+- 仔细思考，可以延长思考时间，一次性给出最好的结果
+
+## 修改代码时
+- 不要硬编码数据，可以在接口中暂时提供假数据（这是正式工程，不是demo）
+- 尽量保证代码干净整洁，在保证性能和逻辑正确的前提下修改
+- 注意代码风格一致性，保持与现有代码风格一致
+- 避免代码冗余，始终保持简洁，高效，易维护
+
+## 修改代码后
+- 添加好注释并保存到本地仓库，以便回滚
+- 检查是否有编译错误和警告
+- 验证修改是否影响其他功能
+
+# 技术栈和规范
+
+## 消息协议
+- 序列化和反序列化使用Nino库，Github地址：https://github.com/JasonXuDeveloper/Nino
+- 消息协议命名规则：消息协议是Main2NetClient_Login，消息发送后，消息的接收的地方是Main2NetClient_LoginHandler
+- 消息协议定义在Model中，Handler实现在Hotfix中
+
+### Proto文件创建和消息定义流程（重要）
+
+#### 1. Proto文件位置和命名规则
+- **Proto文件目录**：`G:\UnityProject\ETFramework\Config\Proto`
+- **命名格式**：`{模块名}_{类型}_{起始Opcode}.proto`
+  - 示例：`ActorLocation_S_20100.proto`（ActorLocation模块，S表示服务端，起始opcode 20100）
+  - 类型说明：`S`=服务端，`C`=客户端，`Inner`=内部，`Outer`=外部
+- **生成的C#代码位置**：`G:\UnityProject\ETFramework\Unity\Assets\Scripts\Model\Core\Share\Proto\ClientServer\{模块名}_{类型}_{起始Opcode}.cs`
+  - 注意：这是客户端和服务端共享的代码，不要在此目录手动创建文件
+
+#### 2. Proto消息定义格式
+```protobuf
+syntax = "proto3";
+package ET;
+
+// ResponseType ObjectAddBatchResponse  // 指定响应类型（RPC消息需要）
+message ObjectAddBatchRequest // IRequest  // 标记为IRequest接口
+{
+	int32 RpcId = 1;  // RPC消息必须包含RpcId
+	repeated ObjectAddBatchItem Items = 2;  // repeated表示List<T>
+}
+
+message ObjectAddBatchResponse // IResponse  // 标记为IResponse接口
+{
+	int32 RpcId = 1;
+	int32 Error = 2;  // 错误码，0表示成功
+	string Message = 3;  // 错误消息
+}
+
+// 嵌套消息定义（非IRequest/IResponse）
+message ObjectAddBatchItem
+{
+	int32 Type = 1;
+	int64 Key = 2;
+	ActorId ActorId = 3;  // 支持自定义类型如ActorId
+}
+```
+
+**关键要点：**
+- RPC消息必须包含`RpcId`字段
+- 使用`// ResponseType XxxResponse`注释指定响应类型
+- 使用`// IRequest`或`// IResponse`注释标记接口类型
+- `repeated`字段会生成`List<T>`
+- 支持自定义类型（如`ActorId`），需要在代码生成工具中处理
+
+#### 3. Proto生成C#代码
+- **生成工具**：`ET.Proto2CS`项目中的`Proto2CS.Export()`方法
+- **生成规则**：
+  - 自动生成`partial class`，包含`Create`方法和`Dispose`方法（对象池支持）
+  - 自动生成opcode常量（在`{模块名}`静态类中）
+  - 自动添加`[NinoType(false)]`、`[Message]`、`[ResponseType]`等特性
+- **注意事项**：
+  - 不要手动修改生成的C#代码，会被覆盖
+  - 如果需要扩展功能，使用`partial class`在单独文件中添加
+
+#### 4. Handler实现和注册
+
+**Handler实现位置：**
+- Actor消息Handler：`ET.Hotfix/{模块名}/{Handler名}.cs`
+- Session消息Handler：`ET.Hotfix/{模块名}/{Handler名}.cs`
+
+**Handler实现格式：**
+```csharp
+// Actor消息Handler
+[MessageHandler(SceneType.Location)]  // 指定处理的Scene类型
+public class ObjectAddBatchRequestHandler: MessageHandler<Scene, ObjectAddBatchRequest, ObjectAddBatchResponse>
+{
+    protected override async ETTask Run(Scene scene, ObjectAddBatchRequest request, ObjectAddBatchResponse response)
+    {
+        // 处理逻辑
+    }
+}
+
+// Session消息Handler
+[MessageHandler(SceneType.Gate)]
+public class C2G_LoginGateHandler: MessageSessionHandler<C2G_LoginGate, G2C_LoginGate>
+{
+    protected override async ETTask Run(Session session, C2G_LoginGate request, G2C_LoginGate response)
+    {
+        // 处理逻辑
+    }
+}
+```
+
+**Handler注册位置（重要）：**
+- **客户端和服务端共享的注册文件**：`G:\UnityProject\ETFramework\Unity\Assets\Scripts\GameEntry\GameRegister\Share\GameRegisterMessage.cs`
+  - ⚠️ **关键**：这是客户端和服务端共用的文件，不要在`DotNet`项目中创建同名文件
+  - Actor消息注册：`MessageDispatcher.Instance.RegisterMessage<HandlerType>(SceneType)`
+  - Session消息注册：`MessageSessionDispatcher.Instance.RegisterMessageSession<HandlerType>(SceneType)`
+  - 注册示例：
+    ```csharp
+    #if DOTNET  // 服务端专用
+        MessageDispatcher.Instance.RegisterMessage<ObjectAddBatchRequestHandler>(SceneType.Location);
+    #endif
+    ```
+
+**注册流程：**
+1. 在`GameRegisterMessage.cs`中找到对应的`#if DOTNET`或`#if UNITY`代码块
+2. 根据Handler的`SceneType`找到对应的注册位置
+3. 添加`MessageDispatcher.Instance.RegisterMessage<HandlerType>(SceneType)`或`MessageSessionDispatcher.Instance.RegisterMessageSession<HandlerType>(SceneType)`
+
+#### 5. 查找客户端共享代码位置
+
+**关键目录结构：**
+```
+G:\UnityProject\ETFramework\
+├── Unity\Assets\Scripts\
+│   ├── Model\Core\Share\          # 客户端和服务端共享的Model代码
+│   │   └── Proto\ClientServer\    # 生成的proto消息代码（共享）
+│   ├── GameEntry\GameRegister\Share\  # 客户端和服务端共享的注册代码
+│   │   └── GameRegisterMessage.cs     # 消息Handler注册（共享）
+│   └── Hotfix\                     # 客户端和服务端共享的Hotfix代码
+└── DotNet\                         # 服务端专用代码
+    └── ET.Hotfix\                  # 服务端Handler实现
+```
+
+**查找共享代码的要点：**
+- **Share文件夹**：包含客户端和服务端共享的代码
+- **不要创建重复文件**：如果文件在`Share`文件夹中，不要在`DotNet`项目中创建同名文件
+- **消息定义**：在`Unity\Assets\Scripts\Model\Core\Share\Proto\ClientServer\`中查找或生成
+- **Handler注册**：在`Unity\Assets\Scripts\GameEntry\GameRegister\Share\GameRegisterMessage.cs`中注册
+- **Handler实现**：服务端在`DotNet\ET.Hotfix\`中实现，客户端在`Unity\Assets\Scripts\Hotfix\`中实现
+
+#### 6. 完整开发流程示例（批量Location注册）
+
+1. **定义Proto消息**（`Config\Proto\ActorLocation_S_20100.proto`）：
+   ```protobuf
+   message ObjectAddBatchItem { ... }
+   message ObjectAddBatchRequest // IRequest { ... }
+   message ObjectAddBatchResponse // IResponse { ... }
+   ```
+
+2. **生成C#代码**：运行`Proto2CS.Export()`，生成到`Unity\Assets\Scripts\Model\Core\Share\Proto\ClientServer\ActorLocation_S_20100.cs`
+
+3. **实现Handler**（`DotNet\ET.Hotfix\ActorLocation\ObjectAddBatchRequestHandler.cs`）：
+   ```csharp
+   [MessageHandler(SceneType.Location)]
+   public class ObjectAddBatchRequestHandler: MessageHandler<Scene, ObjectAddBatchRequest, ObjectAddBatchResponse>
+   ```
+
+4. **注册Handler**（`Unity\Assets\Scripts\GameEntry\GameRegister\Share\GameRegisterMessage.cs`）：
+   ```csharp
+   #if DOTNET
+       MessageDispatcher.Instance.RegisterMessage<ObjectAddBatchRequestHandler>(SceneType.Location);
+   #endif
+   ```
+
+5. **实现System方法**（`DotNet\ET.Hotfix\ActorLocation\LocationProxyComponentSystem.cs`）：
+   ```csharp
+   public static async ETTask AddBatch(this LocationProxyComponent self, List<(int type, long key, ActorId actorId)> items)
+   {
+       // 使用MessageSender.Call发送批量请求
+       List<ETTask<IResponse>> tasks = new List<ETTask<IResponse>>();
+       // ... 并行发送请求
+       foreach (var task in tasks)
+       {
+           IResponse response = await task;
+           if (response.Error != ErrorCode.ERR_Success)
+           {
+               throw new Exception($"location batch add failed: {response.Message}");
+           }
+       }
+   }
+   ```
+
+**注意事项：**
+- `MessageSender.Call`返回`ETTask<IResponse>`，不是`ETTask`
+- 需要检查`response.Error`判断是否成功
+- 批量操作应该并行发送，减少网络往返次数
+
+## 消息系统架构（核心要点）
+
+### 两套独立的消息系统
+ET框架使用**两套独立的消息系统**，用途不同，不能混用：
+
+1. **Actor消息系统（进程内通信）**
+   - 用途：同一进程内不同Fiber之间的通信
+   - 接口：`IRequest`/`IResponse`（RPC）、`IMessage`（单向消息）
+   - 组件：`ProcessInnerSender`、`MailBoxComponent`、`MessageQueue`
+   - 特点：进程内、FIFO队列、支持RPC、高性能
+   - 使用场景：Main Fiber 与 NetClient Fiber 通信、服务端内部通信
+
+2. **Session消息系统（网络通信）**
+   - 用途：客户端与服务端之间的网络通信
+   - 接口：`ISessionRequest`/`ISessionResponse`（RPC）、`ISessionMessage`（单向消息）
+   - 组件：`Session`、`NetComponent`、`Router`
+   - 特点：跨进程、基于KCP/TCP、支持RPC、通过Router转发
+   - 使用场景：客户端登录、游戏逻辑通信
+
+### MailBoxComponent 工作原理
+- **任何Entity都可以成为Actor**：只需添加`MailBoxComponent`组件
+- **Entity自带ActorId**：通过`entity.GetActorId()`获取，包含Process、Fiber、InstanceId
+- **消息接收流程**：
+  1. 消息通过`ProcessInnerSender.Send/Call`发送到目标Actor
+  2. 消息进入`MessageQueue`（按Fiber分组）
+  3. 目标Fiber的`ProcessInnerSender.Update`每帧批量取出消息（最多1000条）
+  4. 根据`ActorId.InstanceId`查找对应的`MailBoxComponent`（存储在`Fiber.Mailboxes`中）
+  5. `MailBoxComponent.Add`触发`EventSystem.Invoke`，根据`MailBoxType`分发
+  6. `MessageHandler`处理消息，传入的entity是`MailBoxComponent.Parent`（即添加了MailBoxComponent的Entity）
+- **MailBoxComponent存储**：存储在`Fiber.Mailboxes`中，key是`MailBoxComponent.Parent.InstanceId`，value是MailBoxComponent本身（EntityRef<Entity>）
+- **MailBoxType**：决定消息分发方式，目前有`UnOrderedMessage`（无序消息）等
+
+### Actor消息发送要点
+- **获取ActorId**：使用`entity.GetActorId()`获取Entity的ActorId
+- **发送消息**：通过`ProcessInnerSender.Send(actorId, message)`或`ProcessInnerSender.Call(actorId, request)`
+- **消息路由**：消息根据`ActorId.Address.Fiber`路由到目标Fiber的消息队列
+- **消息查找**：根据`ActorId.InstanceId`在`Fiber.Mailboxes`中查找MailBoxComponent
+- **RPC响应**：通过`ProcessInnerSender.Reply`回复，自动匹配`requestCallback`中的等待者
+
+### Session消息发送要点
+- **Session创建**：通过`NetComponent.CreateRouterSession`创建路由Session
+- **发送消息**：通过`Session.Call(request)`（RPC）或`Session.Send(message)`（单向）
+- **消息序列化**：使用`MessageSerializeHelper.ToMemoryBuffer`序列化
+- **网络传输**：通过KCP/UDP或TCP传输，支持Router转发
+- **消息接收**：服务端`NetComponent.OnRead`接收，反序列化后分发到`MessageSessionDispatcher`
+- **Handler自动回复**：`MessageSessionHandler`自动处理RPC响应，通过`Session.Send(response)`回复
+
+### 消息Handler注册
+- **Actor消息Handler**：继承`MessageHandler<Entity, Request, Response>`，通过`MessageDispatcher.Instance.RegisterMessage<HandlerType>(SceneType)`注册
+- **Session消息Handler**：继承`MessageSessionHandler<Request, Response>`，通过`MessageSessionDispatcher.Instance.RegisterMessageSession<HandlerType>(SceneType)`注册
+- **注册位置**：Handler实现在Hotfix中，在`GameRegister.RegisterMessage()`和`GameRegister.RegisterMessageSession()`中注册
+- **注册示例**：`MessageDispatcher.Instance.RegisterMessage<A2NetClient_MessageHandler>(SceneType.NetClient)`
+
+### 关键组件说明
+- **ProcessInnerSender**：挂载在Scene上，负责Actor消息的发送和接收，Update中每帧处理消息队列
+- **MailBoxComponent**：挂载在需要接收Actor消息的Entity上，表示该Entity是一个Actor
+- **MessageQueue**：全局单例，按Fiber分组存储消息，支持批量获取
+- **Session**：网络连接的抽象，支持RPC和单向消息
+- **NetComponent**：网络组件，管理Session的创建和消息收发
+
+### 消息流程注意事项
+- **Actor消息是进程内的**：不能用于跨进程通信，跨进程必须使用Session
+- **消息顺序**：Actor消息在同一Fiber内保证FIFO顺序，但`UnOrderedMessage`可能不保证
+- **异步处理**：`MailBoxType_UnOrderedMessageHandler`使用`NoContext()`，不等待完成，注意异常处理
+- **消息超时**：Actor RPC默认40秒超时，Session RPC需要在调用时设置超时
+- **Entity生命周期**：确保发送消息时目标Entity及其MailBoxComponent仍然存在
+
+## Actor模型和Fiber
+- Fiber是Actor模型的调度单位，每个Fiber有自己的线程或调度器
+- 跨Fiber通信必须通过ProcessInnerSender发送消息，不能直接访问其他Fiber的Entity
+- 消息顺序由MessageQueue保证FIFO顺序，修改消息处理逻辑时要注意保持消息顺序，避免影响其他消息的处理顺序
+- Fiber创建后需要等待FiberInit完成才能发送消息，注意时序问题，避免在Fiber未初始化完成时发送消息导致失败
+- MainThreadScheduler在Unity的Update/LateUpdate中调度，注意Unity生命周期的影响
+
+## Fiber线程模型和线程安全
+
+### Fiber内部单线程保证
+- **每个Fiber内部是单线程的**：同一Fiber的所有Update、Timer回调、消息处理都在同一线程顺序执行
+- **不同Fiber可能在不同线程**：服务端使用ThreadScheduler时，每个Fiber有独立线程
+- **组件属于Fiber**：挂在Scene上的组件（如TimerComponent、CoroutineLockComponent）都属于同一Fiber
+- **Update执行顺序**：Fiber.Update → EntitySystem.Publish(UpdateEvent) → 按注册顺序调用IUpdate组件
+- **Timer回调在Fiber线程**：Timer超时回调在该Fiber的Update中执行，与其他组件顺序执行
+
+### 跨Fiber并发场景
+- **不同Fiber的对象不共享**：每个Fiber有自己的TimerComponent、CoroutineLockComponent等
+- **ThreadSynchronizationContext保证安全**：跨线程调用通过Post投递到目标Fiber线程执行
+- **避免直接访问其他Fiber的Entity**：必须通过消息通信
+
+### 线程安全编程规范
+- **Fiber内组件**：通常不需要线程同步（单线程保证）
+- **可能并发的点**：
+  - 同一对象的多个回调（如超时和正常回调）可能在时序上接近
+  - 使用`Interlocked.Exchange`防止重复调用SetResult/SetException
+  - 使用`Volatile.Read`确保内存可见性
+- **已知并发安全模式**：
+  - WaitCoroutineLock：使用Interlocked.Exchange原子交换tcs
+  - CoroutineBlocker：使用Interlocked.Exchange防止重复SetResult
+  - MessageQueue：使用ConcurrentQueue保证线程安全
+
+## ETTask异步框架要点
+
+### ETTask vs C# Task
+- **避免使用C# Task**：会引入线程池，与Fiber模型冲突
+- **使用ETTask**：轻量级异步，无线程池开销，支持对象池
+- **ETTask对象池**：谨慎使用，await后不能再操作ETTask
+- **SetResult前置空tcs**：避免多次SetResult，使用Interlocked.Exchange模式
+
+### 并发原语使用
+- **Interlocked.Exchange**：原子交换，防止并发重复调用
+- **Interlocked.Decrement/Increment**：原子计数操作
+- **Volatile.Read/Write**：确保内存可见性，防止CPU缓存问题
+- **性能影响**：这些操作开销极小（~50纳秒），在异步等待场景中可忽略（<0.01%）
+
+### 取消和超时机制
+- **ETCancellationToken**：通过回调机制取消，不抛异常
+- **Cancel调用SetResult**：取消时正常完成Task，不是异常完成
+- **超时任务优化**：RPC正常返回时立即Cancel超时任务，避免资源占用
+- **超时时间**：Actor RPC默认4秒，根据业务调整
+
+## 异步操作规范
+- 使用ETTask进行异步操作，避免使用Task或Thread
+- 使用await时注意上下文，确保在正确的Fiber线程中执行
+- 长时间运行的异步操作要设置超时机制，避免无限等待导致死锁
+- 异步操作中的异常要正确传播，避免静默失败
+
+## 资源管理
+- 对象池使用：
+  - EntityObjectPool：主要用于Entity的创建和回收
+  - ObjectPool：主要用于非Entity对象的创建和回收
+- 使用ObjectPool管理对象生命周期，避免频繁创建销毁，特别是消息对象和临时Entity
+- 实现IDisposable的组件要在Destroy中正确释放资源，包括ThreadSynchronizationContext、网络连接等
+- 使用using语句管理临时对象，特别是消息对象（MessageObject）
+
+## 异常处理
+- 关键路径要有异常捕获和日志记录，避免异常导致程序崩溃
+- 异步操作中要确保异常能正确传播，避免静默失败，特别是await FiberManager.Create和ProcessInnerSender.Call等关键操作
+- 网络操作和IO操作必须有超时和重试机制，避免因网络问题导致长时间等待
+- 异常信息要包含足够的上下文信息，便于问题定位
+
+## 性能注意事项
+- 避免在Update中执行耗时操作，特别是网络请求、HTTP请求和IO操作，这些应该在异步方法中执行
+- 批量操作优先使用批处理，减少单次调用开销，例如MessageQueue.Fetch的批量处理
+- 注意消息队列的批量处理限制，避免消息堆积导致延迟，每帧最多处理1000条消息
+- 避免在游戏循环中频繁分配内存，特别是字符串拼接、集合操作等
+- 注意Unity的GC影响，合理使用对象池减少GC压力
+
+## 登录流程性能分析（重要）
+
+### 登录流程时间线
+```
+总耗时：316ms（典型值）
+├─ ① HTTP获取路由信息：32ms (10.1%)
+├─ ② 初始化NetComponent：1ms (0.3%)
+├─ ③ 建立Realm路由连接：26ms (8.2%)
+│  └─ 路由连接成功：18ms，等待13帧
+├─ ④ Realm登录RPC：103ms (32.6%) ⚠️ 最大瓶颈
+├─ ⑤ 建立Gate路由连接：14ms (4.4%)
+│  └─ 路由连接成功：11ms，等待9帧
+└─ ⑥ Gate登录RPC：140ms (44.3%) ⚠️ 最大瓶颈
+```
+
+### Realm登录RPC流程（103ms瓶颈）
+
+**完整调用链：**
+```
+客户端 → Realm (C2R_LoginHandler.cs:9)
+  └─ MessageSender.Call(config.ActorId, R2G_GetLoginKey) (MessageSenderSystem.cs:33)
+     ├─ 判断：fiber.Process == actorId.Process? (同进程内)
+     │  └─ 否：跨进程调用
+     │     └─ ProcessInnerSender.Call(NetInner, A2NetInner_Request) (MessageSenderSystem.cs:58)
+     │        └─ NetInner转发到目标进程
+     │           └─ ProcessOuterSender.Call(Gate.ActorId, R2G_GetLoginKey) (ProcessOuterSenderSystem.cs:198)
+     │              ├─ 创建Session（如不存在）(ProcessOuterSenderSystem.cs:129-139)
+     │              ├─ 发送请求 (ProcessOuterSenderSystem.cs:214)
+     │              ├─ 启动超时任务（40秒）(ProcessOuterSenderSystem.cs:216-235)
+     │              └─ 等待响应 (ProcessOuterSenderSystem.cs:239)
+     │                 └─ Gate处理 (R2G_GetLoginKeyHandler.cs:9)
+     │                    └─ 生成key并存储 (R2G_GetLoginKeyHandler.cs:11-14)
+     │                       └─ 返回响应
+```
+
+**耗时构成：**
+- 跨进程网络往返：~50-60ms（Realm→Gate的KCP/UDP传输）
+- 消息序列化/反序列化：~5-10ms（Nino序列化）
+- Gate处理逻辑：~1ms（生成RandomGenerator.RandInt64()）
+- Fiber调度延迟：~30-40ms（消息队列等待，每帧最多处理1000条）
+
+**关键代码位置：**
+- `ET.Hotfix/Login/Realm/C2R_LoginHandler.cs:19`
+- `ET.Hotfix/NetInner/MessageSenderSystem.cs:33-72`
+- `ET.Hotfix/NetInner/ProcessOuterSenderSystem.cs:198-250`
+- Actor RPC超时：40秒（`ProcessOuterSender.TIMEOUT_TIME`）
+- 性能警告阈值：>200ms（`ProcessOuterSenderSystem.cs:244`）
+
+### Gate登录RPC流程（140ms瓶颈）
+
+**完整调用链：**
+```
+客户端 → Gate (C2G_LoginGateHandler.cs:8)
+  ├─ 验证Key (C2G_LoginGateHandler.cs:11)
+  ├─ 创建Player (C2G_LoginGateHandler.cs:25-26)
+  ├─ 第一次AddLocation (C2G_LoginGateHandler.cs:29) ⚠️ 串行
+  │  └─ LocationProxyComponent.Add(LocationType.GateSession, playerSessionComponent.Id, actorId)
+  │     └─ MessageSender.Call(Location.ActorId, ObjectAddRequest) (LocationProxyComponentSystem.cs:22)
+  │        └─ Location服务器处理 (ObjectAddRequestHandler.cs:8)
+  │           └─ LocationOneType.Add(key, actorId) (LocationOneTypeSystem.cs:35)
+  │              ├─ CoroutineLock等待 (LocationOneTypeSystem.cs:38)
+  │              └─ 字典操作：self.locations[key] = instanceId (LocationOneTypeSystem.cs:40)
+  │
+  ├─ 第二次AddLocation (C2G_LoginGateHandler.cs:32) ⚠️ 串行
+  │  └─ LocationProxyComponent.Add(LocationType.Player, player.Id, actorId)
+  │     └─ （同上流程，完全重复）
+  │
+  └─ 关联Session (C2G_LoginGateHandler.cs:34-35)
+```
+
+**耗时构成：**
+- 第一次AddLocation：~60-70ms
+  - Location服务器Actor RPC往返：~50-60ms
+  - LocationOneType.Add处理：~5-10ms（CoroutineLock等待+字典操作）
+- 第二次AddLocation：~60-70ms（完全串行，重复上述流程）
+- Player创建和关联：~5-10ms
+
+**关键发现：**
+- 代码位置：`ET.Hotfix/Login/Gate/C2G_LoginGateHandler.cs:29-32`
+- **最大问题**：两次AddLocation完全串行，可以并行执行
+- Location服务器处理很快（<10ms），主要耗时在网络往返
+
+### 关键优化方案
+
+#### 优化1：Gate登录RPC并行化（预期节省60-70ms）
+
+**修改文件：** `ET.Hotfix/Login/Gate/C2G_LoginGateHandler.cs`
+
+**修改位置：** 第29-32行
+
+**修改内容：**
+```csharp
+// 原代码（串行）：
+await playerSessionComponent.AddLocation(LocationType.GateSession);
+player.AddComponent<MailBoxComponent, int>(MailBoxType.UnOrderedMessage);
+await player.AddLocation(LocationType.Player);
+
+// 修改为（并行）：
+player.AddComponent<MailBoxComponent, int>(MailBoxType.UnOrderedMessage);
+await ETTaskHelper.WaitAll(
+    playerSessionComponent.AddLocation(LocationType.GateSession),
+    player.AddLocation(LocationType.Player)
+);
+```
+
+**注意事项：**
+- 确保MailBoxComponent在AddLocation之前添加（AddLocation需要ActorId）
+- 两个AddLocation可以并行，因为它们注册不同的Location类型和key
+
+#### 优化2：批量Location注册接口（预期节省50-60ms）
+
+**需要新增/修改的文件：**
+1. `ET.Model/Actorlocation/Server/ObjectAddBatchRequest.cs`（新增消息协议）
+2. `ET.Hotfix/ActorLocation/LocationProxyComponentSystem.cs`（添加AddBatch方法）
+3. `ET.Hotfix/ActorLocation/LocationOneTypeSystem.cs`（添加批量Add方法）
+4. `ET.Hotfix/ActorLocation/ObjectAddBatchRequestHandler.cs`（新增Handler）
+5. `ET.Hotfix/Login/Gate/C2G_LoginGateHandler.cs`（使用批量接口）
+
+**实现要点：**
+- ObjectAddBatchRequest包含List<(type, key, actorId)>
+- Location服务器批量处理，使用一个CoroutineLock保护整个批量操作
+- 减少网络往返次数从2次→1次
+
+### 性能优化预期效果
+
+**保守估计（仅优化1）：**
+- Gate登录RPC并行化：节省60-70ms
+- **总耗时从316ms降至246-256ms（减少19-22%）**
+
+**理想情况（优化1+2）：**
+- Gate登录RPC并行化：节省60-70ms
+- 批量Location注册：节省50-60ms
+- **总耗时从316ms降至186-206ms（减少35-41%）**
+
+### 关键代码位置参考
+
+1. **Gate登录Handler**：`ET.Hotfix/Login/Gate/C2G_LoginGateHandler.cs:29-32`
+2. **Location注册**：`ET.Hotfix/ActorLocation/LocationProxyComponentSystem.cs:14-22`
+3. **Location处理**：`ET.Hotfix/ActorLocation/LocationOneTypeSystem.cs:35-42`
+4. **Actor RPC调用**：`ET.Hotfix/NetInner/MessageSenderSystem.cs:33-72`
+5. **跨进程RPC**：`ET.Hotfix/NetInner/ProcessOuterSenderSystem.cs:198-250`
+
+### 关键配置
+
+- Actor RPC超时：40秒（`ProcessOuterSender.TIMEOUT_TIME`）
+- 性能警告阈值：200ms（`ProcessOuterSenderSystem.cs:244`）
+- 消息队列批量处理：每帧最多1000条（`ProcessInnerSender.Update`）
+
+## 线程安全
+- Unity客户端是单线程的，但Fiber调度器可能在不同线程
+- 服务端使用多线程，需要特别注意线程安全问题
+- 修改前检查是否有线程安全问题，特别是涉及ConcurrentQueue、ConcurrentDictionary等并发集合的操作
+- 跨线程访问数据时要注意同步机制，避免竞态条件
+
+# 代码审查检查点
+
+## 修改前检查
+- 检查是否有线程安全问题
+- 检查是否会影响消息顺序
+- 检查是否会影响Fiber调度时序
+- 检查是否有潜在的竞态条件
+
+## 修改后验证
+- 验证消息顺序是否受影响，确保不会导致消息乱序
+- 验证Fiber的创建、初始化和消息处理的时序是否正确
+- 验证资源是否正确释放，避免内存泄漏
+- 验证异常处理是否完整，避免程序崩溃
+- 避免代码冗余
+
+# Entity系统和事件系统架构（核心）
+
+## 三套独立的事件/调用系统
+
+ET框架使用三套完全独立的系统，各有不同的用途和特点，不能混用：
+
+### 1. EventSystem.Publish/PublishAsync（Scene级全局事件）
+- **注册位置**：`GameRegister.RegisterEvent()`
+- **存储结构**：`_allEventDic: Dictionary<Type, List<EventInfo>>`
+- **用途**：跨模块的场景级事件（LoginFinish、EnterMapFinish、AfterUnitCreate等）
+- **PublishAsync**：真正的异步，`await ETTaskHelper.WaitAll(list)` 等待所有处理器完成
+- **Publish**：发起异步但不等待（`.NoContext()`），fire-and-forget模式
+- **特点**：可以没有订阅者（事件语义），查找失败静默返回
+
+### 2. EntitySystem.Publish（⚡每帧热路径）
+- **注册位置**：`Entity.RegisterSystem()` → `Fiber.EntitySystem.RegisterSystem()`
+- **存储结构**：`queues: Dictionary<Type, Queue<EntityRef<Entity>>>`
+- **用途**：Entity生命周期事件（UpdateEvent、LateUpdateEvent）
+- **调用时机**：`Fiber.Update()` 和 `Fiber.LateUpdate()` 每帧调用
+- **特点**：完全同步执行，高频热路径，性能关键
+- **重要**：不是所有Entity都实现IClassEvent<T>接口，只有需要的组件才实现（如IUpdate、ILateUpdate）
+
+### 3. EventSystem.Invoke（函数式条件调用）
+- **注册位置**：`GameRegister.RegisterInvoke()`
+- **存储结构**：`_allInvokeDic: Dictionary<Type, Dictionary<long, IInvoke>>`
+- **用途**：条件分发（Timer回调、MailBox消息、FiberInit、网络读取等）
+- **特点**：必须有处理器，否则抛异常（函数语义）
+- **注意**：不要滥用Invoke，能用函数就用函数
+
+## Entity生命周期和系统注册流程
+
+### Entity创建流程
+```
+1. Entity创建（通过EntityObjectPool或new）
+   → 设置 TypeId = TypeId<T>.Id（全局唯一运行时ID）
+   
+2. Entity.RegisterSystem()
+   → EntitySystemSingleton.TypeSystems.GetOneTypeSystems(type)
+   → 获取 ClassType 列表（如 AClassEventSystem<UpdateEvent>）
+   → 将Entity加入Fiber.EntitySystem对应队列
+```
+
+### Entity每帧更新流程
+```
+Fiber.Update()
+  → EntitySystem.Publish(new UpdateEvent())
+  → GetQueue(AClassEventSystem<UpdateEvent>)
+  → 遍历队列中所有Entity
+  → 对每个Entity：
+     → 检查 IsDisposed
+     → 缓存 GetType() 结果
+     → TypeSystems.GetSystems(entityType, systemType)
+     → 执行所有UpdateSystem的Run方法
+```
+
+### Entity销毁流程
+```
+Entity.Dispose()
+  → 清理 children 和 components（优化：使用数组避免临时List）
+  → EntitySystemSingleton.Instance.Destroy(this)
+     → TypeSystems.GetSystems(entityType, IDestroySystem)
+     → 执行所有DestroySystem
+```
+
+## TypeSystems 工作原理
+
+### 数据结构
+```
+TypeSystems
+  ├─ typeSystemsMap: Dictionary<Type, OneTypeSystems>
+  │    └─ OneTypeSystems
+  │         ├─ Map: UnOrderMultiMap<Type, SystemObject>  // systemType → List<SystemObject>
+  │         ├─ ClassType: List<Type>                      // IClassEvent系统类型列表
+  │         └─ Capabilities: SystemFlags                  // 🔥 新增：能力位标记
+```
+
+### RegisterEntitySystem 注册流程
+```
+GameRegister.RegisterEntitySystem()
+  → EntitySystemSingleton.RegisterEntitySystem<UpdateSystem<OperaComponent>>()
+  → TypeSystems.GetOrCreateOneTypeSystems(typeof(OperaComponent))
+  → oneTypeSystems.Map.Add(typeof(AClassEventSystem<UpdateEvent>), systemObject)
+  → 🔥 SetSystemCapability(oneTypeSystems, obj)  // 使用标记接口设置位标记
+  │   └─ if (obj is IAwakeSystemMarker) Capabilities |= SystemFlags.Awake
+  │   └─ if (obj is IDestroySystemMarker) Capabilities |= SystemFlags.Destroy
+  │   └─ if (obj is AClassEventSystem<UpdateEvent>) Capabilities |= SystemFlags.Update
+  └─ oneTypeSystems.ClassType.Add(typeof(AClassEventSystem<UpdateEvent>))
+```
+
+## IClassEvent 接口理解（重要）
+
+### 关键认识
+- **不是所有Entity都实现IClassEvent<T>**
+- 只有需要接收特定事件的Entity才实现
+- 例如：IUpdate、ILateUpdate 等
+
+### 实现示例
+- `TimerComponent: Entity, IAwake, IUpdate`
+- `OperaComponent: Entity, IAwake<Scene>, IUpdate`
+- `NetComponent: Entity, IAwake<IKcpTransport>, IDestroy, IUpdate`
+- `ProcessInnerSender: Entity, IAwake, IDestroy, IUpdate`
+
+## TypeId vs Type
+
+### TypeId 特点
+- **定义**：`TypeId<T>.Id` 是全局唯一的运行时 long 值
+- **生成**：通过 `Interlocked.Increment` 原子递增生成
+- **用途**：Entity的类型标识，用于组件查找（components字典的key）、对象池分组等
+- **性能**：long值比较比Type对象比较快
+
+### 对象池和资源管理
+- **using语句和手动回收不能同时使用**：会造成双重回收
+- **使用finally确保回收**：在异步方法中确保对象池对象正确回收
+- **避免在Dispose中创建临时对象**：直接操作集合，减少GC
+
+### 避免过度优化
+- **字典查询已经很快**：不需要额外缓存来优化字典查询本身
+- **简洁优于复杂**：除非有明确性能问题，保持代码简洁
+- **优先优化算法复杂度**：O(n)→O(1)，而不是常数优化
+
+# 常见问题注意事项
+
+## Entity系统
+- Entity的创建和销毁要遵循正确的生命周期
+- 使用EntitySystem的[EntitySystem]特性标记系统方法
+- Component的Awake和Destroy要正确配对
+- 理解IClassEvent<T>接口，不是所有Entity都实现，只有需要的组件才实现
+
+## 网络相关
+- 网络连接要正确处理超时和重连
+- Session的创建和销毁要正确管理
+- 网络消息的序列化和反序列化要使用Nino库
+
+## 日志和调试
+- 使用Log.Info、Log.Warning、Log.Error记录日志
+- 重要操作要有日志记录，便于问题排查
+- 生产环境要控制日志级别，避免日志过多影响性能
+
+---
+
+## SystemFlags位标记系统
+
+### 核心设计
+
+```csharp
+// 位标记枚举（按Entity类型存储在TypeSystems.OneTypeSystems中）
+[Flags]
+public enum SystemFlags : byte
+{
+    None = 0, Awake = 1, Update = 2, LateUpdate = 4, Destroy = 8
+}
+
+// 存储位置：TypeSystems.OneTypeSystems.Capabilities
+// 设置时机：RegisterEntitySystem时，通过标记接口判断
+```
+
+**作用**：
+- Awake/Destroy中快速识别"没有System的Entity"，避免无效查询
+- Publish中不需要位标记检查（队列机制已保证类型正确）
+
+## 标记接口模式（判断System类型）
+
+```csharp
+// IAwakeSystem标记接口（覆盖5个泛型变体）
+public interface IAwakeSystemMarker { }
+public interface IAwakeSystem: ISystemType, IAwakeSystemMarker { }
+public interface IAwakeSystem<A>: ISystemType, IAwakeSystemMarker { }
+// ... 其他重载同样继承
+
+// IDestroySystem标记接口
+public interface IDestroySystemMarker { }
+public interface IDestroySystem: ISystemType, IDestroySystemMarker { }
+
+// 设置能力位标记
+if (obj is IAwakeSystemMarker) Capabilities |= SystemFlags.Awake;
+if (obj is IDestroySystemMarker) Capabilities |= SystemFlags.Destroy;
+if (obj is AClassEventSystem<UpdateEvent>) Capabilities |= SystemFlags.Update;
+```
+
+## SystemBase统一泛型基类
+
+```csharp
+// SystemBase自动实现ISystemType，所有System抽象类继承它
+public abstract class SystemBase<TEntity, TSystem> : SystemObject, ISystemType
+    where TEntity : Entity, where TSystem : ISystemType
+{
+    Type ISystemType.Type() => typeof(TEntity);
+    Type ISystemType.SystemType() => typeof(TSystem);
+}
+
+// 示例：AwakeSystem简化（从30行→8行，减少73%）
+public abstract class AwakeSystem<T> : SystemBase<T, IAwakeSystem>, IAwakeSystem 
+    where T: Entity, IAwake
+{
+    void IAwakeSystem.Run(Entity o) => this.Awake((T)o);
+    protected abstract void Awake(T self);
+}
+```
+
+## 使用指南
+
+### Entity定义（Model层）
+```csharp
+[ComponentOf(typeof(Scene))]
+public class TimerComponent: Entity, IAwake, IUpdate { }
+```
+
+### System实现（Hotfix层）
+```csharp
+[EntitySystemOf(typeof(TimerComponent))]
+public static partial class TimerComponentSystem
+{
+    [EntitySystem] private static void Awake(this TimerComponent self) { }
+    [EntitySystem] private static void Update(this TimerComponent self) { }
+}
+```

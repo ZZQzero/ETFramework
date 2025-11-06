@@ -10,14 +10,15 @@ namespace ET
             public readonly UnOrderMultiMap<Type, SystemObject> Map = new();
             // 这里不用hash，数量比较少，直接for循环速度更快
             public readonly List<Type> ClassType = new();
+            // 在RegisterEntitySystem时设置，运行时只读，用于快速能力检查
+            public SystemFlags Capabilities = SystemFlags.None;
         }
         
         private readonly Dictionary<Type, OneTypeSystems> typeSystemsMap = new();
 
         public OneTypeSystems GetOrCreateOneTypeSystems(Type type)
         {
-            OneTypeSystems systems = null;
-            this.typeSystemsMap.TryGetValue(type, out systems);
+            this.typeSystemsMap.TryGetValue(type, out var systems);
             if (systems != null)
             {
                 return systems;
@@ -30,25 +31,17 @@ namespace ET
 
         public OneTypeSystems GetOneTypeSystems(Type type)
         {
-            OneTypeSystems systems = null;
-            this.typeSystemsMap.TryGetValue(type, out systems);
-            return systems;
+            return typeSystemsMap.GetValueOrDefault(type);
         }
 
         public List<SystemObject> GetSystems(Type type, Type systemType)
         {
-            OneTypeSystems oneTypeSystems = null;
-            if (!this.typeSystemsMap.TryGetValue(type, out oneTypeSystems))
+            if (!this.typeSystemsMap.TryGetValue(type, out var oneTypeSystems))
             {
                 return null;
             }
 
-            if (!oneTypeSystems.Map.TryGetValue(systemType, out List<SystemObject> systems))
-            {
-                return null;
-            }
-
-            return systems;
+            return oneTypeSystems.Map.GetValueOrDefault(systemType);
         }
     }
 }

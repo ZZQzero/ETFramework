@@ -29,7 +29,5 @@ namespace ET
             
             Log.Info($"scene dispose: {this.SceneType} {this.Id} {this.InstanceId}");
         }
-        
-        protected override string ViewName => $"{this.GetType().Name} ({this.SceneType})";
     }
 }

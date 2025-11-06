@@ -15,23 +15,9 @@ namespace ET
         void Run(Entity e, T t);
     }
     
-    public abstract class ClassEventSystem<E, T> : SystemObject, AClassEventSystem<T> where E: Entity, IClassEvent<T> where T: struct
+    public abstract class ClassEventSystem<E, T> : SystemBase<E, AClassEventSystem<T>>, AClassEventSystem<T> where E: Entity, IClassEvent<T> where T: struct
     {
-        public void Run(Entity e, T t)
-        {
-            this.Handle((E)e, t);
-        }
-
-        public Type SystemType()
-        {
-            return typeof(AClassEventSystem<T>);
-        }
-
-        public Type Type()
-        {
-            return typeof(E);
-        }
-
+        public void Run(Entity e, T t) => this.Handle((E)e, t);
         protected abstract void Handle(Entity e, T t);
     }
 }

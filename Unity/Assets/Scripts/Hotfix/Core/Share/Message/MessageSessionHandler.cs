@@ -15,7 +15,7 @@ namespace ET
         {
             if (message == null)
             {
-                Log.Error($"消息类型转换错误: {message.GetType().FullName} to {typeof (Message).Name}");
+                Log.Error($"消息为null，期望类型: {typeof (Message).Name}");
                 return;
             }
 
@@ -55,7 +55,8 @@ namespace ET
                 Request request = message as Request;
                 if (request == null)
                 {
-                    throw new Exception($"消息类型转换错误: {message.GetType().FullName} to {typeof (Request).FullName}");
+                    string messageTypeName = message?.GetType().FullName ?? "null";
+                    throw new Exception($"消息类型转换错误: {messageTypeName} to {typeof (Request).FullName}");
                 }
 
                 int rpcId = request.RpcId;

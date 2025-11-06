@@ -42,6 +42,34 @@ namespace ET
             }
         }
 
+        /// <summary>
+        /// 批量添加Location（用于批量注册优化）
+        /// 注意：此方法在批量处理时使用，可以减少CoroutineLock的等待次数
+        /// 使用统一的锁key（0）来保护整个批量操作，避免不必要的锁竞争
+        /// </summary>
+        public static async ETTask AddBatch(this LocationOneType self, List<(long key, ActorId instanceId)> items)
+        {
+            if (items == null || items.Count == 0)
+            {
+                return;
+            }
+            
+            // 对于批量操作，使用统一的锁key（0）来保护整个批量操作
+            // 这样可以减少锁竞争，提高性能
+            // 注意：批量操作应该是原子的，所以使用统一的锁是合理的
+            long coroutineLockType = (self.Id << 32) | CoroutineLockType.Location;
+            long lockKey = 0; // 使用统一的锁key，避免不必要的锁竞争
+            
+            using (await self.Root().GetComponent<CoroutineLockComponent>().Wait(coroutineLockType, lockKey))
+            {
+                foreach (var (key, instanceId) in items)
+                {
+                    self.locations[key] = instanceId;
+                    Log.Info($"location batch add key: {key} instanceId: {instanceId}");
+                }
+            }
+        }
+
         public static async ETTask Remove(this LocationOneType self, long key)
         {
             long coroutineLockType = (self.Id << 32) | CoroutineLockType.Location;

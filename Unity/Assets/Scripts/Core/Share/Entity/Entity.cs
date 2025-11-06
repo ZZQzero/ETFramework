@@ -27,19 +27,10 @@ namespace ET
         private EntityStatus status = EntityStatus.None;
         private Entity parent;
         private IScene iScene;
-        /*private ChildrenCollection children;
-        private ComponentsCollection components;*/
         private SortedDictionary<long, Entity> children;
         private SortedDictionary<long, Entity> components;
         #endregion
-
-        #region Unity编辑器支持
-#if ENABLE_VIEW && UNITY_EDITOR
-        [UnityEngine.HideInInspector]
-        public UnityEngine.GameObject ViewGO;
-#endif
-        #endregion
-
+        
         #region 构造函数
         protected Entity()
         {
@@ -65,11 +56,6 @@ namespace ET
                 if (value)
                 {
                     this.RegisterSystem();
-                    this.SetupView();
-                }
-                else
-                {
-                    this.CleanupView();
                 }
             }
         }
@@ -101,32 +87,7 @@ namespace ET
                 this.status &= ~flag;
         }
         #endregion
-
-        #region 视图管理
-        protected virtual string ViewName => this.GetType().FullName;
-
-        private void SetupView()
-        {
-#if ENABLE_VIEW && UNITY_EDITOR
-            this.ViewGO = new UnityEngine.GameObject(this.ViewName);
-            this.ViewGO.AddComponent<ComponentView>().Component = this;
-            this.ViewGO.transform.SetParent(this.Parent?.ViewGO?.transform ?? 
-                UnityEngine.GameObject.Find("Init/Scenes").transform);
-#endif
-        }
-
-        private void CleanupView()
-        {
-#if ENABLE_VIEW && UNITY_EDITOR
-            if (this.ViewGO != null)
-            {
-                UnityEngine.Object.Destroy(this.ViewGO);
-                this.ViewGO = null;
-            }
-#endif
-        }
-        #endregion
-
+        
         #region 系统注册
         protected virtual void RegisterSystem()
         {
@@ -207,51 +168,8 @@ namespace ET
             {
                 this.IScene = this.parent.iScene;
             }
-
-            this.UpdateViewHierarchy();
         }
-
-        private void UpdateViewHierarchy()
-        {
-#if ENABLE_VIEW && UNITY_EDITOR
-            if (this.ViewGO == null) return;
-            
-            this.ViewGO.GetComponent<ComponentView>().Component = this;
-            this.ViewGO.transform.SetParent(this.Parent?.ViewGO?.transform ?? 
-                UnityEngine.GameObject.Find("Init/Scenes").transform);
-            
-            this.UpdateChildrenViewHierarchy();
-            this.UpdateComponentsViewHierarchy();
-#endif
-        }
-
-        private void UpdateChildrenViewHierarchy()
-        {
-#if ENABLE_VIEW && UNITY_EDITOR
-            this.UpdateEntityViewHierarchy(this.children);
-#endif
-        }
-
-        private void UpdateComponentsViewHierarchy()
-        {
-#if ENABLE_VIEW && UNITY_EDITOR
-            this.UpdateEntityViewHierarchy(this.components);
-#endif
-        }
-
-        private void UpdateEntityViewHierarchy(IEnumerable<KeyValuePair<long, Entity>> entities)
-        {
-#if ENABLE_VIEW && UNITY_EDITOR
-            if (entities == null) return;
-            
-            foreach (var kv in entities)
-            {
-                if (kv.Value.ViewGO != null)
-                    kv.Value.ViewGO.transform.SetParent(this.ViewGO.transform);
-            }
-#endif
-        }
-
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T GetParent<T>() where T : Entity
         {
@@ -334,13 +252,6 @@ namespace ET
         public K GetComponent<K>() where K : Entity
         {
             if (this.components == null) return null;
-
-            // 触发GetComponentSystem
-            if (this is IGetComponentSys)
-            {
-                EntitySystemSingleton.Instance.GetComponentSys(this, typeof(K));
-            }
-            
             return this.components.TryGetValue(TypeId<K>.Id, out Entity component) ? (K)component : null;
         }
 
@@ -596,9 +507,6 @@ namespace ET
             }
 
             this.parent = null;
-            // 清理视图
-            this.CleanupView();
-            
             // 重置状态
             this.status = EntityStatus.None;
         }

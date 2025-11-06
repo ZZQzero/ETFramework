@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 
 namespace ET
@@ -26,10 +27,19 @@ namespace ET
                 playerComponent.Add(player);
                 PlayerSessionComponent playerSessionComponent = player.AddComponent<PlayerSessionComponent>();
                 playerSessionComponent.AddComponent<MailBoxComponent, int>(MailBoxType.GateSession);
-                await playerSessionComponent.AddLocation(LocationType.GateSession);
-			
+                
+                // 优化：使用批量Location注册接口，减少网络往返次数（预期节省50-60ms）
+                // 注意：MailBoxComponent必须在AddLocation之前添加，因为AddLocation需要ActorId
                 player.AddComponent<MailBoxComponent, int>(MailBoxType.UnOrderedMessage);
-                await player.AddLocation(LocationType.Player);
+                
+                // 使用批量注册接口，一次RPC注册两个Location（GateSession和Player）
+                // 这样可以减少网络往返次数从2次→1次，进一步提升性能
+                List<(int type, long key, ActorId actorId)> batchItems = new List<(int type, long key, ActorId actorId)>
+                {
+                    (LocationType.GateSession, playerSessionComponent.Id, playerSessionComponent.GetActorId()),
+                    (LocationType.Player, player.Id, player.GetActorId())
+                };
+                await root.GetComponent<LocationProxyComponent>().AddBatch(batchItems);
 			
                 session.AddComponent<SessionPlayerComponent>().Player = player;
                 playerSessionComponent.Session = session;

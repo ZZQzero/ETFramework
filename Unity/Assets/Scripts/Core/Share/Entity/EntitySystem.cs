@@ -21,7 +21,7 @@ namespace ET
         public virtual void RegisterSystem(Entity component)
         {
             Type type = component.GetType();
-
+            
             TypeSystems.OneTypeSystems oneTypeSystems = EntitySystemSingleton.TypeSystems.GetOneTypeSystems(type);
             if (oneTypeSystems == null)
             {
@@ -35,54 +35,53 @@ namespace ET
             }
         }
         
-        public void Publish<T>(T t) where T: struct
+    public void Publish<T>(T t) where T: struct
+    {
+        Type systemType = typeof(AClassEventSystem<T>);
+        
+        if (!this.queues.TryGetValue(systemType, out var queue))
         {
-            Type systemType = typeof(AClassEventSystem<T>);
-            Queue<EntityRef<Entity>> queue = this.GetQueue(systemType);
-            int count = queue.Count;
-            while (count-- > 0)
+            return;
+        }
+        
+        int count = queue.Count;
+        while (count-- > 0)
+        {
+            Entity component = queue.Dequeue();
+            if (component == null || component.IsDisposed)
             {
-                Entity component = queue.Dequeue();
-                if (component == null)
+                continue;
+            }
+            
+            Type componentType = component.GetType();
+            
+            try
+            {
+                List<SystemObject> systems = EntitySystemSingleton.TypeSystems.GetSystems(componentType, systemType);
+                if (systems == null)
                 {
                     continue;
                 }
-                if (component.IsDisposed)
+
+                queue.Enqueue(component);
+
+                foreach (AClassEventSystem<T> classSystem in systems)
                 {
-                    continue;
-                }
-                if (component is not IClassEvent<T>)
-                {
-                    continue;
-                }
-                try
-                {
-                    List<SystemObject> systems = EntitySystemSingleton.TypeSystems.GetSystems(component.GetType(), systemType);
-                    if (systems == null)
+                    try
                     {
-                        continue;
+                        classSystem.Run(component, t);
                     }
-
-                    queue.Enqueue(component);
-
-                    foreach (AClassEventSystem<T> classSystem in systems)
+                    catch (Exception e)
                     {
-                        try
-                        {
-                            classSystem.Run(component, t);
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Error(e);
-                        }
+                        Log.Error(e);
                     }
                 }
-                catch (Exception e)
-                {
-                    throw new Exception($"entity system update fail: {component.GetType().FullName}", e);
-                }
-
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"entity system update fail: {componentType.FullName}", e);
             }
         }
+    }
     }
 }

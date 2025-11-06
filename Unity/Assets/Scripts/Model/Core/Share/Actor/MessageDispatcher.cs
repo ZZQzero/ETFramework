@@ -25,12 +25,6 @@ namespace ET
 
         public void Awake()
         {
-            /*HashSet<Type> types = CodeTypes.Instance.GetTypes(typeof (MessageHandlerAttribute));
-            
-            foreach (Type type in types)
-            {
-                //this.RegisterMessage(type);
-            }*/
         }
         
         public void RegisterMessage<T>(int sceneType) where T : IMHandler, new()
@@ -53,38 +47,6 @@ namespace ET
 
             RegisterHandler(messageType, messageDispatcherInfo);
         }
-        /*{
-            object obj = Activator.CreateInstance(type);
-
-            IMHandler imHandler = obj as IMHandler;
-            if (imHandler == null)
-            {
-                throw new Exception($"message handler not inherit IMActorHandler abstract class: {obj.GetType().FullName}");
-            }
-                
-            object[] attrs = type.GetCustomAttributes(typeof(MessageHandlerAttribute), true);
-
-            foreach (object attr in attrs)
-            {
-                MessageHandlerAttribute messageHandlerAttribute = attr as MessageHandlerAttribute;
-
-                Type messageType = imHandler.GetRequestType();
-
-                Type handleResponseType = imHandler.GetResponseType();
-                if (handleResponseType != null)
-                {
-                    Type responseType = OpcodeType.Instance.GetResponseType(messageType);
-                    if (handleResponseType != responseType)
-                    {
-                        throw new Exception($"message handler response type error: {messageType.FullName}");
-                    }
-                }
-
-                MessageDispatcherInfo messageDispatcherInfo = new(messageHandlerAttribute.SceneType, imHandler);
-
-                this.RegisterHandler(messageType, messageDispatcherInfo);
-            }
-        }*/
         
         private void RegisterHandler(Type type, MessageDispatcherInfo handler)
         {
@@ -101,7 +63,8 @@ namespace ET
             List<MessageDispatcherInfo> list;
             if (!this.messageHandlers.TryGetValue(message.GetType(), out list))
             {
-                throw new Exception($"not found message handler: {message} {entity.GetType().FullName}");
+                Log.Error($"not found message handler: {message} {entity.GetType().FullName}");
+                return;
             }
 
             int sceneType = entity.IScene.SceneType;
@@ -111,7 +74,15 @@ namespace ET
                 {
                     continue;
                 }
-                await actorMessageDispatcherInfo.IMHandler.Handle(entity, fromAddress, message);   
+                
+                try
+                {
+                    await actorMessageDispatcherInfo.IMHandler.Handle(entity, fromAddress, message);
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"消息处理异常: {message.GetType().FullName}\n{e}");
+                }
             }
         }
     }

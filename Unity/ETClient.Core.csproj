@@ -80,13 +80,12 @@
     <Compile Include="Assets\Scripts\Core\Share\MultiMapSet.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\ByteHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\Mailboxes.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Entity\ChildrenCollection.cs" />
     <Compile Include="Assets\Scripts\Core\Share\MultiDictionary.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\EntityRef.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\Circularbuffer.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Entity\ComponentsCollection.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Entity\ISerializeSystem.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\Entity\SystemBase.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Log\Log.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\Entity\SystemFlags.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Fiber\IScheduler.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\PacketParser.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\ETTaskHelper.cs" />
@@ -110,7 +109,6 @@
     <Compile Include="Assets\Scripts\Core\Share\ErrorCore.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\TService.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\NetworkHelper.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Entity\ComponentView.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\IKcpTransport.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Object\SystemObject.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\Kcp\ikcph.cs" />
@@ -129,7 +127,6 @@
     <Compile Include="Assets\Scripts\Core\Share\World\Log\Logger.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\ETVoid.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Fiber\ThreadSynchronizationContext.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Entity\ISerializeToEntity.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\EntitySystemAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\ObjectHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Log\LogInvoker.cs" />
@@ -140,7 +137,6 @@
     <Compile Include="Assets\Scripts\Core\Share\ETTask\ETCancellationToken.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\ProcessHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\StringHashHelper.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Entity\IGetComponentSysSystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\AsyncETVoidMethodBuilder.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\EnumHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\SortedSet.cs" />
@@ -156,7 +152,6 @@
     <Compile Include="Assets\Scripts\Core\Share\ETTask\StateMachineWrap.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\SceneTypeSingleton.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\EntityHelper.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\Entity\IDeserializeSystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\IAwakeSystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Method\StaticMethod.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\OpcodeRangeDefine.cs" />

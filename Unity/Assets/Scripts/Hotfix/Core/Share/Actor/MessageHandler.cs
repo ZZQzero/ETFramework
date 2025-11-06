@@ -64,7 +64,6 @@ namespace ET
                 Response response = ObjectPool.Fetch<Response>();
                 try
                 {
-                    Log.Error($"{ee}  {request}  {response}");
                     await this.Run(ee, request, response);
                 }
                 catch (RpcException exception)

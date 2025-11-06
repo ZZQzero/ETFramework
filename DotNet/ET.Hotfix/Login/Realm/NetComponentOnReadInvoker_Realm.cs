@@ -7,20 +7,27 @@ namespace ET
     {
         public override void Handle(NetComponentOnRead args)
         {
-            Session session = args.Session;
-            object message = args.Message;
-            // 根据消息接口判断是不是Actor消息，不同的接口做不同的处理,比如需要转发给Chat Scene，可以做一个IChatMessage接口
-            switch (message)
+            try
             {
-                case ISessionMessage:
+                Session session = args.Session;
+                object message = args.Message;
+                // 根据消息接口判断是不是Actor消息，不同的接口做不同的处理,比如需要转发给Chat Scene，可以做一个IChatMessage接口
+                switch (message)
                 {
-                    MessageSessionDispatcher.Instance.Handle(session, message);
-                    break;
+                    case ISessionMessage:
+                    {
+                        MessageSessionDispatcher.Instance.Handle(session, message);
+                        break;
+                    }
+                    default:
+                    {
+                        throw new Exception($"not found handler: {message}");
+                    }
                 }
-                default:
-                {
-                    throw new Exception($"not found handler: {message}");
-                }
+            }
+            catch (Exception e)
+            {
+                Log.Error($"NetComponentOnReadInvoker_Realm 处理消息异常: {args.Message?.GetType().FullName ?? "null"}\n{e}");
             }
         }
     }

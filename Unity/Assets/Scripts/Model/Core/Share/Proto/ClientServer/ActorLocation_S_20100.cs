@@ -366,6 +366,103 @@ namespace ET
         }
     }
 
+    // 批量Location注册项
+    [NinoType(false)]
+    [Message(ActorLocation.ObjectAddBatchItem)]
+    public partial class ObjectAddBatchItem : MessageObject
+    {
+        public static ObjectAddBatchItem Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<ObjectAddBatchItem>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int Type { get; set; }
+
+        [NinoMember(1)]
+        public long Key { get; set; }
+
+        [NinoMember(2)]
+        public ActorId ActorId { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.Type = default;
+            this.Key = default;
+            this.ActorId = default;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [NinoType(false)]
+    [Message(ActorLocation.ObjectAddBatchRequest)]
+    [ResponseType(nameof(ObjectAddBatchResponse))]
+    public partial class ObjectAddBatchRequest : MessageObject, IRequest
+    {
+        public static ObjectAddBatchRequest Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<ObjectAddBatchRequest>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int RpcId { get; set; }
+
+        [NinoMember(1)]
+        public List<ObjectAddBatchItem> Items { get; set; } = new();
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RpcId = default;
+            this.Items.Clear();
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [NinoType(false)]
+    [Message(ActorLocation.ObjectAddBatchResponse)]
+    public partial class ObjectAddBatchResponse : MessageObject, IResponse
+    {
+        public static ObjectAddBatchResponse Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<ObjectAddBatchResponse>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int RpcId { get; set; }
+
+        [NinoMember(1)]
+        public int Error { get; set; }
+
+        [NinoMember(2)]
+        public string Message { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RpcId = default;
+            this.Error = default;
+            this.Message = default;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
     public static class ActorLocation
     {
         public const ushort ObjectAddRequest = 20101;
@@ -378,5 +475,8 @@ namespace ET
         public const ushort ObjectRemoveResponse = 20108;
         public const ushort ObjectGetRequest = 20109;
         public const ushort ObjectGetResponse = 20110;
+        public const ushort ObjectAddBatchItem = 20111;
+        public const ushort ObjectAddBatchRequest = 20112;
+        public const ushort ObjectAddBatchResponse = 20113;
     }
 }

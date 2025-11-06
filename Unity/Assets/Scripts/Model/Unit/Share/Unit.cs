@@ -39,7 +39,5 @@ namespace ET
                 EventSystem.Instance.Publish(this.Scene(), new ChangeRotation() { Unit = this });
             }
         }
-
-        protected override string ViewName => $"{this.GetType().FullName} ({this.Id})";
     }
 }

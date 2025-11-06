@@ -91,7 +91,10 @@ namespace ET
 
         public static void Send(this ProcessInnerSender self, ActorId actorId, IMessage message)
         {
-            self.SendInner(actorId, (MessageObject)message);
+            if (!self.SendInner(actorId, (MessageObject)message))
+            {
+                Log.Warning($"ProcessInnerSender.Send failed, target fiber not found: {actorId} {message.GetType().FullName}");
+            }
         }
 
         private static bool SendInner(this ProcessInnerSender self, ActorId actorId, MessageObject message)

@@ -4,137 +4,69 @@ using System.Reflection;
 
 namespace ET
 {
-    public class EntitySystemSingleton: Singleton<EntitySystemSingleton>, ISingletonAwake
+    public class EntitySystemSingleton : Singleton<EntitySystemSingleton>, ISingletonAwake
     {
-        [StaticField]
-        public static TypeSystems TypeSystems { get; private set; } = new();
-        
+        [StaticField] public static TypeSystems TypeSystems { get; private set; } = new();
+
         public void Awake()
         {
-            /*foreach (Type type in CodeTypes.Instance.GetTypes(typeof (EntitySystemAttribute)))
-            {
-                SystemObject obj = (SystemObject)Activator.CreateInstance(type);
-                
-                if (obj is ISystemType iSystemType)
-                {
-                    TypeSystems.OneTypeSystems oneTypeSystems = TypeSystems.GetOrCreateOneTypeSystems(iSystemType.Type());
-                    oneTypeSystems.Map.Add(iSystemType.SystemType(), obj);
-
-                    if (iSystemType is IClassEventSystem)
-                    {
-                        oneTypeSystems.ClassType.Add(iSystemType.SystemType());
-                    }
-                }
-            }*/
         }
-        
+
         public static void RegisterEntitySystem<T>() where T : SystemObject, new()
         {
             SystemObject obj = new T();
             if (obj is ISystemType iSystemType)
             {
-                TypeSystems.OneTypeSystems oneTypeSystems = TypeSystems.GetOrCreateOneTypeSystems(iSystemType.Type());
-                oneTypeSystems.Map.Add(iSystemType.SystemType(), obj);
+                Type entityType = iSystemType.Type();
+                Type systemType = iSystemType.SystemType();
+
+                TypeSystems.OneTypeSystems oneTypeSystems = TypeSystems.GetOrCreateOneTypeSystems(entityType);
+                oneTypeSystems.Map.Add(systemType, obj);
+
+                SetSystemCapability(oneTypeSystems, obj);
 
                 if (iSystemType is IClassEventSystem)
                 {
-                    oneTypeSystems.ClassType.Add(iSystemType.SystemType());
+                    oneTypeSystems.ClassType.Add(systemType);
                 }
             }
         }
-        
-        public void Serialize(Entity component)
+
+        // 辅助方法：设置能力位标记（使用接口检查，类型安全）
+        private static void SetSystemCapability(TypeSystems.OneTypeSystems oneTypeSystems, SystemObject obj)
         {
-            if (component is not ISerialize)
+            if (obj is IAwakeSystemMarker)
             {
-                return;
+                oneTypeSystems.Capabilities |= SystemFlags.Awake;
             }
             
-            List<SystemObject> iSerializeSystems = TypeSystems.GetSystems(component.GetType(), typeof (ISerializeSystem));
-            if (iSerializeSystems == null)
+            if (obj is IDestroySystemMarker)
             {
-                return;
-            }
-
-            foreach (ISerializeSystem serializeSystem in iSerializeSystems)
-            {
-                if (serializeSystem == null)
-                {
-                    continue;
-                }
-
-                try
-                {
-                    serializeSystem.Run(component);
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e);
-                }
-            }
-        }
-        
-        public void Deserialize(Entity component)
-        {
-            if (component is not IDeserialize)
-            {
-                return;
+                oneTypeSystems.Capabilities |= SystemFlags.Destroy;
             }
             
-            List<SystemObject> iDeserializeSystems = TypeSystems.GetSystems(component.GetType(), typeof (IDeserializeSystem));
-            if (iDeserializeSystems == null)
+            if (obj is AClassEventSystem<UpdateEvent>)
             {
-                return;
+                oneTypeSystems.Capabilities |= SystemFlags.Update;
             }
-
-            foreach (IDeserializeSystem deserializeSystem in iDeserializeSystems)
+            
+            if (obj is AClassEventSystem<LateUpdateEvent>)
             {
-                if (deserializeSystem == null)
-                {
-                    continue;
-                }
-
-                try
-                {
-                    deserializeSystem.Run(component);
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e);
-                }
+                oneTypeSystems.Capabilities |= SystemFlags.LateUpdate;
             }
         }
-        
-        // GetComponentSystem
-        public void GetComponentSys(Entity entity, Type type)
-        {
-            List<SystemObject> iGetSystem = TypeSystems.GetSystems(entity.GetType(), typeof (IGetComponentSysSystem));
-            if (iGetSystem == null)
-            {
-                return;
-            }
 
-            foreach (IGetComponentSysSystem getSystem in iGetSystem)
-            {
-                if (getSystem == null)
-                {
-                    continue;
-                }
-
-                try
-                {
-                    getSystem.Run(entity, type);
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e);
-                }
-            }
-        }
-        
         public void Awake(Entity component)
         {
-            List<SystemObject> iAwakeSystems = TypeSystems.GetSystems(component.GetType(), typeof (IAwakeSystem));
+            Type entityType = component.GetType();
+
+            var oneTypeSystems = TypeSystems.GetOneTypeSystems(entityType);
+            if (oneTypeSystems == null || !oneTypeSystems.Capabilities.Has(SystemFlags.Awake))
+            {
+                return; // 没有AwakeSystem，直接返回
+            }
+
+            List<SystemObject> iAwakeSystems = TypeSystems.GetSystems(entityType, typeof(IAwakeSystem));
             if (iAwakeSystems == null)
             {
                 return;
@@ -160,12 +92,15 @@ namespace ET
 
         public void Awake<P1>(Entity component, P1 p1)
         {
-            if (component is not IAwake<P1>)
+            Type entityType = component.GetType();
+
+            var oneTypeSystems = TypeSystems.GetOneTypeSystems(entityType);
+            if (oneTypeSystems == null || !oneTypeSystems.Capabilities.Has(SystemFlags.Awake))
             {
                 return;
             }
-            
-            List<SystemObject> iAwakeSystems = TypeSystems.GetSystems(component.GetType(), typeof (IAwakeSystem<P1>));
+
+            List<SystemObject> iAwakeSystems = TypeSystems.GetSystems(entityType, typeof(IAwakeSystem<P1>));
             if (iAwakeSystems == null)
             {
                 return;
@@ -191,12 +126,15 @@ namespace ET
 
         public void Awake<P1, P2>(Entity component, P1 p1, P2 p2)
         {
-            if (component is not IAwake<P1, P2>)
+            Type entityType = component.GetType();
+
+            var oneTypeSystems = TypeSystems.GetOneTypeSystems(entityType);
+            if (oneTypeSystems == null || !oneTypeSystems.Capabilities.Has(SystemFlags.Awake))
             {
                 return;
             }
-            
-            List<SystemObject> iAwakeSystems = TypeSystems.GetSystems(component.GetType(), typeof (IAwakeSystem<P1, P2>));
+
+            List<SystemObject> iAwakeSystems = TypeSystems.GetSystems(entityType, typeof(IAwakeSystem<P1, P2>));
             if (iAwakeSystems == null)
             {
                 return;
@@ -222,12 +160,15 @@ namespace ET
 
         public void Awake<P1, P2, P3>(Entity component, P1 p1, P2 p2, P3 p3)
         {
-            if (component is not IAwake<P1, P2, P3>)
+            Type entityType = component.GetType();
+
+            var oneTypeSystems = TypeSystems.GetOneTypeSystems(entityType);
+            if (oneTypeSystems == null || !oneTypeSystems.Capabilities.Has(SystemFlags.Awake))
             {
                 return;
             }
-            
-            List<SystemObject> iAwakeSystems = TypeSystems.GetSystems(component.GetType(), typeof (IAwakeSystem<P1, P2, P3>));
+
+            List<SystemObject> iAwakeSystems = TypeSystems.GetSystems(entityType, typeof(IAwakeSystem<P1, P2, P3>));
             if (iAwakeSystems == null)
             {
                 return;
@@ -253,12 +194,15 @@ namespace ET
 
         public void Destroy(Entity component)
         {
-            if (component is not IDestroy)
+            Type entityType = component.GetType();
+
+            var oneTypeSystems = TypeSystems.GetOneTypeSystems(entityType);
+            if (oneTypeSystems == null || !oneTypeSystems.Capabilities.Has(SystemFlags.Destroy))
             {
                 return;
             }
-            
-            List<SystemObject> iDestroySystems = TypeSystems.GetSystems(component.GetType(), typeof (IDestroySystem));
+
+            List<SystemObject> iDestroySystems = TypeSystems.GetSystems(entityType, typeof(IDestroySystem));
             if (iDestroySystems == null)
             {
                 return;

@@ -79,6 +79,64 @@ namespace ET
             await self.Root().GetComponent<LocationProxyComponent>().Add(type, self.Id, self.GetActorId());
         }
 
+        /// <summary>
+        /// 批量添加Location（性能优化：减少网络往返次数）
+        /// 一次RPC可以注册多个Location，减少网络往返次数
+        /// </summary>
+        public static async ETTask AddBatch(this LocationProxyComponent self, List<(int type, long key, ActorId actorId)> items)
+        {
+            if (items == null || items.Count == 0)
+            {
+                return;
+            }
+            
+            Fiber fiber = self.Fiber();
+            Log.Info($"location proxy batch add count={items.Count}, {TimeInfo.Instance.ServerNow()}");
+            
+            // 按Location服务器分组，因为不同的key可能路由到不同的Location服务器
+            Dictionary<ActorId, List<(int type, long key, ActorId actorId)>> groupedItems = new Dictionary<ActorId, List<(int type, long key, ActorId actorId)>>();
+            
+            foreach (var item in items)
+            {
+                ActorId locationSceneId = self.GetLocationSceneId(item.key);
+                if (!groupedItems.TryGetValue(locationSceneId, out var list))
+                {
+                    list = new List<(int type, long key, ActorId actorId)>();
+                    groupedItems[locationSceneId] = list;
+                }
+                list.Add(item);
+            }
+            
+            // 并行向不同的Location服务器发送批量请求
+            List<ETTask<IResponse>> tasks = new List<ETTask<IResponse>>();
+            foreach (var kvp in groupedItems)
+            {
+                ObjectAddBatchRequest batchRequest = ObjectAddBatchRequest.Create();
+                foreach (var item in kvp.Value)
+                {
+                    ObjectAddBatchItem batchItem = new ObjectAddBatchItem
+                    {
+                        Type = item.type,
+                        Key = item.key,
+                        ActorId = item.actorId
+                    };
+                    batchRequest.Items.Add(batchItem);
+                }
+                
+                tasks.Add(fiber.Root.GetComponent<MessageSender>().Call(kvp.Key, batchRequest));
+            }
+            
+            // 等待所有批量请求完成，并检查响应错误
+            foreach (var task in tasks)
+            {
+                IResponse response = await task;
+                if (response.Error != ErrorCode.ERR_Success)
+                {
+                    throw new Exception($"location batch add failed: {response.Message}");
+                }
+            }
+        }
+
         public static async ETTask RemoveLocation(this Entity self, int type)
         {
             await self.Root().GetComponent<LocationProxyComponent>().Remove(type, self.Id);

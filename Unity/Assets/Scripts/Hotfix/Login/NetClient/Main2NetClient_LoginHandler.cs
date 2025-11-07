@@ -15,7 +15,7 @@ namespace ET
             root.RemoveComponent<RouterAddressComponent>();
             // 获取路由跟realmDispatcher地址
             RouterAddressComponent routerAddressComponent = root.AddComponent<RouterAddressComponent, string>(request.Address);
-            await routerAddressComponent.Init();
+            await routerAddressComponent.GetAllRouter();
 #if UNITY_WEBGL
             root.AddComponent<NetComponent, IKcpTransport>(new WebSocketTransport(routerAddressComponent.AddressFamily));
 #else

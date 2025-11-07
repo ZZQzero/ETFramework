@@ -8,23 +8,25 @@ namespace ET
         private static ActorId GetLocationSceneId(this LocationProxyComponent self, long key)
         {
             List<StartSceneConfig> locationConfigs = StartSceneConfigManager.Instance.GetBySceneType(self.Zone(), SceneType.Location);
+            if (locationConfigs == null || locationConfigs.Count == 0)
+            {
+                throw new Exception($"Location server not found for zone: {self.Zone()}");
+            }
             return locationConfigs[(int)(key % locationConfigs.Count)].ActorId;
         }
 
         public static async ETTask Add(this LocationProxyComponent self, int type, long key, ActorId actorId)
         {
-            Fiber fiber = self.Fiber();
             Log.Info($"location proxy add {key}, {actorId} {TimeInfo.Instance.ServerNow()}");
             ObjectAddRequest objectAddRequest = ObjectAddRequest.Create();
             objectAddRequest.Type = type;
             objectAddRequest.Key = key;
             objectAddRequest.ActorId = actorId;
-            await fiber.Root.GetComponent<MessageSender>().Call(self.GetLocationSceneId(key), objectAddRequest);
+            await self.Root().GetComponent<MessageSender>().Call(self.GetLocationSceneId(key), objectAddRequest);
         }
 
         public static async ETTask Lock(this LocationProxyComponent self, int type, long key, ActorId actorId, int time = 60000)
         {
-            Fiber fiber = self.Fiber();
             Log.Info($"location proxy lock {key}, {actorId} {TimeInfo.Instance.ServerNow()}");
 
             ObjectLockRequest objectLockRequest = ObjectLockRequest.Create();
@@ -32,30 +34,28 @@ namespace ET
             objectLockRequest.Key = key;
             objectLockRequest.ActorId = actorId;
             objectLockRequest.Time = time;
-            await fiber.Root.GetComponent<MessageSender>().Call(self.GetLocationSceneId(key), objectLockRequest);
+            await self.Root().GetComponent<MessageSender>().Call(self.GetLocationSceneId(key), objectLockRequest);
         }
 
         public static async ETTask UnLock(this LocationProxyComponent self, int type, long key, ActorId oldActorId, ActorId newActorId)
         {
-            Fiber fiber = self.Fiber();
             Log.Info($"location proxy unlock {key}, {newActorId} {TimeInfo.Instance.ServerNow()}");
             ObjectUnLockRequest objectUnLockRequest = ObjectUnLockRequest.Create();
             objectUnLockRequest.Type = type;
             objectUnLockRequest.Key = key;
             objectUnLockRequest.OldActorId = oldActorId;
             objectUnLockRequest.NewActorId = newActorId;
-            await fiber.Root.GetComponent<MessageSender>().Call(self.GetLocationSceneId(key), objectUnLockRequest);
+            await self.Root().GetComponent<MessageSender>().Call(self.GetLocationSceneId(key), objectUnLockRequest);
         }
 
         public static async ETTask Remove(this LocationProxyComponent self, int type, long key)
         {
-            Fiber fiber = self.Fiber();
             Log.Info($"location proxy remove {key}, {TimeInfo.Instance.ServerNow()}");
 
             ObjectRemoveRequest objectRemoveRequest = ObjectRemoveRequest.Create();
             objectRemoveRequest.Type = type;
             objectRemoveRequest.Key = key;
-            await fiber.Root.GetComponent<MessageSender>().Call(self.GetLocationSceneId(key), objectRemoveRequest);
+            await self.Root().GetComponent<MessageSender>().Call(self.GetLocationSceneId(key), objectRemoveRequest);
         }
 
         public static async ETTask<ActorId> Get(this LocationProxyComponent self, int type, long key)
@@ -90,9 +90,6 @@ namespace ET
                 return;
             }
             
-            Fiber fiber = self.Fiber();
-            Log.Info($"location proxy batch add count={items.Count}, {TimeInfo.Instance.ServerNow()}");
-            
             // 按Location服务器分组，因为不同的key可能路由到不同的Location服务器
             Dictionary<ActorId, List<(int type, long key, ActorId actorId)>> groupedItems = new Dictionary<ActorId, List<(int type, long key, ActorId actorId)>>();
             
@@ -107,12 +104,14 @@ namespace ET
                 list.Add(item);
             }
             
-            // 并行向不同的Location服务器发送批量请求
-            List<ETTask<IResponse>> tasks = new List<ETTask<IResponse>>();
-            foreach (var kvp in groupedItems)
+            // 优化：如果只有1个Location服务器，直接await，避免WaitAll的开销
+            // 典型场景中通常只有1个Location服务器，所以这个优化很重要
+            if (groupedItems.Count == 1)
             {
+                // 单个Location服务器，直接await（避免WaitAll的额外开销）
+                var locationValue = groupedItems.First();
                 ObjectAddBatchRequest batchRequest = ObjectAddBatchRequest.Create();
-                foreach (var item in kvp.Value)
+                foreach (var item in locationValue.Value)
                 {
                     ObjectAddBatchItem batchItem = new ObjectAddBatchItem
                     {
@@ -123,16 +122,52 @@ namespace ET
                     batchRequest.Items.Add(batchItem);
                 }
                 
-                tasks.Add(fiber.Root.GetComponent<MessageSender>().Call(kvp.Key, batchRequest));
-            }
-            
-            // 等待所有批量请求完成，并检查响应错误
-            foreach (var task in tasks)
-            {
-                IResponse response = await task;
+                IResponse response = await self.Root().GetComponent<MessageSender>().Call(locationValue.Key, batchRequest);
+                if (response == null)
+                {
+                    throw new Exception("location batch add failed: response is null");
+                }
                 if (response.Error != ErrorCode.ERR_Success)
                 {
-                    throw new Exception($"location batch add failed: {response.Message}");
+                    throw new Exception($"location batch add failed: {response.Message} (Error={response.Error})");
+                }
+            }
+            else
+            {
+                // 多个Location服务器，使用WaitAll并行等待
+                List<ETTask<IResponse>> tasks = new List<ETTask<IResponse>>();
+                foreach (var kvp in groupedItems)
+                {
+                    ObjectAddBatchRequest batchRequest = ObjectAddBatchRequest.Create();
+                    foreach (var item in kvp.Value)
+                    {
+                        ObjectAddBatchItem batchItem = new ObjectAddBatchItem
+                        {
+                            Type = item.type,
+                            Key = item.key,
+                            ActorId = item.actorId
+                        };
+                        batchRequest.Items.Add(batchItem);
+                    }
+                    
+                    tasks.Add(self.Root().GetComponent<MessageSender>().Call(kvp.Key, batchRequest));
+                }
+                
+                // 并行等待所有批量请求完成
+                IResponse[] responses = await ETTaskHelper.WaitAll(tasks);
+                
+                // 检查所有响应的错误
+                for (int i = 0; i < responses.Length; i++)
+                {
+                    IResponse response = responses[i];
+                    if (response == null)
+                    {
+                        throw new Exception("location batch add failed: response is null");
+                    }
+                    if (response.Error != ErrorCode.ERR_Success)
+                    {
+                        throw new Exception($"location batch add failed: {response.Message} (Error={response.Error})");
+                    }
                 }
             }
         }

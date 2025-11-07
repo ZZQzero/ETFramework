@@ -24,7 +24,6 @@
             if (!self.isStart)
             {
                 self.isStart = true;
-                //TODO 这里怀疑有问题
                 coroutineLock = self.AddChild<CoroutineLock, long, long, int>(self.type, self.Id, 1, true);
                 return coroutineLock;
             }

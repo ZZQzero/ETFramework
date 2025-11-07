@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace ET
 {
     /// <summary>
-    /// 批量Location注册Handler（性能优化：减少网络往返次数）
+    /// 批量Location注册Handler,减少网络往返次数
     /// </summary>
     [MessageHandler(SceneType.Location)]
     public class ObjectAddBatchRequestHandler: MessageHandler<Scene, ObjectAddBatchRequest, ObjectAddBatchResponse>
@@ -27,22 +27,23 @@ namespace ET
                 list.Add((item.Key, item.ActorId));
             }
             
-            // 并行处理所有LocationType的批量添加
-            List<ETTask> tasks = new List<ETTask>();
-            foreach (var kvp in groupedItems)
+            if (groupedItems.Count == 1)
             {
+                var kvp = groupedItems.First();
                 LocationOneType locationOneType = locationManager.Get(kvp.Key);
-                tasks.Add(locationOneType.AddBatch(kvp.Value));
+                await locationOneType.AddBatch(kvp.Value);
             }
-            
-            // 等待所有批量操作完成
-            foreach (var task in tasks)
+            else
             {
-                await task;
+                List<ETTask> tasks = new List<ETTask>();
+                foreach (var kvp in groupedItems)
+                {
+                    LocationOneType locationOneType = locationManager.Get(kvp.Key);
+                    tasks.Add(locationOneType.AddBatch(kvp.Value));
+                }
+
+                await ETTaskHelper.WaitAll(tasks);
             }
-            
-            Log.Info($"location batch add completed: count={request.Items.Count}, types={groupedItems.Count}");
         }
     }
 }
-

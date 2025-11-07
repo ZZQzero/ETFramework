@@ -8,8 +8,8 @@ namespace ET
     public class RouterAddressComponent: Entity, IAwake<string>
     {
         public AddressFamily AddressFamily { get; set; }
-        public string Address;
         public HttpGetRouterResponse Info;
+        public string Address;
         public int RouterIndex;
     }
 }

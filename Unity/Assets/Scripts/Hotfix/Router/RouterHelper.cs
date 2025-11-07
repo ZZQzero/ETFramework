@@ -64,7 +64,6 @@ namespace ET
             byte[] addressBytes = realAddress.ToString().ToByteArray();
             Array.Copy(addressBytes, 0, sendCache, 13, addressBytes.Length);
             TimerComponent timerComponent = netComponent.Root().GetComponent<TimerComponent>();
-            Log.Info($"router connect: {localConn} {remoteConn} {routerAddress} {realAddress}");
 
             long lastSendTimer = 0;
 
@@ -78,7 +77,7 @@ namespace ET
                         Log.Error($"router connect timeout fail! {localConn} {remoteConn} {routerAddress} {realAddress}");
                         return 0;
                     }
-
+                    
                     lastSendTimer = timeNow;
                     // 发送
                     routerConnector.Connect(sendCache, 0, addressBytes.Length + 13, routerAddress);

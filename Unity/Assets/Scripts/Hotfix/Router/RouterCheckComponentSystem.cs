@@ -23,7 +23,7 @@ namespace ET
             NetComponent netComponent = root.GetComponent<NetComponent>();
             
             // 失败计数策略
-            const int maxTotalFailures = 5; // 总失败次数达到5次后断开连接
+            const int maxTotalFailures = 3; // 总失败次数达到3次后断开连接
             int totalFailures = 0;
             
             // 检查是否达到失败上限并断开Session

@@ -15,8 +15,6 @@ namespace ET
             stream.SetLength(headOffset + Packet.OpcodeLength);
             
             stream.GetBuffer().WriteTo(headOffset, opcode);
-            
-            // 序列化 payload（零拷贝）
             NinoSerializer.Serialize(message, stream);
             stream.Seek(0, SeekOrigin.Begin);
             return opcode;

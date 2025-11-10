@@ -295,6 +295,23 @@ namespace ET
             sb.AppendLine("        };");
             sb.AppendLine();
 
+            // RequestResponseType (Dictionary<Type, Type>)
+            sb.AppendLine("        public static readonly Dictionary<Type, Type> RequestResponseType = new(256)");
+            sb.AppendLine("        {");
+            foreach (var m in messages)
+            {
+                if (m.IsRequest && !string.IsNullOrEmpty(m.ResponseTypeFullName))
+                {
+                    sb.AppendLine($"            {{ typeof({m.TypeFullName}), typeof({m.ResponseTypeFullName}) }},");
+                }
+                else if (m.IsRequest && string.IsNullOrEmpty(m.ResponseTypeFullName))
+                {
+                    sb.AppendLine($"            {{ typeof({m.TypeFullName}), typeof(ET.MessageResponse) }},");
+                }
+            }
+            sb.AppendLine("        };");
+            sb.AppendLine();
+            
             // RequestResponse
             sb.AppendLine("        public static readonly Dictionary<Type, Func<bool,IResponse>> RequestResponse = new(256)");
             sb.AppendLine("        {");
@@ -303,7 +320,6 @@ namespace ET
                 if (m.IsRequest && !string.IsNullOrEmpty(m.ResponseTypeFullName))
                 {
                     sb.AppendLine($"            {{ typeof({m.TypeFullName}), (isFromPool) => ObjectPool.Fetch<{m.ResponseTypeFullName}>(isFromPool) }},");
-                    //sb.AppendLine($"            {{ typeof({m.TypeFullName}), () => ObjectPool.Fetch<{m.ResponseTypeFullName}>() }},");
                 }
                 else if (m.IsRequest && string.IsNullOrEmpty(m.ResponseTypeFullName))
                 {

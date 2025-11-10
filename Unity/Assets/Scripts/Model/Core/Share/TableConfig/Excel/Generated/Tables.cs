@@ -13,6 +13,7 @@ namespace ET
 {
 public partial class Tables
 {
+    public TbGlobalConst TbGlobalConst {get; }
     public TbAIConfig TbAIConfig {get; }
     public TbStartMachineConfig TbStartMachineConfig {get; }
     public TbStartProcessConfig TbStartProcessConfig {get; }
@@ -22,6 +23,7 @@ public partial class Tables
 
     public Tables(System.Func<string, ByteBuf> loader)
     {
+        TbGlobalConst = new TbGlobalConst(loader("tbglobalconst"));
         TbAIConfig = new TbAIConfig(loader("tbaiconfig"));
         TbStartMachineConfig = new TbStartMachineConfig(loader("tbstartmachineconfig"));
         TbStartProcessConfig = new TbStartProcessConfig(loader("tbstartprocessconfig"));
@@ -33,6 +35,7 @@ public partial class Tables
     
     private void ResolveRef()
     {
+        TbGlobalConst.ResolveRef(this);
         TbAIConfig.ResolveRef(this);
         TbStartMachineConfig.ResolveRef(this);
         TbStartProcessConfig.ResolveRef(this);

@@ -35,12 +35,11 @@ namespace ET
             Type handleResponseType = imHandler.GetResponseType();
             if (handleResponseType != null)
             {
-                //TODO 后面想办法，主要是判断request和response类型是否匹配
-                /*Type responseType = MessageOpcodeTypeMap.RequestResponse[messageType];
+                Type responseType = MessageOpcodeTypeMap.RequestResponseType[messageType];
                 if (handleResponseType != responseType)
                 {
                     throw new Exception($"message handler response type error: {messageType.FullName}");
-                }*/
+                }
             }
             
             MessageDispatcherInfo messageDispatcherInfo = new(sceneType, imHandler);

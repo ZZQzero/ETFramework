@@ -63,6 +63,7 @@
     <Compile Include="Assets\Scripts\Model\StateSync\Scene\Wait_CreateMyUnit.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\INumericWatcher.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\IMessageSessionHandler.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbGlobalConst.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\StartZoneConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\NumericType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbStartSceneConfig.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\Session.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\ErrorCode.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\SessionAcceptTimeoutComponent.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\GlobalConst.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageSenderStruct.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbAIConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLockQueueType.cs" />
@@ -88,6 +90,7 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\StartMachineConfigConfigCategory.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Mailbox\MailBoxComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\NetClient\A2NetClient_Message.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\GlobalConstConfigCategory.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\ProcessInnerSender.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Scene\Wait_SceneChangeFinish.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\ISessionMessage.cs" />

@@ -339,6 +339,12 @@ GameRegister.RegisterEntitySystem()
 - 网络连接要正确处理超时和重连
 - Session的创建和销毁要正确管理
 - 网络消息的序列化和反序列化要使用Nino库
+- ### 客户端登录到路由发现流程
+  - **登录入口**：`GlobalConfig.asset` 的 `IPAddress` 传入 `LoginHelper.Login()`，`ClientSenderComponent.LoginAsync` 通过 `ProcessInnerSender.Call` 发送 `Main2NetClient_Login` Actor RPC。
+  - **NetClient 处理**：`Main2NetClient_LoginHandler` 创建 `RouterAddressComponent`，调用 `GetAllRouter()` 生成 `http://{Address}/get_router` 请求。
+  - **HTTP 拉取**：`HttpClientHelper.Get()` 等待 `RouterManager` 返回 `HttpGetRouterResponse`，端口不通会在 `ProcessInnerSender.TIMEOUT_TIME`（默认 3 秒）后触发 RPC 超时。
+  - **服务端初始化**：`EntryEvent2_InitServer` 依据 `StartSceneConfig` 创建场景，`FiberInit_RouterManager` 读取 RouterManager 条目并通过 `HttpComponent` 监听配置端口，`HttpGetRouterHandler` 返回 Router/Realm 列表。
+  - **后续通信**：客户端拿到路由列表后创建 Router/Gate Session 继续登录，Router 节点只负责网络转发，端口需统一由配置表提供。
 
 ## 日志和调试
 - 使用Log.Info、Log.Warning、Log.Error记录日志

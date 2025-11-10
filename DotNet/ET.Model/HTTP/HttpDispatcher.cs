@@ -9,50 +9,69 @@ namespace ET
         
         public void Awake()
         {
-            /*HashSet<Type> types = CodeTypes.Instance.GetTypes(typeof (HttpHandlerAttribute));
-
-            foreach (Type type in types)
-            {
-                object[] attrs = type.GetCustomAttributes(typeof(HttpHandlerAttribute), false);
-                if (attrs.Length == 0)
-                {
-                    continue;
-                }
-
-                HttpHandlerAttribute httpHandlerAttribute = (HttpHandlerAttribute)attrs[0];
-                
-                object obj = Activator.CreateInstance(type);
-
-                IHttpHandler ihttpHandler = obj as IHttpHandler;
-                if (ihttpHandler == null)
-                {
-                    throw new Exception($"HttpHandler handler not inherit IHttpHandler class: {obj.GetType().FullName}");
-                }
-
-                if (!this.dispatcher.TryGetValue(httpHandlerAttribute.Path, out var dict))
-                {
-                    dict = new Dictionary<int, IHttpHandler>();
-                    this.dispatcher.Add(httpHandlerAttribute.Path, dict);
-                }
-                
-                dict.Add(httpHandlerAttribute.SceneType, ihttpHandler);
-            }*/
         }
 
-        public void HttpRegister<T>(int sceneType,string path) where T : IHttpHandler, new()
+        public void HttpRegister<T>(int sceneType, string path) where T : IHttpHandler, new()
         {
-            IHttpHandler http = new T();
-            if (!this.dispatcher.TryGetValue(path, out var dict))
+            if (string.IsNullOrWhiteSpace(path))
             {
-                dict = new Dictionary<int, IHttpHandler>();
-                this.dispatcher.Add(path, dict);
+                throw new ArgumentException("http path is null or empty", nameof(path));
             }
-            dict.Add(sceneType, http);
+
+            IHttpHandler http = new T();
+            this.InternalRegister(sceneType, NormalizePath(path), http);
+        }
+
+        public bool TryGet(int sceneType, string path, out IHttpHandler handler)
+        {
+            handler = default;
+            if (string.IsNullOrEmpty(path))
+            {
+                return false;
+            }
+
+            path = NormalizePath(path);
+            if (!this.dispatcher.TryGetValue(path, out Dictionary<int, IHttpHandler> dict))
+            {
+                return false;
+            }
+
+            return dict.TryGetValue(sceneType, out handler);
         }
 
         public IHttpHandler Get(int sceneType, string path)
         {
-            return this.dispatcher[path][sceneType];
+            if (this.TryGet(sceneType, path, out IHttpHandler handler))
+            {
+                return handler;
+            }
+
+            throw new KeyNotFoundException($"Http handler not found, path: {path}, sceneType: {sceneType}");
+        }
+
+        private void InternalRegister(int sceneType, string path, IHttpHandler handler)
+        {
+            if (!this.dispatcher.TryGetValue(path, out Dictionary<int, IHttpHandler> dict))
+            {
+                dict = new Dictionary<int, IHttpHandler>();
+                this.dispatcher.Add(path, dict);
+            }
+
+            if (!dict.TryAdd(sceneType, handler))
+            {
+                Log.Warning($"Http handler already registered, path: {path}, sceneType: {sceneType}");
+                dict[sceneType] = handler;
+            }
+        }
+
+        private static string NormalizePath(string path)
+        {
+            path = path.Trim();
+            if (!path.StartsWith('/'))
+            {
+                path = "/" + path;
+            }
+            return path;
         }
     }
 }

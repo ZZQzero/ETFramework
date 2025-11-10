@@ -61,6 +61,5 @@ public sealed partial class StartMachineConfig : Luban.BeanBase
         + "}";
     }
 }
-
 }
 

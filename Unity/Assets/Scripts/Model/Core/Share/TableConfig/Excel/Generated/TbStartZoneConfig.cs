@@ -19,13 +19,13 @@ public partial class TbStartZoneConfig
     
     public TbStartZoneConfig(ByteBuf _buf)
     {
-        _dataMap = new System.Collections.Generic.Dictionary<int, StartZoneConfig>();
-        _dataList = new System.Collections.Generic.List<StartZoneConfig>();
-        
-        for(int n = _buf.ReadSize() ; n > 0 ; --n)
+        int n = _buf.ReadSize();
+        _dataMap = new System.Collections.Generic.Dictionary<int, StartZoneConfig>(n);
+        _dataList = new System.Collections.Generic.List<StartZoneConfig>(n);
+        for(int i = n ; i > 0 ; --i)
         {
             StartZoneConfig _v;
-            _v = StartZoneConfig.DeserializeStartZoneConfig(_buf);
+            _v = global::ET.StartZoneConfig.DeserializeStartZoneConfig(_buf);
             _dataList.Add(_v);
             _dataMap.Add(_v.Id, _v);
         }
@@ -34,7 +34,7 @@ public partial class TbStartZoneConfig
     public System.Collections.Generic.Dictionary<int, StartZoneConfig> DataMap => _dataMap;
     public System.Collections.Generic.List<StartZoneConfig> DataList => _dataList;
 
-    public StartZoneConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : null;
+    public StartZoneConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : default;
     public StartZoneConfig Get(int key) => _dataMap[key];
     public StartZoneConfig this[int key] => _dataMap[key];
 

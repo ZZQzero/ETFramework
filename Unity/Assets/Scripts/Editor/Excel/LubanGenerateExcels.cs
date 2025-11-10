@@ -59,7 +59,9 @@ public class LubanGenerateExcels : MonoBehaviour
     {
         string csFilePath = Path.Combine(Application.dataPath, @"Scripts/Model/Core/Share/TableConfig/Excel/Generated");
         string proxyTemplateFilePath = Path.Combine(Application.dataPath.Replace("Unity/Assets",""), @"Config\TableConfigCategoryTemp.template");
+        string proxyConstTemplateFilePath = Path.Combine(Application.dataPath.Replace("Unity/Assets",""), @"Config\TableConstConfigCategoryTemp.template");
         string templateContent = File.ReadAllText(proxyTemplateFilePath);
+        string templateConstContent = File.ReadAllText(proxyConstTemplateFilePath);
         string templateOutputPath = Path.Combine(Application.dataPath, @"Scripts\Model\Core\Share\TableConfig\Excel\Category");
         string templateOutputFileName = "#Name#ConfigCategory.cs";
         DirectoryInfo dirInfo = new DirectoryInfo(csFilePath);
@@ -72,11 +74,26 @@ public class LubanGenerateExcels : MonoBehaviour
         {
             // 获取文件名
             string fileName = fileInfo.Name;
-            if (fileName.StartsWith("Tb") && fileName.EndsWith(".cs") && !fileName.Contains("TableData"))
+            if (fileName.StartsWith("Tb") && fileName.EndsWith(".cs") && !fileName.Contains("Const"))
             {
                 string name = fileName.Replace("Tb","").Replace(".cs", "");
                 
                 string outputContent = templateContent.Replace("#Name#", name);
+                string outputFileName = templateOutputFileName.Replace("#Name#", name);
+                string outputPath = Path.Combine(templateOutputPath, outputFileName);
+
+                if (!File.Exists(outputPath))
+                {
+                    File.Create(outputPath).Dispose();
+                }
+                File.WriteAllText(outputPath, outputContent, Encoding.UTF8);
+                Debug.Log($"Generate TDProxy File :{outputFileName}");
+            }
+            else if(fileName.StartsWith("TbGlobal") && fileName.EndsWith(".cs") && !fileName.Contains("TableData"))
+            {
+                string name = fileName.Replace("Tb","").Replace(".cs", "");
+                
+                string outputContent = templateConstContent.Replace("#Name#", name);
                 string outputFileName = templateOutputFileName.Replace("#Name#", name);
                 string outputPath = Path.Combine(templateOutputPath, outputFileName);
 

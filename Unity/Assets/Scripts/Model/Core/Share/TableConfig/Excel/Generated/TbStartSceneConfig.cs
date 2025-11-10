@@ -19,13 +19,13 @@ public partial class TbStartSceneConfig
     
     public TbStartSceneConfig(ByteBuf _buf)
     {
-        _dataMap = new System.Collections.Generic.Dictionary<int, StartSceneConfig>();
-        _dataList = new System.Collections.Generic.List<StartSceneConfig>();
-        
-        for(int n = _buf.ReadSize() ; n > 0 ; --n)
+        int n = _buf.ReadSize();
+        _dataMap = new System.Collections.Generic.Dictionary<int, StartSceneConfig>(n);
+        _dataList = new System.Collections.Generic.List<StartSceneConfig>(n);
+        for(int i = n ; i > 0 ; --i)
         {
             StartSceneConfig _v;
-            _v = StartSceneConfig.DeserializeStartSceneConfig(_buf);
+            _v = global::ET.StartSceneConfig.DeserializeStartSceneConfig(_buf);
             _dataList.Add(_v);
             _dataMap.Add(_v.Id, _v);
         }
@@ -34,7 +34,7 @@ public partial class TbStartSceneConfig
     public System.Collections.Generic.Dictionary<int, StartSceneConfig> DataMap => _dataMap;
     public System.Collections.Generic.List<StartSceneConfig> DataList => _dataList;
 
-    public StartSceneConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : null;
+    public StartSceneConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : default;
     public StartSceneConfig Get(int key) => _dataMap[key];
     public StartSceneConfig this[int key] => _dataMap[key];
 

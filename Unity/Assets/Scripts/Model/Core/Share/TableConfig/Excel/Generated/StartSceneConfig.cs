@@ -73,6 +73,5 @@ public sealed partial class StartSceneConfig : Luban.BeanBase
         + "}";
     }
 }
-
 }
 

@@ -79,6 +79,5 @@ public sealed partial class UnitConfig : Luban.BeanBase
         + "}";
     }
 }
-
 }
 

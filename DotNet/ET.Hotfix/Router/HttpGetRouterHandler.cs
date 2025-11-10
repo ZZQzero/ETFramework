@@ -39,15 +39,10 @@ namespace ET
                 return; // don't continue to serialization
             }
 
-            // Binary response for MemoryPack
-            response.ContentType = "application/octet-stream";
-            response.StatusCode = (int)HttpStatusCode.OK;
-
             try
             {
                 byte[] bytes = NinoSerializer.Serialize(httpGetRouterResponse);
-                response.ContentLength64 = bytes.Length;
-                await response.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+                await HttpHelper.ResponseBinary(response, HttpStatusCode.OK, bytes, "application/octet-stream");
             }
             catch (Exception e)
             {
@@ -57,11 +52,7 @@ namespace ET
                 {
                     if (response.OutputStream.CanWrite)
                     {
-                        response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                        byte[] err = "Internal Server Error"u8.ToArray();
-                        response.ContentType = "text/plain";
-                        response.ContentLength64 = err.Length;
-                        await response.OutputStream.WriteAsync(err, 0, err.Length);
+                        await HttpHelper.ResponseText(response, HttpStatusCode.InternalServerError, "Internal Server Error");
                     }
                 }
                 catch (Exception inner)

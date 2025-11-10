@@ -19,13 +19,13 @@ public partial class TbAIConfig
     
     public TbAIConfig(ByteBuf _buf)
     {
-        _dataMap = new System.Collections.Generic.Dictionary<int, AIConfig>();
-        _dataList = new System.Collections.Generic.List<AIConfig>();
-        
-        for(int n = _buf.ReadSize() ; n > 0 ; --n)
+        int n = _buf.ReadSize();
+        _dataMap = new System.Collections.Generic.Dictionary<int, AIConfig>(n);
+        _dataList = new System.Collections.Generic.List<AIConfig>(n);
+        for(int i = n ; i > 0 ; --i)
         {
             AIConfig _v;
-            _v = AIConfig.DeserializeAIConfig(_buf);
+            _v = global::ET.AIConfig.DeserializeAIConfig(_buf);
             _dataList.Add(_v);
             _dataMap.Add(_v.Id, _v);
         }
@@ -34,7 +34,7 @@ public partial class TbAIConfig
     public System.Collections.Generic.Dictionary<int, AIConfig> DataMap => _dataMap;
     public System.Collections.Generic.List<AIConfig> DataList => _dataList;
 
-    public AIConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : null;
+    public AIConfig GetOrDefault(int key) => _dataMap.TryGetValue(key, out var v) ? v : default;
     public AIConfig Get(int key) => _dataMap[key];
     public AIConfig this[int key] => _dataMap[key];
 

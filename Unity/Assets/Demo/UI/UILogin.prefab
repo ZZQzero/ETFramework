@@ -89,6 +89,7 @@ GameObject:
   m_Component:
   - component: {fileID: 224438795553994780}
   - component: {fileID: 2714445701061781044}
+  - component: {fileID: 2302591876715140349}
   m_Layer: 5
   m_Name: UILogin
   m_TagString: Untagged
@@ -133,6 +134,18 @@ MonoBehaviour:
   accountInputField: {fileID: 114341495829030012}
   passwordInputField: {fileID: 114663064108016614}
   loginBtnButton: {fileID: 114630311973242952}
+--- !u!114 &2302591876715140349
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1386170326414932}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b48f97f967374c0ba051450c551d6986, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1568484768885604
 GameObject:
   m_ObjectHideFlags: 0

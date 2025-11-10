@@ -10,12 +10,12 @@ namespace ET
             MessageDispatcher.Instance.RegisterMessage<A2NetClient_RequestHandler>(SceneType.NetClient);
             MessageDispatcher.Instance.RegisterMessage<Main2NetClient_LoginHandler>(SceneType.NetClient);
             MessageDispatcher.Instance.RegisterMessage<NetClient2Main_SessionDisposeHandler>(SceneType.All);
-            MessageDispatcher.Instance.RegisterMessage<M2C_PathfindingResultHandler>(SceneType.StateSync);
-            MessageDispatcher.Instance.RegisterMessage<M2C_CreateMyUnitHandler>(SceneType.StateSync);
-            MessageDispatcher.Instance.RegisterMessage<M2C_CreateUnitsHandler>(SceneType.StateSync);
-            MessageDispatcher.Instance.RegisterMessage<M2C_RemoveUnitsHandler>(SceneType.StateSync);
-            MessageDispatcher.Instance.RegisterMessage<M2C_StartSceneChangeHandler>(SceneType.StateSync);
-            MessageDispatcher.Instance.RegisterMessage<M2C_StopHandler>(SceneType.StateSync);
+            MessageDispatcher.Instance.RegisterMessage<M2C_PathfindingResultHandler>(SceneType.Main);
+            MessageDispatcher.Instance.RegisterMessage<M2C_CreateMyUnitHandler>(SceneType.Main);
+            MessageDispatcher.Instance.RegisterMessage<M2C_CreateUnitsHandler>(SceneType.Main);
+            MessageDispatcher.Instance.RegisterMessage<M2C_RemoveUnitsHandler>(SceneType.Main);
+            MessageDispatcher.Instance.RegisterMessage<M2C_StartSceneChangeHandler>(SceneType.Main);
+            MessageDispatcher.Instance.RegisterMessage<M2C_StopHandler>(SceneType.Main);
 #endif
 
 #if DOTNET

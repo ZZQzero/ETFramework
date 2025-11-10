@@ -20,7 +20,6 @@ namespace ET
         public const int Robot = PackageType.StateSync * 1000 + 3;
 
         // 客户端
-        public const int StateSync = PackageType.StateSync * 1000 + 25;
         public const int Current = PackageType.StateSync * 1000 + 21;
         public const int StateSyncView = PackageType.StateSync * 1000 + 24;
         

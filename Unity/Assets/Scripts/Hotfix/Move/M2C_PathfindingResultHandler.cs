@@ -1,6 +1,5 @@
 ﻿namespace ET
 {
-	[MessageHandler(SceneType.StateSync)]
 	public class M2C_PathfindingResultHandler : MessageHandler<Scene, M2C_PathfindingResult>
 	{
 		protected override async ETTask Run(Scene root, M2C_PathfindingResult message)

@@ -2,7 +2,6 @@
 
 namespace ET
 {
-	[MessageHandler(SceneType.StateSync)]
 	public class M2C_StopHandler : MessageHandler<Scene, M2C_Stop>
 	{
 		protected override async ETTask Run(Scene root, M2C_Stop message)

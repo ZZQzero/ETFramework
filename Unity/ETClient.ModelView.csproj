@@ -41,7 +41,7 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@34f567815f5d\Runtime\Nino.Generator.dll" />
+    <Analyzer Include="G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@8a23a2cfe186\Runtime\Nino.Generator.dll" />
     <Analyzer Include="G:\UnityProject\ETFramework\Unity\Assets\Plugins\ET.SourceGenerator.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
@@ -410,10 +410,10 @@
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.testtools.codecoverage@205a02cbcb39\lib\ReportGenerator\ReportGeneratorMerged.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@34f567815f5d\Runtime\ThirdParty\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@8a23a2cfe186\Runtime\ThirdParty\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
     <Reference Include="Nino.Core">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@34f567815f5d\Runtime\Nino.Core.dll</HintPath>
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@8a23a2cfe186\Runtime\Nino.Core.dll</HintPath>
     </Reference>
     <Reference Include="dnlib">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.code-philosophy.hybridclr@01754c8fb47b\Plugins\dnlib.dll</HintPath>

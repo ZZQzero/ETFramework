@@ -88,7 +88,7 @@ public class ETSceneNodeGraph: EditorWindow
         foreach (var fiber in fibers)
         {
             NodeData nodeData = new NodeData();
-            var nodeName = $"{fiber.Value.Root.GetType().Name}-{fiber.Value.Root.Id}"; 
+            var nodeName = $"{fiber.Value.Root.GetType().Name}-{fiber.Value.Root.Id}-{fiber.Value.Root.Id}-{fiber.Value.Root.InstanceId}"; 
             if(maxIndexX != 0)
             {
                 nodeData.Index_X = maxIndexX;
@@ -120,7 +120,7 @@ public class ETSceneNodeGraph: EditorWindow
         {
             foreach (var component in components)
             {
-                var nodeName = $"{component.Value.GetType().Name}";
+                var nodeName = $"{component.Value.GetType().Name} - {component.Value.Id} - {component.Value.InstanceId}";
                 nodeData.StartPos = startPos + new Vector2(nodeData.OffsetX * nodeData.Index_X, nodeData.OffsetY * nodeData.Index_Y);
                 ETNode etNode = new(nodeData.StartPos, nodeData.NodeSize, nodeName, Color.green);
                 nodeData.NodeList.Add(etNode);
@@ -167,7 +167,7 @@ public class ETSceneNodeGraph: EditorWindow
         {
             foreach (var component in components)
             {
-                var nodeName = $"{component.Value.GetType().Name}-Child";
+                var nodeName = $"{component.Value.GetType().Name}-Child-{component.Value.Id} - {component.Value.InstanceId}";
                 nodeData.StartPos = startPos + new Vector2(nodeData.OffsetX * nodeData.Index_X, nodeData.OffsetY * nodeData.Index_Y);
                 ETNode etNode = new(nodeData.StartPos,nodeData.NodeSize, nodeName, Color.green);
                 nodeData.NodeList.Add(etNode);

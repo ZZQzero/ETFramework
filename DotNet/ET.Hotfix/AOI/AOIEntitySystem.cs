@@ -92,6 +92,12 @@ namespace ET
         // enter进入self视野
         public static void EnterSight(this AOIEntity self, AOIEntity enter)
         {
+            // 检查enter是否已被销毁
+            if (enter == null || enter.IsDisposed)
+            {
+                return;
+            }
+            
             // 有可能之前在Enter，后来出了Enter还在LeaveCell，这样仍然没有删除，继续进来Enter，这种情况不需要处理
             if (self.SeeUnits.ContainsKey(enter.Id))
             {
@@ -140,6 +146,12 @@ namespace ET
         // leave离开self视野
         public static void LeaveSight(this AOIEntity self, AOIEntity leave)
         {
+            // 检查leave是否已被销毁
+            if (leave == null || leave.IsDisposed)
+            {
+                return;
+            }
+            
             if (self.Id == leave.Id)
             {
                 return;

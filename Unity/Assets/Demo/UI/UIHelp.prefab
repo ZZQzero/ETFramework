@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6796907679107340876}
   - component: {fileID: 4593297500709526083}
   m_Layer: 5
-  m_Name: '@UIHelp'
+  m_Name: UIHelp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -76,7 +76,7 @@ GameObject:
   - component: {fileID: 7729256126041248981}
   - component: {fileID: 476678119492089194}
   m_Layer: 5
-  m_Name: Text
+  m_Name: UIHelpText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

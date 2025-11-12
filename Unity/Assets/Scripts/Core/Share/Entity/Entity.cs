@@ -461,39 +461,10 @@ namespace ET
         {
             if (this.IsDisposed) return;
 
-            IsRegister = false;
-            InstanceId = 0;
-            Id = 0;
-
-            // 清理子级
-            if (this.children != null)
-            {
-                var keys = new List<long>(children.Keys);
-                foreach (var child in keys)
-                {
-                    RemoveChild(child);
-                }
-            }
-
-            // 清理组件
-            if (this.components != null)
-            {
-                var keys = new List<long>(components.Keys);
-                foreach (var component in keys)
-                {
-                    RemoveComponent(component);
-                }
-            }
-
-            // 触发Destroy事件
-            if (this is IDestroy)
-            {
-                EntitySystemSingleton.Instance.Destroy(this);
-            }
-
-            this.iScene = null;
-
-            // 从父级移除
+            // 立即标记为已销毁，防止重入（parent.RemoveChild会调用RecycleEntity导致再次进入Dispose）
+            this.InstanceId = 0;
+    
+            // 从父级移除（此时Id和TypeId都还有效）
             if (this.parent?.IsDisposed == false)
             {
                 if (this.IsComponent)
@@ -506,6 +477,39 @@ namespace ET
                 }
             }
 
+            // 清空其他标识
+            IsRegister = false;
+            Id = 0;
+
+            // 清理子级
+            if (this.children != null && this.children.Count > 0)
+            {
+                long[] childKeys = new long[this.children.Count];
+                this.children.Keys.CopyTo(childKeys, 0);
+                foreach (long childId in childKeys)
+                {
+                    RemoveChild(childId);
+                }
+            }
+
+            // 清理组件
+            if (this.components != null && this.components.Count > 0)
+            {
+                long[] componentKeys = new long[this.components.Count];
+                this.components.Keys.CopyTo(componentKeys, 0);
+                foreach (long typeId in componentKeys)
+                {
+                    RemoveComponent(typeId);
+                }
+            }
+
+            // 触发Destroy事件
+            if (this is IDestroy)
+            {
+                EntitySystemSingleton.Instance.Destroy(this);
+            }
+
+            this.iScene = null;
             this.parent = null;
             // 重置状态
             this.status = EntityStatus.None;

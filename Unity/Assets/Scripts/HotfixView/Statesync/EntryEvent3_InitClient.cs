@@ -8,7 +8,6 @@ namespace ET
     {
         protected override async ETTask Run(Scene root, EntryEvent3 args)
         {
-            root.AddComponent<GlobalComponent>();
             root.AddComponent<ResourcesLoaderComponent>();
             root.AddComponent<PlayerComponent>();
             root.AddComponent<CurrentScenesComponent>();

@@ -20,7 +20,7 @@ namespace ET
 				toMap = "Map1";
 			}
 
-			StartSceneConfig startSceneConfig = StartSceneConfigManager.Instance.GetBySceneName(unit.Fiber().Zone, toMap);
+			StartSceneTable startSceneConfig = StartSceneConfigManager.Instance.GetBySceneName(unit.Fiber().Zone, toMap);
 			
 			TransferHelper.TransferAtFrameFinish(unit, startSceneConfig.ActorId, toMap).NoContext();
 		}

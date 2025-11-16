@@ -2,8 +2,7 @@
 
 namespace ET
 {
-    [Invoke(SceneType.Realm)]
-    public class FiberInit_Realm: AInvokeHandler<FiberInit, ETTask>
+    public class FiberInit_Realm : AInvokeHandler<FiberInit, ETTask>
     {
         public override async ETTask Handle(FiberInit fiberInit)
         {
@@ -13,7 +12,8 @@ namespace ET
             root.AddComponent<CoroutineLockComponent>();
             root.AddComponent<ProcessInnerSender>();
             root.AddComponent<MessageSender>();
-            StartSceneConfig startSceneConfig = StartSceneConfigConfigCategory.Instance.Get(root.Fiber.Id);
+            root.AddComponent<DBManagerComponent>();
+            StartSceneTable startSceneConfig = StartSceneConfig.Instance.Get(root.Fiber.Id);
             root.AddComponent<NetComponent, IKcpTransport>(new UdpTransport(startSceneConfig.InnerIPPort));
 
             await ETTask.CompletedTask;

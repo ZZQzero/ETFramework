@@ -9,9 +9,9 @@ namespace ET
             self.ConfigId = configId;
         }
 
-        public static UnitConfig Config(this Unit self)
+        public static UnitTable Config(this Unit self)
         {
-            return UnitConfigConfigCategory.Instance.Get(self.ConfigId);
+            return UnitConfig.Instance.Get(self.ConfigId);
         }
         
         public static int Type(this Unit self)

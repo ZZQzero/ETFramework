@@ -63,7 +63,7 @@ public class LubanGenerateExcels : MonoBehaviour
         string templateContent = File.ReadAllText(proxyTemplateFilePath);
         string templateConstContent = File.ReadAllText(proxyConstTemplateFilePath);
         string templateOutputPath = Path.Combine(Application.dataPath, @"Scripts\Model\Core\Share\TableConfig\Excel\Category");
-        string templateOutputFileName = "#Name#ConfigCategory.cs";
+        string templateOutputFileName = "#Name#Config.cs";
         DirectoryInfo dirInfo = new DirectoryInfo(csFilePath);
 
         if (!Directory.Exists(templateOutputPath))
@@ -76,10 +76,11 @@ public class LubanGenerateExcels : MonoBehaviour
             string fileName = fileInfo.Name;
             if (fileName.StartsWith("Tb") && fileName.EndsWith(".cs") && !fileName.Contains("Const"))
             {
-                string name = fileName.Replace("Tb","").Replace(".cs", "");
-                
-                string outputContent = templateContent.Replace("#Name#", name);
-                string outputFileName = templateOutputFileName.Replace("#Name#", name);
+                string name = fileName.Replace("Tb","").Replace(".cs", "Table");
+                string className = fileName.Replace("Tb","").Replace(".cs", "");
+                string tableName = fileName.Replace(".cs", "");
+                string outputContent = templateContent.Replace("#Name#", name).Replace("#FileName#", className).Replace("#Table#", tableName);
+                string outputFileName = templateOutputFileName.Replace("#Name#", className);
                 string outputPath = Path.Combine(templateOutputPath, outputFileName);
 
                 if (!File.Exists(outputPath))
@@ -91,10 +92,11 @@ public class LubanGenerateExcels : MonoBehaviour
             }
             else if(fileName.StartsWith("TbGlobal") && fileName.EndsWith(".cs") && !fileName.Contains("TableData"))
             {
-                string name = fileName.Replace("Tb","").Replace(".cs", "");
-                
-                string outputContent = templateConstContent.Replace("#Name#", name);
-                string outputFileName = templateOutputFileName.Replace("#Name#", name);
+                string name = fileName.Replace("Tb","").Replace(".cs", "Table");
+                string className = fileName.Replace("Tb","").Replace(".cs", "");
+                string tableName = fileName.Replace(".cs", "");
+                string outputContent = templateConstContent.Replace("#Name#", name).Replace("#FileName#", className).Replace("#Table#", tableName);
+                string outputFileName = templateOutputFileName.Replace("#Name#", className);
                 string outputPath = Path.Combine(templateOutputPath, outputFileName);
 
                 if (!File.Exists(outputPath))

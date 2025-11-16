@@ -14,34 +14,34 @@ namespace ET
 public partial class Tables
 {
     public TbGlobalConst TbGlobalConst {get; }
-    public TbAIConfig TbAIConfig {get; }
-    public TbStartMachineConfig TbStartMachineConfig {get; }
-    public TbStartProcessConfig TbStartProcessConfig {get; }
-    public TbStartSceneConfig TbStartSceneConfig {get; }
-    public TbStartZoneConfig TbStartZoneConfig {get; }
-    public TbUnitConfig TbUnitConfig {get; }
+    public TbAIRobot TbAIRobot {get; }
+    public TbStartMachine TbStartMachine {get; }
+    public TbStartZone TbStartZone {get; }
+    public TbStartProcess TbStartProcess {get; }
+    public TbStartScene TbStartScene {get; }
+    public TbUnit TbUnit {get; }
 
     public Tables(System.Func<string, ByteBuf> loader)
     {
         TbGlobalConst = new TbGlobalConst(loader("tbglobalconst"));
-        TbAIConfig = new TbAIConfig(loader("tbaiconfig"));
-        TbStartMachineConfig = new TbStartMachineConfig(loader("tbstartmachineconfig"));
-        TbStartProcessConfig = new TbStartProcessConfig(loader("tbstartprocessconfig"));
-        TbStartSceneConfig = new TbStartSceneConfig(loader("tbstartsceneconfig"));
-        TbStartZoneConfig = new TbStartZoneConfig(loader("tbstartzoneconfig"));
-        TbUnitConfig = new TbUnitConfig(loader("tbunitconfig"));
+        TbAIRobot = new TbAIRobot(loader("tbairobot"));
+        TbStartMachine = new TbStartMachine(loader("tbstartmachine"));
+        TbStartZone = new TbStartZone(loader("tbstartzone"));
+        TbStartProcess = new TbStartProcess(loader("tbstartprocess"));
+        TbStartScene = new TbStartScene(loader("tbstartscene"));
+        TbUnit = new TbUnit(loader("tbunit"));
         ResolveRef();
     }
     
     private void ResolveRef()
     {
         TbGlobalConst.ResolveRef(this);
-        TbAIConfig.ResolveRef(this);
-        TbStartMachineConfig.ResolveRef(this);
-        TbStartProcessConfig.ResolveRef(this);
-        TbStartSceneConfig.ResolveRef(this);
-        TbStartZoneConfig.ResolveRef(this);
-        TbUnitConfig.ResolveRef(this);
+        TbAIRobot.ResolveRef(this);
+        TbStartMachine.ResolveRef(this);
+        TbStartZone.ResolveRef(this);
+        TbStartProcess.ResolveRef(this);
+        TbStartScene.ResolveRef(this);
+        TbUnit.ResolveRef(this);
     }
 }
 

@@ -17,7 +17,6 @@ namespace GameUI
 		{
 			LoginHelper.Login(
 				root, 
-				globalComponent.GlobalConfig.IPAddress,
 				accountInputField.text, 
 				passwordInputField.text).NoContext();
 		}
@@ -28,7 +27,6 @@ namespace GameUI
 			if (Data is Scene scene)
 			{
 				root = scene;
-				globalComponent = scene.GetComponent<GlobalComponent>();
 			}
 		}
 

@@ -11,8 +11,6 @@ namespace GameUI
 		[SerializeField] private UnityEngine.UI.InputField passwordInputField;
 		[SerializeField] private UnityEngine.UI.Button loginBtnButton;
 		#endregion Auto Generate Code
-
-		private GlobalComponent globalComponent;
 		private Scene root;
 	}
 }

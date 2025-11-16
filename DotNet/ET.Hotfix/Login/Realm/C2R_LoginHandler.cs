@@ -10,7 +10,7 @@ namespace ET
 		{
 			const int UserZone = 3; // 这里一般会有创角，选择区服，demo就不做这个操作了，直接放在3区
 			// 随机分配一个Gate
-			StartSceneConfig config = RealmGateAddressHelper.GetGate(UserZone, request.Account);
+			StartSceneTable config = RealmGateAddressHelper.GetGate(UserZone, request.Account);
 			Log.Debug($"gate address: {config}");
 			
 			// 向gate请求一个key,客户端可以拿着这个key连接gate

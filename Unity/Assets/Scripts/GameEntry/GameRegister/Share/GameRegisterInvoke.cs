@@ -22,6 +22,7 @@ namespace ET
             EventSystem.Instance.RegisterInvoke<FiberInit_Location>(SceneType.Location);
             EventSystem.Instance.RegisterInvoke<FiberInit_Gate>(SceneType.Gate);
             EventSystem.Instance.RegisterInvoke<FiberInit_Realm>(SceneType.Realm);
+            EventSystem.Instance.RegisterInvoke<FiberInit_LoginCenter>(SceneType.LoginCenter);
             EventSystem.Instance.RegisterInvoke<FiberInit_NetInner>(SceneType.NetInner);
             EventSystem.Instance.RegisterInvoke<FiberInit_Router>(SceneType.Router);
             EventSystem.Instance.RegisterInvoke<FiberInit_RouterManager>(SceneType.RouterManager);

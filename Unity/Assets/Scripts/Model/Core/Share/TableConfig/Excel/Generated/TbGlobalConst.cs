@@ -15,31 +15,22 @@ namespace ET
 public partial class TbGlobalConst
 {
 
-     private readonly GlobalConst _data;
+     private readonly GlobalConstTable _data;
 
-     public GlobalConst Data => _data;
+     public GlobalConstTable Data => _data;
 
     public TbGlobalConst(ByteBuf _buf)
     {
         int n = _buf.ReadSize();
         if (n != 1) throw new SerializationException("table mode=one, but size != 1");
-        _data = global::ET.GlobalConst.DeserializeGlobalConst(_buf);
+        _data = global::ET.GlobalConstTable.DeserializeGlobalConstTable(_buf);
     }
 
 
     /// <summary>
-    /// 参数1
+    /// 倍率
     /// </summary>
-     public int X1 => _data.X1;
-    /// <summary>
-    /// 道具
-    /// </summary>
-     public int X2 => _data.X2;
-     public int X3 => _data.X3;
-     public int X4 => _data.X4;
-     public int X5 => _data.X5;
-     public int X6 => _data.X6;
-     public System.Collections.Generic.List<int> X7 => _data.X7;
+     public int Seed => _data.Seed;
     
     public void ResolveRef(Tables tables)
     {

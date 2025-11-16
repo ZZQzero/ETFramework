@@ -6,11 +6,11 @@ namespace ET
 {
     public static partial class WatcherHelper
     {
-        public static StartMachineConfig GetThisMachineConfig()
+        public static StartMachineTable GetThisMachineConfig()
         {
             string[] localIP = NetworkHelper.GetAddressIPs();
-            StartMachineConfig startMachineConfig = null;
-            foreach (StartMachineConfig config in StartMachineConfigConfigCategory.Instance.GetDataList())
+            StartMachineTable startMachineConfig = null;
+            foreach (StartMachineTable config in StartMachineConfig.Instance.GetDataList())
             {
                 if (!WatcherHelper.IsThisMachine(config.InnerIP, localIP))
                 {
@@ -39,7 +39,7 @@ namespace ET
         
         public static System.Diagnostics.Process StartProcess(int processId, int createScenes = 0)
         {
-            StartProcessConfig startProcessConfig = StartProcessConfigConfigCategory.Instance.Get(processId);
+            StartProcessTable startProcessConfig = StartProcessConfig.Instance.Get(processId);
             const string exe = "dotnet";
             string arguments = $"App.dll" + 
                     $" --Process={startProcessConfig.Id}" +

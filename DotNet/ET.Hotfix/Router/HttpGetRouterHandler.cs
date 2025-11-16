@@ -12,14 +12,14 @@ namespace ET
         public async ETTask Handle(Scene scene, HttpListenerContext context)
         {
             HttpGetRouterResponse httpGetRouterResponse = HttpGetRouterResponse.Create();
-            List<StartSceneConfig> realms = StartSceneConfigManager.Instance.GetBySceneType(SceneType.Realm);
-            foreach (StartSceneConfig startSceneConfig in realms)
+            List<StartSceneTable> realms = StartSceneConfigManager.Instance.GetBySceneType(SceneType.Realm);
+            foreach (StartSceneTable startSceneConfig in realms)
             {
                 httpGetRouterResponse.Realms.Add(startSceneConfig.InnerIPPort.ToString());
             }
-            foreach (StartSceneConfig startSceneConfig in StartSceneConfigManager.Instance.GetBySceneType(SceneType.Router))
+            foreach (StartSceneTable startSceneConfig in StartSceneConfigManager.Instance.GetBySceneType(SceneType.Router))
             {
-                httpGetRouterResponse.Routers.Add($"{startSceneConfig.StartProcessConfig.OuterIP}:{startSceneConfig.Port}");
+                httpGetRouterResponse.Routers.Add($"{startSceneConfig.ProcessConfig.OuterIP}:{startSceneConfig.Port}");
             }
 
             HttpListenerRequest request = context.Request;

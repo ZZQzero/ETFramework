@@ -14,7 +14,7 @@
 			// 这里可以从DB中加载Unit
 			Unit unit = UnitFactory.Create(scene, player.Id, UnitType.Player);
 			
-			StartSceneConfig startSceneConfig = StartSceneConfigManager.Instance.GetBySceneName(session.Zone(), "Map1");
+			StartSceneTable startSceneConfig = StartSceneConfigManager.Instance.GetBySceneName(session.Zone(), "Map1");
 			response.MyId = player.Id;
 			Log.Debug("C2G_EnterMapHandler");
 			// 等到一帧的最后面再传送，先让G2C_EnterMap返回，否则传送消息可能比G2C_EnterMap还早

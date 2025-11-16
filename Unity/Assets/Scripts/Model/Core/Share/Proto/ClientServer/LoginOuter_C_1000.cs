@@ -72,6 +72,9 @@ namespace ET
         [NinoMember(3)]
         public long PlayerId { get; set; }
 
+        [NinoMember(4)]
+        public string Token { get; set; }
+
         public override void Dispose()
         {
             if (!this.IsFromPool)
@@ -83,6 +86,7 @@ namespace ET
             this.Error = default;
             this.Message = default;
             this.PlayerId = default;
+            this.Token = default;
 
             ObjectPool.Recycle(this);
         }
@@ -310,6 +314,83 @@ namespace ET
         }
     }
 
+    [NinoType(false)]
+    [Message(LoginOuter.C2R_LoginAccount)]
+    [ResponseType(nameof(R2C_LoginAccount))]
+    public partial class C2R_LoginAccount : MessageObject, ISessionRequest
+    {
+        public static C2R_LoginAccount Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<C2R_LoginAccount>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int RpcId { get; set; }
+
+        /// <summary>
+        /// 帐号
+        /// </summary>
+        [NinoMember(1)]
+        public string Account { get; set; }
+
+        /// <summary>
+        /// 密码
+        /// </summary>
+        [NinoMember(2)]
+        public string Password { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RpcId = default;
+            this.Account = default;
+            this.Password = default;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [NinoType(false)]
+    [Message(LoginOuter.R2C_LoginAccount)]
+    public partial class R2C_LoginAccount : MessageObject, ISessionResponse
+    {
+        public static R2C_LoginAccount Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<R2C_LoginAccount>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int RpcId { get; set; }
+
+        [NinoMember(1)]
+        public int Error { get; set; }
+
+        [NinoMember(2)]
+        public string Message { get; set; }
+
+        [NinoMember(3)]
+        public string Token { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RpcId = default;
+            this.Error = default;
+            this.Message = default;
+            this.Token = default;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
     public static class LoginOuter
     {
         public const ushort Main2NetClient_Login = 1001;
@@ -320,5 +401,7 @@ namespace ET
         public const ushort R2C_Login = 1006;
         public const ushort C2G_LoginGate = 1007;
         public const ushort G2C_LoginGate = 1008;
+        public const ushort C2R_LoginAccount = 1009;
+        public const ushort R2C_LoginAccount = 1010;
     }
 }

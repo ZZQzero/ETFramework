@@ -32,9 +32,9 @@ namespace ET
                 return;
             }
 
-            var oneAI = AIConfigConfigCategory.Instance.GetDataList().FindAll(id => id.AIConfigId == self.AIConfigId);
+            var oneAI = AIRobotConfig.Instance.GetDataList().FindAll(id => id.AIConfigId == self.AIConfigId);
 
-            foreach (AIConfig aiConfig in oneAI)
+            foreach (AIRobotTable aiConfig in oneAI)
             {
 
                 AAIHandler aaiHandler = AIDispatcherSingle.Instance.Get(aiConfig.Name);

@@ -11,7 +11,7 @@ namespace ET
             root.AddComponent<MailBoxComponent, int>(MailBoxType.UnOrderedMessage);
             root.AddComponent<TimerComponent>();
             root.AddComponent<CoroutineLockComponent>();
-            StartProcessConfig startProcessConfig = StartProcessConfigConfigCategory.Instance.Get(fiberInit.Fiber.Process);
+            StartProcessTable startProcessConfig = StartProcessConfig.Instance.Get(fiberInit.Fiber.Process);
             root.AddComponent<ProcessOuterSender, IPEndPoint>(startProcessConfig.IPEndPoint);
             root.AddComponent<ProcessInnerSender>();
 

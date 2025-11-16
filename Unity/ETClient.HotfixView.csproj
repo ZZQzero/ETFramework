@@ -48,7 +48,6 @@
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\HotfixView\Loader\GlobalComponentSystem.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Statesync\UI\UILobby\LoginFinish_CreateLobbyUI.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Statesync\Unit\AfterUnitCreate_CreateUnitView.cs" />
     <Compile Include="Assets\Scripts\HotfixView\GameUI\UIScriptsGenerate\UILobbyPanelComponent.cs" />

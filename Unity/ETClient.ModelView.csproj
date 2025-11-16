@@ -52,7 +52,6 @@
     <Compile Include="Assets\Scripts\ModelView\YooAssets\ResourcesLoaderComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\Statesync\Client\Opera\OperaComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\Statesync\Client\Unit\GameObjectComponent.cs" />
-    <Compile Include="Assets\Scripts\ModelView\Loader\GlobalComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\GameUI\UIScript\GameUIName.cs" />
     <None Include="Assets\Scripts\ModelView\ETClient.ModelView.asmdef" />
     <Reference Include="UnityEngine">

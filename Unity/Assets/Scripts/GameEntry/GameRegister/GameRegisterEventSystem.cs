@@ -43,7 +43,6 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.RouterConnectorSystem.ET_RouterConnector_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.RouterConnectorSystem.ET_RouterConnector_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.UnitSystem.ET_Unit_int_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.GlobalComponentSystem.ET_GlobalComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.OperaComponentSystem.ET_OperaComponent_ET_Scene_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.OperaComponentSystem.ET_OperaComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.AnimatorComponentSystem.ET_AnimatorComponent_DestroySystem>();

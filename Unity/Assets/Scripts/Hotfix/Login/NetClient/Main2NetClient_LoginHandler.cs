@@ -4,7 +4,6 @@ using System.Net.Sockets;
 
 namespace ET
 {
-    [MessageHandler(SceneType.NetClient)]
     public class Main2NetClient_LoginHandler: MessageHandler<Scene, Main2NetClient_Login, NetClient2Main_Login>
     {
         protected override async ETTask Run(Scene root, Main2NetClient_Login request, NetClient2Main_Login response)
@@ -27,8 +26,22 @@ namespace ET
             
             IPEndPoint realmAddress = routerAddressComponent.GetRealmAddress(account);
 
-
-            R2C_Login r2CLogin;
+            Session session = await netComponent.CreateRouterSession(realmAddress, account, password);
+            C2R_LoginAccount c2RLogin = C2R_LoginAccount.Create();
+            c2RLogin.Account = account;
+            c2RLogin.Password = password;
+            var r2CLoginAccount = (R2C_LoginAccount)await session.Call(c2RLogin);
+            if(r2CLoginAccount.Error == ErrorCode.ERR_Success)
+            {
+                root.AddComponent<SessionComponent>().Session = session;
+            }
+            else
+            {
+                session.Dispose();
+            }
+            response.Token = r2CLoginAccount.Token;
+            response.Error = r2CLoginAccount.Error;
+            /*R2C_Login r2CLogin;
             using (Session session = await netComponent.CreateRouterSession(realmAddress, account, password))
             {
                 C2R_Login c2RLogin = C2R_Login.Create();
@@ -49,7 +62,7 @@ namespace ET
 
             Log.Debug("登陆gate成功!");
 
-            response.PlayerId = g2CLoginGate.PlayerId;
+            response.PlayerId = g2CLoginGate.PlayerId;*/
         }
     }
 }

@@ -10,7 +10,7 @@ namespace ET
         public static void Awake(this WatcherComponent self)
         {
             string[] localIP = NetworkHelper.GetAddressIPs();
-            foreach (StartProcessConfig startProcessConfig in StartProcessConfigConfigCategory.Instance.GetDataList())
+            foreach (StartProcessTable startProcessConfig in StartProcessConfig.Instance.GetDataList())
             {
                 if (!WatcherHelper.IsThisMachine(startProcessConfig.InnerIP, localIP))
                 {

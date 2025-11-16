@@ -75,7 +75,6 @@
         <Compile Include="..\..\Unity\Assets\Scripts\Hotfix\Login\Share\**\*.cs">
             <Link>Login\Share\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
-        <Folder Include="Login\" />
     </ItemGroup>
 
     <!-- sourcegenerator use -->

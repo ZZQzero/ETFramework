@@ -19,6 +19,7 @@ message NetClient2Main_Login // IResponse
 	string Message = 3;
 
 	int64 PlayerId = 4;
+	string Token = 5;
 }
 
 // ResponseType G2C_Ping
@@ -67,4 +68,21 @@ message G2C_LoginGate // ISessionResponse
 	int32 Error = 2;
 	string Message = 3;
 	int64 PlayerId = 4;
+}
+
+// ResponseType R2C_LoginAccount
+message C2R_LoginAccount // ISessionRequest
+{
+    int32 RpcId = 1;
+    string  Account = 2;  // 帐号
+    string  Password = 3;  // 密码
+}
+
+message R2C_LoginAccount // ISessionResponse
+{
+    int32 RpcId = 1;
+    int32 Error = 2;
+    string Message = 3;
+
+    string Token = 4;
 }

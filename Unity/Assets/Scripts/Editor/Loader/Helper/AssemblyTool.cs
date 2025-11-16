@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using UnityEditor;
 using UnityEditor.Build.Player;
+using UnityEditor.Callbacks;
 using UnityEditor.Compilation;
 using UnityEngine;
 
@@ -28,7 +29,6 @@ namespace ET
         static void Initialize()
         {
             //unitySynchronizationContext = SynchronizationContext.Current;
-            CompilationPipeline.compilationFinished += OnCompilationFinished;
             CompilationPipeline.compilationStarted += OnCompilationStarted;
         }
 
@@ -40,7 +40,8 @@ namespace ET
             }
         }
 
-        private static void OnCompilationFinished(object obj)
+        [DidReloadScripts]
+        public static void OnAfterAssemblyReload()
         {
             GenerateEntity();
         }

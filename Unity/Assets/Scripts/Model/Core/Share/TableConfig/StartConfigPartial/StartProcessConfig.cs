@@ -3,11 +3,11 @@ using System.Net;
 namespace ET
 {
     [EnableClass]
-    public partial class StartProcessConfig
+    public partial class StartProcessTable
     {
-        public string InnerIP => this.StartMachineConfig.InnerIP;
+        public string InnerIP => this.MachineConfig.InnerIP;
 
-        public string OuterIP => this.StartMachineConfig.OuterIP;
+        public string OuterIP => this.MachineConfig.OuterIP;
         
         // 内网地址外网端口，通过防火墙映射端口过来
         private IPEndPoint ipEndPoint;
@@ -25,6 +25,6 @@ namespace ET
             }
         }
 
-        public StartMachineConfig StartMachineConfig => StartMachineConfigConfigCategory.Instance.Get(this.MachineId);
+        public StartMachineTable MachineConfig => StartMachineConfig.Instance.Get(this.MachineId);
     }
 }

@@ -7,7 +7,7 @@ namespace ET
     {
         private static ActorId GetLocationSceneId(this LocationProxyComponent self, long key)
         {
-            List<StartSceneConfig> locationConfigs = StartSceneConfigManager.Instance.GetBySceneType(self.Zone(), SceneType.Location);
+            List<StartSceneTable> locationConfigs = StartSceneConfigManager.Instance.GetBySceneType(self.Zone(), SceneType.Location);
             if (locationConfigs == null || locationConfigs.Count == 0)
             {
                 throw new Exception($"Location server not found for zone: {self.Zone()}");

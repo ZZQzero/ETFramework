@@ -5,15 +5,15 @@ using System.Net;
 namespace ET
 {
     [EnableClass]
-    public partial class StartSceneConfig
+    public partial class StartSceneTable
     {
         public ActorId ActorId;
         
         public int Type;
 
-        public StartProcessConfig StartProcessConfig => StartProcessConfigConfigCategory.Instance.Get(this.Process);
+        public StartProcessTable ProcessConfig => StartProcessConfig.Instance.Get(this.Process);
 
-        public StartZoneConfig StartZoneConfig => StartZoneConfigConfigCategory.Instance.Get(this.Zone);
+        public StartZoneTable ZoneConfig => StartZoneConfig.Instance.Get(this.Zone);
 
         // 内网地址外网端口，通过防火墙映射端口过来
         private IPEndPoint innerIPPort;
@@ -24,7 +24,7 @@ namespace ET
             {
                 if (innerIPPort == null)
                 {
-                    this.innerIPPort = NetworkHelper.ToIPEndPoint($"{this.StartProcessConfig.InnerIP}:{this.Port}");
+                    this.innerIPPort = NetworkHelper.ToIPEndPoint($"{this.ProcessConfig.InnerIP}:{this.Port}");
                 }
 
                 return this.innerIPPort;
@@ -38,7 +38,7 @@ namespace ET
         {
             get
             {
-                return this.outerIPPort ??= NetworkHelper.ToIPEndPoint($"{this.StartProcessConfig.OuterIP}:{this.Port}");
+                return this.outerIPPort ??= NetworkHelper.ToIPEndPoint($"{this.ProcessConfig.OuterIP}:{this.Port}");
             }
         }
 

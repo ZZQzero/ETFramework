@@ -15,6 +15,9 @@ namespace ET
         
         //public const int ErrorExampleException = 100000000 + PackageType.Core * ConstValue.Seed + 1;
         //public const int ErrorExampleNoException = 200000000 + PackageType.Core * ConstValue.Seed + 1;
+
+        #region 100000000
+
         public const int ERR_WithException = 100000000;
         //------------------------100000000---------------------------------
         public const int ERR_SessionSendOrRecvTimeout = ERR_WithException + PackageType.Core * ConstValue.Seed + 1;
@@ -34,16 +37,29 @@ namespace ET
         public const int ERR_ActorLocationSenderTimeout4 = ERR_WithException + PackageType.ActorLocation * ConstValue.Seed + 6;
         
         public const int ERR_ConnectGateKeyError = ERR_WithException + PackageType.Login * ConstValue.Seed + 1;
+
+        #endregion
         
-        // 小于这个Rpc会抛异常，大于这个异常的error需要自己判断处理，也就是说需要处理的错误应该要大于该值
+
+        #region 200000000 小于这个Rpc会抛异常，大于这个异常的error需要自己判断处理，也就是说需要处理的错误应该要大于该值
+        
         public const int ERR_WithoutException = 200000000;
         //------------------------200000000--------------------------------------
         public const int ERR_Cancel = ERR_WithoutException + PackageType.Core * ConstValue.Seed + 1;
         public const int ERR_Timeout = ERR_WithoutException + PackageType.Core * ConstValue.Seed + 2;
+        
         public const int ERR_RequestRepeatedly = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 1;
         public const int ERR_LoginInfoIsNull = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 2;
+        public const int ERR_AccountSessionCheckOutTimer = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 3;
+        public const int ERR_AccountDifferentLocation = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 4;
+        public const int ERR_AccountInBlackList = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 5;
+        public const int ERR_AccountNameOrPasswordError = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 6;
+        public const int ERR_TokenError = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 7;
         
         //------------------------------------------------------------------------
+
+        #endregion
+        
 
         public static bool IsRpcNeedThrowException(int error)
         {

@@ -62,8 +62,8 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\StartProcessConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\OpcodeGeneratorHint.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Router\RouterCheckComponent.cs" />
-    <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\UnitConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbStartProcess.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\UnitConfig.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Scene\Wait_CreateMyUnit.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\INumericWatcher.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\IMessageSessionHandler.cs" />
@@ -87,7 +87,6 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\ConstValue\SceneType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageSenderStruct.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLockQueueType.cs" />
-    <Compile Include="Assets\Scripts\Model\Login\ClientSessionErrorComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\FiberParentComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\ObjectWait\ObjectWait.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Mailbox\MailBoxComponent.cs" />
@@ -98,6 +97,7 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\ProcessInnerSender.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Scene\Wait_SceneChangeFinish.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\ISessionMessage.cs" />
+    <Compile Include="Assets\Scripts\Model\Login\NetClient\ClientSessionErrorComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\StartSceneConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\AIRobotTable.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\AIRobotConfig.cs" />
@@ -105,6 +105,7 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\StartZoneConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\Tables.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\GlobalConstTable.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\ConstValue\TimerInvokeType.cs" />
     <Compile Include="Assets\Scripts\Model\Unit\Share\UnitEventType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLockQueue.cs" />
     <Compile Include="Assets\Scripts\Model\Login\SessionComponent.cs" />
@@ -118,7 +119,6 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageHelper.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\TableConfigBase.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\CurrentScenesComponent.cs" />
-    <Compile Include="Assets\Scripts\Model\Login\Share\ClientSenderComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Router\RouterConnector.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbStartMachine.cs" />
     <Compile Include="Assets\Scripts\Model\Login\PlayerComponent.cs" />
@@ -136,8 +136,8 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\RouterProto_C_1100.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\ActorLocation_S_20100.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbStartScene.cs" />
-    <Compile Include="Assets\Scripts\Model\Login\Share\TimerInvokeType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\WaitCoroutineLockTimerInvoke.cs" />
+    <Compile Include="Assets\Scripts\Model\Login\NetClient\ClientSenderComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Timer\TimerComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\IMHandler.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\StartZoneTable.cs" />

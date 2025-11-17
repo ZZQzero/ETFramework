@@ -9,6 +9,8 @@ namespace ET
             MessageDispatcher.Instance.RegisterMessage<A2NetClient_MessageHandler>(SceneType.NetClient);
             MessageDispatcher.Instance.RegisterMessage<A2NetClient_RequestHandler>(SceneType.NetClient);
             MessageDispatcher.Instance.RegisterMessage<Main2NetClient_LoginHandler>(SceneType.NetClient);
+            MessageDispatcher.Instance.RegisterMessage<Main2NetClient_LoginGameHandler>(SceneType.NetClient);
+            
             MessageDispatcher.Instance.RegisterMessage<NetClient2Main_SessionDisposeHandler>(SceneType.All);
             MessageDispatcher.Instance.RegisterMessage<M2C_PathfindingResultHandler>(SceneType.Main);
             MessageDispatcher.Instance.RegisterMessage<M2C_CreateMyUnitHandler>(SceneType.Main);
@@ -34,6 +36,7 @@ namespace ET
             MessageDispatcher.Instance.RegisterMessage<C2M_TransferMapHandler>(SceneType.Map);
             MessageDispatcher.Instance.RegisterMessage<M2M_UnitTransferRequestHandler>(SceneType.Map);
             MessageDispatcher.Instance.RegisterMessage<C2M_StopHandler>(SceneType.Map);
+            MessageDispatcher.Instance.RegisterMessage<R2L_AccountRequestHandler>(SceneType.LoginCenter);
 #endif
         }
 

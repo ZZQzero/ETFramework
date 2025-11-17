@@ -94,6 +94,7 @@
     <Compile Include="Assets\Scripts\Hotfix\StateSync\Share\ConstValue.cs" />
     <Compile Include="Assets\Scripts\Hotfix\StateSync\Share\EntryEvent1_InitShare.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Unit\Share\UnitSystem.cs" />
+    <Compile Include="Assets\Scripts\Hotfix\Login\NetClient\Main2NetClient_LoginGameHandler.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Login\ClientSenderComponentSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\AI\AI_XunLuo.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Login\NetClient\Main2NetClient_LoginHandler.cs" />

@@ -1,5 +1,6 @@
 ﻿namespace ET;
 
+[MessageSessionHandler(SceneType.Realm)]
 public class C2R_GetRealmKeyHandler : MessageSessionHandler<C2R_GetRealmKey,R2C_GetRealmKey>
 {
     protected override async ETTask Run(Session session, C2R_GetRealmKey request, R2C_GetRealmKey response)
@@ -11,8 +12,27 @@ public class C2R_GetRealmKeyHandler : MessageSessionHandler<C2R_GetRealmKey,R2C_
             return;
         }
 
-        string token = session.Root().GetComponent<TokenComponent>().Get(request.Account);
-        if (token == null || token != request.Token)
+        // 验证Token（优先使用TokenComponent快速验证，失败则使用签名验证）
+        string token = request.Token;
+        var tokenComponent = session.Root().GetComponent<TokenComponent>();
+        string cachedToken = tokenComponent.Get(request.Account);
+        
+        bool tokenValid = false;
+        if (cachedToken == token)
+        {
+            // 快速路径：TokenComponent中匹配，直接通过
+            tokenValid = true;
+        }
+        else if (TokenHelper.ValidateToken(token, out string account, out int zone))
+        {
+            // 慢速路径：签名验证，并检查账号匹配
+            if (account == request.Account)
+            {
+                tokenValid = true;
+            }
+        }
+        
+        if (!tokenValid)
         {
             response.Error = ErrorCode.ERR_TokenError;
             session?.Disconnect().NoContext();

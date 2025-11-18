@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using UnityEditor.Animations;
 using UnityEngine;
 
 namespace ET
@@ -16,12 +17,13 @@ namespace ET
             ETClient.Hotfix.NinoGen.NinoBuiltInTypesRegistration.Init();
             
             GameRegister.RegisterSingleton();
-            GameRegister.RegisterEvent();
-            GameRegister.RegisterInvoke();
-            GameRegister.RegisterMessage();
-            GameRegister.RegisterMessageSession();
-            GameRegister.RegisterAI();
             GameRegister.RegisterEntitySystem();
+            
+            GameRegisterHotfix.RegisterAIAuto();
+            GameRegisterHotfix.RegisterEventAuto();
+            GameRegisterHotfix.RegisterInvokeAuto();
+            GameRegisterHotfix.RegisterMessageAuto();
+            GameRegisterHotfixView.RegisterEventAuto();
             StartAsync().NoContext();
         }
         

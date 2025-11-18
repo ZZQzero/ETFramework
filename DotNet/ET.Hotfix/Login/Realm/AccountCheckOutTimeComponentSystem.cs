@@ -1,10 +1,11 @@
 ﻿namespace ET;
 
+[Invoke(TimerInvokeType.AccountSessionCheckOutTimer)]
 public class AccountSessionCheckOutTimer : ATimer<AccountCheckOutTimeComponent>
 {
     protected override void Run(AccountCheckOutTimeComponent t)
     {
-        
+        t?.DeleteSession();
     }
 }
 

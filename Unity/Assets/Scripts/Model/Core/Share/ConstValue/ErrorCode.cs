@@ -35,9 +35,6 @@ namespace ET
         public const int ERR_ActorLocationSenderTimeout2 = ERR_WithException + PackageType.ActorLocation * ConstValue.Seed + 4;
         public const int ERR_ActorLocationSenderTimeout3 = ERR_WithException + PackageType.ActorLocation * ConstValue.Seed + 5;
         public const int ERR_ActorLocationSenderTimeout4 = ERR_WithException + PackageType.ActorLocation * ConstValue.Seed + 6;
-        
-        public const int ERR_ConnectGateKeyError = ERR_WithException + PackageType.Login * ConstValue.Seed + 1;
-
         #endregion
         
 
@@ -55,7 +52,14 @@ namespace ET
         public const int ERR_AccountInBlackList = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 5;
         public const int ERR_AccountNameOrPasswordError = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 6;
         public const int ERR_TokenError = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 7;
-        
+        public const int ERR_LoginGateGameError = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 8;
+        public const int ERR_ConnectGateKeyError = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 9;
+        public const int ERR_OtherAccountLogin = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 10;
+        public const int ERR_SessionPlayerError = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 11;
+        public const int ERR_NonePlayerError = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 12;
+        public const int ERR_EnterGameError = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 13;
+        public const int ERR_ReEnterGameError = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 14;
+
         //------------------------------------------------------------------------
 
         #endregion

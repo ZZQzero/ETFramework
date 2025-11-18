@@ -44,13 +44,14 @@ namespace ET
         public static void Register()
         {
             GameRegister.RegisterSingleton();
-            GameRegister.RegisterInvoke();
-            GameRegister.RegisterEvent();
-            GameRegister.RegisterMessage();
-            GameRegister.RegisterHttp();
-            GameRegister.RegisterMessageSession();
             GameRegister.RegisterEntitySystem();
-            GameRegister.RegisterConsole();
+            
+            GameRegisterHotfix.RegisterEventAuto();
+            GameRegisterHotfix.RegisterInvokeAuto();
+            GameRegisterHotfix.RegisterMessageAuto();
+            GameRegisterHotfix.RegisterMessageSessionAuto();
+            GameRegisterHotfix.RegisterHttpAuto();
+            GameRegisterHotfix.RegisterConsoleAuto();
         }
 
         public static void Update()

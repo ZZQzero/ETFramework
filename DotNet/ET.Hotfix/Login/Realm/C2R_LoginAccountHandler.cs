@@ -1,5 +1,6 @@
 ﻿namespace ET;
 
+[MessageSessionHandler(SceneType.Realm)]
 public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2C_LoginAccount>
 {
     protected override async ETTask Run(Session session, C2R_LoginAccount request, R2C_LoginAccount response)
@@ -11,6 +12,7 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
         {
             response.Error = ErrorCode.ERR_RequestRepeatedly;
             session.Disconnect().NoContext();
+            return;
         }
         
         if(string.IsNullOrEmpty(request.Account) || string.IsNullOrEmpty(request.Password))
@@ -60,7 +62,8 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
 
         var r2LAccountRequest =  R2L_AccountRequest.Create();
         r2LAccountRequest.Account = request.Account;
-        var config = StartSceneConfig.Instance.GetOrDefault(session.Fiber().Id);
+        var config = StartSceneConfig.Instance.GetOrDefault(202);
+        Log.Info($"{session.Fiber().Id}  {session.Root().Name}   ");
         var l2RAccountResponse = await session.Root().GetComponent<MessageSender>().Call(config.ActorId,r2LAccountRequest) as L2R_AccountResponse;
         if (l2RAccountResponse.Error != ErrorCode.ERR_Success)
         {
@@ -81,11 +84,15 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
         
         accountSessionComponent.AddAccountSession(request.Account,session);
         session.AddComponent<AccountCheckOutTimeComponent, string>(request.Account);
-        string token = TimeInfo.Instance.ServerNow().ToString() + RandomGenerator.RandomNumber(int.MinValue,int.MinValue);
-        Log.Info($"token: {token}");
+        
+        // 生成Token（轻量级，性能优化）
+        string token = TokenHelper.GenerateToken(request.Account, session.Zone());
+        
+        // 保留TokenComponent用于快速验证
         var tokenComponent = session.Root().GetComponent<TokenComponent>();
         tokenComponent.Remove(request.Account);
-        tokenComponent.Add(request.Account,token);
+        tokenComponent.Add(request.Account, token);
+        
         response.Token = token;
         response.Error = ErrorCode.ERR_Success;
         await ETTask.CompletedTask;

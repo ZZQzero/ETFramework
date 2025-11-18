@@ -2,6 +2,7 @@ using Unity.Mathematics;
 
 namespace ET
 {
+    [AIHandler]
     public class AI_XunLuo: AAIHandler
     {
         public override int Check(AIComponent aiComponent, AIRobotTable aiConfig)

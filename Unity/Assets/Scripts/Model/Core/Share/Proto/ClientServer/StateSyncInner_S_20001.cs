@@ -135,9 +135,9 @@ namespace ET
 
     public static class StateSyncInner
     {
-        public const ushort M2A_Reload = 20011;
-        public const ushort A2M_Reload = 20012;
-        public const ushort M2M_UnitTransferRequest = 20013;
-        public const ushort M2M_UnitTransferResponse = 20014;
+        public const ushort M2A_Reload = 20019;
+        public const ushort A2M_Reload = 20020;
+        public const ushort M2M_UnitTransferRequest = 20021;
+        public const ushort M2M_UnitTransferResponse = 20022;
     }
 }

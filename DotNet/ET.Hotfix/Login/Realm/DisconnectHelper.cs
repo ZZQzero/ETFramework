@@ -8,8 +8,9 @@ public static class DisconnectHelper
         {
             return;
         }
+
         long instanceId = self.InstanceId;
-        
+
         TimerComponent timerComponent = self.Root().GetComponent<TimerComponent>();
         await timerComponent.WaitAsync(1000);
 
@@ -17,6 +18,64 @@ public static class DisconnectHelper
         {
             return;
         }
+
         self.Dispose();
     }
+
+    public static async ETTask KickPlayer(Player player)
+    {
+        if (player == null || player.IsDisposed)
+        {
+            return;
+        }
+
+        long instanceId = player.InstanceId;
+        CoroutineLockComponent coroutineLockComponent = player.Root().GetComponent<CoroutineLockComponent>();
+        using (await coroutineLockComponent.Wait(CoroutineLockType.LoginGate, player.Account.GetLongHashCode()))
+        {
+            if (player.IsDisposed || player.InstanceId != instanceId)
+            {
+                return;
+            }
+
+            await KickPlayerNoLock(player);
+        }
+    }
+
+    public static async ETTask KickPlayerNoLock(Player player)
+    {
+        if (player == null || player.IsDisposed)
+        {
+            return;
+        }
+
+        switch (player.PlayerState)
+        {
+            case PlayerState.Disconnect:
+                break;
+            case PlayerState.Gate:
+                break;
+            case PlayerState.Game:
+                //通知游戏逻辑服下线Unit角色逻辑,并将数据存入数据库
+                var m2GRequestExitGame = (M2G_RequestExitGame)await player.Root()
+                    .GetComponent<MessageLocationSenderComponent>()
+                    .Get(LocationType.Unit).Call(player.PlayerId, G2M_RequestExitGame.Create());
+                //通知移除账号角色登录信息
+                G2L_RemoveLoginRecord g2LRemoveLoginRecord = G2L_RemoveLoginRecord.Create();
+                g2LRemoveLoginRecord.AccountName = player.Account;
+                g2LRemoveLoginRecord.ServerId= player.Zone();
+                var config = StartSceneConfig.Instance.GetOrDefault(202);
+                var l2GRemoveLoginRecord = (L2G_RemoveLoginRecord)await player.Root().GetComponent<MessageSender>()
+                    .Call(config.ActorId, g2LRemoveLoginRecord);
+                break;
+        }
+
+        TimerComponent timerComponent = player.Root().GetComponent<TimerComponent>();
+        player.PlayerState = PlayerState.Disconnect;
+        await player.GetComponent<PlayerSessionComponent>().RemoveLocation(LocationType.GateSession);
+        player.Root().GetComponent<PlayerComponent>()?.Remove(player);
+        player?.Dispose();
+        await timerComponent.WaitAsync(300);
+    }
+
 }

@@ -3,7 +3,7 @@ using System.IO;
 
 namespace ET
 {
-    [Invoke]
+    [Invoke(SceneType.All)]
     public class RecastFileReader: AInvokeHandler<NavmeshComponent.RecastFileLoader, byte[]>
     {
         public override byte[] Handle(NavmeshComponent.RecastFileLoader args)

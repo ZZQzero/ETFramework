@@ -1,5 +1,6 @@
 ﻿namespace ET;
 
+[Invoke(SceneType.LoginCenter)]
 public class FiberInit_LoginCenter : AInvokeHandler<FiberInit, ETTask>
 {
     public override async ETTask Handle(FiberInit fiberInit)

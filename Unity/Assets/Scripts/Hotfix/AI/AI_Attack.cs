@@ -1,5 +1,6 @@
 namespace ET
 {
+    [AIHandler]
     public class AI_Attack: AAIHandler
     {
         public override int Check(AIComponent aiComponent, AIRobotTable aiConfig)

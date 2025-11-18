@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace ET
 {
+	[MessageSessionHandler(SceneType.Gate)]
     public class C2G_LoginGateHandler : MessageSessionHandler<C2G_LoginGate, G2C_LoginGate>
     {
         protected override async ETTask Run(Session session, C2G_LoginGate request, G2C_LoginGate response)

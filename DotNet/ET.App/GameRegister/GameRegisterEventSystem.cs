@@ -7,8 +7,6 @@ namespace ET
         {
             EntitySystemSingleton.RegisterEntitySystem<ET.ModeContexSystem.ET_ModeContex_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ModeContexSystem.ET_ModeContex_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.MailBoxComponentSystem.ET_MailBoxComponent_int_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.MailBoxComponentSystem.ET_MailBoxComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.LockInfoSystem.ET_LockInfo_ET_ActorId_ET_CoroutineLock_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.LockInfoSystem.ET_LockInfo_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.LocationOneTypeSystem.ET_LocationOneType_AwakeSystem>();
@@ -26,9 +24,18 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.DBComponentSystem.ET_DBComponent_string_string_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HttpComponentSystem.ET_HttpComponent_string_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HttpComponentSystem.ET_HttpComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.PlayerOfflineOutTimeComponentSystem.ET_PlayerOfflineOutTimeComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.PlayerOfflineOutTimeComponentSystem.ET_PlayerOfflineOutTimeComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.PlayerSystem.ET_Player_string_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.SessionPlayerComponentSystem.ET_SessionPlayerComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.SessionPlayerComponentSystem.ET_SessionPlayerComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.LoginInfoRecordComponentSystem.ET_LoginInfoRecordComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.LoginInfoRecordComponentSystem.ET_LoginInfoRecordComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.AccountCheckOutTimeComponentSystem.ET_AccountCheckOutTimeComponent_string_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.AccountCheckOutTimeComponentSystem.ET_AccountCheckOutTimeComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.AccountSessionComponentSystem.ET_AccountSessionComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.AccountSessionComponentSystem.ET_AccountSessionComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.TokenComponentSystem.ET_TokenComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MoveComponentSystem.ET_MoveComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MoveComponentSystem.ET_MoveComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ProcessOuterSenderSystem.ET_ProcessOuterSender_System_Net_IPEndPoint_AwakeSystem>();
@@ -56,6 +63,8 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.CoroutineLockQueueTypeSystem.ET_CoroutineLockQueueType_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CoroutineLockSystem.ET_CoroutineLock_long_long_int_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CoroutineLockSystem.ET_CoroutineLock_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MailBoxComponentSystem.ET_MailBoxComponent_int_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MailBoxComponentSystem.ET_MailBoxComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.NetComponentSystem.ET_NetComponent_ET_IKcpTransport_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.NetComponentSystem.ET_NetComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.NetComponentSystem.ET_NetComponent_DestroySystem>();

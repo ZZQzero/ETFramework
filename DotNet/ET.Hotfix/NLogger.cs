@@ -5,7 +5,7 @@ using NLog;
 
 namespace ET
 {
-    [Invoke]
+    [Invoke(SceneType.All)]
     public class LogInvoker_NLog: AInvokeHandler<LogInvoker, ILog>
     {
         public override ILog Handle(LogInvoker args)

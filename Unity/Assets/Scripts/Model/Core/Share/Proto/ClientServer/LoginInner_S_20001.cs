@@ -304,6 +304,258 @@ namespace ET
         }
     }
 
+    [NinoType(false)]
+    [Message(LoginInner.G2L_AddLoginRecord)]
+    [ResponseType(nameof(L2G_AddLoginRecord))]
+    public partial class G2L_AddLoginRecord : MessageObject, IRequest
+    {
+        public static G2L_AddLoginRecord Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<G2L_AddLoginRecord>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int RpcId { get; set; }
+
+        [NinoMember(1)]
+        public string AccountName { get; set; }
+
+        [NinoMember(2)]
+        public int ServerId { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RpcId = default;
+            this.AccountName = default;
+            this.ServerId = default;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [NinoType(false)]
+    [Message(LoginInner.L2G_AddLoginRecord)]
+    public partial class L2G_AddLoginRecord : MessageObject, IResponse
+    {
+        public static L2G_AddLoginRecord Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<L2G_AddLoginRecord>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int RpcId { get; set; }
+
+        [NinoMember(1)]
+        public int Error { get; set; }
+
+        [NinoMember(2)]
+        public string Message { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RpcId = default;
+            this.Error = default;
+            this.Message = default;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [NinoType(false)]
+    [Message(LoginInner.G2M_RequestExitGame)]
+    [ResponseType(nameof(M2G_RequestExitGame))]
+    public partial class G2M_RequestExitGame : MessageObject, ILocationRequest
+    {
+        public static G2M_RequestExitGame Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<G2M_RequestExitGame>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int RpcId { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RpcId = default;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [NinoType(false)]
+    [Message(LoginInner.M2G_RequestExitGame)]
+    public partial class M2G_RequestExitGame : MessageObject, ILocationResponse
+    {
+        public static M2G_RequestExitGame Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<M2G_RequestExitGame>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int RpcId { get; set; }
+
+        [NinoMember(1)]
+        public int Error { get; set; }
+
+        [NinoMember(2)]
+        public string Message { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RpcId = default;
+            this.Error = default;
+            this.Message = default;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [NinoType(false)]
+    [Message(LoginInner.G2L_RemoveLoginRecord)]
+    [ResponseType(nameof(L2G_RemoveLoginRecord))]
+    public partial class G2L_RemoveLoginRecord : MessageObject, IRequest
+    {
+        public static G2L_RemoveLoginRecord Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<G2L_RemoveLoginRecord>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int RpcId { get; set; }
+
+        [NinoMember(1)]
+        public string AccountName { get; set; }
+
+        [NinoMember(2)]
+        public int ServerId { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RpcId = default;
+            this.AccountName = default;
+            this.ServerId = default;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [NinoType(false)]
+    [Message(LoginInner.L2G_RemoveLoginRecord)]
+    public partial class L2G_RemoveLoginRecord : MessageObject, IResponse
+    {
+        public static L2G_RemoveLoginRecord Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<L2G_RemoveLoginRecord>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int RpcId { get; set; }
+
+        [NinoMember(1)]
+        public int Error { get; set; }
+
+        [NinoMember(2)]
+        public string Message { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RpcId = default;
+            this.Error = default;
+            this.Message = default;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [NinoType(false)]
+    [Message(LoginInner.G2M_SecondLogin)]
+    [ResponseType(nameof(M2G_SecondLogin))]
+    public partial class G2M_SecondLogin : MessageObject, ILocationRequest
+    {
+        public static G2M_SecondLogin Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<G2M_SecondLogin>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int RpcId { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RpcId = default;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [NinoType(false)]
+    [Message(LoginInner.M2G_SecondLogin)]
+    public partial class M2G_SecondLogin : MessageObject, ILocationResponse
+    {
+        public static M2G_SecondLogin Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<M2G_SecondLogin>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int RpcId { get; set; }
+
+        [NinoMember(1)]
+        public int Error { get; set; }
+
+        [NinoMember(2)]
+        public string Message { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RpcId = default;
+            this.Error = default;
+            this.Message = default;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
     public static class LoginInner
     {
         public const ushort R2G_GetLoginKey = 20002;
@@ -315,5 +567,13 @@ namespace ET
         public const ushort G2L_DisconnectGateUnit = 20008;
         public const ushort Main2NetClient_LoginGame = 20009;
         public const ushort NetClient2Main_LoginGame = 20010;
+        public const ushort G2L_AddLoginRecord = 20011;
+        public const ushort L2G_AddLoginRecord = 20012;
+        public const ushort G2M_RequestExitGame = 20013;
+        public const ushort M2G_RequestExitGame = 20014;
+        public const ushort G2L_RemoveLoginRecord = 20015;
+        public const ushort L2G_RemoveLoginRecord = 20016;
+        public const ushort G2M_SecondLogin = 20017;
+        public const ushort M2G_SecondLogin = 20018;
     }
 }

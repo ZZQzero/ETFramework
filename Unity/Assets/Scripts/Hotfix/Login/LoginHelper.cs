@@ -13,10 +13,12 @@ namespace ET
                 return;
             }
             
+            Log.Error($"登录成功 {root.Zone()}");
             C2R_GetRealmKey c2RGetRealmKey = C2R_GetRealmKey.Create();
             c2RGetRealmKey.Account = account;
             c2RGetRealmKey.Token = resp.Token;
-            c2RGetRealmKey.ServerId = 1;
+            // 这里一般会有创角，选择区服，demo就不做这个操作了，直接放在3区
+            c2RGetRealmKey.ServerId = 3;
             var r2CGateRealmKey = (R2C_GetRealmKey) await clientSenderComponent.Call(c2RGetRealmKey);
             if (r2CGateRealmKey.Error != ErrorCode.ERR_Success)
             {

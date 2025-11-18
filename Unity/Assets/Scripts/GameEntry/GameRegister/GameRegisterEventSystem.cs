@@ -17,6 +17,8 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.CoroutineLockQueueTypeSystem.ET_CoroutineLockQueueType_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CoroutineLockSystem.ET_CoroutineLock_long_long_int_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CoroutineLockSystem.ET_CoroutineLock_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MailBoxComponentSystem.ET_MailBoxComponent_int_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MailBoxComponentSystem.ET_MailBoxComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.NetComponentSystem.ET_NetComponent_ET_IKcpTransport_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.NetComponentSystem.ET_NetComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.NetComponentSystem.ET_NetComponent_DestroySystem>();
@@ -53,8 +55,6 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.ResourcesLoaderComponentSystem.ET_ResourcesLoaderComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ResourcesLoaderComponentSystem.ET_ResourcesLoaderComponent_string_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ResourcesLoaderComponentSystem.ET_ResourcesLoaderComponent_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.MailBoxComponentSystem.ET_MailBoxComponent_int_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.MailBoxComponentSystem.ET_MailBoxComponent_DestroySystem>();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿namespace ET
 {
+    [MessageHandler(SceneType.NetClient)]
     public class Main2NetClient_LoginGameHandler : MessageHandler<Scene,Main2NetClient_LoginGame,NetClient2Main_LoginGame>
     {
         protected override async ETTask Run(Scene root, Main2NetClient_LoginGame request, NetClient2Main_LoginGame response)

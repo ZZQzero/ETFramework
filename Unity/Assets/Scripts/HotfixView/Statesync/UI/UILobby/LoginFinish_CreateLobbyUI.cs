@@ -2,6 +2,7 @@
 
 namespace ET
 {
+	[Event(SceneType.Main)]
 	public class LoginFinish_CreateLobbyUI: AEvent<Scene, LoginFinish>
 	{
 		protected override async ETTask Run(Scene scene, LoginFinish args)

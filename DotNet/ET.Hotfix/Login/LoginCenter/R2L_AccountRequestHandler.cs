@@ -1,5 +1,6 @@
 ﻿namespace ET;
 
+[MessageHandler(SceneType.LoginCenter)]
 public class R2L_AccountRequestHandler : MessageHandler<Scene,R2L_AccountRequest,L2R_AccountResponse>
 {
     protected override async ETTask Run(Scene scene, R2L_AccountRequest request, L2R_AccountResponse response)

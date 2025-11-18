@@ -4,7 +4,7 @@
     {
         public long Type { get; }
 
-        public InvokeAttribute(long type = 0)
+        public InvokeAttribute(long type)
         {
             this.Type = type;
         }

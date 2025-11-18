@@ -1,6 +1,7 @@
 ﻿
 namespace ET
 {
+    [Invoke(SceneType.Main)]
     public class FiberInit_Main: AInvokeHandler<FiberInit, ETTask>
     {
         public override async ETTask Handle(FiberInit fiberInit)

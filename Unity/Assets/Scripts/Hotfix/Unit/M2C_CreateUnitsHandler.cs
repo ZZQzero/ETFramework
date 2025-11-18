@@ -1,5 +1,6 @@
 ﻿namespace ET
 {
+	[MessageHandler(SceneType.Main)]
 	public class M2C_CreateUnitsHandler: MessageHandler<Scene, M2C_CreateUnits>
 	{
 		protected override async ETTask Run(Scene root, M2C_CreateUnits message)

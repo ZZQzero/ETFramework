@@ -64,6 +64,7 @@
     <Compile Include="Assets\Scripts\Hotfix\Login\NetClient\PingComponentSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Router\RouterConnectorSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Router\RouterAddressComponentSystem.cs" />
+    <Compile Include="Assets\Scripts\Hotfix\Core\Share\Message\MessageSessionHandlerAttribute.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\Message\SessionAcceptTimeoutComponentSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\Message\MessageSessionDispatcher.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\ObjectWait\ObjectWaitSystem.cs" />
@@ -72,6 +73,7 @@
     <Compile Include="Assets\Scripts\Hotfix\Numeric\Share\NumericChangeEvent_NotifyWatcher.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\CoroutineLock\CoroutineLockSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\Message\SessionIdleCheckerComponentSystem.cs" />
+    <Compile Include="Assets\Scripts\Hotfix\Core\Share\Message\MessageHandlerAttribute.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Login\NetClient2Main_SessionDisposeHandler.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\ETCancellationTokenHelper.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\Message\SessionIdleCheckerInvoke.cs" />
@@ -88,6 +90,7 @@
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\Message\MessageSerializeHelper.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Login\ClientSessionErrorComponentSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Login\NetClient\A2NetClient_MessageHandler.cs" />
+    <Compile Include="Assets\Scripts\Hotfix\Core\Share\MailBox\MailBoxComponentSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Router\RouterCheckComponentSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Move\M2C_PathfindingResultHandler.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\Message\SessionAcceptTimeoutInvoke.cs" />

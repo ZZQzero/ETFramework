@@ -32,7 +32,7 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.ObjectWaitSystem.ET_ObjectWait_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.TimerComponentSystem.ET_TimerComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.TimerComponentSystem.ET_TimerComponent_UpdateSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.ClientSenderComponentSystem.ET_ClientSenderComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.ClientSenderComponentSystem.ET_ClientSenderComponent_ET_Fiber_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ClientSenderComponentSystem.ET_ClientSenderComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ClientSessionErrorComponentSystem.ET_ClientSessionErrorComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ClientSessionErrorComponentSystem.ET_ClientSessionErrorComponent_DestroySystem>();

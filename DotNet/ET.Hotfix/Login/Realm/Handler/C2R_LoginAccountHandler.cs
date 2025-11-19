@@ -29,7 +29,7 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
             {
                 var dbManager = session.Root().GetComponent<DBManagerComponent>();
                 var db = dbManager.GetZoneDB(session.Zone());
-                var account = await db.QuerySingle<Account>(a => a.AccountName.Equals(request.Account));
+                var account = await db.QueryById<Account>(request.Account);
                 if (account != null)
                 {
                     //session.AddChild(account);
@@ -49,12 +49,15 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
                 }
                 else
                 {
-                    account = new Account();
-                    account.AccountType = AccountType.General;
-                    account.AccountName = request.Account;
-                    account.Password = request.Password;
-                    account.CreateTime = TimeInfo.Instance.ServerNow();
-                    await db.Save<Account>(account);
+                    // 创建新账户
+                    account = new Account
+                    {
+                        AccountType = AccountType.General,
+                        AccountName = request.Account,
+                        Password = request.Password,
+                        CreateTime = TimeInfo.Instance.ServerNow()
+                    };
+                    await db.Save<Account, string>(account, request.Account);
                 }
                 Log.Info($" C2R_LoginAccountHandler: {session.Root().Name} | {dbManager}  {db}");
             }

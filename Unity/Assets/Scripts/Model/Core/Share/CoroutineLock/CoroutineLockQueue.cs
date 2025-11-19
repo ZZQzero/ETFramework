@@ -12,12 +12,6 @@ namespace ET
         
         public Queue<WaitCoroutineLock> queue = new();
 
-        public int Count
-        {
-            get
-            {
-                return this.queue.Count;
-            }
-        }
+        public int Count => this.queue.Count;
     }
 }

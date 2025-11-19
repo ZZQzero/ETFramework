@@ -5,12 +5,12 @@ namespace ET
     [ConsoleHandler(ConsoleMode.ReloadConfig)]
     public class ReloadConfigConsoleHandler: IConsoleHandler
     {
-        public async ETTask Run(Fiber fiber, ModeContex contex, string content)
+        public async ETTask Run(Fiber fiber, ModeContext context, string content)
         {
             switch (content)
             {
                 case ConsoleMode.ReloadConfig:
-                    contex.Parent.RemoveComponent<ModeContex>();
+                    context.Parent.RemoveComponent<ModeContext>();
                     Log.Console("C must have config name, like: C UnitConfig");
                     break;
                 /*default:

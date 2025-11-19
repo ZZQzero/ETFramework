@@ -135,7 +135,6 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\RouterProto_C_1100.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\ActorLocation_S_20100.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbStartScene.cs" />
-    <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\WaitCoroutineLockTimerInvoke.cs" />
     <Compile Include="Assets\Scripts\Model\Login\NetClient\ClientSenderComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Timer\TimerComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\IMHandler.cs" />

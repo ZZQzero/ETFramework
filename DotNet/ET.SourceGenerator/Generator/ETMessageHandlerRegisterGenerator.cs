@@ -320,11 +320,6 @@ public class ETMessageHandlerRegisterGenerator : ISourceGenerator
 
         public void OnVisitSyntaxNode(GeneratorSyntaxContext context)
         {
-            if (!AnalyzerHelper.IsAssemblyNeedAnalyze(context.SemanticModel.Compilation.AssemblyName, AnalyzeAssembly.AllHotfix))
-            {
-                return;
-            }
-
             if (context.Node is not ClassDeclarationSyntax classDeclarationSyntax)
             {
                 return;

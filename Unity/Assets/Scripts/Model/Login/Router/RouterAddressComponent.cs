@@ -11,5 +11,8 @@ namespace ET
         public HttpGetRouterResponse Info;
         public string Address;
         public int RouterIndex;
+        public long CacheTime;
+        
+        public const long CacheValidTime = 5 * 60 * 1000; // 5分钟
     }
 }

@@ -5,8 +5,7 @@ namespace ET
     public class AIHandlerAttribute: BaseAttribute
     {
     }
-    
-    [AIHandler]
+
     public abstract class AAIHandler: HandlerObject
     {
         // 检查是否满足条件

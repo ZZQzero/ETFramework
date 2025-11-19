@@ -461,6 +461,11 @@ namespace ET
         {
             if (this.IsDisposed) return;
 
+            // 触发Destroy事件
+            if (this is IDestroy)
+            {
+                EntitySystemSingleton.Instance.Destroy(this);
+            }
             // 立即标记为已销毁，防止重入（parent.RemoveChild会调用RecycleEntity导致再次进入Dispose）
             this.InstanceId = 0;
     
@@ -502,13 +507,7 @@ namespace ET
                     RemoveComponent(typeId);
                 }
             }
-
-            // 触发Destroy事件
-            if (this is IDestroy)
-            {
-                EntitySystemSingleton.Instance.Destroy(this);
-            }
-
+            
             this.iScene = null;
             this.parent = null;
             // 重置状态

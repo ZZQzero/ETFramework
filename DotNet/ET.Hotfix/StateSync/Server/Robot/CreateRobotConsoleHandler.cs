@@ -7,7 +7,7 @@ namespace ET
     [ConsoleHandler(ConsoleMode.CreateRobot)]
     public class CreateRobotConsoleHandler: IConsoleHandler
     {
-        public async ETTask Run(Fiber fiber, ModeContex contex, string content)
+        public async ETTask Run(Fiber fiber, ModeContext context, string content)
         {
             switch (content)
             {
@@ -37,7 +37,7 @@ namespace ET
                     break;
                 }
             }
-            contex.Parent.RemoveComponent<ModeContex>();
+            context.Parent.RemoveComponent<ModeContext>();
             await ETTask.CompletedTask;
         }
     }

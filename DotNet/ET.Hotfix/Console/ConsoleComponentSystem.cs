@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace ET
 {
     [EntitySystemOf(typeof(ConsoleComponent))]
-    [FriendOf(typeof(ModeContex))]
+    [FriendOf(typeof(ModeContext))]
     public static partial class ConsoleComponentSystem
     {
         [EntitySystem]
@@ -24,10 +24,10 @@ namespace ET
             {
                 try
                 {
-                    ModeContex modeContex = self.GetComponent<ModeContex>();
+                    ModeContext modeContext = self.GetComponent<ModeContext>();
                     string line = await Task.Factory.StartNew(() =>
                     {
-                        Console.Write($"{modeContex?.Mode ?? ""}> ");
+                        Console.Write($"{modeContext?.Mode ?? ""}> ");
                         return Console.In.ReadLine();
                     }, self.CancellationTokenSource.Token);
 
@@ -42,20 +42,20 @@ namespace ET
                         case "":
                             break;
                         case "exit":
-                            self.RemoveComponent<ModeContex>();
+                            self.RemoveComponent<ModeContext>();
                             break;
                         default:
                         {
                             string[] lines = line.Split(" ");
-                            string mode = modeContex == null? lines[0] : modeContex.Mode;
+                            string mode = modeContext == null? lines[0] : modeContext.Mode;
 
                             IConsoleHandler iConsoleHandler = ConsoleDispatcher.Instance.Get(mode);
-                            if (modeContex == null)
+                            if (modeContext == null)
                             {
-                                modeContex = self.AddComponent<ModeContex>();
-                                modeContex.Mode = mode;
+                                modeContext = self.AddComponent<ModeContext>();
+                                modeContext.Mode = mode;
                             }
-                            await iConsoleHandler.Run(self.Fiber(), modeContex, line);
+                            await iConsoleHandler.Run(self.Fiber(), modeContext, line);
                             break;
                         }
                     }

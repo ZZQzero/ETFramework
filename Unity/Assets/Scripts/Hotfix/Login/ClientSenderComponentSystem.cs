@@ -6,9 +6,10 @@ namespace ET
     public static partial class ClientSenderComponentSystem
     {
         [EntitySystem]
-        private static void Awake(this ClientSenderComponent self)
+        private static void Awake(this ClientSenderComponent self,Fiber fiber)
         {
-
+            self.fiberId = fiber.Id;
+            self.netClientActorId = new ActorId(Options.Instance.Process, SceneType.NetClient);
         }
         
         [EntitySystem]
@@ -37,10 +38,10 @@ namespace ET
 
         public static async ETTask<NetClient2Main_Login> LoginAsync(this ClientSenderComponent self, string address, string account, string password)
         {
-            var fiber = await FiberManager.Instance.Create(SchedulerType.Main, 0, SceneType.NetClient, "");
+            /*var fiber = await FiberManager.Instance.Create(SchedulerType.Main, 0, SceneType.NetClient, "");
             self.fiberId = fiber.Id;
-            self.netClientActorId = new ActorId(self.Fiber().Process, self.fiberId);
-
+            self.netClientActorId = new ActorId(self.Fiber().Process, self.fiberId);*/
+            
             Main2NetClient_Login main2NetClientLogin = Main2NetClient_Login.Create();
             main2NetClientLogin.OwnerFiberId = self.Fiber().Id;
             main2NetClientLogin.Account = account;

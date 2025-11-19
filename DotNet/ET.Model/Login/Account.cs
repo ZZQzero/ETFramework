@@ -1,4 +1,6 @@
-﻿namespace ET
+﻿using MongoDB.Bson.Serialization.Attributes;
+
+namespace ET
 {
     public enum AccountType
     {
@@ -8,8 +10,9 @@
     
     public class Account
     {
-        public long UserId;
+        [BsonId]
         public string AccountName;
+        public long UserId;
         public string Password;
         public long CreateTime;
         public AccountType AccountType;

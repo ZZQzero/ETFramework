@@ -5,8 +5,6 @@ namespace ET
     {
         public static void RegisterEntitySystem()
         {
-            EntitySystemSingleton.RegisterEntitySystem<ET.ModeContexSystem.ET_ModeContex_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.ModeContexSystem.ET_ModeContex_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.LockInfoSystem.ET_LockInfo_ET_ActorId_ET_CoroutineLock_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.LockInfoSystem.ET_LockInfo_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.LocationOneTypeSystem.ET_LocationOneType_AwakeSystem>();
@@ -21,6 +19,8 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.CellSystem.ET_Cell_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CellSystem.ET_Cell_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ConsoleComponentSystem.ET_ConsoleComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.ModeContextSystem.ET_ModeContext_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.ModeContextSystem.ET_ModeContext_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.DBComponentSystem.ET_DBComponent_string_string_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HttpComponentSystem.ET_HttpComponent_string_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HttpComponentSystem.ET_HttpComponent_DestroySystem>();

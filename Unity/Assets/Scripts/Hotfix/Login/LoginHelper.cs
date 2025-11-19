@@ -4,8 +4,9 @@ namespace ET
     {
         public static async ETTask Login(Scene root, string account, string password)
         {
-            root.RemoveComponent<ClientSenderComponent>();
-            ClientSenderComponent clientSenderComponent = root.AddComponent<ClientSenderComponent>();
+            /*root.RemoveComponent<ClientSenderComponent>();
+            ClientSenderComponent clientSenderComponent = root.AddComponent<ClientSenderComponent>();*/
+            ClientSenderComponent clientSenderComponent = root.GetComponent<ClientSenderComponent>();
             var resp = await clientSenderComponent.LoginAsync(GlobalConfigManager.Instance.Config.IPAddress, account, password);
             if (resp.Error != ErrorCode.ERR_Success)
             {

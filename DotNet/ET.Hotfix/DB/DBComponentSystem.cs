@@ -336,6 +336,46 @@ namespace ET
                 return result.DeletedCount > 0;
             }
         }
+        
+        
+        /// 删除单个数据对象（根据实体对象和主键）
+        /// 示例：await db.RemoveSingle&lt;Account, string&gt;(oldAccount, oldAccount.AccountName);
+        /// </summary>
+        public static async ETTask<bool> RemoveSingle<T, TKey>(this DBComponent self, T entity, TKey primaryKey, string collection = null) where T : class
+        {
+            if (primaryKey == null)
+            {
+                return false;
+            }
+            
+            long lockKey = primaryKey.GetHashCode();
+            using (await self.Root().GetComponent<CoroutineLockComponent>().Wait(CoroutineLockType.DB, lockKey % DBComponent.TaskCount))
+            {
+                var filter = Builders<T>.Filter.Eq(MongoIdFieldName, primaryKey);
+                DeleteResult result = await self.GetCollection<T>(collection).DeleteOneAsync(filter);
+                return result.DeletedCount > 0;
+            }
+        }
+
+
+
+        /// <summary>
+        /// 删除单个数据对象（根据实体对象和主键），指定taskId用于协程锁
+        /// </summary>
+        public static async ETTask<bool> RemoveSingle<T, TKey>(this DBComponent self, long taskId, T entity, TKey primaryKey, string collection = null) where T : class
+        {
+            if (primaryKey == null)
+            {
+                return false;
+            }
+            
+            using (await self.Root().GetComponent<CoroutineLockComponent>().Wait(CoroutineLockType.DB, taskId % DBComponent.TaskCount))
+            {
+                var filter = Builders<T>.Filter.Eq(MongoIdFieldName, primaryKey);
+                DeleteResult result = await self.GetCollection<T>(collection).DeleteOneAsync(filter);
+                return result.DeletedCount > 0;
+            }
+        }
 
         /// <summary>
         /// 删除多个数据对象（根据业务条件）

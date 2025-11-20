@@ -13,19 +13,27 @@ namespace ET
 
         private async ETTask HandleAsync(Session session, object message)
         {
-            if (message == null)
+            try
             {
-                Log.Error($"消息为null，期望类型: {typeof (Message).Name}");
-                return;
-            }
+                if (message == null)
+                {
+                    Log.Error($"消息为null，期望类型: {typeof (Message).Name}");
+                    return;
+                }
 
-            if (session.IsDisposed)
+                if (session.IsDisposed)
+                {
+                    Log.Error($"session disconnect {message}");
+                    return;
+                }
+
+                await this.Run(session, (Message)message);
+            }
+            finally
             {
-                Log.Error($"session disconnect {message}");
-                return;
+                // Session 消息处理完成后回收（从网络反序列化的消息对象）
+                (message as MessageObject)?.Dispose();
             }
-
-            await this.Run(session, (Message)message);
         }
 
         public Type GetMessageType()
@@ -81,6 +89,11 @@ namespace ET
                     Log.Error($"{exception.Message} \n {exception.StackTrace} \n  {request}   {response}");
                     
                     response.Error = ErrorCode.ERR_RpcFail;
+                }
+                finally
+                {
+                    // Request 处理完成后回收（从网络反序列化的消息对象）
+                    request?.Dispose();
                 }
                 
                 // 等回调回来,session可以已经断开了,所以需要判断session InstanceId是否一样

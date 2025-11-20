@@ -32,11 +32,11 @@ namespace ET
         public IdStruct(long id)
         {
             ulong result = (ulong) id; 
-            this.Value = (uint) (result & IdGenerater.Mask20bit);
+            this.Value = (uint) (result & GenerateIdManager.Mask20bit);
             result >>= 20;
-            this.Time = (uint) result & IdGenerater.Mask30bit;
+            this.Time = (uint) result & GenerateIdManager.Mask30bit;
             result >>= 30;
-            this.Process = (short) (result & IdGenerater.Mask14bit);
+            this.Process = (short) (result & GenerateIdManager.Mask14bit);
         }
 
         public override string ToString()
@@ -80,7 +80,7 @@ namespace ET
         }
     }
 
-    public class IdGenerater: Singleton<IdGenerater>, ISingletonAwake
+    public class GenerateIdManager: Singleton<GenerateIdManager>, ISingletonAwake
     {
         public const int MaxZone = 1024;
         
@@ -101,32 +101,26 @@ namespace ET
 
         private uint TimeSince2022()
         {
-            uint a = (uint)((TimeInfo.Instance.FrameTime - this.epoch2022) / 1000);
-            return a;
+            return (uint)((TimeInfo.Instance.FrameTime - this.epoch2022) / 1000);
         }
         
         public long GenerateId()
         {
             uint time = TimeSince2022();
-            int v = 0;
-            // 这里必须加锁
-            lock (this)
-            {
-                if (++this.value > Mask20bit - 1)
-                {
-                    this.value = 0;
-                }
-                v = this.value;
-            }
             
-            IdStruct idStruct = new(time, (short)Options.Instance.Process, (uint)v);
+            // 使用原子操作递增并处理溢出（比 lock 性能更好）
+            int newValue = Interlocked.Increment(ref this.value);
+            // 使用模运算确保值在有效范围内（0 到 Mask20bit）
+            uint v = (uint)(newValue & Mask20bit);
+            
+            IdStruct idStruct = new(time, (short)Options.Instance.Process, v);
             return idStruct.ToLong();
         }
         
         public long GenerateInstanceId()
         {
             uint time = this.TimeSince2022();
-            uint v = (uint)Interlocked.Add(ref this.instanceIdValue, 1);
+            uint v = (uint)Interlocked.Increment(ref this.instanceIdValue);
             InstanceIdStruct instanceIdStruct = new(time, v);
             return instanceIdStruct.ToLong();
         }

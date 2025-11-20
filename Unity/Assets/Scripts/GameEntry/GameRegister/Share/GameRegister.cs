@@ -10,7 +10,7 @@ namespace ET
             World.Instance.AddSingleton<TableConfigManager>();
             World.Instance.AddSingleton<SceneTypeSingleton, Type>(typeof(SceneType));
             World.Instance.AddSingleton<ObjectPool>();
-            World.Instance.AddSingleton<IdGenerater>();
+            World.Instance.AddSingleton<GenerateIdManager>();
             World.Instance.AddSingleton<MessageQueue>();
             World.Instance.AddSingleton<NetServices>();
 #if DOTNET

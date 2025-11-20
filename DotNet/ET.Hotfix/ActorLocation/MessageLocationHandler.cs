@@ -8,24 +8,31 @@ namespace ET
 
         public async ETTask Handle(Entity entity, Address fromAddress, MessageObject actorMessage)
         {
-            Fiber fiber = entity.Fiber();
-            if (actorMessage is not Message message)
+            try
             {
-                Log.Error($"消息类型转换错误: {actorMessage.GetType().FullName} to {typeof (Message).Name}");
-                return;
-            }
+                Fiber fiber = entity.Fiber();
+                if (actorMessage is not Message message)
+                {
+                    Log.Error($"消息类型转换错误: {actorMessage.GetType().FullName} to {typeof (Message).Name}");
+                    return;
+                }
 
-            if (entity is not E e)
+                if (entity is not E e)
+                {
+                    Log.Error($"Actor类型转换错误: {entity.GetType().FullName} to {typeof (E).FullName} --{typeof (Message).FullName}");
+                    return;
+                }
+                
+                MessageResponse response = ObjectPool.Fetch<MessageResponse>();
+                response.RpcId = message.RpcId;
+                fiber.Root.GetComponent<ProcessInnerSender>().Reply(fromAddress, response);
+
+                await this.Run(e, message);
+            }
+            finally
             {
-                Log.Error($"Actor类型转换错误: {entity.GetType().FullName} to {typeof (E).FullName} --{typeof (Message).FullName}");
-                return;
+                actorMessage?.Dispose();
             }
-            
-            MessageResponse response = ObjectPool.Fetch<MessageResponse>();
-            response.RpcId = message.RpcId;
-            fiber.Root.GetComponent<ProcessInnerSender>().Reply(fromAddress, response);
-
-            await this.Run(e, message);
         }
 
         public Type GetRequestType()
@@ -77,6 +84,10 @@ namespace ET
                 {
                     response.Error = ErrorCode.ERR_RpcFail;
                     response.Message = exception.ToString();
+                }
+                finally
+                {
+                    request?.Dispose();
                 }
                 response.RpcId = rpcId;
                 

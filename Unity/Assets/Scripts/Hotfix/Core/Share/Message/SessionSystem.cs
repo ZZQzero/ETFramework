@@ -95,6 +95,7 @@ namespace ET
             self.LastSendTime = TimeInfo.Instance.ClientNow();
             (ushort opcode, MemoryBuffer memoryBuffer) = MessageSerializeHelper.ToMemoryBuffer(self.AService, actorId, message);
             self.AService.Send(self.Id, memoryBuffer);
+            (message as MessageObject)?.Dispose();
         }
     }
 }

@@ -74,7 +74,6 @@
     <Compile Include="Assets\Scripts\Core\Share\World\Singleton.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ListComponent.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\StringHelper.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\World\IdGenerater\IdGenerater.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\Entity.cs" />
     <Compile Include="Assets\Scripts\Core\Share\MultiMap.cs" />
     <Compile Include="Assets\Scripts\Core\Share\MultiMapSet.cs" />
@@ -148,6 +147,7 @@
     <Compile Include="Assets\Scripts\Core\Share\Network\KService.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\IInvoke.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\TChannel.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\World\IdGenerater\GenerateIdManager.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\OpcodeType.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\StateMachineWrap.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\SceneTypeSingleton.cs" />

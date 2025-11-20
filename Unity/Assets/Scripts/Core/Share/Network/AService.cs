@@ -11,7 +11,7 @@ namespace ET
         public Action<long, MemoryBuffer> ReadCallback;
         public Action<long, int> ErrorCallback;
 
-        public long Id { get; set; } = IdGenerater.Instance.GenerateId();
+        public long Id { get; set; } = GenerateIdManager.Instance.GenerateId();
         
         public ServiceType ServiceType { get; protected set; }
         

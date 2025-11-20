@@ -59,7 +59,7 @@ public class C2G_EnterGameHandler : MessageSessionHandler<C2G_EnterGame,G2C_Ente
                 {
                     // 在Gate上动态创建一个Map Scene，把Unit从DB中加载放进来，然后传送到真正的Map中，这样登陆跟传送的逻辑就完全一样了
                     GateMapComponent gateMapComponent = player.AddComponent<GateMapComponent>();
-                    gateMapComponent.Scene = await GateMapFactory.Create(gateMapComponent, player.Id, IdGenerater.Instance.GenerateInstanceId(), "GateMap");
+                    gateMapComponent.Scene = await GateMapFactory.Create(gateMapComponent, player.Id, GenerateIdManager.Instance.GenerateInstanceId(), "GateMap");
 
                     Scene scene = gateMapComponent.Scene;
                     // 这里可以从DB中加载Unit

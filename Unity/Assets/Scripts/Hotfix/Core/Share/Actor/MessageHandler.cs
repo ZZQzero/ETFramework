@@ -8,19 +8,26 @@ namespace ET
 
         public async ETTask Handle(Entity entity, Address fromAddress, MessageObject actorMessage)
         {
-            if (actorMessage is not Message msg)
+            try
             {
-                Log.Error($"消息类型转换错误: {actorMessage.GetType().FullName} to {typeof (Message).Name}");
-                return;
-            }
+                if (actorMessage is not Message msg)
+                {
+                    Log.Error($"消息类型转换错误: {actorMessage.GetType().FullName} to {typeof (Message).Name}");
+                    return;
+                }
 
-            if (entity is not E e)
+                if (entity is not E e)
+                {
+                    Log.Error($"Actor类型转换错误: {entity.GetType().FullName} to {typeof (E).Name} --{typeof (Message).FullName}");
+                    return;
+                }
+
+                await this.Run(e, msg);
+            }
+            finally
             {
-                Log.Error($"Actor类型转换错误: {entity.GetType().FullName} to {typeof (E).Name} --{typeof (Message).FullName}");
-                return;
+                actorMessage?.Dispose();
             }
-
-            await this.Run(e, msg);
         }
 
         public Type GetRequestType()
@@ -61,6 +68,7 @@ namespace ET
                 }
 
                 int rpcId = request.RpcId;
+                
                 Response response = ObjectPool.Fetch<Response>();
                 try
                 {
@@ -76,6 +84,10 @@ namespace ET
                     response.Error = ErrorCode.ERR_RpcFail;
                     Log.Error($"{exception.Message} \n {exception.StackTrace} \n  {request}   {response}");
                     response.Message = exception.ToString();
+                }
+                finally
+                {
+                    request?.Dispose();
                 }
                 
                 response.RpcId = rpcId;

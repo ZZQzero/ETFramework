@@ -138,7 +138,7 @@ namespace ET
                     return;
                 }
 
-                id = IdGenerater.Instance.GenerateInstanceId();
+                id = GenerateIdManager.Instance.GenerateInstanceId();
                 this.tService.Create(id, (IPEndPoint)endPoint);
                 this.idEndpoints.Add(id, endPoint);
                 this.channelIds.Enqueue(id);

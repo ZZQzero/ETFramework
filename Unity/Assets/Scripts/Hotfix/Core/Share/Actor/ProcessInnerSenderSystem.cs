@@ -60,11 +60,19 @@ namespace ET
 
         private static void HandleIActorResponse(this ProcessInnerSender self, IResponse response)
         {
-            if (!self.requestCallback.Remove(response.RpcId, out MessageSenderStruct actorMessageSender))
+            try
             {
-                return;
+                if (!self.requestCallback.Remove(response.RpcId, out MessageSenderStruct actorMessageSender))
+                {
+                    return;
+                }
+                Run(actorMessageSender, response);
             }
-            Run(actorMessageSender, response);
+            finally
+            {
+                // Response 处理完成后回收
+                (response as MessageObject)?.Dispose();
+            }
         }
         
         private static void Run(MessageSenderStruct self, IResponse response)

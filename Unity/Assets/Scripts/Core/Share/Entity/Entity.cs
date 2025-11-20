@@ -192,7 +192,7 @@ namespace ET
                 
                 if (this.InstanceId == 0)
                 {
-                    this.InstanceId = IdGenerater.Instance.GenerateInstanceId();
+                    this.InstanceId = GenerateIdManager.Instance.GenerateInstanceId();
                 }
 
                 this.IsRegister = true;
@@ -376,25 +376,25 @@ namespace ET
 
         public T AddChild<T>(bool isFromPool = false) where T : Entity, IAwake, new()
         {
-            return this.CreateAndAddChild<T>(isFromPool, IdGenerater.Instance.GenerateId(), 
+            return this.CreateAndAddChild<T>(isFromPool, GenerateIdManager.Instance.GenerateId(), 
                 component => EntitySystemSingleton.Instance.Awake(component));
         }
 
         public T AddChild<T, A>(A a, bool isFromPool = false) where T : Entity, IAwake<A>, new()
         {
-            return this.CreateAndAddChild<T, A>(isFromPool, IdGenerater.Instance.GenerateId(), 
+            return this.CreateAndAddChild<T, A>(isFromPool, GenerateIdManager.Instance.GenerateId(), 
                 (component, param) => EntitySystemSingleton.Instance.Awake(component, param), a);
         }
 
         public T AddChild<T, A, B>(A a, B b, bool isFromPool = false) where T : Entity, IAwake<A, B>, new()
         {
-            return this.CreateAndAddChild<T, A, B>(isFromPool, IdGenerater.Instance.GenerateId(), 
+            return this.CreateAndAddChild<T, A, B>(isFromPool, GenerateIdManager.Instance.GenerateId(), 
                 (component, param1, param2) => EntitySystemSingleton.Instance.Awake(component, param1, param2), a, b);
         }
 
         public T AddChild<T, A, B, C>(A a, B b, C c, bool isFromPool = false) where T : Entity, IAwake<A, B, C>, new()
         {
-            return this.CreateAndAddChild<T, A, B, C>(isFromPool, IdGenerater.Instance.GenerateId(), 
+            return this.CreateAndAddChild<T, A, B, C>(isFromPool, GenerateIdManager.Instance.GenerateId(), 
                 (component, param1, param2, param3) => EntitySystemSingleton.Instance.Awake(component, param1, param2, param3), a, b, c);
         }
 

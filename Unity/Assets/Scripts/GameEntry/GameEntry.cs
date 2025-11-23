@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using UnityEditor.Animations;
 using UnityEngine;
 
 namespace ET

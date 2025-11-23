@@ -43,7 +43,8 @@ namespace ET
         [DidReloadScripts]
         public static void OnAfterAssemblyReload()
         {
-            GenerateEntity();
+            // 使用延迟调用，避免在编译过程中立即触发重新编译
+            EditorApplication.delayCall += GenerateEntity;
         }
 
         /// <summary>
@@ -194,8 +195,27 @@ namespace ET
                 Directory.CreateDirectory(dir);
             }
 
-            File.WriteAllText(Define.EntitySystemRegisterDir, sb.ToString(), Encoding.UTF8);
-            AssetDatabase.Refresh();
+            string newContent = sb.ToString();
+            string filePath = Define.EntitySystemRegisterDir;
+            
+            // 检查文件是否存在，以及内容是否真的有变化
+            bool needWrite = true;
+            if (File.Exists(filePath))
+            {
+                string oldContent = File.ReadAllText(filePath, Encoding.UTF8);
+                // 如果内容相同，不写入文件，避免触发重新编译
+                if (oldContent == newContent)
+                {
+                    needWrite = false;
+                }
+            }
+            
+            // 只有内容真的有变化时才写入文件并刷新
+            if (needWrite)
+            {
+                File.WriteAllText(filePath, newContent, Encoding.UTF8);
+                AssetDatabase.Refresh();
+            }
 
             Debug.Log($"EntitySystemRegisterAll generated at {Define.EntitySystemRegisterDir}");
         }

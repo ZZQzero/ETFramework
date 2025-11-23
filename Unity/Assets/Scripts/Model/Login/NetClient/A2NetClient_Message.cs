@@ -3,9 +3,9 @@
     [Message]
     public class A2NetClient_Message: MessageObject, IMessage
     {
-        public static A2NetClient_Message Create()
+        public static A2NetClient_Message Create(bool isIsFromPool)
         {
-            return ObjectPool.Fetch<A2NetClient_Message>();
+            return ObjectPool.Fetch<A2NetClient_Message>(isIsFromPool);
         }
 
         public override void Dispose()

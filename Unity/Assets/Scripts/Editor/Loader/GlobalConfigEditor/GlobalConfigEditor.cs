@@ -11,9 +11,6 @@ namespace ET
     {
         private void OnEnable()
         {
-            GlobalConfig globalConfig = (GlobalConfig)this.target;
-            //globalConfig.BuildType = EditorUserBuildSettings.development ? BuildType.Debug : BuildType.Release;
-            SaveAsset(globalConfig);
         }
 
         public override void OnInspectorGUI()
@@ -23,14 +20,25 @@ namespace ET
             if (codeMode != globalConfig.CodeMode)
             {
                 globalConfig.CodeMode = codeMode;
-                AssetDatabase.Refresh();
+                SaveAsset(globalConfig);
+                // 使用延迟调用避免阻塞UI，CodeMode改变可能需要重新编译
+                EditorApplication.delayCall += () => AssetDatabase.Refresh();
             }
             
             EPlayMode playMode = (EPlayMode)EditorGUILayout.EnumPopup("PlayMode", globalConfig.PlayMode);
             if (playMode != globalConfig.PlayMode)
             {
                 globalConfig.PlayMode = playMode;
-                AssetDatabase.Refresh();
+                SaveAsset(globalConfig);
+                // 使用延迟调用避免阻塞UI，PlayMode改变可能需要刷新资源
+                EditorApplication.delayCall += () => AssetDatabase.Refresh();
+            }
+            
+            string version = EditorGUILayout.TextField($"Version", globalConfig.Version);
+            if (version != globalConfig.Version)
+            {
+                globalConfig.Version = version;
+                SaveAsset(globalConfig);
             }
             
             string sceneName = EditorGUILayout.TextField($"SceneName", globalConfig.SceneName);
@@ -53,13 +61,19 @@ namespace ET
                 globalConfig.IPAddress = address;
                 SaveAsset(globalConfig);
             }
+            
+            string resourcePath = EditorGUILayout.TextField($"ResourcePath", globalConfig.ResourcePath);
+            if (resourcePath != globalConfig.ResourcePath)
+            {
+                globalConfig.ResourcePath = resourcePath;
+                SaveAsset(globalConfig);
+            }
         }
 
         private void SaveAsset(UnityEngine.Object obj)
         {
             EditorUtility.SetDirty(obj);
             AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
         }
     }
 }

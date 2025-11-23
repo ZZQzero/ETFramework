@@ -30,5 +30,7 @@ namespace ET
         public string SceneName;
 
         public string IPAddress;
+        
+        public string ResourcePath;
     }
 }

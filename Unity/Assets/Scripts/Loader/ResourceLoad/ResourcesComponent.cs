@@ -47,6 +47,7 @@ namespace ET
             var config = GlobalConfigManager.Instance.Config;
             ResourcePackage package = YooAssets.CreatePackage(config.PackageName);
             InitializationOperation initializationOperation = null;
+            Log.Error($"{config.PlayMode}");
             switch (config.PlayMode)
             {
                 case EPlayMode.EditorSimulateMode:
@@ -156,12 +157,15 @@ namespace ET
                 return;
             }
 
+            downloaderOperation.DownloadFinishCallback = downloaderFinish;
+            downloaderOperation.DownloadErrorCallback = errorCallback;
+            downloaderOperation.DownloadUpdateCallback = progressCallback;
             downloaderOperation.BeginDownload();
         }
 
         private string GetHostServerURL(GlobalConfig config)
         {
-            string hostServerIP = config.IPAddress;
+            string hostServerIP = config.ResourcePath;
             string appVersion = config.Version;
             
 #if UNITY_EDITOR
@@ -174,7 +178,7 @@ namespace ET
                 case UnityEditor.BuildTarget.WebGL:
                     return $"{hostServerIP}/StreamingAssets/Bundles/{config.PackageName}";
                 default:
-                    return $"{hostServerIP}/CDN/PC/{appVersion}";
+                    return $"{hostServerIP}/{appVersion}";
             }
 #else
 		        switch (Application.platform)
@@ -186,7 +190,7 @@ namespace ET
                     case RuntimePlatform.WebGLPlayer:
                         return $"{hostServerIP}/StreamingAssets/Bundles/{config.PackageName}";
                     default:
-                        return $"{hostServerIP}/CDN/PC/{appVersion}";
+                        return $"{hostServerIP}/{appVersion}";
                 }
 #endif
         }

@@ -64,7 +64,7 @@ namespace ET
        
         public static void Send(this ClientSenderComponent self, IMessage message)
         {
-            A2NetClient_Message a2NetClientMessage = A2NetClient_Message.Create();
+            A2NetClient_Message a2NetClientMessage = A2NetClient_Message.Create(true);
             a2NetClientMessage.MessageObject = message;
             Log.Error($"A2NetClient_Message  {a2NetClientMessage.MessageObject}");
             self.Root().GetComponent<ProcessInnerSender>().Send(self.netClientActorId, a2NetClientMessage);

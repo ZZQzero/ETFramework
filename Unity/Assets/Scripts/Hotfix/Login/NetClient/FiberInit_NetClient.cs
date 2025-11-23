@@ -12,6 +12,12 @@
             root.AddComponent<CoroutineLockComponent>();
             root.AddComponent<ProcessInnerSender>();
             root.AddComponent<FiberParentComponent>();
+            var routerAddressComponent = root.AddComponent<RouterAddressComponent,string>(GlobalConfigManager.Instance.Config.IPAddress);
+#if UNITY_WEBGL
+            root.AddComponent<NetComponent, IKcpTransport>(new WebSocketTransport(routerAddressComponent.AddressFamily));
+#else
+            root.AddComponent<NetComponent, IKcpTransport>(new UdpTransport(routerAddressComponent.AddressFamily));
+#endif
             await ETTask.CompletedTask;
         }
     }

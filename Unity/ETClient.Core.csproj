@@ -116,8 +116,8 @@
     <Compile Include="Assets\Scripts\Core\Share\UnOrderMultiMap.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\ISingletonAwake.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\WinPeriod.cs" />
-    <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\TypeSystems.cs" />
     <Compile Include="Assets\Scripts\Core\Share\DoubleMap.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\TypeSystems.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\IScene.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\Kcp\Kcp.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\IEvent.cs" />

@@ -11,36 +11,9 @@ namespace ET
         {
             Log.Error($"Main2NetClient_LoginHandler {root.Name}");
             RouterAddressComponent routerAddressComponent = root.GetComponent<RouterAddressComponent>();
-            
-            
-            if (routerAddressComponent != null && routerAddressComponent.Address == request.Address)
-            {
-                // 复用已存在的RouterAddressComponent
-            }
-            else
-            {
-                if (routerAddressComponent != null)
-                {
-                    routerAddressComponent.Info = null;
-                    routerAddressComponent.CacheTime = 0;
-                }
-                root.RemoveComponent<RouterAddressComponent>();
-                routerAddressComponent = root.AddComponent<RouterAddressComponent, string>(request.Address);
-            }
-            
             await routerAddressComponent.GetAllRouter();
             
             NetComponent netComponent = root.GetComponent<NetComponent>();
-            if (netComponent == null)
-            {
-#if UNITY_WEBGL
-                root.AddComponent<NetComponent, IKcpTransport>(new WebSocketTransport(routerAddressComponent.AddressFamily));
-#else
-                root.AddComponent<NetComponent, IKcpTransport>(new UdpTransport(routerAddressComponent.AddressFamily));
-#endif
-                netComponent = root.GetComponent<NetComponent>();
-            }
-            
             root.GetComponent<FiberParentComponent>().ParentFiberId = request.OwnerFiberId;
             
             IPEndPoint realmAddress = routerAddressComponent.GetRealmAddress(request.Account);

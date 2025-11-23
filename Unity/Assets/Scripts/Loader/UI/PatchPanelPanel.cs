@@ -15,16 +15,12 @@ namespace GameUI
 		public override void OnInitUI()
 		{
 			base.OnInitUI();
-			#region Auto Generate Code
-			InitData();
-			#endregion Auto Generate Code
-			
 		}
 		public override void OnOpenUI()
 		{
 			base.OnOpenUI();
 		}
-		
+
 		public override async void OnRefreshUI()
 		{
 			base.OnRefreshUI();
@@ -37,7 +33,7 @@ namespace GameUI
 			}
 		}
 
-		private void OnCreateDownLoad()
+		private async void OnCreateDownLoad()
 		{
 			if (_downloader.TotalDownloadCount == 0)
 			{
@@ -54,11 +50,12 @@ namespace GameUI
 				sizeMB = Mathf.Clamp(sizeMB, 0.1f, float.MaxValue);
 				string totalSizeMB = sizeMB.ToString("f1");
 				messageBoxData.Content = $"发现新资源需要更新，共{_downloader.TotalDownloadCount}个文件，总大小{totalSizeMB}MB";
-				messageBoxData.OnOk = () =>
+				messageBoxData.OnClickOk = () =>
 				{
 					ResourcesComponent.Instance.BeginDownload(_downloader,OnDownLoadFinish,OnDownloadProgress,OnDownError);
+					GameUIManager.Instance.CloseAndDestroyUI(LocalGameUIName.MessageBox);
 				};
-				GameUIManager.Instance.OpenUI(GameUIName1.MessageBoxPanel, messageBoxData);
+				await GameUIManager.Instance.OpenUI(LocalGameUIName.MessageBox, messageBoxData);
 			}
 		}
 
@@ -66,15 +63,15 @@ namespace GameUI
 		{
 			MessageBoxData messageBoxData = new MessageBoxData();
 			messageBoxData.Content = $"下载失败，{data.FileName} , {data.ErrorInfo}";
-			GameUIManager.Instance.OpenUI(GameUIName1.MessageBoxPanel, messageBoxData).Forget();
+			GameUIManager.Instance.OpenUI(LocalGameUIName.MessageBox, messageBoxData).Forget();
 		}
 
 		private void OnDownloadProgress(DownloadUpdateData data)
 		{
-			SliderSlider.value = (float)data.CurrentDownloadCount / data.TotalDownloadCount;
+			sliderSlider.value = (float)data.CurrentDownloadCount / data.TotalDownloadCount;
 			string currentSizeMB = (data.CurrentDownloadBytes / 1048576f).ToString("f1");
 			string totalSizeMB = (data.TotalDownloadBytes / 1048576f).ToString("f1");
-			TxttipsText.text = $"{data.CurrentDownloadCount}/{data.TotalDownloadCount} {currentSizeMB}MB/{totalSizeMB}MB";
+			tipsText.text = $"{data.CurrentDownloadCount}/{data.TotalDownloadCount} {currentSizeMB}MB/{totalSizeMB}MB";
 		}
 
 		private void OnDownLoadFinish(DownloaderFinishData data)
@@ -82,15 +79,16 @@ namespace GameUI
 			if (data.Succeed)
 			{
 				Debug.LogError("下载完成");
+				var handle = _package.LoadAssetSync<GameObject>("GameEntry");
+				var obj = handle.InstantiateSync();
+				GameObject.DontDestroyOnLoad(obj);
 				Destroy(gameObject);
-				//TODO 正式进入游戏
 			}
 		}
 
 		private void ChangeScene()
 		{
 			YooAssets.LoadSceneAsync("scene_home");
-			GameUIManager.Instance.OpenUI(GameUIName1.UIHome,null).Forget();
 			CloseSelf();
 		}
 

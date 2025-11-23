@@ -19,6 +19,7 @@ MonoBehaviour:
   - PackageName: DefaultPackage
     PackageDesc: 
     EnableAddressable: 1
+    SupportExtensionless: 1
     LocationToLower: 0
     IncludeAssetGUID: 0
     AutoCollectShaders: 1
@@ -55,16 +56,16 @@ MonoBehaviour:
       AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
-      - CollectPath: Assets/Demo/Prefab
-        CollectorGUID: 83fa054619bf1874e8b0fd87e17a0903
+      - CollectPath: Assets/Demo/Bundles
+        CollectorGUID: c6bd2b470bea1414eb44ce0fbd88070e
         CollectorType: 0
         AddressRuleName: AddressByFileName
         PackRuleName: PackDirectory
         FilterRuleName: CollectAll
         AssetTags: 
         UserData: 
-      - CollectPath: Assets/Demo/Bundles
-        CollectorGUID: c6bd2b470bea1414eb44ce0fbd88070e
+      - CollectPath: Assets/Demo/Prefab
+        CollectorGUID: 83fa054619bf1874e8b0fd87e17a0903
         CollectorType: 0
         AddressRuleName: AddressByFileName
         PackRuleName: PackDirectory
@@ -86,7 +87,7 @@ MonoBehaviour:
         UserData: 
     - GroupName: config
       GroupDesc: 
-      AssetTags: 
+      AssetTags: Local
       ActiveRuleName: EnableGroup
       Collectors:
       - CollectPath: Assets/Config/Excel/Gen
@@ -96,4 +97,17 @@ MonoBehaviour:
         PackRuleName: PackDirectory
         FilterRuleName: CollectAll
         AssetTags: 
+        UserData: 
+    - GroupName: LocalUI
+      GroupDesc: 
+      AssetTags: 
+      ActiveRuleName: EnableGroup
+      Collectors:
+      - CollectPath: Assets/Demo/LocalUI
+        CollectorGUID: 4faee3ee9c69f114d874fc8e41774c22
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackDirectory
+        FilterRuleName: CollectAll
+        AssetTags: Local
         UserData: 

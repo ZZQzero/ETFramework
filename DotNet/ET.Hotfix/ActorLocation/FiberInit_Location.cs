@@ -13,7 +13,7 @@ namespace ET
             root.AddComponent<CoroutineLockComponent>();
             root.AddComponent<ProcessInnerSender>();
             root.AddComponent<MessageSender>();
-            root.AddComponent<LocationManagerComoponent>();
+            root.AddComponent<LocationManagerComponent>();
 
             await ETTask.CompletedTask;
         }

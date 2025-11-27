@@ -7,7 +7,7 @@ namespace ET
     {
         protected override async ETTask Run(Scene scene, ObjectAddRequest request, ObjectAddResponse response)
         {
-            await scene.GetComponent<LocationManagerComoponent>().Get(request.Type).Add(request.Key, request.ActorId);
+            await scene.GetComponent<LocationManagerComponent>().Get(request.Type).Add(request.Key, request.ActorId);
         }
     }
 }

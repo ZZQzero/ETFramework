@@ -2,26 +2,6 @@
 
 namespace ET
 {
-    [EntitySystemOf(typeof(LockInfo))]
-    [FriendOf(typeof(LockInfo))]
-    public static partial class LockInfoSystem
-    {
-        [EntitySystem]
-        private static void Awake(this LockInfo self, ActorId lockActorId, CoroutineLock coroutineLock)
-        {
-            self.CoroutineLock = coroutineLock;
-            self.LockActorId = lockActorId;
-        }
-        
-        [EntitySystem]
-        private static void Destroy(this LockInfo self)
-        {
-            self.CoroutineLock.Dispose();
-            self.LockActorId = default;
-        }
-    }
-    
-
     [EntitySystemOf(typeof(LocationOneType))]
     [FriendOf(typeof(LocationOneType))]
     [FriendOf(typeof(LockInfo))]
@@ -139,27 +119,5 @@ namespace ET
                 return actorId;
             }
         }
-    }
-
-    [EntitySystemOf(typeof(LocationManagerComoponent))]
-    [FriendOf(typeof(LocationManagerComoponent))]
-    public static partial class LocationComoponentSystem
-    {
-        [EntitySystem]
-        private static void Awake(this LocationManagerComoponent self)
-        {
-        }
-        
-        public static LocationOneType Get(this LocationManagerComoponent self, int locationType)
-        {
-            LocationOneType locationOneType = self.GetChild<LocationOneType>(locationType);
-            if (locationOneType != null)
-            {
-                return locationOneType;
-            }
-            locationOneType = self.AddChildWithId<LocationOneType>(locationType);
-            return locationOneType;
-        }
-
     }
 }

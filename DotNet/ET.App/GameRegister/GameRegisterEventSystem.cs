@@ -5,10 +5,10 @@ namespace ET
     {
         public static void RegisterEntitySystem()
         {
+            EntitySystemSingleton.RegisterEntitySystem<ET.LocationManagerComponentSystem.ET_LocationManagerComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.LocationOneTypeSystem.ET_LocationOneType_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.LockInfoSystem.ET_LockInfo_ET_ActorId_ET_CoroutineLock_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.LockInfoSystem.ET_LockInfo_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.LocationOneTypeSystem.ET_LocationOneType_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.LocationComoponentSystem.ET_LocationManagerComoponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MessageLocationSenderComponentSystem.ET_MessageLocationSenderComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MessageLocationSenderOneTypeSystem.ET_MessageLocationSenderOneType_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MessageLocationSenderOneTypeSystem.ET_MessageLocationSenderOneType_DestroySystem>();

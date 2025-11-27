@@ -11,7 +11,7 @@ namespace ET
     {
         protected override async ETTask Run(Scene scene, ObjectAddBatchRequest request, ObjectAddBatchResponse response)
         {
-            LocationManagerComoponent locationManager = scene.GetComponent<LocationManagerComoponent>();
+            LocationManagerComponent locationManager = scene.GetComponent<LocationManagerComponent>();
             
             // 按LocationType分组，使用批量Add方法提高性能
             // 这样可以减少CoroutineLock的等待次数

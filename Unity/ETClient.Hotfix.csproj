@@ -68,7 +68,9 @@
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\Message\SessionAcceptTimeoutComponentSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\Message\MessageSessionDispatcher.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\ObjectWait\ObjectWaitSystem.cs" />
+    <Compile Include="Assets\Scripts\Hotfix\Core\Share\EntityDebugHelper.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Unit\M2C_CreateMyUnitHandler.cs" />
+    <Compile Include="Assets\Scripts\Hotfix\Login\NetClient\A2C_DisconnectHandler.cs" />
     <Compile Include="Assets\Scripts\Hotfix\AI\XunLuoPathComponentSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Numeric\Share\NumericChangeEvent_NotifyWatcher.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\CoroutineLock\CoroutineLockSystem.cs" />

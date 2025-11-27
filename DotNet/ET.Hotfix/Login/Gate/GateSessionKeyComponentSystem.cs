@@ -11,8 +11,7 @@
 
         public static string Get(this GateSessionKeyComponent self, long key)
         {
-            string account = null;
-            self.sessionKey.TryGetValue(key, out account);
+            self.sessionKey.TryGetValue(key, out var account);
             return account;
         }
 

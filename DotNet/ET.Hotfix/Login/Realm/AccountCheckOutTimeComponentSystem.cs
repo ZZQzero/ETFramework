@@ -5,7 +5,11 @@ public class AccountSessionCheckOutTimer : ATimer<AccountCheckOutTimeComponent>
 {
     protected override void Run(AccountCheckOutTimeComponent t)
     {
-        t?.DeleteSession();
+        if (t == null || t.IsDisposed)
+        {
+            return;
+        }
+        t.DeleteSession();
     }
 }
 
@@ -29,15 +33,40 @@ public static partial class AccountCheckOutTimeComponentSystem
     public static void DeleteSession(this AccountCheckOutTimeComponent self)
     {
         var session = self.GetParent<Session>();
-        var accountSessionComponent = session.Root().GetComponent<AccountSessionComponent>();
-        var originSession = accountSessionComponent.Get(self.Account);
-        if (originSession != null && session.InstanceId == originSession.InstanceId)
+        if (session == null || session.IsDisposed)
         {
-            accountSessionComponent.RemoveAccountSession(self.Account);
+            return;
         }
+        
+        Scene root = null;
+        try
+        {
+            root = session.Root();
+        }
+        catch (Exception e)
+        {
+            Log.Warning($"AccountCheckOutTimeComponent.DeleteSession failed to get Root: {e.Message}");
+            return;
+        }
+        
+        if (root == null || root.IsDisposed)
+        {
+            return;
+        }
+        
+        var accountSessionComponent = root.GetComponent<AccountSessionComponent>();
+        if (accountSessionComponent != null && !accountSessionComponent.IsDisposed)
+        {
+            var originSession = accountSessionComponent.Get(self.Account);
+            if (originSession != null && session.InstanceId == originSession.InstanceId)
+            {
+                accountSessionComponent.RemoveAccountSession(self.Account);
+            }
+        }
+        
         var a2CDisconnect = A2C_Disconnect.Create();
         a2CDisconnect.Error = ErrorCode.ERR_AccountSessionCheckOutTimer;
-        session?.Send(a2CDisconnect);
-        session?.Disconnect().NoContext();
+        session.Send(a2CDisconnect);
+        session.Disconnect().NoContext();
     }
 }

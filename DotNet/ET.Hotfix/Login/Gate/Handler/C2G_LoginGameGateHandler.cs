@@ -62,17 +62,18 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
                     PlayerSessionComponent playerSessionComponent = player.AddComponent<PlayerSessionComponent>();
                     playerSessionComponent.AddComponent<MailBoxComponent, int>(MailBoxType.GateSession);
                     player.AddComponent<MailBoxComponent, int>(MailBoxType.UnOrderedMessage);
-                    
-                    List<(int type, long key, ActorId actorId)> batchItems = new List<(int type, long key, ActorId actorId)>
-                    {
-                        (LocationType.GateSession, playerSessionComponent.Id, playerSessionComponent.GetActorId()),
-                        (LocationType.Player, player.Id, player.GetActorId())
-                    };
+
+                    List<(int type, long key, ActorId actorId)> batchItems =
+                        new List<(int type, long key, ActorId actorId)>
+                        {
+                            (LocationType.GateSession, playerSessionComponent.Id, playerSessionComponent.GetActorId()),
+                            (LocationType.Player, player.Id, player.GetActorId())
+                        };
                     await root.GetComponent<LocationProxyComponent>().AddBatch(batchItems);
-                    
-                session.AddComponent<SessionPlayerComponent>().Player = player;
-                playerSessionComponent.Session = session;
-                player.PlayerState = PlayerState.Gate;
+
+                    session.AddComponent<SessionPlayerComponent>().Player = player;
+                    playerSessionComponent.Session = session;
+                    player.PlayerState = PlayerState.Gate;
                 }
                 else
                 {

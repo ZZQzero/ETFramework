@@ -11,34 +11,18 @@ public class C2R_GetRealmKeyHandler : MessageSessionHandler<C2R_GetRealmKey,R2C_
             session?.Disconnect().NoContext();
             return;
         }
-
-        // 验证Token（优先使用TokenComponent快速验证，失败则使用签名验证）
-        string token = request.Token;
+        
         var tokenComponent = session.Root().GetComponent<TokenComponent>();
         string cachedToken = tokenComponent.Get(request.Account);
         
-        bool tokenValid = false;
-        if (cachedToken == token)
-        {
-            // 快速路径：TokenComponent中匹配，直接通过
-            tokenValid = true;
-        }
-        else if (TokenHelper.ValidateToken(token, out string account, out int zone))
-        {
-            // 慢速路径：签名验证，并检查账号匹配
-            if (account == request.Account)
-            {
-                tokenValid = true;
-            }
-        }
-        
-        if (!tokenValid)
+        if (cachedToken != request.Token)
         {
             response.Error = ErrorCode.ERR_TokenError;
             session?.Disconnect().NoContext();
             return;
         }
-
+        // 验证通过后立即删除（一次性Token，防止重放攻击）
+        tokenComponent.Remove(request.Account);
         var coroutineLockComponent = session.Root().GetComponent<CoroutineLockComponent>();
         using (session.AddComponent<SessionLockingComponent>())
         {

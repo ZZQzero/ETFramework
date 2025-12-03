@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace ET
 {
-    [Event(SceneType.Current)]
+    [Event(SceneType.Main)]
     public class ChangeRotation_SyncGameObjectRotation: AEvent<Scene, ChangeRotation>
     {
         protected override async ETTask Run(Scene scene, ChangeRotation args)

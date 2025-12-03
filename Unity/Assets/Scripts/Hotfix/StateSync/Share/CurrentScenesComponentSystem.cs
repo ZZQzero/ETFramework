@@ -6,7 +6,7 @@ namespace ET
     {
         public static Scene CurrentScene(this Scene root)
         {
-            return root.GetComponent<CurrentScenesComponent>()?.Scene;
+            return root;//.GetComponent<CurrentScenesComponent>()?.Scene;
         }
     }
 }

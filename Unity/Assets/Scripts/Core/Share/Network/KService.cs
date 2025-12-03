@@ -471,6 +471,11 @@ namespace ET
 
         public override void Update()
         {
+            if (this.Transport == null)
+            {
+                return;
+            }
+
             uint timeNow = this.TimeNow;
 
             this.TimerOut(timeNow);

@@ -19,13 +19,21 @@ namespace ET
         [EntitySystem]
         private static void Update(this NetComponent self)
         {
+            if (self.AService == null)
+            {
+                return;
+            }
             self.AService.Update();
         }
 
         [EntitySystem]
         private static void Destroy(this NetComponent self)
         {
-            self.AService.Dispose();
+            if (self.AService != null)
+            {
+                self.AService.Dispose();
+                self.AService = null; // 置空，防止 Update 访问
+            }
         }
 
         private static void OnError(this NetComponent self, long channelId, int error)

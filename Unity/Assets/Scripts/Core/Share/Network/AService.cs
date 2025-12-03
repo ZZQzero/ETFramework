@@ -61,6 +61,7 @@ namespace ET
         public virtual void Dispose()
         {
             this.Id = 0;
+            this.pool.Clear();
         }
 
         public abstract void Update();

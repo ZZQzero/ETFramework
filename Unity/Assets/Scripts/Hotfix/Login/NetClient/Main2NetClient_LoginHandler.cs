@@ -13,7 +13,11 @@ namespace ET
             RouterAddressComponent routerAddressComponent = root.GetComponent<RouterAddressComponent>();
             await routerAddressComponent.GetAllRouter();
             
-            NetComponent netComponent = root.GetComponent<NetComponent>();
+#if UNITY_WEBGL
+            var netComponent = root.AddComponent<NetComponent, IKcpTransport>(new WebSocketTransport(routerAddressComponent.AddressFamily));
+#else
+            var netComponent = root.AddComponent<NetComponent, IKcpTransport>(new UdpTransport(routerAddressComponent.AddressFamily));
+#endif
             root.GetComponent<FiberParentComponent>().ParentFiberId = request.OwnerFiberId;
             
             IPEndPoint realmAddress = routerAddressComponent.GetRealmAddress(request.Account);

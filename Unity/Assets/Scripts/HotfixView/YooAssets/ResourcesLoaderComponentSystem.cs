@@ -98,9 +98,23 @@ namespace ET
             HandleBase handler;
             if (self.handlers.TryGetValue(location, out handler))
             {
-                return;
+                // 检查句柄是否已被释放（LoadSceneMode.Single 会自动卸载之前的场景）
+                SceneHandle sceneHandle = (SceneHandle)handler;
+                if (sceneHandle.IsValid)
+                {
+                    Log.Error($"场景 {location} 正在加载或已加载，等待完成...");
+                    await handler.Task; // 等待之前的加载完成
+                    return;
+                }
+                else
+                {
+                    // 句柄已失效，从字典中移除，重新加载
+                    Log.Warning($"场景 {location} 的句柄已失效（可能被 LoadSceneMode.Single 卸载），重新加载");
+                    self.handlers.Remove(location);
+                }
             }
 
+            Log.Error($"开始加载场景: {location}");
             handler = (SceneHandle)self.package.LoadSceneAsync(location);
             await handler.Task;
             self.handlers.Add(location, handler);

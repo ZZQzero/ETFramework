@@ -41,7 +41,7 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@8a23a2cfe186\Runtime\Nino.Generator.dll" />
+    <Analyzer Include="G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@5ce9ab8d75fb\Runtime\Nino.Generator.dll" />
     <Analyzer Include="G:\UnityProject\ETFramework\Unity\Assets\Plugins\ET.SourceGenerator.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="G:\Unity\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
@@ -131,7 +131,7 @@
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Lib\Editor\Unity.Plastic.Antlr3.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@8a23a2cfe186\Runtime\ThirdParty\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@5ce9ab8d75fb\Runtime\ThirdParty\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Plastic.Newtonsoft.Json">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Lib\Editor\Unity.Plastic.Newtonsoft.Json.dll</HintPath>
@@ -143,7 +143,7 @@
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Editor\VisualScripting.Core\Dependencies\DotNetZip\Unity.VisualScripting.IonicZip.dll</HintPath>
     </Reference>
     <Reference Include="Nino.Core">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@8a23a2cfe186\Runtime\Nino.Core.dll</HintPath>
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.jasonxudeveloper.nino@5ce9ab8d75fb\Runtime\Nino.Core.dll</HintPath>
     </Reference>
     <Reference Include="dnlib">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\PackageCache\com.code-philosophy.hybridclr@01754c8fb47b\Plugins\dnlib.dll</HintPath>

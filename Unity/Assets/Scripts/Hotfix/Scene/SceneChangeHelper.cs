@@ -8,12 +8,13 @@ namespace ET
         public static async ETTask SceneChangeTo(Scene root, string sceneName, long sceneInstanceId)
         {
             Log.Error($"SceneChangeTo  {root.Name}   {sceneName}  {sceneInstanceId}");
-            CurrentScenesComponent currentScenesComponent = root.GetComponent<CurrentScenesComponent>();
+            /*CurrentScenesComponent currentScenesComponent = root.GetComponent<CurrentScenesComponent>();
             currentScenesComponent.Scene?.Dispose(); // 删除之前的CurrentScene，创建新的
-            Scene currentScene = CurrentSceneFactory.Create(sceneInstanceId, sceneName, currentScenesComponent);
+            Scene currentScene = CurrentSceneFactory.Create(sceneInstanceId, sceneName, currentScenesComponent);*/
+            var currentScene = root;
             UnitComponent unitComponent = currentScene.AddComponent<UnitComponent>();
             // 可以订阅这个事件中创建Loading界面
-            EventSystem.Instance.Publish(root, new SceneChangeStart());
+            EventSystem.Instance.Publish(root, new SceneChangeStart(){SceneName = "Map1"});
             // 等待CreateMyUnit的消息
             Wait_CreateMyUnit waitCreateMyUnit = await root.GetComponent<ObjectWait>().Wait<Wait_CreateMyUnit>();
             M2C_CreateMyUnit m2CCreateMyUnit = waitCreateMyUnit.Message;

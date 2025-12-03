@@ -69,7 +69,7 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
                             (LocationType.GateSession, playerSessionComponent.Id, playerSessionComponent.GetActorId()),
                             (LocationType.Player, player.Id, player.GetActorId())
                         };
-                    await root.GetComponent<LocationProxyComponent>().AddBatch(batchItems);
+                    await root.GetComponent<LocationProxyComponent>().AddBatchLocation(batchItems);
 
                     session.AddComponent<SessionPlayerComponent>().Player = player;
                     playerSessionComponent.Session = session;
@@ -81,7 +81,6 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
                     session.AddComponent<SessionPlayerComponent>().Player = player;
                     player.GetComponent<PlayerSessionComponent>().Session = session;
                 }
-                
                 response.PlayerId = player.PlayerId;
             }
         }

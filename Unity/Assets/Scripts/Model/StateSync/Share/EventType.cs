@@ -2,6 +2,7 @@
 {
     public struct SceneChangeStart
     {
+        public string SceneName;
     }
     
     public struct SceneChangeFinish
@@ -31,5 +32,10 @@
     public struct AfterUnitCreate
     {
         public Unit Unit;
+    }
+
+    public struct SessionDispose
+    {
+        public int Error;
     }
 }

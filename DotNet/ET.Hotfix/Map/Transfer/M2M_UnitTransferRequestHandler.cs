@@ -24,10 +24,6 @@ namespace ET
             unit.Position = new float3(-10, 0, -10);
 
             unit.AddComponent<MailBoxComponent, int>(MailBoxType.OrderedMessage);
-            // 重新创建Unit时，GateSession可能已经换了，需要清理消息缓存，保证重新从Location拉取ActorId
-            scene.Root().GetComponent<MessageLocationSenderComponent>()
-                .Get(LocationType.GateSession)
-                .Remove(unit.Id);
             Log.Info("M2M_UnitTransferRequestHandler");
             // 通知客户端开始切场景
             M2C_StartSceneChange m2CStartSceneChange = M2C_StartSceneChange.Create();

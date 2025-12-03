@@ -59,6 +59,7 @@ namespace ET
         public const int ERR_NonePlayerError = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 12;
         public const int ERR_EnterGameError = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 13;
         public const int ERR_ReEnterGameError = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 14;
+        public const int ERR_KickedByServer = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 15;
 
         //------------------------------------------------------------------------
 

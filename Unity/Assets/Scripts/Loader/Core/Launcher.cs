@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace ET
 {
-    public class Init: MonoBehaviour
+    public class Launcher: MonoBehaviour
     {
         private GameUIBase loadUI;
         private void Start()

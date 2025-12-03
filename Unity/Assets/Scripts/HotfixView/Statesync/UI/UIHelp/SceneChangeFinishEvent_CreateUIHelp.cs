@@ -2,7 +2,7 @@
 
 namespace ET
 {
-    [Event(SceneType.Current)]
+    [Event(SceneType.Main)]
     public class SceneChangeFinishEvent_CreateUIHelp : AEvent<Scene, SceneChangeFinish>
     {
         protected override async ETTask Run(Scene scene, SceneChangeFinish args)

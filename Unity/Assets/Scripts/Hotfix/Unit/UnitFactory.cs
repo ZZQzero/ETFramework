@@ -7,6 +7,7 @@ namespace ET
         public static Unit Create(Scene currentScene, UnitInfo unitInfo)
         {
 	        UnitComponent unitComponent = currentScene.GetComponent<UnitComponent>();
+	        Log.Error($"创建Unit  {unitComponent}");
 	        Unit unit = unitComponent.AddChildWithId<Unit, int>(unitInfo.UnitId, unitInfo.ConfigId);
 	        unit.Position = unitInfo.Position;
 	        unit.Forward = unitInfo.Forward;

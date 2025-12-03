@@ -10,18 +10,19 @@ namespace ET
         {
             try
             {
-                Scene currentScene = root.CurrentScene();
-
+                Scene currentScene = root;
                 ResourcesLoaderComponent resourcesLoaderComponent = currentScene.GetComponent<ResourcesLoaderComponent>();
-            
+
+                Log.Error($"SceneChangeStart 切换到{args.SceneName}场景");
+                
                 // 加载场景资源
-                await resourcesLoaderComponent.LoadSceneAsync($"Map1", LoadSceneMode.Single);
+                await resourcesLoaderComponent.LoadSceneAsync(args.SceneName, LoadSceneMode.Single);
                 // 切换到map场景
 
                 //await SceneManager.LoadSceneAsync(currentScene.Name);
 
+                currentScene.RemoveComponent<OperaComponent>();
                 currentScene.AddComponent<OperaComponent,Scene>(currentScene);
-                Log.Error("SceneChangeStart 切换到map场景");
             }
             catch (Exception e)
             {

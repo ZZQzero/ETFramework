@@ -201,6 +201,11 @@ namespace ET
 		
 		public override void Update()
 		{
+			if (this.IsDisposed())
+			{
+				return;
+			}
+			
 			while (true)
 			{
 				if (!this.Queue.TryDequeue(out var result))

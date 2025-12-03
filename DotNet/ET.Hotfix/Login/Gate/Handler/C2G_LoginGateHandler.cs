@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Collections.Generic;
 
 
@@ -40,7 +40,7 @@ namespace ET
                     (LocationType.GateSession, playerSessionComponent.Id, playerSessionComponent.GetActorId()),
                     (LocationType.Player, player.Id, player.GetActorId())
                 };
-                await root.GetComponent<LocationProxyComponent>().AddBatch(batchItems);
+                await root.GetComponent<LocationProxyComponent>().AddBatchLocation(batchItems);
 			
                 session.AddComponent<SessionPlayerComponent>().Player = player;
                 playerSessionComponent.Session = session;
@@ -54,4 +54,4 @@ namespace ET
             await ETTask.CompletedTask;
         }
     }
-}
+}*/

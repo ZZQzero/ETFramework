@@ -37,7 +37,6 @@ public static class DisconnectHelper
             {
                 return;
             }
-
             await KickPlayerNoLock(player);
         }
     }
@@ -48,6 +47,7 @@ public static class DisconnectHelper
         {
             return;
         }
+        var locationSenderComponent = player.Root().GetComponent<MessageLocationSenderComponent>();
 
         switch (player.PlayerState)
         {
@@ -57,8 +57,7 @@ public static class DisconnectHelper
                 break;
             case PlayerState.Game:
                 //通知游戏逻辑服下线Unit角色逻辑,并将数据存入数据库
-                var m2GRequestExitGame = (M2G_RequestExitGame)await player.Root()
-                    .GetComponent<MessageLocationSenderComponent>()
+                var m2GRequestExitGame = (M2G_RequestExitGame)await locationSenderComponent
                     .Get(LocationType.Unit).Call(player.PlayerId, G2M_RequestExitGame.Create());
                 //通知移除账号角色登录信息
                 G2L_RemoveLoginRecord g2LRemoveLoginRecord = G2L_RemoveLoginRecord.Create();
@@ -72,6 +71,8 @@ public static class DisconnectHelper
 
         TimerComponent timerComponent = player.Root().GetComponent<TimerComponent>();
         player.PlayerState = PlayerState.Disconnect;
+        locationSenderComponent.Get(LocationType.GateSession).Remove(player.Id);
+        await player.RemoveLocation(LocationType.Player);
         await player.GetComponent<PlayerSessionComponent>().RemoveLocation(LocationType.GateSession);
         player.Root().GetComponent<PlayerComponent>()?.Remove(player);
         player?.Dispose();

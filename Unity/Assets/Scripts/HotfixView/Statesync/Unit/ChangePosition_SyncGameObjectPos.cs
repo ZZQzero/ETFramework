@@ -2,7 +2,7 @@
 
 namespace ET
 {
-    [Event(SceneType.Current)]
+    [Event(SceneType.Main)]
     public class ChangePosition_SyncGameObjectPos: AEvent<Scene, ChangePosition>
     {
         protected override async ETTask Run(Scene scene, ChangePosition args)

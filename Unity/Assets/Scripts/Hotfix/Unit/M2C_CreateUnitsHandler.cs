@@ -5,7 +5,7 @@
 	{
 		protected override async ETTask Run(Scene root, M2C_CreateUnits message)
 		{
-			Scene currentScene = root.CurrentScene();
+			Scene currentScene = root;
 			UnitComponent component = currentScene.GetComponent<UnitComponent>();
 			
 			foreach (UnitInfo unitInfo in message.Units)

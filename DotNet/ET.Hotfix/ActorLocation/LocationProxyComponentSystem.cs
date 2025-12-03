@@ -83,7 +83,7 @@ namespace ET
         /// 批量添加Location（性能优化：减少网络往返次数）
         /// 一次RPC可以注册多个Location，减少网络往返次数
         /// </summary>
-        public static async ETTask AddBatch(this LocationProxyComponent self, List<(int type, long key, ActorId actorId)> items)
+        public static async ETTask AddBatchLocation(this LocationProxyComponent self, List<(int type, long key, ActorId actorId)> items)
         {
             if (items == null || items.Count == 0)
             {

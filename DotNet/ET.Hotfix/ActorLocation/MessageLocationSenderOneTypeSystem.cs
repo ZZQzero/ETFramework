@@ -78,8 +78,6 @@ public static partial class MessageLocationSenderOneTypeSystem
         {
             return;
         }
-
-        Log.Info($"MessageLocationSenderOneType actor id is {id}");
         actorMessageSender.Dispose();
     }
 

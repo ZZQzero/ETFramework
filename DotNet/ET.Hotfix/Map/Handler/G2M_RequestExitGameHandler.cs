@@ -21,9 +21,8 @@ public class G2M_RequestExitGameHandler : MessageLocationHandler<Unit,G2M_Reques
         // 等待当前帧结束，确保所有消息处理完成
         await unit.Fiber().WaitFrameFinish();
         // 重新创建Unit时，GateSession可能已经换了，需要清理消息缓存，保证重新从Location拉取ActorId
-        unit.Root().GetComponent<MessageLocationSenderComponent>()
-            .Get(LocationType.GateSession)
-            .Remove(unit.Id);
+        var locationSenderComponent = unit.Root().GetComponent<MessageLocationSenderComponent>();
+        locationSenderComponent.Get(LocationType.GateSession).Remove(unit.Id);
         // 移除Location注册
         await unit.RemoveLocation(LocationType.Unit);
         

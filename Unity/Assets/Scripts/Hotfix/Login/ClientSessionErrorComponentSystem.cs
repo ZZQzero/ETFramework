@@ -20,6 +20,8 @@
             NetClient2Main_SessionDispose message = NetClient2Main_SessionDispose.Create();
             message.Error = self.GetParent<Session>().Error;
             fiber.Root.GetComponent<ProcessInnerSender>().Send(new ActorId(fiber.Process, SceneType.Main), message);
+            self.Root().RemoveComponent<SessionComponent>();
+            self.Root().RemoveComponent<NetComponent>();
         }
     }
 }

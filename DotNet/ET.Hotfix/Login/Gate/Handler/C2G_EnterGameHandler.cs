@@ -40,9 +40,8 @@ public class C2G_EnterGameHandler : MessageSessionHandler<C2G_EnterGame,G2C_Ente
                 if (player.PlayerState == PlayerState.Game)
                 {
                     G2M_SecondLogin g2MSecondLogin = G2M_SecondLogin.Create();
-                    var m2GSecondLogin = (M2G_SecondLogin) await session.Root().GetComponent<MessageLocationSenderComponent>().Get(LocationType.Unit)
-                        .Call(player.PlayerId, g2MSecondLogin);
-                    
+                    var locationSend = session.Root().GetComponent<MessageLocationSenderComponent>().Get(LocationType.Unit);
+                    var m2GSecondLogin = (M2G_SecondLogin) await locationSend.Call(player.PlayerId, g2MSecondLogin);
                     if(m2GSecondLogin.Error == ErrorCode.ERR_Success)
                     {
                         response.Error = ErrorCode.ERR_Success;

@@ -4,6 +4,7 @@ namespace GameUI
 	{
 		public const string PatchPanel = "PatchPanel";
 		public const string MessageBox = "MessageBox";
+		public const string UIConsole = "UIConsole";
 		//end
 	}
 }

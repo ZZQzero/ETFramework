@@ -20,15 +20,9 @@ namespace ET
         /// </summary>
         static SynchronizationContext unitySynchronizationContext { get; set; }
 
-        /// <summary>
-        /// 程序集名字数组
-        /// </summary>
-        public static readonly string[] DllNames = { "ETClient.Hotfix", "ETClient.HotfixView", "ETClient.Model", "ETClient.ModelView" };
-
         [InitializeOnLoadMethod]
         static void Initialize()
         {
-            //unitySynchronizationContext = SynchronizationContext.Current;
             CompilationPipeline.compilationStarted += OnCompilationStarted;
         }
 
@@ -90,7 +84,7 @@ namespace ET
 
             //CopyHotUpdateDlls();
             
-            Log.Info($"Compile Finish!");
+            Debug.Log($"Compile Finish!");
         }
 
         /// <summary>
@@ -132,20 +126,89 @@ namespace ET
         }
 
         /// <summary>
-        /// 将dll文件复制到加载目录
+        /// 将热更dll文件复制到加载目录
         /// </summary>
-        static void CopyHotUpdateDlls()
+        [MenuItem("ET/Loader/CopyHotUpdateDlls _F8")]
+        public static void CopyHotUpdateDlls()
         {
+            // 根据当前构建目标获取HybridCLR的输出目录
+            BuildTarget target = EditorUserBuildSettings.activeBuildTarget;
+            string platformName = GetPlatformName(target);
+            string hotUpdateDllDir = $"HybridCLRData/HotUpdateDlls/{platformName}";
+            
             FileHelper.CleanDirectory(Define.CodeDir);
-            foreach (string dllName in DllNames)
+            
+            foreach (string dllName in GlobalConfigManager.DllNames)
             {
-                string sourceDll = $"{Define.BuildOutputDir}/{dllName}.dll";
-                string sourcePdb = $"{Define.BuildOutputDir}/{dllName}.pdb";
+                string sourceDll = $"{hotUpdateDllDir}/{dllName}.dll";
+                string sourcePdb = $"{hotUpdateDllDir}/{dllName}.pdb";
+                
+                if (!File.Exists(sourceDll))
+                {
+                    Debug.LogWarning($"热更DLL不存在: {sourceDll}，请先编译或使用HybridCLR生成");
+                    continue;
+                }
+                
                 File.Copy(sourceDll, $"{Define.CodeDir}/{dllName}.dll.bytes", true);
-                File.Copy(sourcePdb, $"{Define.CodeDir}/{dllName}.pdb.bytes", true);
+                
+                if (File.Exists(sourcePdb))
+                {
+                    File.Copy(sourcePdb, $"{Define.CodeDir}/{dllName}.pdb.bytes", true);
+                }
             }
 
             AssetDatabase.Refresh();
+        }
+        
+        /// <summary>
+        /// 将 AOT 补充元数据 DLL 复制到加载目录
+        /// </summary>
+        [MenuItem("ET/Loader/CopyAOTDlls")]
+        public static void CopyAOTDlls()
+        {
+            // 根据当前构建目标获取HybridCLR的AOT输出目录
+            BuildTarget target = EditorUserBuildSettings.activeBuildTarget;
+            string platformName = GetPlatformName(target);
+            string aotDllDir = $"HybridCLRData/AssembliesPostIl2CppStrip/{platformName}";
+            
+            Directory.CreateDirectory(Define.AOTDllDir);
+            FileHelper.CleanDirectory(Define.AOTDllDir);
+            
+            foreach (string aotDllName in GlobalConfigManager.AOTDllNames)
+            {
+                string sourceDll = $"{aotDllDir}/{aotDllName}.dll";
+                
+                if (!File.Exists(sourceDll))
+                {
+                    Debug.LogWarning($"AOT DLL不存在: {sourceDll}，请先使用HybridCLR生成");
+                    continue;
+                }
+                
+                // 直接拷贝 DLL 文件，不需要 .bytes 后缀（因为使用 PackRawFile）
+                File.Copy(sourceDll, $"{Define.AOTDllDir}/{aotDllName}.dll.bytes", true);
+                Debug.Log($"拷贝 AOT DLL: {aotDllName}");
+            }
+
+            AssetDatabase.Refresh();
+            Debug.Log($"AOT DLL 拷贝完成，共 {GlobalConfigManager.AOTDllNames.Length} 个文件");
+        }
+        
+        /// <summary>
+        /// 将BuildTarget转换为HybridCLR平台目录名
+        /// </summary>
+        static string GetPlatformName(BuildTarget target)
+        {
+            return target switch
+            {
+                BuildTarget.StandaloneWindows => "StandaloneWindows",
+                BuildTarget.StandaloneWindows64 => "StandaloneWindows64",
+                BuildTarget.StandaloneOSX => "StandaloneOSX",
+                BuildTarget.StandaloneLinux64 => "StandaloneLinux64",
+                BuildTarget.Android => "Android",
+                BuildTarget.iOS => "iOS",
+                BuildTarget.WebGL => "WebGL",
+                _ => target.ToString()
+            };
         }
         
         [MenuItem("ET/Loader/生成EntitySystem注册代码")]

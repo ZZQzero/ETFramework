@@ -69,8 +69,8 @@ namespace ET
             ObjectGetRequest objectGetRequest = ObjectGetRequest.Create();
             objectGetRequest.Type = type;
             objectGetRequest.Key = key;
-            ObjectGetResponse response =
-                    (ObjectGetResponse) await self.Root().GetComponent<MessageSender>().Call(self.GetLocationSceneId(key), objectGetRequest);
+            var sender = self.Root().GetComponent<MessageSender>();
+            var response = (ObjectGetResponse) await sender.Call(self.GetLocationSceneId(key), objectGetRequest);
             return response.ActorId;
         }
 

@@ -69,8 +69,7 @@ namespace ET
 
         public static void Error(string msg)
         {
-            StackTrace st = new(1, true);
-            GetLog().Error($"{msg}\n{st}");
+            GetLog().Error(msg);
         }
 
         public static void Error(Exception e)

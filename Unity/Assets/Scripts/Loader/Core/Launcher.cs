@@ -16,8 +16,10 @@ namespace ET
         private async ETTask StartAsync()
         {
             DontDestroyOnLoad(gameObject);
+            World.Instance.AddSingleton<GlobalConfigManager>();
             World.Instance.AddSingleton<ConsoleManager>();
             GameUIManager.Instance.Init();
+            GameObjectPool.Instance.Init();
             LoadUI();
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
             {
@@ -36,20 +38,11 @@ namespace ET
 
         private void AddSingleton()
         {
-            World.Instance.AddSingleton<GlobalConfigManager>();
             Options.Instance.SceneName = GlobalConfigManager.Instance.Config.SceneName;
-            
             World.Instance.AddSingleton<Logger>().Log = new UnityLogger();
             ETTask.ExceptionHandler += Log.Error;
             World.Instance.AddSingleton<TimeInfo>();
             World.Instance.AddSingleton<FiberManager>();
-            
-#if ENABLE_CONSOLE || DEVELOPMENT_BUILD
-            // 初始化Console管理器
-            ConsoleManager.Instance.IsEnabled = true;
-            // 注册Unity日志回调
-            Application.logMessageReceived += OnLogMessageReceived;
-#endif
         }
         private void LoadUI()
         {
@@ -60,35 +53,6 @@ namespace ET
                 loadUI = GameObject.Instantiate(prefab, parent).GetComponent<PatchPanelPanel>();
             }
         }
-        
-        
-#if ENABLE_CONSOLE || DEVELOPMENT_BUILD
-        private void OnLogMessageReceived(string logString, string stackTrace, LogType type)
-        {
-            ConsoleLogType consoleLogType = ConsoleLogType.Log;
-            switch (type)
-            {
-                case LogType.Error:
-                case LogType.Exception:
-                case LogType.Assert:
-                    consoleLogType = ConsoleLogType.Error;
-                    break;
-                case LogType.Warning:
-                    consoleLogType = ConsoleLogType.Warning;
-                    break;
-                case LogType.Log:
-                default:
-                    consoleLogType = ConsoleLogType.Log;
-                    break;
-            }
-
-            if (ConsoleManager.Instance == null)
-            {
-                return;
-            }
-            ConsoleManager.Instance.AddLog(consoleLogType, logString, stackTrace);
-        }
-#endif
         
         private void Update()
         {

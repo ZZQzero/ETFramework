@@ -68,6 +68,13 @@ namespace ET
                 globalConfig.ResourcePath = resourcePath;
                 SaveAsset(globalConfig);
             }
+            
+            bool isDev = EditorGUILayout.Toggle($"IsDevelop", globalConfig.IsDevelop);
+            if (isDev != globalConfig.IsDevelop)
+            {
+                globalConfig.IsDevelop = isDev;
+                SaveAsset(globalConfig);
+            }
         }
 
         private void SaveAsset(UnityEngine.Object obj)

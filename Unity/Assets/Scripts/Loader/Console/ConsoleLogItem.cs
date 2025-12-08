@@ -11,8 +11,6 @@ namespace ET
 		[SerializeField] private TMPro.TextMeshProUGUI timeTextTextMeshProUGUI;
 		[SerializeField] private TMPro.TextMeshProUGUI messageTextTextMeshProUGUI;
 		[SerializeField] private TMPro.TextMeshProUGUI countTextTextMeshProUGUI;
-		[SerializeField] private UnityEngine.GameObject stackTracePanelGameObject;
-		[SerializeField] private TMPro.TextMeshProUGUI stackTraceTextTextMeshProUGUI;
 		[SerializeField] private Image typeIcon;
 		#endregion Auto Generate Code
 		
@@ -28,7 +26,7 @@ namespace ET
 
 		private LogEntry currentLog;
 		private int currentIndex;
-        private Action<string> clickAction;
+        private Action<LogEntry> clickAction;
 		
 		 private void Awake()
         {
@@ -41,7 +39,7 @@ namespace ET
         /// <summary>
         /// 设置日志数据
         /// </summary>
-        public void SetData(LogEntry log, int index,Action<string> call)
+        public void SetData(LogEntry log, int index,Action<LogEntry> call)
         {
             currentLog = log;
             currentIndex = index;
@@ -60,7 +58,7 @@ namespace ET
             // 设置消息
             if (messageTextTextMeshProUGUI != null)
             {
-                messageTextTextMeshProUGUI.text = log.GetShortMessage(200);
+                messageTextTextMeshProUGUI.text = log.Message;
             }
 
             // 设置计数
@@ -69,7 +67,14 @@ namespace ET
                 if (log.Count > 1)
                 {
                     countTextTextMeshProUGUI.gameObject.SetActive(true);
-                    countTextTextMeshProUGUI.text = $"x{log.Count}";
+                    if (log.Count > 999)
+                    {
+                        countTextTextMeshProUGUI.text = $"x999+";
+                    }
+                    else
+                    {
+                        countTextTextMeshProUGUI.text = $"x{log.Count}";
+                    }
                 }
                 else
                 {
@@ -78,8 +83,8 @@ namespace ET
             }
 
             // 设置类型图标和颜色
-            Color typeColor = logColor;
-            Sprite icon = logIcon;
+            Color typeColor;
+            Sprite icon;
 
             switch (log.LogType)
             {
@@ -108,33 +113,6 @@ namespace ET
             {
                 messageTextTextMeshProUGUI.color = typeColor;
             }
-
-            // 设置堆栈跟踪
-            UpdateStackTraceDisplay();
-        }
-
-        /// <summary>
-        /// 更新堆栈跟踪显示
-        /// </summary>
-        private void UpdateStackTraceDisplay()
-        {
-            if (currentLog == null)
-            {
-                return;
-            }
-
-            bool hasStackTrace = !string.IsNullOrEmpty(currentLog.StackTrace);
-            bool isExpanded = currentLog.IsExpanded;
-
-            if (stackTracePanelGameObject != null)
-            {
-                stackTracePanelGameObject.SetActive(hasStackTrace && isExpanded);
-            }
-
-            if (stackTraceTextTextMeshProUGUI != null && hasStackTrace && isExpanded)
-            {
-                stackTraceTextTextMeshProUGUI.text = currentLog.StackTrace;
-            }
         }
 
         /// <summary>
@@ -146,24 +124,11 @@ namespace ET
             {
                 return;
             }
-
-            // 切换展开状态
-            //ConsoleManager.Instance.ToggleLogExpanded(currentIndex);
-            //UpdateStackTraceDisplay();
-
+            
             // 复制到剪贴板
             string logText = currentLog.FormatOutput(true);
             GUIUtility.systemCopyBuffer = logText;
-            clickAction?.Invoke(currentLog.StackTrace);
-            UnityEngine.Debug.Log("日志已复制到剪贴板");
-        }
-
-        /// <summary>
-        /// 刷新显示（用于展开状态改变）
-        /// </summary>
-        public void RefreshDisplay()
-        {
-            UpdateStackTraceDisplay();
+            clickAction?.Invoke(currentLog);
         }
 	}
 }

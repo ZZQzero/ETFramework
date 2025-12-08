@@ -131,6 +131,7 @@ namespace ET
                 YooAssets.SetDefaultPackage(package);
                 // 此时已经可以使用yooAssets加载资源了
                 GameUIManager.Instance.SetPackage(package);
+                GameObjectPool.Instance.SetPackage(package);
                 GameUIManager.Instance.RefreshUI(_uiBase, package);
                 return true;
             }

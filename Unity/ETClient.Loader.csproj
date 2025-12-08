@@ -55,13 +55,11 @@
     <Compile Include="Assets\Scripts\Loader\Console\ConsoleTrigger.cs" />
     <Compile Include="Assets\Scripts\Loader\UI\PatchPanelPanelComponent.cs" />
     <Compile Include="Assets\Scripts\Loader\Core\GlobalConfig.cs" />
-    <Compile Include="Assets\Scripts\Loader\Console\ConsoleTestHelper.cs" />
     <Compile Include="Assets\Scripts\Loader\UI\MessageBoxPanel.cs" />
     <Compile Include="Assets\Scripts\Loader\Core\UnityLogInvoke.cs" />
     <Compile Include="Assets\Scripts\Loader\Console\ConsoleManager.cs" />
     <Compile Include="Assets\Scripts\Loader\UI\PatchPanelPanel.cs" />
     <Compile Include="Assets\Scripts\Loader\Core\GlobalConfigManager.cs" />
-    <Compile Include="Assets\Scripts\Loader\Console\ConsoleConfig.cs" />
     <Compile Include="Assets\Scripts\Loader\Console\UIConsolePanel.cs" />
     <Compile Include="Assets\Scripts\Loader\Console\LogEntry.cs" />
     <Compile Include="Assets\Scripts\Loader\ResourceLoad\ResourcesComponent.cs" />

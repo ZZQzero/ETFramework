@@ -2,24 +2,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
+using GameUI;
+using UnityEngine;
 
 namespace ET
 {
     /// <summary>
-    /// Console管理器 - 单例
+    /// Console管理器
     /// </summary>
     public class ConsoleManager : Singleton<ConsoleManager>,ISingletonAwake
     {
-        /// <summary>
-        /// 日志更新事件
-        /// </summary>
-        public event Action OnLogAdded;
-
-        /// <summary>
-        /// 日志清空事件
-        /// </summary>
-        public event Action OnLogCleared;
-
         /// <summary>
         /// 最大日志数量
         /// </summary>
@@ -43,45 +36,59 @@ namespace ET
         private bool showError = true;
 
         /// <summary>
-        /// 搜索文本
-        /// </summary>
-        private string searchText = string.Empty;
-
-        /// <summary>
         /// 日志统计
         /// </summary>
         public int LogCount { get; private set; }
         public int WarningCount { get; private set; }
         public int ErrorCount { get; private set; }
-
-        /// <summary>
-        /// 是否启用Console（运行时配置）
-        /// </summary>
-        public bool IsEnabled { get; set; } = true;
-
-        public ConsoleManager()
+        
+        public void Awake()
         {
+            // 注册Unity日志回调
+            Application.logMessageReceived += OnLogMessageReceived;
         }
-
+        
+        private void OnLogMessageReceived(string logString, string stackTrace, LogType type)
+        {
+            ConsoleLogType consoleLogType = ConsoleLogType.Log;
+            switch (type)
+            {
+                case LogType.Error:
+                case LogType.Exception:
+                case LogType.Assert:
+                    consoleLogType = ConsoleLogType.Error;
+                    break;
+                case LogType.Warning:
+                    consoleLogType = ConsoleLogType.Warning;
+                    break;
+                case LogType.Log:
+                default:
+                    consoleLogType = ConsoleLogType.Log;
+                    break;
+            }
+            
+            AddLog(consoleLogType, logString, stackTrace);
+        }
+        
         /// <summary>
         /// 添加日志
         /// </summary>
-        public void AddLog(ConsoleLogType logType, string message, string stackTrace)
+        private void AddLog(ConsoleLogType logType, string message, string stackTrace)
         {
-            if (!IsEnabled)
+            if (GlobalConfigManager.Instance == null || !GlobalConfigManager.Instance.Config.IsDevelop)
             {
                 return;
             }
 
-            // 检查是否与最后一条日志相同（合并重复日志）
+            // 检查是否与最后一条日志相同（合并连续相同日志）
             if (allLogs.Count > 0)
             {
-                LogEntry lastLog = allLogs[allLogs.Count - 1];
-                if (lastLog.LogType == logType && lastLog.Message == message)
+                LogEntry lastLog = allLogs[^1];
+                if (lastLog.LogType == logType && lastLog.Message.Equals(message, StringComparison.Ordinal))
                 {
                     lastLog.Count++;
-                    UpdateFilter();
-                    OnLogAdded?.Invoke();
+                    lastLog.Timestamp = DateTime.Now;
+                    RefreshUIAsync().Forget();
                     return;
                 }
             }
@@ -94,7 +101,6 @@ namespace ET
                 StackTrace = stackTrace,
                 Timestamp = DateTime.Now,
                 Count = 1,
-                IsExpanded = false
             };
 
             // 添加到列表（如果超过最大数量，移除最旧的）
@@ -102,21 +108,19 @@ namespace ET
             {
                 LogEntry removedLog = allLogs[0];
                 allLogs.RemoveAt(0);
-
-                // 更新计数
+                
+                // 从过滤列表中移除
+                filteredLogs.Remove(removedLog);
+                
                 UpdateLogCount(removedLog.LogType, -1);
             }
 
             allLogs.Add(entry);
-
-            // 更新计数
             UpdateLogCount(logType, 1);
-
-            // 更新过滤列表
-            UpdateFilter();
-
-            // 触发事件
-            OnLogAdded?.Invoke();
+            
+            // 增量添加到过滤列表
+            AddToFilteredList(entry);
+            RefreshUIAsync().Forget();
         }
 
         /// <summary>
@@ -138,6 +142,11 @@ namespace ET
             }
         }
 
+        private async UniTaskVoid RefreshUIAsync()
+        {
+            await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
+            GameUIManager.Instance.RefreshUI(LocalGameUIName.UIConsole, GetAllFilteredLogs());
+        }
         /// <summary>
         /// 清空所有日志
         /// </summary>
@@ -148,7 +157,6 @@ namespace ET
             LogCount = 0;
             WarningCount = 0;
             ErrorCount = 0;
-            OnLogCleared?.Invoke();
         }
 
         /// <summary>
@@ -173,24 +181,7 @@ namespace ET
         }
 
         /// <summary>
-        /// 设置搜索文本
-        /// </summary>
-        public void SetSearchText(string text)
-        {
-            searchText = text ?? string.Empty;
-            UpdateFilter();
-        }
-
-        /// <summary>
-        /// 获取搜索文本
-        /// </summary>
-        public string GetSearchText()
-        {
-            return searchText;
-        }
-
-        /// <summary>
-        /// 更新过滤列表
+        /// 更新过滤列表（全量重建，仅在过滤条件改变时调用）
         /// </summary>
         private void UpdateFilter()
         {
@@ -198,32 +189,38 @@ namespace ET
 
             foreach (LogEntry log in allLogs)
             {
-                // 类型过滤
-                bool typeMatch = false;
-                switch (log.LogType)
+                if (ShouldShowLog(log))
                 {
-                    case ConsoleLogType.Log:
-                        typeMatch = showLog;
-                        break;
-                    case ConsoleLogType.Warning:
-                        typeMatch = showWarning;
-                        break;
-                    case ConsoleLogType.Error:
-                        typeMatch = showError;
-                        break;
+                    filteredLogs.Add(log);
                 }
-
-                if (!typeMatch)
-                {
-                    continue;
-                }
-
-                // 搜索过滤
-                if (!log.MatchesSearch(searchText))
-                {
-                    continue;
-                }
-
+            }
+        }
+        
+        /// <summary>
+        /// 判断日志是否应该显示
+        /// </summary>
+        private bool ShouldShowLog(LogEntry log)
+        {
+            switch (log.LogType)
+            {
+                case ConsoleLogType.Log:
+                    return showLog;
+                case ConsoleLogType.Warning:
+                    return showWarning;
+                case ConsoleLogType.Error:
+                    return showError;
+                default:
+                    return true;
+            }
+        }
+        
+        /// <summary>
+        /// 增量添加到过滤列表（新日志添加时调用）
+        /// </summary>
+        private void AddToFilteredList(LogEntry log)
+        {
+            if (ShouldShowLog(log))
+            {
                 filteredLogs.Add(log);
             }
         }
@@ -287,23 +284,6 @@ namespace ET
             }
 
             return sb.ToString();
-        }
-
-        /// <summary>
-        /// 切换日志展开状态
-        /// </summary>
-        public void ToggleLogExpanded(int index)
-        {
-            LogEntry log = GetFilteredLog(index);
-            if (log != null)
-            {
-                log.IsExpanded = !log.IsExpanded;
-            }
-        }
-
-        public void Awake()
-        {
-            
         }
     }
 }

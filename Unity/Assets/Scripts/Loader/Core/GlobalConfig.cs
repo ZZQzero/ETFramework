@@ -32,5 +32,7 @@ namespace ET
         public string IPAddress;
         
         public string ResourcePath;
+        
+        public bool IsDevelop;
     }
 }

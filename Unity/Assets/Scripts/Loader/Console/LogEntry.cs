@@ -43,16 +43,10 @@ namespace ET
         /// </summary>
         public int Count { get; set; }
 
-        /// <summary>
-        /// 是否展开显示堆栈
-        /// </summary>
-        public bool IsExpanded { get; set; }
-
         public LogEntry()
         {
             Timestamp = DateTime.Now;
             Count = 1;
-            IsExpanded = false;
         }
 
         /// <summary>
@@ -76,57 +70,6 @@ namespace ET
             
             return result;
         }
-
-        /// <summary>
-        /// 获取简短的消息（用于列表显示）
-        /// </summary>
-        public string GetShortMessage(int maxLength = 100)
-        {
-            if (string.IsNullOrEmpty(Message))
-            {
-                return string.Empty;
-            }
-
-            string msg = Message;
-            int newLineIndex = msg.IndexOf('\n');
-            if (newLineIndex > 0)
-            {
-                msg = msg.Substring(0, newLineIndex);
-            }
-
-            if (msg.Length > maxLength)
-            {
-                msg = msg.Substring(0, maxLength) + "...";
-            }
-
-            return msg;
-        }
-
-        /// <summary>
-        /// 检查日志内容是否匹配搜索关键字
-        /// </summary>
-        public bool MatchesSearch(string searchText)
-        {
-            if (string.IsNullOrEmpty(searchText))
-            {
-                return true;
-            }
-
-            searchText = searchText.ToLower();
-
-            if (!string.IsNullOrEmpty(Message) && Message.ToLower().Contains(searchText))
-            {
-                return true;
-            }
-
-            if (!string.IsNullOrEmpty(StackTrace) && StackTrace.ToLower().Contains(searchText))
-            {
-                return true;
-            }
-
-            return false;
-        }
     }
 }
 #endif
-

@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: GlobalConfig
   m_EditorClassIdentifier: 
   CodeMode: 0
-  PlayMode: 0
-  Version: V1.0
+  PlayMode: 2
+  Version: V1.3
   PackageName: DefaultPackage
   SceneName: StateSync
   IPAddress: 127.0.0.1:10101
-  ResourcePath: http://192.168.31.66:8080
+  ResourcePath: http://127.0.0.1:8080
   IsDevelop: 1

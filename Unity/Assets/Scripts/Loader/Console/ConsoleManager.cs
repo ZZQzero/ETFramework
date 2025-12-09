@@ -5,6 +5,7 @@ using System.Linq;
 using Cysharp.Threading.Tasks;
 using GameUI;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace ET
 {
@@ -14,19 +15,29 @@ namespace ET
     public class ConsoleManager : Singleton<ConsoleManager>,ISingletonAwake
     {
         /// <summary>
-        /// 最大日志数量
+        /// 每种类型日志的最大数量
         /// </summary>
-        private const int MAX_LOG_COUNT = 1000;
+        private const int MAX_LOG_COUNT_PER_TYPE = 1000;
+        
+        /// <summary>
+        /// 每次触发清理时移除的日志数量
+        /// </summary>
+        private const int BATCH_REMOVE_COUNT = 100;
 
         /// <summary>
-        /// 所有日志列表（循环缓冲区）
+        /// 所有日志列表（包含所有类型，最大容量 = 3 * MAX_LOG_COUNT_PER_TYPE）
         /// </summary>
-        private readonly List<LogEntry> allLogs = new List<LogEntry>(MAX_LOG_COUNT);
+        private readonly List<LogEntry> allLogs = new List<LogEntry>(MAX_LOG_COUNT_PER_TYPE * 3);
 
         /// <summary>
         /// 过滤后的日志列表
         /// </summary>
-        private readonly List<LogEntry> filteredLogs = new List<LogEntry>(MAX_LOG_COUNT);
+        private readonly List<LogEntry> filteredLogs = new List<LogEntry>(MAX_LOG_COUNT_PER_TYPE * 3);
+        
+        // 辅助队列，用于快速定位要移除的日志
+        private readonly Queue<LogEntry> _logEntries = new Queue<LogEntry>();
+        private readonly Queue<LogEntry> _warningEntries = new Queue<LogEntry>();
+        private readonly Queue<LogEntry> _errorEntries = new Queue<LogEntry>();
 
         /// <summary>
         /// 日志类型过滤器
@@ -46,6 +57,8 @@ namespace ET
         {
             // 注册Unity日志回调
             Application.logMessageReceived += OnLogMessageReceived;
+            GameObject obj = new GameObject("ConsoleManager");
+            obj.AddComponent<ConsoleTrigger>();
         }
         
         private void OnLogMessageReceived(string logString, string stackTrace, LogType type)
@@ -103,24 +116,67 @@ namespace ET
                 Count = 1,
             };
 
-            // 添加到列表（如果超过最大数量，移除最旧的）
-            if (allLogs.Count >= MAX_LOG_COUNT)
-            {
-                LogEntry removedLog = allLogs[0];
-                allLogs.RemoveAt(0);
-                
-                // 从过滤列表中移除
-                filteredLogs.Remove(removedLog);
-                
-                UpdateLogCount(removedLog.LogType, -1);
-            }
+            // 检查当前类型的日志是否超过限制，超过则批量移除该类型的旧日志
+            RemoveOldLogsIfNeeded(logType);
 
             allLogs.Add(entry);
+            
+            // 加入对应辅助队列
+            switch (logType)
+            {
+                case ConsoleLogType.Log:
+                    _logEntries.Enqueue(entry);
+                    break;
+                case ConsoleLogType.Warning:
+                    _warningEntries.Enqueue(entry);
+                    break;
+                case ConsoleLogType.Error:
+                    _errorEntries.Enqueue(entry);
+                    break;
+            }
+
             UpdateLogCount(logType, 1);
             
             // 增量添加到过滤列表
             AddToFilteredList(entry);
             RefreshUIAsync().Forget();
+        }
+
+        /// <summary>
+        /// 检查并移除该类型的旧日志（独立容量管理）
+        /// </summary>
+        private void RemoveOldLogsIfNeeded(ConsoleLogType logType)
+        {
+            Queue<LogEntry> targetQueue = logType switch
+            {
+                ConsoleLogType.Log => _logEntries,
+                ConsoleLogType.Warning => _warningEntries,
+                ConsoleLogType.Error => _errorEntries,
+                _ => null
+            };
+
+            if (targetQueue == null || targetQueue.Count < MAX_LOG_COUNT_PER_TYPE)
+            {
+                return;
+            }
+
+            // 该类型已达上限，批量移除该类型的旧日志
+            HashSet<LogEntry> logsToRemove = new HashSet<LogEntry>();
+            int removeCount = Math.Min(BATCH_REMOVE_COUNT, targetQueue.Count);
+
+            for (int i = 0; i < removeCount; i++)
+            {
+                logsToRemove.Add(targetQueue.Dequeue());
+            }
+
+            if (logsToRemove.Count > 0)
+            {
+                allLogs.RemoveAll(x => logsToRemove.Contains(x));
+                filteredLogs.RemoveAll(x => logsToRemove.Contains(x));
+
+                // 更新计数
+                UpdateLogCount(logType, -logsToRemove.Count);
+            }
         }
 
         /// <summary>
@@ -142,10 +198,14 @@ namespace ET
             }
         }
 
+        private bool _isRefreshing = false;
         private async UniTaskVoid RefreshUIAsync()
         {
+            if (_isRefreshing) return;
+            _isRefreshing = true;
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
             GameUIManager.Instance.RefreshUI(LocalGameUIName.UIConsole, GetAllFilteredLogs());
+            _isRefreshing = false;
         }
         /// <summary>
         /// 清空所有日志
@@ -154,6 +214,9 @@ namespace ET
         {
             allLogs.Clear();
             filteredLogs.Clear();
+            _logEntries.Clear();
+            _warningEntries.Clear();
+            _errorEntries.Clear();
             LogCount = 0;
             WarningCount = 0;
             ErrorCount = 0;
@@ -246,22 +309,22 @@ namespace ET
         }
 
         /// <summary>
-        /// 获取所有过滤后的日志（返回新的列表副本）
+        /// 获取所有过滤后的日志（零GC，只读视图）
         /// </summary>
-        public List<LogEntry> GetAllFilteredLogs()
+        public IReadOnlyList<LogEntry> GetAllFilteredLogs()
         {
-            return new List<LogEntry>(filteredLogs);
+            return filteredLogs;
         }
 
         /// <summary>
         /// 获取过滤后的日志数据（用于UI刷新）
         /// 当过滤条件改变时，调用此方法获取最新数据
         /// </summary>
-        public List<LogEntry> GetFilteredLogsForRefresh()
+        public IReadOnlyList<LogEntry> GetFilteredLogsForRefresh()
         {
             // 确保过滤列表是最新的
             UpdateFilter();
-            return new List<LogEntry>(filteredLogs);
+            return filteredLogs;
         }
 
         /// <summary>

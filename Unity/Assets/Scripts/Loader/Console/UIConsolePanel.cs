@@ -39,7 +39,7 @@ namespace ET
         /// <summary>
         /// 日志数据列表
         /// </summary>
-        private List<LogEntry> logList = new List<LogEntry>();
+        private IReadOnlyList<LogEntry> logList = Array.Empty<LogEntry>();
         private List<LogEntry> filterLogList = new List<LogEntry>();
 
         private bool isfilter = false;
@@ -96,7 +96,7 @@ namespace ET
         public override void OnOpenUI()
         {
             base.OnOpenUI();
-            if (Data is List<LogEntry> data)
+            if (Data is IReadOnlyList<LogEntry> data)
             {
                 logList = data;
                 RefreshLogList();
@@ -113,7 +113,7 @@ namespace ET
         public override void OnRefreshUI()
         {
             base.OnRefreshUI();
-            if (Data is List<LogEntry> data)
+            if (Data is IReadOnlyList<LogEntry> data)
             {
                 logList = data;
             }
@@ -123,7 +123,14 @@ namespace ET
             }
             if (isfilter && searchInput != null && !string.IsNullOrEmpty(searchInput.text))
             {
-                filterLogList = logList.FindAll(log => log.Message.Contains(searchInput.text, StringComparison.OrdinalIgnoreCase));
+                filterLogList.Clear();
+                foreach (var log in logList)
+                {
+                    if (log.Message.Contains(searchInput.text, StringComparison.OrdinalIgnoreCase))
+                    {
+                        filterLogList.Add(log);
+                    }
+                }
             }
             if (ScrollRect == null)
             {
@@ -173,7 +180,15 @@ namespace ET
             
             if (isfilter && searchInput != null && !string.IsNullOrEmpty(searchInput.text))
             {
-                filterLogList = logList.FindAll(log => log.Message.Contains(searchInput.text, StringComparison.OrdinalIgnoreCase));
+                // 使用循环代替 FindAll
+                filterLogList.Clear();
+                foreach (var log in logList)
+                {
+                    if (log.Message.Contains(searchInput.text, StringComparison.OrdinalIgnoreCase))
+                    {
+                        filterLogList.Add(log);
+                    }
+                }
             }
             
             RefreshLogList();
@@ -192,9 +207,17 @@ namespace ET
             }
 
             isfilter = true;
-            if (logList is { Count: > 0 })
+            if (logList != null && logList.Count > 0)
             {
-                filterLogList = logList.FindAll(log => log.Message.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+                // 使用循环代替 FindAll
+                filterLogList.Clear();
+                foreach (var log in logList)
+                {
+                    if (log.Message.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                    {
+                        filterLogList.Add(log);
+                    }
+                }
             }
             RefreshLogList();
         }
@@ -205,7 +228,7 @@ namespace ET
         private void OnClearClicked()
         {
             ConsoleManager.Instance.Clear();
-            logList.Clear();
+            logList = Array.Empty<LogEntry>();
             filterLogList.Clear();
             isfilter = false;
             Data = null;
@@ -333,24 +356,11 @@ namespace ET
         public override GameObject GetObject(int index)
         {
             GameObject itemObj = GameObjectPool.Instance.GetObjectSync("ConsoleLogItem", PoolType.UI);
-            /*if (itemPool.Count > 0)
-            {
-                Transform trans = itemPool.Pop();
-                itemObj = trans.gameObject;
-                itemObj.SetActive(true);
-            }
-            else
-            {
-                itemObj = GameObject.Instantiate(item);
-            }*/
             return itemObj;
         }
 
         public override void ReturnObject(Transform trans)
         {
-            /*trans.gameObject.SetActive(false);
-            trans.SetParent(transform, false);
-            itemPool.Push(trans);*/
             GameObjectPool.Instance.ReleaseObject(trans.gameObject,PoolType.UI);
         }
 

@@ -11,7 +11,7 @@ namespace ET
     {
         private async void Awake()
         {
-#if UNITY_EDITOR
+#if !UNITY_EDITOR
             // 1. 先加载 AOT 程序集用于补充元数据（必须在加载热更DLL之前）
             foreach (var aotDllName in GlobalConfigManager.AOTDllNames)
             {

@@ -57,6 +57,7 @@
     <Compile Include="Assets\Scripts\Editor\Loader\BuildEditor\BuildEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\AssetPostProcessor\OnGenerateCSProjectProcessor.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\LogRedirection\LogRedirection.cs" />
+    <Compile Include="Assets\Scripts\Editor\Loader\Helper\ScriptingDefine.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\ServerCommandLineEditor\ServerCommandLineEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\GlobalConfigEditor\GlobalConfigEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\BuildEditor\BuildHelper.cs" />

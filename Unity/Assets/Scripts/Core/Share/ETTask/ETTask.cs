@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -68,13 +66,31 @@ namespace ET
             }
         }
 
-        [StaticField]
-        private static readonly ConcurrentQueue<ETTask> queue = new();
-
         /// <summary>
-        /// 请不要随便使用ETTask的对象池，除非你完全搞懂了ETTask!!!
-        /// 假如开启了池,await之后不能再操作ETTask，否则可能操作到再次从池中分配出来的ETTask，产生灾难性的后果
-        /// SetResult的时候请现将tcs置空，避免多次对同一个ETTask SetResult
+        /// ETTask对象池使用警告（重要！）
+        /// 
+        /// 对象池已优化为ThreadLocal隔离，保证Fiber隔离性和线程安全。
+        /// 但对象池复用机制的固有危险依然存在，使用时必须注意：
+        /// 
+        ///     await之后绝对不能再操作ETTask
+        ///    - await时GetResult()会自动Recycle，对象回收到池中
+        ///    - 回收后对象可能被其他地方获取并使用
+        ///    - 继续操作会修改到别人的Task，导致逻辑错乱或崩溃
+        /// 
+        ///     不要将对象池的ETTask存储到字段中
+        ///    - await后对象已回收，字段持有的是已回收的对象引用
+        ///    - 后续操作字段会导致Use After Recycle问题
+        /// 
+        ///     避免多次调用SetResult/SetException
+        ///    - Task状态机只能转换一次（Pending → Succeeded/Faulted）
+        ///    - 重复调用会抛出InvalidOperationException
+        ///    - 需要防重复时使用Interlocked.Exchange模式
+        /// 
+        /// 安全使用模式：
+        /// 1. 创建后立即await，不存储引用：await ETTask.Create(true);
+        /// 2. 局部变量使用，await后不再访问该变量
+        /// 3. 需要持有引用时，使用Interlocked.Exchange防止重复操作
+        /// 4. await后立即清空引用：task = null
         /// </summary>
         [DebuggerHidden]
         public static ETTask Create(bool fromPool = false)
@@ -83,11 +99,7 @@ namespace ET
             {
                 return new ETTask();
             }
-            if (!queue.TryDequeue(out ETTask task))
-            {
-                return new ETTask() {fromPool = true}; 
-            }
-            return task;
+            return ETTaskPool.Rent();
         }
 
         [DebuggerHidden]
@@ -98,25 +110,40 @@ namespace ET
                 return;
             }
             
+            ETTaskPool.Return(this);
+        }
+
+        /// <summary>
+        /// 重置状态（内部方法，由对象池调用）
+        /// </summary>
+        [DebuggerHidden]
+        internal void ResetState()
+        {
             this.state = AwaiterStatus.Pending;
             this.callback = null;
             this.Context = null;
             this.TaskType = TaskType.Common;
-            // 太多了
-            if (queue.Count > 1000)
-            {
-                return;
-            }
-            queue.Enqueue(this);
         }
 
         private bool fromPool;
         private AwaiterStatus state;
         private object callback; // Action or ExceptionDispatchInfo
+        
+        /// <summary>
+        /// 池中标记：防止重复归还
+        /// </summary>
+        internal bool IsPooled;
 
         [DebuggerHidden]
         private ETTask()
         {
+            this.TaskType = TaskType.Common;
+        }
+        
+        [DebuggerHidden]
+        internal ETTask(bool fromPool)
+        {
+            this.fromPool = fromPool;
             this.TaskType = TaskType.Common;
         }
         
@@ -238,13 +265,12 @@ namespace ET
     [AsyncMethodBuilder(typeof (ETAsyncTaskMethodBuilder<>))]
     public class ETTask<T>: ICriticalNotifyCompletion, IETTask
     {
-        [StaticField]
-        private static readonly ConcurrentQueue<ETTask<T>> queue = new();
-        
         /// <summary>
-        /// 请不要随便使用ETTask的对象池，除非你完全搞懂了ETTask!!!
-        /// 假如开启了池,await之后不能再操作ETTask，否则可能操作到再次从池中分配出来的ETTask，产生灾难性的后果
-        /// SetResult的时候请现将tcs置空，避免多次对同一个ETTask SetResult
+        /// ETTask对象池使用警告（同ETTask，请务必遵守！）
+        /// 
+        /// await之后绝对不能再操作ETTask
+        /// 不要将对象池的ETTask存储到字段中
+        /// 避免多次调用SetResult/SetException
         /// </summary>
         [DebuggerHidden]
         public static ETTask<T> Create(bool fromPool = false)
@@ -254,11 +280,7 @@ namespace ET
                 return new ETTask<T>();
             }
             
-            if (!queue.TryDequeue(out ETTask<T> task))
-            {
-                return new ETTask<T>() {fromPool = true}; 
-            }
-            return task;
+            return ETTaskPool<T>.Rent();
         }
         
         [DebuggerHidden]
@@ -268,27 +290,43 @@ namespace ET
             {
                 return;
             }
+            
+            ETTaskPool<T>.Return(this);
+        }
+
+        /// <summary>
+        /// 重置状态（内部方法，由对象池调用）
+        /// </summary>
+        [DebuggerHidden]
+        internal void ResetState()
+        {
             this.callback = null;
             this.value = default;
             this.state = AwaiterStatus.Pending;
             this.Context = null;
             this.TaskType = TaskType.Common;
-            // 太多了
-            if (queue.Count > 1000)
-            {
-                return;
-            }
-            queue.Enqueue(this);
         }
 
         private bool fromPool;
         private AwaiterStatus state;
         private T value;
         private object callback; // Action or ExceptionDispatchInfo
+        
+        /// <summary>
+        /// 池中标记：防止重复归还（仅供ETTaskPool使用）
+        /// </summary>
+        internal bool IsPooled;
 
         [DebuggerHidden]
         private ETTask()
         {
+            this.TaskType = TaskType.Common;
+        }
+        
+        [DebuggerHidden]
+        internal ETTask(bool fromPool)
+        {
+            this.fromPool = fromPool;
             this.TaskType = TaskType.Common;
         }
 

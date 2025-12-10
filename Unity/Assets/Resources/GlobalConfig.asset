@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: GlobalConfig
   m_EditorClassIdentifier: 
   CodeMode: 0
-  PlayMode: 2
+  PlayMode: 0
   Version: V1.3
   PackageName: DefaultPackage
   SceneName: StateSync

@@ -14,7 +14,7 @@ namespace ET
         private ByteBuf LoadByteBuf(string file)
         {
 #if UNITY
-            return ResourcesComponent.Instance.LoadConfigByte(file);
+            return ResourcesLoadManager.Instance.LoadConfigByte(file);
 #endif
 #if DOTNET
             string configFilePath = $"Unity/Assets/Config/Excel/Gen/Bytes/{file}.bytes";

@@ -4,7 +4,7 @@ using CommandLine;
 
 namespace ET
 {
-    public class Options: Singleton<Options>
+    public class Options: Singleton<Options>,ISingletonAwake
     {
         [Option("SceneName", Required = false, Default = "Server", HelpText = "define in SceneType class")]
         public string SceneName { get; set; }
@@ -23,5 +23,9 @@ namespace ET
         
         [Option("Console", Required = false, Default = 0)]
         public int Console { get; set; }
+
+        public void Awake()
+        {
+        }
     }
 }

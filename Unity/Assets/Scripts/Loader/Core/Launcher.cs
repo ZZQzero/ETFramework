@@ -1,13 +1,13 @@
 ﻿using System;
-using CommandLine;
 using GameUI;
 using UnityEngine;
+using YooAsset;
 
 namespace ET
 {
     public class Launcher: MonoBehaviour
     {
-        private GameUIBase loadUI;
+        private GameUIBase _loadUI;
         private void Start()
         {
             this.StartAsync().NoContext();
@@ -17,27 +17,28 @@ namespace ET
         {
             DontDestroyOnLoad(gameObject);
             World.Instance.AddSingleton<GlobalConfigManager>();
+#if ENABLE_CONSOLE || DEVELOPMENT_BUILD
             World.Instance.AddSingleton<ConsoleManager>();
+            ConsoleManager.Instance.IsDevelop = GlobalConfigManager.Instance.Config.IsDevelop;
+#endif
+            var resourceLoad = World.Instance.AddSingleton<ResourcesLoadManager>();
             GameUIManager.Instance.Init();
             GameObjectPool.Instance.Init();
             LoadUI();
-            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
-            {
-                Log.Error(e.ExceptionObject.ToString());
-            };
-            
-            // 命令行参数
-            string[] args = "".Split(" ");
-            Parser.Default.ParseArguments<Options>(args)
-                .WithNotParsed(error => throw new Exception($"命令行格式错误! {error}"))
-                .WithParsed((o)=>World.Instance.AddSingleton(o, typeof(Options)));
-            
             AddSingleton();
-            await World.Instance.AddSingleton<ResourcesComponent>().CreatePackageAsync(loadUI);
+            await resourceLoad.CreatePackageAsync(OnResourceCreate);
+        }
+
+        private void OnResourceCreate(ResourcePackage package)
+        {
+            GameUIManager.Instance.SetPackage(package);
+            GameObjectPool.Instance.SetPackage(package);
+            GameUIManager.Instance.RefreshUI(_loadUI, package);
         }
 
         private void AddSingleton()
         {
+            World.Instance.AddSingleton<Options>();
             Options.Instance.SceneName = GlobalConfigManager.Instance.Config.SceneName;
             World.Instance.AddSingleton<Logger>().Log = new UnityLogger();
             ETTask.ExceptionHandler += Log.Error;
@@ -50,7 +51,7 @@ namespace ET
             var prefab = Resources.Load<GameObject>("UI/PatchPanel");
             if (prefab != null)
             {
-                loadUI = GameObject.Instantiate(prefab, parent).GetComponent<PatchPanelPanel>();
+                _loadUI = GameObject.Instantiate(prefab, parent).GetComponent<PatchPanelPanel>();
             }
         }
         

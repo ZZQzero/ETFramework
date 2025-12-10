@@ -14,7 +14,7 @@ namespace ET
         [Tooltip("快捷键（默认F1）")]
         public KeyCode toggleKey = KeyCode.F1;
         private bool _isConsoleOpen;
-
+        private GameUIBase _loadUI;
         private void Awake()
         {
             // 设置为DontDestroyOnLoad
@@ -47,13 +47,35 @@ namespace ET
             _isConsoleOpen = !_isConsoleOpen;
             if (_isConsoleOpen)
             {
-                GameUIManager.Instance.OpenUI(LocalGameUIName.UIConsole, ConsoleManager.Instance.GetAllFilteredLogs()).Forget();
+                if(_loadUI == null)
+                {
+                    var parent = GameUIManager.Instance.GetUILayer(EGameUILayer.Mask);
+                    var prefab = Resources.Load<GameObject>("UI/UIConsole");
+                    if (prefab != null)
+                    {
+                        _loadUI = GameObject.Instantiate(prefab, parent).GetComponent<UIConsolePanel>();
+                        _loadUI.Data = ConsoleManager.Instance.GetAllFilteredLogs();
+                        _loadUI.OnInitUI();
+                        _loadUI.OnOpenUI();
+                    }
+                }
+                else
+                {
+                    GameUIManager.Instance.RefreshUI(_loadUI, ConsoleManager.Instance.GetAllFilteredLogs());
+                }
+                _loadUI.gameObject.SetActive(true);
             }
             else
             {
-                GameUIManager.Instance.CloseUI(LocalGameUIName.UIConsole);
+                if(_loadUI != null)
+                {
+                    _loadUI.OnCloseUI();
+                }
             }
         }
+        
+        public GameUIBase GetUI() => _loadUI;
     }
 }
 #endif
+

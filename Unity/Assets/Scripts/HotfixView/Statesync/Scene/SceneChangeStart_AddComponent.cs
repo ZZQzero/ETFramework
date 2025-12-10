@@ -16,7 +16,8 @@ namespace ET
                 Log.Error($"SceneChangeStart 切换到{args.SceneName}场景");
                 
                 // 加载场景资源
-                await resourcesLoaderComponent.LoadSceneAsync(args.SceneName, LoadSceneMode.Single);
+                //await resourcesLoaderComponent.LoadSceneAsync(args.SceneName, LoadSceneMode.Single);
+                ResourcesLoadManager.Instance.LoadSceneAsync(args.SceneName,LoadSceneMode.Single).NoContext();
                 // 切换到map场景
 
                 //await SceneManager.LoadSceneAsync(currentScene.Name);

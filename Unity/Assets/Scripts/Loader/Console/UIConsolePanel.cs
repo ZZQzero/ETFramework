@@ -81,7 +81,7 @@ namespace ET
 
             if (closeButton != null)
             {
-                closeButton.onClick.AddListener(CloseSelf);
+                closeButton.onClick.AddListener(OnCloseUI);
             }
 
             logCountText.text = "";
@@ -105,6 +105,7 @@ namespace ET
 
         public override void OnCloseUI()
         {
+            gameObject.SetActive(false);
             base.OnCloseUI();
             searchInput.text = "";
             isfilter = false;
@@ -355,13 +356,25 @@ namespace ET
 
         public override GameObject GetObject(int index)
         {
-            GameObject itemObj = GameObjectPool.Instance.GetObjectSync("ConsoleLogItem", PoolType.UI);
+            GameObject itemObj;
+            if (itemPool.Count > 0)
+            {
+                Transform trans = itemPool.Pop();
+                itemObj = trans.gameObject;
+                itemObj.SetActive(true);
+            }
+            else
+            {
+                itemObj = GameObject.Instantiate(item);
+            }
             return itemObj;
         }
 
         public override void ReturnObject(Transform trans)
         {
-            GameObjectPool.Instance.ReleaseObject(trans.gameObject,PoolType.UI);
+            trans.gameObject.SetActive(false);
+            trans.SetParent(transform, false);
+            itemPool.Push(trans);
         }
 
         public override void ProvideData(Transform trans, int idx)

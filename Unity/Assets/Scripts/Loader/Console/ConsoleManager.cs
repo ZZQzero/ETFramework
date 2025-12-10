@@ -15,12 +15,12 @@ namespace ET
     public class ConsoleManager : Singleton<ConsoleManager>,ISingletonAwake
     {
         /// <summary>
-        /// 每种类型日志的最大数量
+        /// 每种类型日志的最大数量（独立计数）
         /// </summary>
-        private const int MAX_LOG_COUNT_PER_TYPE = 1000;
+        private const int MAX_LOG_COUNT_PER_TYPE = 2000;
         
         /// <summary>
-        /// 每次触发清理时移除的日志数量
+        /// 每次触发清理时移除的日志数量（批量移除优化性能）
         /// </summary>
         private const int BATCH_REMOVE_COUNT = 100;
 
@@ -34,10 +34,11 @@ namespace ET
         /// </summary>
         private readonly List<LogEntry> filteredLogs = new List<LogEntry>(MAX_LOG_COUNT_PER_TYPE * 3);
         
-        // 辅助队列，用于快速定位要移除的日志
+        // 辅助队列，用于快速定位要移除的日志，避免O(N)查找
         private readonly Queue<LogEntry> _logEntries = new Queue<LogEntry>();
         private readonly Queue<LogEntry> _warningEntries = new Queue<LogEntry>();
         private readonly Queue<LogEntry> _errorEntries = new Queue<LogEntry>();
+        private ConsoleTrigger _consoleTrigger;
 
         /// <summary>
         /// 日志类型过滤器
@@ -45,7 +46,6 @@ namespace ET
         private bool showLog = true;
         private bool showWarning = true;
         private bool showError = true;
-
         /// <summary>
         /// 日志统计
         /// </summary>
@@ -53,12 +53,14 @@ namespace ET
         public int WarningCount { get; private set; }
         public int ErrorCount { get; private set; }
         
+        public bool IsDevelop { get; set;}
+        
         public void Awake()
         {
             // 注册Unity日志回调
             Application.logMessageReceived += OnLogMessageReceived;
             GameObject obj = new GameObject("ConsoleManager");
-            obj.AddComponent<ConsoleTrigger>();
+            _consoleTrigger = obj.AddComponent<ConsoleTrigger>();
         }
         
         private void OnLogMessageReceived(string logString, string stackTrace, LogType type)
@@ -88,7 +90,7 @@ namespace ET
         /// </summary>
         private void AddLog(ConsoleLogType logType, string message, string stackTrace)
         {
-            if (GlobalConfigManager.Instance == null || !GlobalConfigManager.Instance.Config.IsDevelop)
+            if (!IsDevelop)
             {
                 return;
             }
@@ -171,6 +173,7 @@ namespace ET
 
             if (logsToRemove.Count > 0)
             {
+                // 使用 RemoveAll 进行一次性 O(N) 清理
                 allLogs.RemoveAll(x => logsToRemove.Contains(x));
                 filteredLogs.RemoveAll(x => logsToRemove.Contains(x));
 
@@ -204,7 +207,7 @@ namespace ET
             if (_isRefreshing) return;
             _isRefreshing = true;
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
-            GameUIManager.Instance.RefreshUI(LocalGameUIName.UIConsole, GetAllFilteredLogs());
+            GameUIManager.Instance.RefreshUI(_consoleTrigger.GetUI(), GetAllFilteredLogs());
             _isRefreshing = false;
         }
         /// <summary>

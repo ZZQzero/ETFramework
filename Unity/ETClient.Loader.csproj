@@ -62,7 +62,7 @@
     <Compile Include="Assets\Scripts\Loader\Core\GlobalConfigManager.cs" />
     <Compile Include="Assets\Scripts\Loader\Console\UIConsolePanel.cs" />
     <Compile Include="Assets\Scripts\Loader\Console\LogEntry.cs" />
-    <Compile Include="Assets\Scripts\Loader\ResourceLoad\ResourcesComponent.cs" />
+    <Compile Include="Assets\Scripts\Loader\ResourceLoad\ResourcesLoadManager.cs" />
     <Compile Include="Assets\Scripts\Loader\Console\ConsoleLogItem.cs" />
     <Compile Include="Assets\Scripts\Loader\Core\CoroutineHelper.cs" />
     <Compile Include="Assets\Scripts\Loader\Core\UnityLogger.cs" />
@@ -919,11 +919,11 @@
     <Reference Include="Unity.TextMeshPro">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\Unity.TextMeshPro.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

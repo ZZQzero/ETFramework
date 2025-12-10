@@ -127,12 +127,14 @@
     <Compile Include="Assets\Scripts\Core\Share\ETTask\ETVoid.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Fiber\ThreadSynchronizationContext.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\EntitySystemAttribute.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\ETTask\ETTaskPool.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\ObjectHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\Log\LogInvoker.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\EntitySceneFactory.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\Scene.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\IPEndPointNonAlloc.cs" />
     <Compile Include="Assets\Scripts\Core\Share\TimerCoreInvokeType.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\ETTask\aa.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\ETCancellationToken.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\ProcessHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\StringHashHelper.cs" />
@@ -1000,11 +1002,11 @@
     <Reference Include="YooAsset">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\YooAsset.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

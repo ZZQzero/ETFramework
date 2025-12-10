@@ -27,7 +27,7 @@ namespace GameUI
 			if(Data != null && Data is ResourcePackage package)
 			{
 				_package = package;
-				_downloader = await ResourcesComponent.Instance.OnCreateDownLoad(package);
+				_downloader = await ResourcesLoadManager.Instance.OnCreateDownLoad(package);
 				Debug.LogError($"OnOpenUI  {_downloader}  {_downloader.TotalDownloadCount}");
 				OnCreateDownLoad();
 			}
@@ -52,7 +52,7 @@ namespace GameUI
 				messageBoxData.Content = $"发现新资源需要更新，共{_downloader.TotalDownloadCount}个文件，总大小{totalSizeMB}MB";
 				messageBoxData.OnClickOk = () =>
 				{
-					ResourcesComponent.Instance.BeginDownload(_downloader,OnDownLoadFinish,OnDownloadProgress,OnDownError);
+					ResourcesLoadManager.Instance.BeginDownload(_downloader,OnDownLoadFinish,OnDownloadProgress,OnDownError);
 					GameUIManager.Instance.CloseAndDestroyUI(LocalGameUIName.MessageBox);
 				};
 				await GameUIManager.Instance.OpenUI(LocalGameUIName.MessageBox, messageBoxData);

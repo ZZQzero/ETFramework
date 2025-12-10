@@ -11,7 +11,9 @@ namespace ET
             Unit unit = args.Unit;
             // Unit View层
             string assetsName = $"Skeleton";
-            GameObject go = await scene.GetComponent<ResourcesLoaderComponent>().LoadAssetAsync<GameObject>(assetsName);
+            //GameObject go = await scene.GetComponent<ResourcesLoaderComponent>().LoadAssetAsync<GameObject>(assetsName);
+            GameObject go = await ResourcesLoadManager.Instance.LoadGameObjectAsync(assetsName);
+            //GameObject go = ResourcesLoadManager.Instance.LoadGameObjectSync(assetsName);
             go.transform.position = unit.Position;
             go.transform.localScale = Vector3.one * 10;
             UnityEngine.Object.DontDestroyOnLoad(go);

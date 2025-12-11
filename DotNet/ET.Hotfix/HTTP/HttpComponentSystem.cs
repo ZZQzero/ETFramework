@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Net;
 
 namespace ET
@@ -26,8 +25,8 @@ namespace ET
                     {
                         continue;
                     }
-
-                    if (!prefix.EndsWith('/'))
+                    
+                    if (prefix[^1] != '/')
                     {
                         prefix += "/";
                     }
@@ -37,7 +36,13 @@ namespace ET
 
                 self.Listener.Start();
 
-                self.Accept().NoContext();
+                // 启动多个Accept任务以支持并发处理，提高吞吐量
+                // HttpListener.GetContextAsync() 是线程安全的，可以并发调用
+                const int acceptCount = 1; // 并发接受连接数，可根据实际负载调整
+                for (int i = 0; i < acceptCount; i++)
+                {
+                    self.Accept().NoContext();
+                }
             }
             catch (HttpListenerException e)
             {
@@ -74,10 +79,11 @@ namespace ET
         private static async ETTask Accept(this HttpComponent self)
         {
             long instanceId = self.InstanceId;
+            
             while (self.InstanceId == instanceId)
             {
                 HttpListener listener = self.Listener;
-                if (listener == null)
+                if (listener == null || !listener.IsListening)
                 {
                     break;
                 }
@@ -89,19 +95,22 @@ namespace ET
                 }
                 catch (ObjectDisposedException)
                 {
+                    // Listener 已被释放，正常退出
                     break;
                 }
                 catch (HttpListenerException) when (!listener.IsListening)
                 {
+                    // Listener 已停止，正常退出
                     break;
                 }
                 catch (HttpListenerException e)
                 {
-                    Log.Error(e);
+                    // 其他 HttpListenerException（很少见，通常是临时网络问题）
+                    Log.Warning($"HttpListener异常，继续等待: {e.Message}");
                 }
                 catch (Exception e)
                 {
-                    Log.Error(e);
+                    Log.Error($"Accept循环异常: {e}");
                 }
             }
         }
@@ -111,43 +120,50 @@ namespace ET
             HttpListenerResponse response = context.Response;
             try
             {
+                if (self.IsDisposed)
+                {
+                    await TryResponseText(response, HttpStatusCode.ServiceUnavailable, "Service Unavailable");
+                    return;
+                }
+
                 HttpListenerRequest request = context.Request;
                 if (request?.Url == null)
                 {
                     Log.Error("Http request url is null");
-                    if (response.OutputStream.CanWrite)
-                    {
-                        await HttpHelper.ResponseText(response, HttpStatusCode.BadRequest, "Bad Request");
-                    }
+                    await TryResponseText(response, HttpStatusCode.BadRequest, "Bad Request");
                     return;
                 }
 
                 string path = request.Url.AbsolutePath;
-                if (!HttpDispatcher.Instance.TryGet(self.IScene.SceneType, path, out IHttpHandler handler))
+                int sceneType = self.IScene.SceneType;
+                if (!HttpDispatcher.Instance.TryGet(sceneType, path, out IHttpHandler handler))
                 {
-                    Log.Warning($"Http handler not found, sceneType: {self.IScene.SceneType}, path: {path}");
-                    if (response.OutputStream.CanWrite)
-                    {
-                        await HttpHelper.ResponseText(response, HttpStatusCode.NotFound, "Not Found");
-                    }
+                    Log.Warning($"Http handler not found, sceneType: {sceneType}, path: {path}");
+                    await TryResponseText(response, HttpStatusCode.NotFound, "Not Found");
                     return;
                 }
-
+                
                 await handler.Handle(self.Scene(), context);
+            }
+            catch (ObjectDisposedException)
+            {
+                // HttpListener 或 Response 已被释放，静默处理
+            }
+            catch (HttpListenerException e)
+            {
+                // 网络相关异常，记录但不返回错误响应（可能已经关闭）
+                Log.Warning($"HttpListener exception in Handle: {e.Message}");
             }
             catch (Exception e)
             {
-                Log.Error(e);
+                Log.Error($"Unexpected exception in HttpComponent.Handle: {e}");
                 try
                 {
-                    if (response.OutputStream.CanWrite)
-                    {
-                        await HttpHelper.ResponseText(response, HttpStatusCode.InternalServerError, "Internal Server Error");
-                    }
+                    await TryResponseText(response, HttpStatusCode.InternalServerError, "Internal Server Error");
                 }
                 catch (Exception inner)
                 {
-                    Log.Error(inner);
+                    Log.Error($"Failed to send error response: {inner}");
                 }
             }
             finally
@@ -158,8 +174,17 @@ namespace ET
                 }
                 catch (Exception closeException)
                 {
-                    Log.Error(closeException);
+                    // 忽略关闭时的异常（可能已经关闭）
+                    Log.Debug($"Exception closing response: {closeException.Message}");
                 }
+            }
+        }
+
+        private static async ETTask TryResponseText(HttpListenerResponse response, HttpStatusCode statusCode, string message)
+        {
+            if (response.OutputStream.CanWrite)
+            {
+                await HttpHelper.ResponseText(response, statusCode, message);
             }
         }
     }

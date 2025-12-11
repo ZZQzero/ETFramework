@@ -23,15 +23,22 @@ namespace ET
         [DebuggerHidden]
         public ETTask Task => this.tcs;
 
-        // 3. SetException
-        [DebuggerHidden]
-        public void SetException(Exception exception)
+        // 回收 StateMachineWrap 的公共逻辑
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RecycleStateMachineWrap()
         {
             if (this.iStateMachineWrap != null)
             {
                 this.iStateMachineWrap.Recycle();
                 this.iStateMachineWrap = null;
             }
+        }
+
+        // 3. SetException
+        [DebuggerHidden]
+        public void SetException(Exception exception)
+        {
+            this.RecycleStateMachineWrap();
             this.tcs.SetException(exception);
         }
 
@@ -39,11 +46,7 @@ namespace ET
         [DebuggerHidden]
         public void SetResult()
         {
-            if (this.iStateMachineWrap != null)
-            {
-                this.iStateMachineWrap.Recycle();
-                this.iStateMachineWrap = null;
-            }
+            this.RecycleStateMachineWrap();
             this.tcs.SetResult();
         }
 
@@ -109,15 +112,22 @@ namespace ET
         [DebuggerHidden]
         public ETTask<T> Task => this.tcs;
 
-        // 3. SetException
-        [DebuggerHidden]
-        public void SetException(Exception exception)
+        // 回收 StateMachineWrap 的公共逻辑
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RecycleStateMachineWrap()
         {
             if (this.iStateMachineWrap != null)
             {
                 this.iStateMachineWrap.Recycle();
                 this.iStateMachineWrap = null;
             }
+        }
+
+        // 3. SetException
+        [DebuggerHidden]
+        public void SetException(Exception exception)
+        {
+            this.RecycleStateMachineWrap();
             this.tcs.SetException(exception);
         }
 
@@ -125,11 +135,7 @@ namespace ET
         [DebuggerHidden]
         public void SetResult(T ret)
         {
-            if (this.iStateMachineWrap != null)
-            {
-                this.iStateMachineWrap.Recycle();
-                this.iStateMachineWrap = null;
-            }
+            this.RecycleStateMachineWrap();
             this.tcs.SetResult(ret);
         }
 

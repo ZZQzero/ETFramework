@@ -28,7 +28,6 @@ namespace GameUI
 			{
 				_package = package;
 				_downloader = await ResourcesLoadManager.Instance.OnCreateDownLoad(package);
-				Debug.LogError($"OnOpenUI  {_downloader}  {_downloader.TotalDownloadCount}");
 				OnCreateDownLoad();
 			}
 		}
@@ -37,6 +36,7 @@ namespace GameUI
 		{
 			if (_downloader.TotalDownloadCount == 0)
 			{
+				await ResourcesLoadManager.Instance.LoadHotfixDll();
 				var handle = _package.LoadAssetSync<GameObject>("GameEntry");
 				var obj = handle.InstantiateSync();
 				GameObject.DontDestroyOnLoad(obj);
@@ -74,22 +74,16 @@ namespace GameUI
 			tipsText.text = $"{data.CurrentDownloadCount}/{data.TotalDownloadCount} {currentSizeMB}MB/{totalSizeMB}MB";
 		}
 
-		private void OnDownLoadFinish(DownloaderFinishData data)
+		private async void OnDownLoadFinish(DownloaderFinishData data)
 		{
 			if (data.Succeed)
 			{
-				Debug.LogError("下载完成");
+				await ResourcesLoadManager.Instance.LoadHotfixDll();
 				var handle = _package.LoadAssetSync<GameObject>("GameEntry");
 				var obj = handle.InstantiateSync();
 				GameObject.DontDestroyOnLoad(obj);
 				Destroy(gameObject);
 			}
-		}
-
-		private void ChangeScene()
-		{
-			YooAssets.LoadSceneAsync("scene_home");
-			CloseSelf();
 		}
 
 		public override void OnCloseUI()

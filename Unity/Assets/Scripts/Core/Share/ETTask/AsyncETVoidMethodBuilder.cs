@@ -21,27 +21,30 @@ namespace ET
         [DebuggerHidden]
         public ETVoid Task => default;
 
-        // 3. SetException
-        [DebuggerHidden]
-        public void SetException(Exception e)
+        // 回收 StateMachineWrap 的公共逻辑
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RecycleStateMachineWrap()
         {
             if (this.iStateMachineWrap != null)
             {
                 this.iStateMachineWrap.Recycle();
                 this.iStateMachineWrap = null;
             }
-            ETTask.ExceptionHandler.Invoke(e);
+        }
+
+        // 3. SetException
+        [DebuggerHidden]
+        public void SetException(Exception e)
+        {
+            this.RecycleStateMachineWrap();
+            ETTask.ExceptionHandler?.Invoke(e);
         }
 
         // 4. SetResult
         [DebuggerHidden]
         public void SetResult()
         {
-            if (this.iStateMachineWrap != null)
-            {
-                this.iStateMachineWrap.Recycle();
-                this.iStateMachineWrap = null;
-            }
+            this.RecycleStateMachineWrap();
         }
 
         // 5. AwaitOnCompleted

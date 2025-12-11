@@ -1,3 +1,4 @@
+#if DEVELOPMENT_BUILD
 using System;
 using UnityEngine;
 using UnityEngine.UI;
@@ -132,3 +133,4 @@ namespace ET
         }
 	}
 }
+#endif

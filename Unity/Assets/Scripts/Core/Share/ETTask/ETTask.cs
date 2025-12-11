@@ -125,9 +125,10 @@ namespace ET
             this.TaskType = TaskType.Common;
         }
 
-        private bool fromPool;
+        // 高频访问字段放在前面，优化内存布局和缓存性能
         private AwaiterStatus state;
         private object callback; // Action or ExceptionDispatchInfo
+        private bool fromPool;
         
         /// <summary>
         /// 池中标记：防止重复归还
@@ -177,19 +178,21 @@ namespace ET
             await this;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [DebuggerHidden]
         public ETTask GetAwaiter()
         {
             return this;
         }
 
-        
         public bool IsCompleted
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             [DebuggerHidden]
             get => this.state != AwaiterStatus.Pending;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [DebuggerHidden]
         public void UnsafeOnCompleted(Action action)
         {
@@ -227,6 +230,7 @@ namespace ET
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [DebuggerHidden]
         public void SetResult()
         {
@@ -246,6 +250,11 @@ namespace ET
         [DebuggerHidden]
         public void SetException(Exception e)
         {
+            if (e == null)
+            {
+                throw new ArgumentNullException(nameof(e));
+            }
+            
             if (this.state != AwaiterStatus.Pending)
             {
                 throw new InvalidOperationException("TaskT_TransitionToFinal_AlreadyCompleted");
@@ -307,10 +316,11 @@ namespace ET
             this.TaskType = TaskType.Common;
         }
 
-        private bool fromPool;
+        // 高频访问字段放在前面，优化内存布局和缓存性能
         private AwaiterStatus state;
-        private T value;
         private object callback; // Action or ExceptionDispatchInfo
+        private T value;
+        private bool fromPool;
         
         /// <summary>
         /// 池中标记：防止重复归还（仅供ETTaskPool使用）
@@ -351,7 +361,7 @@ namespace ET
         }
         
         /// <summary>
-        /// 在await的同时可以换一个新的cancellationToken
+        /// 在await的同时可以换一个新的上下文
         /// </summary>
         [DebuggerHidden]
         public async ETTask<T> NewContext(object context)
@@ -360,6 +370,7 @@ namespace ET
             return await this;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [DebuggerHidden]
         public ETTask<T> GetAwaiter()
         {
@@ -380,21 +391,21 @@ namespace ET
                     this.callback = null;
                     this.Recycle();
                     c?.Throw();
+                    // 永远不会执行到这里，但编译器需要返回值
                     return default;
                 default:
-                    throw new NotSupportedException("ETask does not allow call GetResult directly when task not completed. Please use 'await'.");
+                    throw new NotSupportedException("ETTask does not allow call GetResult directly when task not completed. Please use 'await'.");
             }
         }
         
         public bool IsCompleted
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             [DebuggerHidden]
-            get
-            {
-                return state != AwaiterStatus.Pending;
-            }
+            get => this.state != AwaiterStatus.Pending;
         } 
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [DebuggerHidden]
         public void UnsafeOnCompleted(Action action)
         {
@@ -413,6 +424,7 @@ namespace ET
             this.UnsafeOnCompleted(action);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [DebuggerHidden]
         public void SetResult(T result)
         {
@@ -430,9 +442,15 @@ namespace ET
             c?.Invoke();
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [DebuggerHidden]
         public void SetException(Exception e)
         {
+            if (e == null)
+            {
+                throw new ArgumentNullException(nameof(e));
+            }
+            
             if (this.state != AwaiterStatus.Pending)
             {
                 throw new InvalidOperationException("TaskT_TransitionToFinal_AlreadyCompleted");

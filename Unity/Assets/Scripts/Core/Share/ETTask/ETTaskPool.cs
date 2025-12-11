@@ -164,103 +164,6 @@ namespace ET
 #endif
         }
 
-#if ENABLE_VIEW
-        /// <summary>
-        /// 检查对象池健康状态（仅Debug模式）
-        /// 用于发现重复对象、未标记对象等潜在问题
-        /// </summary>
-        public static void CheckPoolHealth()
-        {
-#if DOTNET
-            var stack = localStack.Value;
-#endif
-            HashSet<ETTask> uniqueTasks = new HashSet<ETTask>();
-            int duplicates = 0;
-            int unmarkedCount = 0;
-            int totalTasks = 0;
-
-#if DOTNET
-            foreach (var task in stack)
-            {
-                totalTasks++;
-                
-                if (!uniqueTasks.Add(task))
-                {
-                    duplicates++;
-                    Log.Error($"发现重复对象: HashCode={task.GetHashCode()}");
-                }
-
-                if (!task.IsPooled)
-                {
-                    unmarkedCount++;
-                    Log.Error($"池中对象未标记IsPooled: HashCode={task.GetHashCode()}");
-                }
-            }
-#else
-            for (int i = 0; i < poolCount; i++)
-            {
-                if (pool[i] == null)
-                {
-                    Log.Error($"池中索引{i}为null");
-                    continue;
-                }
-                
-                totalTasks++;
-                var task = pool[i];
-                
-                if (!uniqueTasks.Add(task))
-                {
-                    duplicates++;
-                    Log.Error($"发现重复对象: HashCode={task.GetHashCode()}");
-                }
-
-                if (!task.IsPooled)
-                {
-                    unmarkedCount++;
-                    Log.Error($"池中对象未标记IsPooled: HashCode={task.GetHashCode()}");
-                }
-            }
-#endif
-
-            if (duplicates > 0 || unmarkedCount > 0)
-            {
-                Log.Error($"池健康检查失败: 总数={totalTasks}, 重复={duplicates}, 未标记={unmarkedCount}");
-            }
-            else
-            {
-                Log.Info($"池健康检查通过: {totalTasks}个对象全部正常");
-            }
-        }
-        
-        /// </summary>
-        /// 获取对象池信息（供编辑器窗口使用）
-        /// </summary>
-        public static ETTaskPoolInfo GetPoolInfo()
-        {
-#if DOTNET
-            var stack = localStack.Value;
-            return new PoolInfo
-            {
-                PoolSize = stack.Count,
-                MaxSize = MAX_POOL_SIZE,
-                TotalAllocations = totalAlloc.Value,
-                PoolHits = hitCount.Value,
-                PoolMisses = missCount.Value,
-                DuplicateReturns = dupReturnCount.Value
-            };
-#else
-            return new ETTaskPoolInfo
-            {
-                PoolSize = poolCount,
-                MaxSize = MAX_POOL_SIZE,
-                TotalAllocations = totalAlloc,
-                PoolHits = hitCount,
-                PoolMisses = missCount,
-                DuplicateReturns = dupReturnCount
-            };
-#endif
-        }
-#endif
     }
 
     /// <summary>
@@ -333,11 +236,15 @@ namespace ET
         {
             if (task.IsPooled)
             {
+#if DOTNET
+                dupReturnCount.Value++;
+#else
+                dupReturnCount++;
+#endif
                 return;
             }
             
 #if DOTNET
-            dupReturnCount.Value++;
             var stack = localStack.Value;
             if (stack.Count >= MAX_POOL_SIZE)
             {
@@ -347,7 +254,6 @@ namespace ET
             task.IsPooled = true;
             stack.Push(task);
 #else
-            dupReturnCount++;
             if (poolCount >= MAX_POOL_SIZE)
             {
                 return;
@@ -357,6 +263,29 @@ namespace ET
             pool[poolCount++] = task;
 #endif
         }
+
+        /// <summary>
+        /// 清空对象池
+        /// </summary>
+        public static void Clear()
+        {
+#if DOTNET
+            var stack = localStack.Value;
+            stack.Clear();
+            totalAlloc.Value = 0;
+            hitCount.Value = 0;
+            missCount.Value = 0;
+            dupReturnCount.Value = 0;
+#else
+            Array.Clear(pool, 0, poolCount);
+            poolCount = 0;
+            totalAlloc = 0;
+            hitCount = 0;
+            missCount = 0;
+            dupReturnCount = 0;
+#endif
+        }
+
     }
     
     /// <summary>

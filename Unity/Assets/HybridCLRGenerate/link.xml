@@ -85,7 +85,7 @@
     <type fullname="ET.GlobalConfig" preserve="all" />
     <type fullname="ET.GlobalConfigManager" preserve="all" />
     <type fullname="ET.HttpClientHelper" preserve="all" />
-    <type fullname="ET.ResourcesComponent" preserve="all" />
+    <type fullname="ET.ResourcesLoadManager" preserve="all" />
   </assembly>
   <assembly fullname="ETClient.ThirdParty">
     <type fullname="ET.ChildOfAttribute" preserve="all" />
@@ -98,11 +98,6 @@
   <assembly fullname="GameUIFramework">
     <type fullname="GameUI.GameUIBase" preserve="all" />
     <type fullname="GameUI.GameUIManager" preserve="all" />
-  </assembly>
-  <assembly fullname="HybridCLR.Runtime">
-    <type fullname="HybridCLR.HomologousImageMode" preserve="all" />
-    <type fullname="HybridCLR.LoadImageErrorCode" preserve="all" />
-    <type fullname="HybridCLR.RuntimeApi" preserve="all" />
   </assembly>
   <assembly fullname="Luban.Runtime">
     <type fullname="Luban.BeanBase" preserve="all" />
@@ -162,6 +157,9 @@
     <type fullname="Unity.Mathematics.float3" preserve="all" />
     <type fullname="Unity.Mathematics.math" preserve="all" />
     <type fullname="Unity.Mathematics.quaternion" preserve="all" />
+  </assembly>
+  <assembly fullname="Unity.TextMeshPro">
+    <type fullname="TMPro.TextMeshProUGUI" preserve="all" />
   </assembly>
   <assembly fullname="UnityEngine.AnimationModule">
     <type fullname="UnityEngine.AnimationClip" preserve="all" />
@@ -251,7 +249,6 @@
     <type fullname="System.Object" preserve="all" />
     <type fullname="System.Predicate`1" preserve="all" />
     <type fullname="System.ReadOnlySpan`1" preserve="all" />
-    <type fullname="System.Reflection.Assembly" preserve="all" />
     <type fullname="System.Reflection.DefaultMemberAttribute" preserve="all" />
     <type fullname="System.Reflection.MemberInfo" preserve="all" />
     <type fullname="System.Runtime.CompilerServices.AsyncStateMachineAttribute" preserve="all" />

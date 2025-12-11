@@ -829,7 +829,7 @@ PlayerSettings:
   webWasm2023: 0
   webEnableSubmoduleStrippingCompatibility: 0
   scriptingDefineSymbols:
-    Standalone: UNITY;SHARE;ENABLE_VIEW;ENABLE_CONSOLE
+    Standalone: UNITY;ENABLE_VIEW;DEVELOPMENT_BUILD
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

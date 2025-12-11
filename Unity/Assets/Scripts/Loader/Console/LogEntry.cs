@@ -1,4 +1,4 @@
-﻿#if ENABLE_CONSOLE || DEVELOPMENT_BUILD
+﻿#if DEVELOPMENT_BUILD
 using System;
 
 namespace ET

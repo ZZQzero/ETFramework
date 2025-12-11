@@ -17,7 +17,7 @@ namespace ET
         {
             DontDestroyOnLoad(gameObject);
             World.Instance.AddSingleton<GlobalConfigManager>();
-#if ENABLE_CONSOLE || DEVELOPMENT_BUILD
+#if DEVELOPMENT_BUILD
             World.Instance.AddSingleton<ConsoleManager>();
             ConsoleManager.Instance.IsDevelop = GlobalConfigManager.Instance.Config.IsDevelop;
 #endif

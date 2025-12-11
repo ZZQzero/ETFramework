@@ -1,4 +1,4 @@
-﻿#if ENABLE_CONSOLE || DEVELOPMENT_BUILD
+﻿#if DEVELOPMENT_BUILD
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -109,6 +109,7 @@ namespace ET
             base.OnCloseUI();
             searchInput.text = "";
             isfilter = false;
+            ConsoleManager.Instance.IsConsoleOpen = false;
         }
 
         public override void OnRefreshUI()

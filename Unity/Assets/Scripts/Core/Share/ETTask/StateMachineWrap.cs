@@ -32,7 +32,8 @@ namespace ET
         
         public void Recycle()
         {
-            if (Interlocked.CompareExchange(ref poolSize, 0, 0) > 100)
+            // 使用 Volatile.Read 读取当前值，避免不必要的 CompareExchange
+            if (Volatile.Read(ref poolSize) >= 100)
             {
                 return;
             }

@@ -13,7 +13,7 @@ namespace ET
         public static string BuildFolder = "./Release/{0}/StreamingAssets/";
 
 #if ENABLE_VIEW
-        [MenuItem("ET/Loader/Remove ENABLE_VIEW", false, ETMenuItemPriority.ChangeDefine)]
+        [MenuItem("ET/ScriptingDefine/Remove ENABLE_VIEW", false, ETMenuItemPriority.ChangeDefine)]
         public static void RemoveEnableView()
         {
             EnableDefineSymbols("ENABLE_VIEW", false);

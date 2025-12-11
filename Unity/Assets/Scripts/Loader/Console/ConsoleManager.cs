@@ -1,4 +1,4 @@
-﻿#if ENABLE_CONSOLE || DEVELOPMENT_BUILD
+﻿#if DEVELOPMENT_BUILD
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,8 +52,8 @@ namespace ET
         public int LogCount { get; private set; }
         public int WarningCount { get; private set; }
         public int ErrorCount { get; private set; }
-        
         public bool IsDevelop { get; set;}
+        public bool IsConsoleOpen;
         
         public void Awake()
         {

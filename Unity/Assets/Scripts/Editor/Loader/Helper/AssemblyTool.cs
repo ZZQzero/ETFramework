@@ -1,12 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
-using System.Threading;
 using UnityEditor;
-using UnityEditor.Build.Player;
 using UnityEditor.Callbacks;
 using UnityEditor.Compilation;
 using UnityEngine;
@@ -15,11 +11,6 @@ namespace ET
 {
     public static class AssemblyTool
     {
-        /// <summary>
-        /// Unity线程的同步上下文
-        /// </summary>
-        static SynchronizationContext unitySynchronizationContext { get; set; }
-
         [InitializeOnLoadMethod]
         static void Initialize()
         {
@@ -38,93 +29,25 @@ namespace ET
         public static void OnAfterAssemblyReload()
         {
             // 使用延迟调用，避免在编译过程中立即触发重新编译
-            EditorApplication.delayCall += GenerateEntity;
-        }
-
-        /// <summary>
-        /// 菜单和快捷键编译按钮
-        /// </summary>
-        [MenuItem("ET/Loader/Compile _F6", false, ETMenuItemPriority.Compile)]
-        static void MenuItemOfCompile()
-        {
-            // 强制刷新一下，防止关闭auto refresh，文件修改时间不准确
-            AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
-
-            DoCompile();
-        }
-
-        /// <summary>
-        /// 菜单和快捷键热重载按钮
-        /// </summary>
-        [MenuItem("ET/Loader/Reload _F7", false, ETMenuItemPriority.Compile)]
-        static void MenuItemOfReload()
-        {
-            if (Application.isPlaying)
+            // 额外延迟一帧，确保所有程序集都已完全加载
+            EditorApplication.delayCall += () =>
             {
-                //CodeLoader.Instance?.Reload();
-            }
-        }
-
-        /// <summary>
-        /// 执行编译代码流程
-        /// </summary>
-        public static void DoCompile()
-        {
-            // 强制刷新一下，防止关闭auto refresh，编译出老代码
-            AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
-
-            /*GlobalConfig globalConfig = Resources.Load<GlobalConfig>("GlobalConfig");
-            CodeModeChangeHelper.ChangeToCodeMode(globalConfig.CodeMode.ToString());*/
-
-            bool isCompileOk = CompileDlls();
-            if (!isCompileOk)
-            {
-                return;
-            }
-
-            //CopyHotUpdateDlls();
-            
-            Debug.Log($"Compile Finish!");
-        }
-
-        /// <summary>
-        /// 编译成dll
-        /// </summary>
-        static bool CompileDlls()
-        {
-            // 运行时编译需要先设置为UnitySynchronizationContext, 编译完再还原为CurrentContext
-            SynchronizationContext lastSynchronizationContext = Application.isPlaying ? SynchronizationContext.Current : null;
-            SynchronizationContext.SetSynchronizationContext(unitySynchronizationContext);
-
-            bool isCompileOk = false;
-
-            try
-            {
-                Directory.CreateDirectory(Define.BuildOutputDir);
-                BuildTarget target = EditorUserBuildSettings.activeBuildTarget;
-                BuildTargetGroup group = BuildPipeline.GetBuildTargetGroup(target);
-                ScriptCompilationSettings scriptCompilationSettings = new()
+                // 再次延迟，确保程序集完全初始化
+                EditorApplication.delayCall += () =>
                 {
-                    group = group,
-                    target = target,
-                    extraScriptingDefines = new[] { "IS_COMPILING" },
-                    options = EditorUserBuildSettings.development ? ScriptCompilationOptions.DevelopmentBuild : ScriptCompilationOptions.None
+                    try
+                    {
+                        GenerateEntity();
+                    }
+                    catch (Exception ex)
+                    {
+                        // 静默处理异常，避免影响Unity编辑器
+                        Debug.LogWarning($"[AssemblyTool] OnAfterAssemblyReload 执行失败: {ex.Message}");
+                    }
                 };
-                ScriptCompilationResult result = PlayerBuildInterface.CompilePlayerScripts(scriptCompilationSettings, Define.BuildOutputDir);
-                isCompileOk = result.assemblies.Count > 0;
-                EditorUtility.ClearProgressBar();
-            }
-            finally
-            {
-                if (lastSynchronizationContext != null)
-                {
-                    SynchronizationContext.SetSynchronizationContext(lastSynchronizationContext);
-                }
-            }
-
-            return isCompileOk;
+            };
         }
-
+        
         /// <summary>
         /// 将热更dll文件复制到加载目录
         /// </summary>
@@ -141,7 +64,7 @@ namespace ET
             foreach (string dllName in GlobalConfigManager.DllNames)
             {
                 string sourceDll = $"{hotUpdateDllDir}/{dllName}.dll";
-                string sourcePdb = $"{hotUpdateDllDir}/{dllName}.pdb";
+                //string sourcePdb = $"{hotUpdateDllDir}/{dllName}.pdb";
                 
                 if (!File.Exists(sourceDll))
                 {
@@ -151,10 +74,11 @@ namespace ET
                 
                 File.Copy(sourceDll, $"{Define.CodeDir}/{dllName}.dll.bytes", true);
                 
-                if (File.Exists(sourcePdb))
+                /*if (File.Exists(sourcePdb))
                 {
                     File.Copy(sourcePdb, $"{Define.CodeDir}/{dllName}.pdb.bytes", true);
-                }
+                }*/
+                Debug.Log($"Hotfix DLL 拷贝完成，{dllName}");
             }
 
             AssetDatabase.Refresh();
@@ -214,73 +138,120 @@ namespace ET
         [MenuItem("ET/Loader/生成EntitySystem注册代码")]
         public static void GenerateEntity()
         {
-            var sb = new StringBuilder();
-            sb.AppendLine("//-----------自动生成------------");
-            sb.AppendLine("namespace ET");
-            sb.AppendLine("{");
-            sb.AppendLine("    public static partial class GameRegister");
-            sb.AppendLine("    {");
-            sb.AppendLine("        public static void RegisterEntitySystem()");
-            sb.AppendLine("        {");
-
-            var assemblis = AppDomain.CurrentDomain.GetAssemblies();
-            foreach (var assembly in assemblis)
+            try
             {
-                foreach (var type in assembly.GetTypes())
+                var sb = new StringBuilder();
+                sb.AppendLine("//-----------自动生成------------");
+                sb.AppendLine("namespace ET");
+                sb.AppendLine("{");
+                sb.AppendLine("    public static partial class GameRegister");
+                sb.AppendLine("    {");
+                sb.AppendLine("        public static void RegisterEntitySystem()");
+                sb.AppendLine("        {");
+
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                foreach (var assembly in assemblies)
                 {
-                    // 排除 abstract 类、接口
-                    if (type.IsAbstract || type.IsInterface)
+                    // 跳过动态程序集和系统程序集，避免类型加载问题
+                    if (assembly.IsDynamic || assembly.FullName.StartsWith("System.") || assembly.FullName.StartsWith("Microsoft."))
                     {
                         continue;
                     }
 
-                    // 找到标记 [EntitySystem] 的类
-                    var hasAttr = type.GetCustomAttributes(false).Any(a => a.GetType().Name == "EntitySystemAttribute");
-                    if (!hasAttr)
+                    try
                     {
-                        continue;
+                        // 安全地获取类型，处理 ReflectionTypeLoadException
+                        Type[] types;
+                        try
+                        {
+                            types = assembly.GetTypes();
+                        }
+                        catch (System.Reflection.ReflectionTypeLoadException ex)
+                        {
+                            // 如果某些类型加载失败，使用成功加载的类型
+                            types = ex.Types.Where(t => t != null).ToArray();
+                        }
+
+                        foreach (var type in types)
+                        {
+                            // 跳过空类型（ReflectionTypeLoadException 可能返回 null）
+                            if (type == null)
+                            {
+                                continue;
+                            }
+
+                            // 排除 abstract 类、接口
+                            if (type.IsAbstract || type.IsInterface)
+                            {
+                                continue;
+                            }
+
+                            try
+                            {
+                                // 找到标记 [EntitySystem] 的类
+                                var hasAttr = type.GetCustomAttributes(false).Any(a => a.GetType().Name == "EntitySystemAttribute");
+                                if (!hasAttr)
+                                {
+                                    continue;
+                                }
+
+                                // 修正内部类名称，用 . 替代 +
+                                var typeName = type.FullName.Replace('+', '.');
+                                sb.AppendLine($"            EntitySystemSingleton.RegisterEntitySystem<{typeName}>();");
+                            }
+                            catch (Exception ex)
+                            {
+                                // 单个类型处理失败，记录日志但继续处理其他类型
+                                Debug.LogWarning($"[AssemblyTool] 处理类型 {type?.FullName} 时出错: {ex.Message}");
+                            }
+                        }
                     }
-
-                    // 修正内部类名称，用 . 替代 +
-                    var typeName = type.FullName.Replace('+', '.');
-                    sb.AppendLine($"            EntitySystemSingleton.RegisterEntitySystem<{typeName}>();");
+                    catch (Exception ex)
+                    {
+                        // 单个程序集处理失败，记录日志但继续处理其他程序集
+                        Debug.LogWarning($"[AssemblyTool] 处理程序集 {assembly.FullName} 时出错: {ex.Message}");
+                    }
                 }
-            }
 
-            sb.AppendLine("        }");
-            sb.AppendLine("    }");
-            sb.AppendLine("}");
+                sb.AppendLine("        }");
+                sb.AppendLine("    }");
+                sb.AppendLine("}");
 
-            // 保存到文件
-            var dir = Path.GetDirectoryName(Define.EntitySystemRegisterDir);
-            if (!Directory.Exists(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-
-            string newContent = sb.ToString();
-            string filePath = Define.EntitySystemRegisterDir;
-            
-            // 检查文件是否存在，以及内容是否真的有变化
-            bool needWrite = true;
-            if (File.Exists(filePath))
-            {
-                string oldContent = File.ReadAllText(filePath, Encoding.UTF8);
-                // 如果内容相同，不写入文件，避免触发重新编译
-                if (oldContent == newContent)
+                // 保存到文件
+                var dir = Path.GetDirectoryName(Define.EntitySystemRegisterDir);
+                if (!Directory.Exists(dir))
                 {
-                    needWrite = false;
+                    Directory.CreateDirectory(dir);
+                }
+
+                string newContent = sb.ToString();
+                string filePath = Define.EntitySystemRegisterDir;
+                
+                // 检查文件是否存在，以及内容是否真的有变化
+                bool needWrite = true;
+                if (File.Exists(filePath))
+                {
+                    string oldContent = File.ReadAllText(filePath, Encoding.UTF8);
+                    // 如果内容相同，不写入文件，避免触发重新编译
+                    if (oldContent == newContent)
+                    {
+                        needWrite = false;
+                    }
+                }
+                
+                // 只有内容真的有变化时才写入文件并刷新
+                if (needWrite)
+                {
+                    File.WriteAllText(filePath, newContent, Encoding.UTF8);
+                    AssetDatabase.Refresh();
+                    Debug.Log($"EntitySystemRegisterAll generated at {Define.EntitySystemRegisterDir}");
                 }
             }
-            
-            // 只有内容真的有变化时才写入文件并刷新
-            if (needWrite)
+            catch (Exception ex)
             {
-                File.WriteAllText(filePath, newContent, Encoding.UTF8);
-                AssetDatabase.Refresh();
+                // 整体失败时记录错误，但不抛出异常，避免影响其他编辑器功能
+                Debug.LogError($"[AssemblyTool] GenerateEntity 失败: {ex}");
             }
-
-            Debug.Log($"EntitySystemRegisterAll generated at {Define.EntitySystemRegisterDir}");
         }
     }
 }

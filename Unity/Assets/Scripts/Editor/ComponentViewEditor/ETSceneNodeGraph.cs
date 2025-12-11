@@ -73,7 +73,7 @@ public class ETSceneNodeGraph: EditorWindow
     }
 
     // -------------------- Unity --------------------
-    [MenuItem("ET/查看Scene层级关系")]
+    [MenuItem("ET/View/Scene层级关系视图")]
     static void OpenWindow() => GetWindow<ETSceneNodeGraph>("ET Node Graph");
     
     void OnEnable()

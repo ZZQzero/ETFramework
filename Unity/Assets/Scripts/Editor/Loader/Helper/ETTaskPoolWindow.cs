@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if ENABLE_VIEW
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -26,7 +27,10 @@ namespace ET
         private float _lastUpdateTime;
         private const float UPDATE_INTERVAL = 0.5f; // 0.5秒更新一次
         
-        [MenuItem("ET/ETTask对象池监控")]
+        // 扫描状态
+        private bool _isScanning = false;
+        
+        [MenuItem("ET/View/ETTask对象池监控")]
         public static void ShowWindow()
         {
             _window = GetWindow<ETTaskPoolWindow>("ETTask对象池");
@@ -61,7 +65,11 @@ namespace ET
         
         private void Update()
         {
-            // 定期更新
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+            
             if (Time.realtimeSinceStartup - _lastUpdateTime > UPDATE_INTERVAL)
             {
                 _lastUpdateTime = Time.realtimeSinceStartup;
@@ -76,8 +84,10 @@ namespace ET
                 InitStyles();
             }
             
-            // 更新统计数据
-            UpdateStats();
+            if (Application.isPlaying)
+            {
+                UpdateStats();
+            }
             
             EditorGUILayout.Space(10);
             
@@ -174,7 +184,6 @@ namespace ET
             
             EditorGUILayout.Space(5);
             
-            // 命中率
             float hitRate = info.TotalAllocations > 0 
                 ? (float)info.PoolHits / info.TotalAllocations * 100 
                 : 0;
@@ -198,7 +207,20 @@ namespace ET
             
             if (_stats.GenericPoolInfos.Count == 0)
             {
-                EditorGUILayout.LabelField("暂无泛型对象池", _normalStyle);
+                EditorGUILayout.LabelField("正在扫描程序集，请稍候...", _normalStyle);
+                EditorGUILayout.Space(5);
+                EditorGUILayout.HelpBox("首次打开窗口时会扫描程序集以发现ETTask<T>的使用，这可能需要几秒钟。", MessageType.Info);
+                
+                if (!_isScanning)
+                {
+                    _isScanning = true;
+                    EditorApplication.delayCall += () =>
+                    {
+                        _isScanning = false;
+                        UpdateStats();
+                        Repaint();
+                    };
+                }
                 return;
             }
             
@@ -209,14 +231,40 @@ namespace ET
                 
                 EditorGUILayout.BeginVertical("box");
                 
-                EditorGUILayout.LabelField($"类型：ETTask<{typeName}>", _normalStyle);
+                // 简化类型名称显示（去掉命名空间前缀）
+                string displayName = typeName;
+                int lastDot = typeName.LastIndexOf('.');
+                if (lastDot >= 0)
+                {
+                    displayName = typeName.Substring(lastDot + 1);
+                }
+                
+                EditorGUILayout.LabelField($"类型：ETTask<{displayName}>", _normalStyle);
+                EditorGUILayout.LabelField($"完整类型：{typeName}", _separatorStyle);
+                
+                EditorGUILayout.Space(3);
+                
                 EditorGUILayout.LabelField($"池大小：{info.PoolSize} / {info.MaxSize}", _normalStyle);
                 
                 float fillRate = info.MaxSize > 0 ? (float)info.PoolSize / info.MaxSize : 0;
-                EditorGUI.ProgressBar(EditorGUILayout.GetControlRect(false, 15), fillRate, 
-                    $"{fillRate * 100:F1}%");
+                EditorGUI.ProgressBar(EditorGUILayout.GetControlRect(false, 20), fillRate, 
+                    $"{fillRate * 100:F1}% 满");
                 
-                EditorGUILayout.LabelField($"命中率：{info.HitRate:F2}%", _normalStyle);
+                EditorGUILayout.Space(5);
+                
+                EditorGUILayout.LabelField($"总分配次数：{info.TotalAllocations:N0}", _normalStyle);
+                EditorGUILayout.LabelField($"池命中次数：{info.PoolHits:N0}", _goodStyle);
+                EditorGUILayout.LabelField($"池未命中次数：{info.PoolMisses:N0}", 
+                    info.PoolMisses > info.PoolHits ? _warningStyle : _normalStyle);
+                EditorGUILayout.LabelField($"重复归还次数：{info.DuplicateReturns:N0}", 
+                    info.DuplicateReturns > 0 ? _warningStyle : _goodStyle);
+                
+                EditorGUILayout.Space(5);
+                
+                // 命中率
+                GUIStyle hitRateStyle = info.HitRate > 90 ? _goodStyle : 
+                                       info.HitRate > 70 ? _normalStyle : _warningStyle;
+                EditorGUILayout.LabelField($"命中率：{info.HitRate:F2}%", hitRateStyle);
                 
                 EditorGUILayout.EndVertical();
                 EditorGUILayout.Space(3);
@@ -237,7 +285,6 @@ namespace ET
             
             bool hasIssues = false;
             
-            // 检查重复归还
             if (_stats.ETTaskPoolInfo.DuplicateReturns > 0)
             {
                 EditorGUILayout.LabelField($"⚠️ 检测到 {_stats.ETTaskPoolInfo.DuplicateReturns} 次重复归还", 
@@ -245,7 +292,6 @@ namespace ET
                 hasIssues = true;
             }
             
-            // 检查命中率
             if (_stats.ETTaskPoolInfo.HitRate < 70 && _stats.ETTaskPoolInfo.TotalAllocations > 100)
             {
                 EditorGUILayout.LabelField($"⚠️ 命中率过低 ({_stats.ETTaskPoolInfo.HitRate:F1}%)，建议增加预热", 
@@ -253,7 +299,6 @@ namespace ET
                 hasIssues = true;
             }
             
-            // 检查池满情况
             float fillRate = _stats.ETTaskPoolInfo.MaxSize > 0 
                 ? (float)_stats.ETTaskPoolInfo.PoolSize / _stats.ETTaskPoolInfo.MaxSize 
                 : 0;
@@ -306,7 +351,6 @@ namespace ET
                 }
             }
             
-#if ENABLE_VIEW
             if (GUILayout.Button("🔍 健康检查", GUILayout.Height(30)))
             {
                 if (Application.isPlaying)
@@ -318,7 +362,7 @@ namespace ET
                     EditorUtility.DisplayDialog("提示", "请在Play模式下执行此操作", "确定");
                 }
             }
-#endif
+            
             EditorGUILayout.EndHorizontal();
         }
     }
@@ -342,42 +386,23 @@ namespace ET
                 return;
             }
             
-            // 通过反射或扩展接口获取运行时数据
-            // 这里需要在ETTaskPool中添加接口来获取统计信息
-            ETTaskPoolInfo = GetETTaskPoolInfo();
-            GenericPoolInfos = GetGenericPoolInfos();
-            
-            PoolCount = 1 + GenericPoolInfos.Count;
-            TotalObjects = ETTaskPoolInfo.PoolSize;
-            foreach (var info in GenericPoolInfos.Values)
-            {
-                TotalObjects += info.PoolSize;
-            }
-        }
-        
-        private ETTaskPoolInfo GetETTaskPoolInfo()
-        {
-            // 调用ETTaskPool的统计接口
-            return ETTaskPool.GetPoolInfo();
-        }
-        
-        private Dictionary<string, ETTaskPoolInfo> GetGenericPoolInfos()
-        {
-            // 暂时返回空，后续可以扩展
-            return new Dictionary<string, ETTaskPoolInfo>();
+            // 使用ETTaskPoolView统一接口获取统计数据
+            var stats = ETTaskPoolView.GetAllStats();
+            PoolCount = stats.PoolCount;
+            TotalObjects = stats.TotalObjects;
+            ETTaskPoolInfo = stats.ETTaskPoolInfo;
+            GenericPoolInfos = stats.GenericPoolInfos;
         }
         
         public static void ClearAllPools()
         {
-            ETTaskPool.Clear();
+            ETTaskPoolView.ClearAllPools();
         }
         
         public static void RunHealthCheck()
         {
-#if DEBUG
-            ETTaskPool.CheckPoolHealth();
-#endif
+            ETTaskPoolView.RunHealthCheck();
         }
     }
 }
-
+#endif

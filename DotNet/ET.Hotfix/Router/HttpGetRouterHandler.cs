@@ -36,7 +36,7 @@ namespace ET
                 response.AddHeader("Access-Control-Max-Age", "1728000");
                 response.StatusCode = (int)HttpStatusCode.OK;
                 response.ContentLength64 = 0;
-                return; // don't continue to serialization
+                return; 
             }
 
             try
@@ -47,7 +47,6 @@ namespace ET
             catch (Exception e)
             {
                 Log.Error(e + "\n" + e.StackTrace);
-                // 尽量返回 500 信息给客户端
                 try
                 {
                     if (response.OutputStream.CanWrite)

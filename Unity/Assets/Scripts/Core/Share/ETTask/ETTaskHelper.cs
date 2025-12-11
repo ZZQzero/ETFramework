@@ -61,6 +61,7 @@ namespace ET
 
             public async ETTask WaitAsync()
             {
+                // count 在构造时已确保 > 0（调用方会检查空集合），但保留检查以防御性编程
                 if (this.count <= 0)
                 {
                     return;
@@ -106,6 +107,7 @@ namespace ET
 
             public async ETTask<T[]> WaitAsync()
             {
+                // count 在构造时已确保 > 0（调用方会检查空集合），但保留检查以防御性编程
                 if (this.count <= 0)
                 {
                     return this.results;
@@ -115,7 +117,7 @@ namespace ET
             }
         }
 
-        public static async ETTask WaitAny(List<ETTask> tasks)
+        private static async ETTask WaitAnyInternal(IReadOnlyList<ETTask> tasks)
         {
             if (tasks.Count == 0)
             {
@@ -132,41 +134,17 @@ namespace ET
             await coroutineBlocker.WaitAsync();
         }
 
+        public static async ETTask WaitAny(List<ETTask> tasks)
+        {
+            await WaitAnyInternal(tasks);
+        }
+
         public static async ETTask WaitAny(ETTask[] tasks)
         {
-            if (tasks.Length == 0)
-            {
-                return;
-            }
-
-            CoroutineBlocker coroutineBlocker = new CoroutineBlocker(1);
-
-            foreach (ETTask task in tasks)
-            {
-                coroutineBlocker.RunSubCoroutineAsync(task).NoContext();
-            }
-
-            await coroutineBlocker.WaitAsync();
+            await WaitAnyInternal(tasks);
         }
 
-        public static async ETTask WaitAll(ETTask[] tasks)
-        {
-            if (tasks.Length == 0)
-            {
-                return;
-            }
-
-            CoroutineBlocker coroutineBlocker = new CoroutineBlocker(tasks.Length);
-
-            foreach (ETTask task in tasks)
-            {
-                coroutineBlocker.RunSubCoroutineAsync(task).NoContext();
-            }
-
-            await coroutineBlocker.WaitAsync();
-        }
-
-        public static async ETTask WaitAll(List<ETTask> tasks)
+        private static async ETTask WaitAllInternal(IReadOnlyList<ETTask> tasks)
         {
             if (tasks.Count == 0)
             {
@@ -183,31 +161,17 @@ namespace ET
             await coroutineBlocker.WaitAsync();
         }
 
-        /// <summary>
-        /// 并行等待所有ETTask&lt;T&gt;任务完成，返回结果数组
-        /// </summary>
-        public static async ETTask<T[]> WaitAll<T>(ETTask<T>[] tasks)
+        public static async ETTask WaitAll(ETTask[] tasks)
         {
-            if (tasks.Length == 0)
-            {
-                return Array.Empty<T>();
-            }
-
-            CoroutineBlocker<T> coroutineBlocker = new CoroutineBlocker<T>(tasks.Length);
-
-            for (int i = 0; i < tasks.Length; i++)
-            {
-                int index = i; // 闭包捕获
-                coroutineBlocker.RunSubCoroutineAsync(tasks[index], index).NoContext();
-            }
-
-            return await coroutineBlocker.WaitAsync();
+            await WaitAllInternal(tasks);
         }
 
-        /// <summary>
-        /// 并行等待所有ETTask任务完成，返回结果数组
-        /// </summary>
-        public static async ETTask<T[]> WaitAll<T>(List<ETTask<T>> tasks)
+        public static async ETTask WaitAll(List<ETTask> tasks)
+        {
+            await WaitAllInternal(tasks);
+        }
+
+        private static async ETTask<T[]> WaitAllInternal<T>(IReadOnlyList<ETTask<T>> tasks)
         {
             if (tasks.Count == 0)
             {
@@ -223,6 +187,22 @@ namespace ET
             }
 
             return await coroutineBlocker.WaitAsync();
+        }
+
+        /// <summary>
+        /// 并行等待所有ETTask&lt;T&gt;任务完成，返回结果数组
+        /// </summary>
+        public static async ETTask<T[]> WaitAll<T>(ETTask<T>[] tasks)
+        {
+            return await WaitAllInternal(tasks);
+        }
+
+        /// <summary>
+        /// 并行等待所有ETTask&lt;T&gt;任务完成，返回结果数组
+        /// </summary>
+        public static async ETTask<T[]> WaitAll<T>(List<ETTask<T>> tasks)
+        {
+            return await WaitAllInternal(tasks);
         }
     }
 }

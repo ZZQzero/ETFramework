@@ -1,4 +1,4 @@
-#if ENABLE_CONSOLE || DEVELOPMENT_BUILD
+#if DEVELOPMENT_BUILD
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using GameUI;
@@ -13,7 +13,6 @@ namespace ET
         [Header("Settings")]
         [Tooltip("快捷键（默认F1）")]
         public KeyCode toggleKey = KeyCode.F1;
-        private bool _isConsoleOpen;
         private GameUIBase _loadUI;
         private void Awake()
         {
@@ -44,8 +43,8 @@ namespace ET
         /// </summary>
         private void ToggleConsole()
         {
-            _isConsoleOpen = !_isConsoleOpen;
-            if (_isConsoleOpen)
+            ConsoleManager.Instance.IsConsoleOpen = !ConsoleManager.Instance.IsConsoleOpen;
+            if (ConsoleManager.Instance.IsConsoleOpen)
             {
                 if(_loadUI == null)
                 {

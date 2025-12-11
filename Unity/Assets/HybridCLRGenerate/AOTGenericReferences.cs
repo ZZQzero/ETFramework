@@ -62,6 +62,14 @@ public class AOTGenericReferences : UnityEngine.MonoBehaviour
 	// ET.ETTask<int>
 	// ET.ETTask<object>
 	// ET.ETTask<uint>
+	// ET.ETTaskPool<ET.Wait_CreateMyUnit>
+	// ET.ETTaskPool<ET.Wait_SceneChangeFinish>
+	// ET.ETTaskPool<ET.Wait_UnitStop>
+	// ET.ETTaskPool<System.ValueTuple<uint,object>>
+	// ET.ETTaskPool<byte>
+	// ET.ETTaskPool<int>
+	// ET.ETTaskPool<object>
+	// ET.ETTaskPool<uint>
 	// ET.Entity.<>c__60<object>
 	// ET.Entity.<>c__61<object,int>
 	// ET.Entity.<>c__61<object,object>
@@ -154,7 +162,6 @@ public class AOTGenericReferences : UnityEngine.MonoBehaviour
 	// ET.StateMachineWrap<ET.RpcInfo.<Wait>d__7>
 	// ET.StateMachineWrap<ET.SceneChangeFinishEvent_CreateUIHelp.<Run>d__0>
 	// ET.StateMachineWrap<ET.SceneChangeHelper.<SceneChangeTo>d__0>
-	// ET.StateMachineWrap<ET.SceneChangeStart_AddComponent.<Run>d__0>
 	// ET.StateMachineWrap<ET.SessionSystem.<Call>d__3>
 	// ET.StateMachineWrap<ET.SessionSystem.<Call>d__4>
 	// ET.StateMachineWrap<ET.TimerComponentSystem.<WaitAsync>d__10>
@@ -778,7 +785,6 @@ public class AOTGenericReferences : UnityEngine.MonoBehaviour
 		// System.Void ET.ETAsyncTaskMethodBuilder.AwaitUnsafeOnCompleted<object,ET.RouterAddressComponentSystem.<RefreshRouterAsync>d__2>(object&,ET.RouterAddressComponentSystem.<RefreshRouterAsync>d__2&)
 		// System.Void ET.ETAsyncTaskMethodBuilder.AwaitUnsafeOnCompleted<object,ET.RouterCheckComponentSystem.<CheckAsync>d__1>(object&,ET.RouterCheckComponentSystem.<CheckAsync>d__1&)
 		// System.Void ET.ETAsyncTaskMethodBuilder.AwaitUnsafeOnCompleted<object,ET.SceneChangeHelper.<SceneChangeTo>d__0>(object&,ET.SceneChangeHelper.<SceneChangeTo>d__0&)
-		// System.Void ET.ETAsyncTaskMethodBuilder.AwaitUnsafeOnCompleted<object,ET.SceneChangeStart_AddComponent.<Run>d__0>(object&,ET.SceneChangeStart_AddComponent.<Run>d__0&)
 		// System.Void ET.ETAsyncTaskMethodBuilder.AwaitUnsafeOnCompleted<object,ET.TimerComponentSystem.<WaitAsync>d__10>(object&,ET.TimerComponentSystem.<WaitAsync>d__10&)
 		// System.Void ET.ETAsyncTaskMethodBuilder.AwaitUnsafeOnCompleted<object,ET.TimerComponentSystem.<WaitFrameAsync>d__9>(object&,ET.TimerComponentSystem.<WaitFrameAsync>d__9&)
 		// System.Void ET.ETAsyncTaskMethodBuilder.AwaitUnsafeOnCompleted<object,ET.TimerComponentSystem.<WaitTillAsync>d__8>(object&,ET.TimerComponentSystem.<WaitTillAsync>d__8&)
@@ -1102,9 +1108,7 @@ public class AOTGenericReferences : UnityEngine.MonoBehaviour
 		// System.Span<long> System.MemoryExtensions.AsSpan<long>(long[])
 		// System.Span<long> System.MemoryExtensions.AsSpan<long>(long[],int,int)
 		// System.Span<object> System.MemoryExtensions.AsSpan<object>(object[])
-		// System.Void System.Runtime.CompilerServices.AsyncVoidMethodBuilder.AwaitUnsafeOnCompleted<object,ET.GameEntry.<Awake>d__0>(object&,ET.GameEntry.<Awake>d__0&)
 		// System.Void System.Runtime.CompilerServices.AsyncVoidMethodBuilder.AwaitUnsafeOnCompleted<object,GameUI.UILobbyPanel.<<OnInitUI>b__1_0>d>(object&,GameUI.UILobbyPanel.<<OnInitUI>b__1_0>d&)
-		// System.Void System.Runtime.CompilerServices.AsyncVoidMethodBuilder.Start<ET.GameEntry.<Awake>d__0>(ET.GameEntry.<Awake>d__0&)
 		// System.Void System.Runtime.CompilerServices.AsyncVoidMethodBuilder.Start<GameUI.UILobbyPanel.<<OnInitUI>b__1_0>d>(GameUI.UILobbyPanel.<<OnInitUI>b__1_0>d&)
 		// bool System.Runtime.CompilerServices.RuntimeHelpers.IsReferenceOrContainsReferences<Unity.Mathematics.float3>()
 		// bool System.Runtime.CompilerServices.RuntimeHelpers.IsReferenceOrContainsReferences<byte>()

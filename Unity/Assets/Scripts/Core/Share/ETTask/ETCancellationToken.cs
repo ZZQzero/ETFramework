@@ -51,7 +51,7 @@ namespace ET
             }
             catch (Exception e)
             {
-                ETTask.ExceptionHandler.Invoke(e);
+                ETTask.ExceptionHandler?.Invoke(e);
             }
         }
     }

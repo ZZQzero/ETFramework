@@ -12,7 +12,7 @@ namespace ET
     /// <summary>
     /// Console管理器
     /// </summary>
-    public class ConsoleManager : Singleton<ConsoleManager>,ISingletonAwake
+    public class ConsoleManager : Singleton<ConsoleManager>,ISingletonAwake<bool>
     {
         /// <summary>
         /// 每种类型日志的最大数量（独立计数）
@@ -55,8 +55,13 @@ namespace ET
         public bool IsDevelop { get; set;}
         public bool IsConsoleOpen;
         
-        public void Awake()
+        public void Awake(bool isOn)
         {
+            IsDevelop = isOn;
+            if (!isOn)
+            {
+                return;
+            }
             // 注册Unity日志回调
             Application.logMessageReceived += OnLogMessageReceived;
             GameObject obj = new GameObject("ConsoleManager");

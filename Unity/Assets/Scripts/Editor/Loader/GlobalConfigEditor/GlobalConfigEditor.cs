@@ -16,15 +16,6 @@ namespace ET
         public override void OnInspectorGUI()
         {
             GlobalConfig globalConfig = (GlobalConfig)this.target;
-            CodeMode codeMode = (CodeMode)EditorGUILayout.EnumPopup("CodeMode", globalConfig.CodeMode);
-            if (codeMode != globalConfig.CodeMode)
-            {
-                globalConfig.CodeMode = codeMode;
-                SaveAsset(globalConfig);
-                // 使用延迟调用避免阻塞UI，CodeMode改变可能需要重新编译
-                EditorApplication.delayCall += () => AssetDatabase.Refresh();
-            }
-            
             EPlayMode playMode = (EPlayMode)EditorGUILayout.EnumPopup("PlayMode", globalConfig.PlayMode);
             if (playMode != globalConfig.PlayMode)
             {

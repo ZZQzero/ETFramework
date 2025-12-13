@@ -27,7 +27,7 @@ namespace ET
             }
             
             string url = $"http://{self.Address}/get_router?v={RandomGenerator.RandUInt32()}";
-            byte[] routerInfo = await HttpClientHelper.Get(url);
+            byte[] routerInfo = await HttpClientHelper.GetBytes(url);
                     
             if (routerInfo == null || routerInfo.Length == 0)
             {

@@ -82,11 +82,11 @@ namespace ET
                     return;
                 }
 
-                if (this.globalConfig.CodeMode != CodeMode.Client)
+                /*if (this.globalConfig.CodeMode != CodeMode.Client)
                 {
                     Log.Error("build package CodeMode must be CodeMode.Client, please select Client");
                     return;
-                }
+                }*/
 
                 if (platformType != activePlatform)
                 {

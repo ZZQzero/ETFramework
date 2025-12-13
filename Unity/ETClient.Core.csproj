@@ -55,6 +55,7 @@
     <Compile Include="Assets\Scripts\Core\Share\World\Fiber\MainThreadScheduler.cs" />
     <Compile Include="Assets\Scripts\Core\Share\World\EventSystem\EventSystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\KChannel.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\Config\GlobalStartConfig.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\NetServices.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\IClassEventSystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Network\IMessage.cs" />

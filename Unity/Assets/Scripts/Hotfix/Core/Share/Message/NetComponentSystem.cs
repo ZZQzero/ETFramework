@@ -19,7 +19,13 @@ namespace ET
         [EntitySystem]
         private static void Update(this NetComponent self)
         {
-            if (self.AService == null)
+            // 检查 Entity 是否已销毁
+            if (self.IsDisposed)
+            {
+                return;
+            }
+            
+            if (self.AService == null || self.AService.IsDisposed())
             {
                 return;
             }

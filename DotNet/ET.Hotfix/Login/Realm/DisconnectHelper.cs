@@ -72,8 +72,19 @@ public static class DisconnectHelper
         TimerComponent timerComponent = player.Root().GetComponent<TimerComponent>();
         player.PlayerState = PlayerState.Disconnect;
         locationSenderComponent.Get(LocationType.GateSession).Remove(player.Id);
+        
+        // 移除 Player 的 Location
+        // 注意：如果 Location 已经被 L2G_DisconnectGateUnitHandler 移除，这里再次移除不会报错（只是无效操作）
+        // 这样可以确保无论新客户端何时登录，旧的 Location 都会被清理
         await player.RemoveLocation(LocationType.Player);
-        await player.GetComponent<PlayerSessionComponent>().RemoveLocation(LocationType.GateSession);
+        
+        // 检查 PlayerSessionComponent 是否存在（可能已经被 L2G_DisconnectGateUnitHandler 移除）
+        PlayerSessionComponent playerSessionComponent = player.GetComponent<PlayerSessionComponent>();
+        if (playerSessionComponent != null)
+        {
+            await playerSessionComponent.RemoveLocation(LocationType.GateSession);
+        }
+        
         player.Root().GetComponent<PlayerComponent>()?.Remove(player);
         player?.Dispose();
         await timerComponent.WaitAsync(300);

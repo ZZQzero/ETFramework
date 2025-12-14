@@ -7,14 +7,8 @@
 
 		public Session Session
 		{
-			get
-			{
-				return this.session;
-			}
-			set
-			{
-				this.session = value;
-			}
+			get => this.session;
+			set => this.session = value;
 		}
 	}
 }

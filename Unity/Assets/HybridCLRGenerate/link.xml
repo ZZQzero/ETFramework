@@ -32,6 +32,7 @@
     <type fullname="ET.FiberInit" preserve="all" />
     <type fullname="ET.FiberManager" preserve="all" />
     <type fullname="ET.GenerateIdManager" preserve="all" />
+    <type fullname="ET.GlobalStartConfig" preserve="all" />
     <type fullname="ET.HandlerObject" preserve="all" />
     <type fullname="ET.IAwake" preserve="all" />
     <type fullname="ET.IAwake`1" preserve="all" />

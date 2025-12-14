@@ -77,6 +77,7 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
         var otherSession = accountSessionComponent.Get(request.Account);
         if (otherSession != null)
         {
+            Log.Debug("这里还会走嘛！！顶号断开之前的登录");
             var a2CDisconnect = A2C_Disconnect.Create();
             a2CDisconnect.Error = ErrorCode.ERR_AccountDifferentLocation;
             otherSession.Send(a2CDisconnect);

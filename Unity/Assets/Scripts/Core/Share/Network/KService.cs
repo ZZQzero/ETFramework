@@ -486,6 +486,11 @@ namespace ET
 
             this.UpdateChannel(timeNow);
             
+            // 再次检查 Transport，防止在 Update 过程中被清理
+            if (this.Transport == null)
+            {
+                return;
+            }
             this.Transport.Update();
         }
 

@@ -42,7 +42,7 @@ namespace ET
             try
             {
                 byte[] bytes = NinoSerializer.Serialize(httpGetRouterResponse);
-                await HttpHelper.ResponseBinary(response, HttpStatusCode.OK, bytes, "application/octet-stream");
+                await HttpHelper.ResponseBinary(response, HttpStatusCode.OK, bytes, "++");
             }
             catch (Exception e)
             {

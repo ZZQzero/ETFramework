@@ -48,6 +48,14 @@ namespace ET
             {
                 return;
             }
+            
+            Scene root = self.Root();
+            if (root.GetComponent<NetComponent>() == null)
+            {
+                // 网络组件已清理，停止刷新
+                Log.Info($"网络组件已清理，停止刷新路由信息: {self.Address}");
+                return;
+            }
             await self.GetAllRouter();
         }
 

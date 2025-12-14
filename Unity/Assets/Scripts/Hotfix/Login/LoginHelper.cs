@@ -27,7 +27,7 @@ namespace ET
                 return;
             }
 
-            var roleId = 1;
+            var roleId = GenerateIdManager.Instance.GenerateId();
             var netClient2MainLoginGame = await clientSenderComponent.LoginGameAsync(account, r2CGateRealmKey.Key, roleId, r2CGateRealmKey.Address);
             
             //root.GetComponent<PlayerComponent>().MyId = resp.PlayerId;

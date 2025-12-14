@@ -14,6 +14,7 @@ public static partial class PlayerOfflineOutTimeComponentSystem
     [EntitySystem]
     private static void Awake(this PlayerOfflineOutTimeComponent self)
     {
+        Log.Debug("添加离线保护PlayerOfflineOutTimeComponent");
         self.Timer = self.Root().GetComponent<TimerComponent>().NewOnceTimer(TimeInfo.Instance.ServerNow() + 10000,
             TimerInvokeType.PlayerOfflineOutTimer,self);
     }

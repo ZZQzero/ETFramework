@@ -79,7 +79,25 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
                 {
                     player.RemoveComponent<PlayerOfflineOutTimeComponent>();
                     session.AddComponent<SessionPlayerComponent>().Player = player;
-                    player.GetComponent<PlayerSessionComponent>().Session = session;
+                    
+                    // 如果 PlayerSessionComponent 不存在（可能被顶号时移除了），需要重新创建
+                    PlayerSessionComponent playerSessionComponent = player.GetComponent<PlayerSessionComponent>();
+                    if (playerSessionComponent == null)
+                    {
+                        playerSessionComponent = player.AddComponent<PlayerSessionComponent>();
+                        playerSessionComponent.AddComponent<MailBoxComponent, int>(MailBoxType.GateSession);
+                        
+                        // 重新注册 Location
+                        List<(int type, long key, ActorId actorId)> batchItems =
+                            new List<(int type, long key, ActorId actorId)>
+                            {
+                                (LocationType.GateSession, playerSessionComponent.Id, playerSessionComponent.GetActorId()),
+                                (LocationType.Player, player.Id, player.GetActorId())
+                            };
+                        await root.GetComponent<LocationProxyComponent>().AddBatchLocation(batchItems);
+                    }
+                    
+                    playerSessionComponent.Session = session;
                 }
                 response.PlayerId = player.PlayerId;
             }

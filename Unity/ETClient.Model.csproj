@@ -52,6 +52,7 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\StartConfigPartial\StartSceneConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\Response.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageDispatcher.cs" />
+    <Compile Include="Assets\Scripts\Model\Login\UserComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\NumericComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\ConstValue\MailBoxType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\StateSyncOuter_C_10001.cs" />
@@ -120,7 +121,6 @@
     <Compile Include="Assets\Scripts\Model\StateSync\Share\CurrentScenesComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Router\RouterConnector.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbStartMachine.cs" />
-    <Compile Include="Assets\Scripts\Model\Login\PlayerComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Router\RouterAddressComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\GlobalConstConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\NumericWatcherComponent.cs" />

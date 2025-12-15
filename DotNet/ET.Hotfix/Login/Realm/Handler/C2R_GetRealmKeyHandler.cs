@@ -5,6 +5,8 @@ public class C2R_GetRealmKeyHandler : MessageSessionHandler<C2R_GetRealmKey,R2C_
 {
     protected override async ETTask Run(Session session, C2R_GetRealmKey request, R2C_GetRealmKey response)
     {
+        Log.Info($"收到 C2R_GetRealmKey 请求：用户 {request.Account}");
+        
         if (session.GetComponent<SessionLockingComponent>() != null)
         {
             response.Error = ErrorCode.ERR_RequestRepeatedly;
@@ -17,11 +19,11 @@ public class C2R_GetRealmKeyHandler : MessageSessionHandler<C2R_GetRealmKey,R2C_
         
         if (cachedToken != request.Token)
         {
+            Log.Warning($"Token验证失败：用户 {request.Account}");
             response.Error = ErrorCode.ERR_TokenError;
             session?.Disconnect().NoContext();
             return;
         }
-        // 验证通过后立即删除（一次性Token，防止重放攻击）
         tokenComponent.Remove(request.Account);
         var coroutineLockComponent = session.Root().GetComponent<CoroutineLockComponent>();
         using (session.AddComponent<SessionLockingComponent>())

@@ -21,6 +21,7 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
             return;
         }
 
+        User user = null;
         var coroutineLockComponent = session.Root().GetComponent<CoroutineLockComponent>();
         using (session.AddComponent<SessionLockingComponent>())
         {
@@ -28,17 +29,17 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
             {
                 var dbManager = session.Root().GetComponent<DBManagerComponent>();
                 var db = dbManager.GetZoneDB(session.Zone());
-                var account = await db.QueryById<Account>(request.Account);
-                if (account != null)
+                user = await db.QueryById<User>(request.Account);
+                if (user != null)
                 {
-                    if (account.AccountType == AccountType.BlackList)
+                    if (user.Status == UserStatus.Banned)
                     {
                         response.Error = ErrorCode.ERR_AccountInBlackList;
                         session.Disconnect().NoContext();
                         return;
                     }
 
-                    if (account.Password != request.Password)
+                    if (user.Password != request.Password)
                     {
                         response.Error = ErrorCode.ERR_AccountNameOrPasswordError;
                         session.Disconnect().NoContext();
@@ -47,15 +48,25 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
                 }
                 else
                 {
-                    // 创建新账户
-                    account = new Account
+                    long now = TimeInfo.Instance.ServerNow();
+                    user = new User
                     {
-                        AccountType = AccountType.General,
-                        AccountName = request.Account,
+                        Account = request.Account,
+                        AccountType = AccountType.Phone,
+                        UserId = GenerateIdManager.Instance.GenerateId(),
+                        Username = $"User_{GenerateIdManager.Instance.GenerateId() % 1000000}",
                         Password = request.Password,
-                        CreateTime = TimeInfo.Instance.ServerNow()
+                        CreateTime = now,
+                        Status = UserStatus.Normal,
+                        RoleIds = new List<long>(),
+                        Profile = new UserProfile
+                        {
+                            VipLevel = 0,
+                            TotalRecharge = 0,
+                            LastLoginTime = now
+                        }
                     };
-                    await db.Save<Account, string>(account, request.Account);
+                    await db.Save<User, string>(user, request.Account);
                 }
                 Log.Info($" C2R_LoginAccountHandler: {session.Root().Name} | {dbManager}  {db}");
             }
@@ -73,19 +84,16 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
             return;
         }
 
-        var accountSessionComponent = session.Root().GetComponent<AccountSessionComponent>();
-        var otherSession = accountSessionComponent.Get(request.Account);
-        if (otherSession != null)
+        var userSessionComponent = session.Root().GetComponent<UserSessionComponent>();
+        var otherSession = userSessionComponent.Get(request.Account);
+        if (otherSession != null && !otherSession.IsDisposed)
         {
-            Log.Debug("这里还会走嘛！！顶号断开之前的登录");
-            var a2CDisconnect = A2C_Disconnect.Create();
-            a2CDisconnect.Error = ErrorCode.ERR_AccountDifferentLocation;
-            otherSession.Send(a2CDisconnect);
+            Log.Info($"清理Realm上的旧Session：用户 {request.Account}");
             otherSession.Disconnect().NoContext();
         }
         
-        accountSessionComponent.AddAccountSession(request.Account,session);
-        session.AddComponent<AccountCheckOutTimeComponent, string>(request.Account);
+        userSessionComponent.Add(request.Account, session);
+        session.AddComponent<UserSessionTimeoutComponent, string>(request.Account);
         
         string token = TokenHelper.GenerateToken();
         var tokenComponent = session.Root().GetComponent<TokenComponent>();
@@ -94,6 +102,36 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
         
         response.Token = token;
         response.Error = ErrorCode.ERR_Success;
+        
+        // 填充用户信息
+        response.UserInfo = UserInfo.Create();
+        response.UserInfo.Account = user.Account;
+        response.UserInfo.UserId = user.UserId;
+        response.UserInfo.Username = user.Username ?? $"User_{user.UserId % 1000000}";
+        
+        // 确保Profile不为null
+        if (user.Profile != null)
+        {
+            response.UserInfo.VipLevel = user.Profile.VipLevel;
+            response.UserInfo.TotalRecharge = user.Profile.TotalRecharge;
+        }
+        else
+        {
+            response.UserInfo.VipLevel = 0;
+            response.UserInfo.TotalRecharge = 0;
+        }
+        
+        // 确保RoleIds不为null
+        if (user.RoleIds != null && user.RoleIds.Count > 0)
+        {
+            response.UserInfo.RoleIds = new System.Collections.Generic.List<long>(user.RoleIds);
+        }
+        else
+        {
+            response.UserInfo.RoleIds = new System.Collections.Generic.List<long>();
+        }
+        
+        Log.Info($"登录成功：用户 {request.Account}，UserId: {user.UserId}，角色数量: {response.UserInfo.RoleIds.Count}");
         await ETTask.CompletedTask;
     }
 }

@@ -3,6 +3,70 @@ using System.Collections.Generic;
 
 namespace ET
 {
+    // 用户信息
+    [NinoType(false)]
+    [Message(LoginOuter.UserInfo)]
+    public partial class UserInfo : MessageObject
+    {
+        public static UserInfo Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<UserInfo>(isFromPool);
+        }
+
+        /// <summary>
+        /// 登录账号
+        /// </summary>
+        [NinoMember(0)]
+        public string Account { get; set; }
+
+        /// <summary>
+        /// 用户ID
+        /// </summary>
+        [NinoMember(1)]
+        public long UserId { get; set; }
+
+        /// <summary>
+        /// 用户昵称
+        /// </summary>
+        [NinoMember(2)]
+        public string Username { get; set; }
+
+        /// <summary>
+        /// VIP等级
+        /// </summary>
+        [NinoMember(3)]
+        public int VipLevel { get; set; }
+
+        /// <summary>
+        /// 累计充值
+        /// </summary>
+        [NinoMember(4)]
+        public long TotalRecharge { get; set; }
+
+        /// <summary>
+        /// 角色ID列表
+        /// </summary>
+        [NinoMember(5)]
+        public List<long> RoleIds { get; set; } = new();
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.Account = default;
+            this.UserId = default;
+            this.Username = default;
+            this.VipLevel = default;
+            this.TotalRecharge = default;
+            this.RoleIds.Clear();
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
     [NinoType(false)]
     [Message(LoginOuter.Main2NetClient_Login)]
     [ResponseType(nameof(NetClient2Main_Login))]
@@ -75,6 +139,12 @@ namespace ET
         [NinoMember(4)]
         public string Token { get; set; }
 
+        /// <summary>
+        /// 用户信息
+        /// </summary>
+        [NinoMember(5)]
+        public UserInfo UserInfo { get; set; }
+
         public override void Dispose()
         {
             if (!this.IsFromPool)
@@ -87,6 +157,7 @@ namespace ET
             this.Message = default;
             this.PlayerId = default;
             this.Token = default;
+            this.UserInfo = default;
 
             ObjectPool.Recycle(this);
         }
@@ -375,6 +446,12 @@ namespace ET
         [NinoMember(3)]
         public string Token { get; set; }
 
+        /// <summary>
+        /// 用户信息
+        /// </summary>
+        [NinoMember(4)]
+        public UserInfo UserInfo { get; set; }
+
         public override void Dispose()
         {
             if (!this.IsFromPool)
@@ -386,6 +463,7 @@ namespace ET
             this.Error = default;
             this.Message = default;
             this.Token = default;
+            this.UserInfo = default;
 
             ObjectPool.Recycle(this);
         }
@@ -526,7 +604,16 @@ namespace ET
         [NinoMember(2)]
         public string AccountName { get; set; }
 
+        /// <summary>
+        /// 用户ID（永久唯一标识）
+        /// </summary>
         [NinoMember(3)]
+        public long UserId { get; set; }
+
+        /// <summary>
+        /// 角色ID（当前选择的角色）
+        /// </summary>
+        [NinoMember(4)]
         public long RoleId { get; set; }
 
         public override void Dispose()
@@ -539,6 +626,7 @@ namespace ET
             this.RpcId = default;
             this.Key = default;
             this.AccountName = default;
+            this.UserId = default;
             this.RoleId = default;
 
             ObjectPool.Recycle(this);
@@ -563,9 +651,6 @@ namespace ET
         [NinoMember(2)]
         public string Message { get; set; }
 
-        [NinoMember(3)]
-        public long PlayerId { get; set; }
-
         public override void Dispose()
         {
             if (!this.IsFromPool)
@@ -576,7 +661,6 @@ namespace ET
             this.RpcId = default;
             this.Error = default;
             this.Message = default;
-            this.PlayerId = default;
 
             ObjectPool.Recycle(this);
         }
@@ -626,9 +710,6 @@ namespace ET
         [NinoMember(2)]
         public string Message { get; set; }
 
-        [NinoMember(3)]
-        public long MyUnitId { get; set; }
-
         public override void Dispose()
         {
             if (!this.IsFromPool)
@@ -639,7 +720,6 @@ namespace ET
             this.RpcId = default;
             this.Error = default;
             this.Message = default;
-            this.MyUnitId = default;
 
             ObjectPool.Recycle(this);
         }
@@ -647,22 +727,23 @@ namespace ET
 
     public static class LoginOuter
     {
-        public const ushort Main2NetClient_Login = 1001;
-        public const ushort NetClient2Main_Login = 1002;
-        public const ushort C2G_Ping = 1003;
-        public const ushort G2C_Ping = 1004;
-        public const ushort C2R_Login = 1005;
-        public const ushort R2C_Login = 1006;
-        public const ushort C2G_LoginGate = 1007;
-        public const ushort G2C_LoginGate = 1008;
-        public const ushort C2R_LoginAccount = 1009;
-        public const ushort R2C_LoginAccount = 1010;
-        public const ushort A2C_Disconnect = 1011;
-        public const ushort C2R_GetRealmKey = 1012;
-        public const ushort R2C_GetRealmKey = 1013;
-        public const ushort C2G_LoginGameGate = 1014;
-        public const ushort G2C_LoginGameGate = 1015;
-        public const ushort C2G_EnterGame = 1016;
-        public const ushort G2C_EnterGame = 1017;
+        public const ushort UserInfo = 1001;
+        public const ushort Main2NetClient_Login = 1002;
+        public const ushort NetClient2Main_Login = 1003;
+        public const ushort C2G_Ping = 1004;
+        public const ushort G2C_Ping = 1005;
+        public const ushort C2R_Login = 1006;
+        public const ushort R2C_Login = 1007;
+        public const ushort C2G_LoginGate = 1008;
+        public const ushort G2C_LoginGate = 1009;
+        public const ushort C2R_LoginAccount = 1010;
+        public const ushort R2C_LoginAccount = 1011;
+        public const ushort A2C_Disconnect = 1012;
+        public const ushort C2R_GetRealmKey = 1013;
+        public const ushort R2C_GetRealmKey = 1014;
+        public const ushort C2G_LoginGameGate = 1015;
+        public const ushort G2C_LoginGameGate = 1016;
+        public const ushort C2G_EnterGame = 1017;
+        public const ushort G2C_EnterGame = 1018;
     }
 }

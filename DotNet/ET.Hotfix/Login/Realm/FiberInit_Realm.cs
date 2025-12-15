@@ -14,7 +14,7 @@ namespace ET
             root.AddComponent<ProcessInnerSender>();
             root.AddComponent<MessageSender>();
             root.AddComponent<DBManagerComponent>();
-            root.AddComponent<AccountSessionComponent>();
+            root.AddComponent<UserSessionComponent>();
             root.AddComponent<TokenComponent>();
             StartSceneTable startSceneConfig = StartSceneConfig.Instance.Get(root.Fiber.Id);
             root.AddComponent<NetComponent, IKcpTransport>(new UdpTransport(startSceneConfig.InnerIPPort));

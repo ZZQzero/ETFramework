@@ -75,7 +75,7 @@ namespace ET
                 // 检查HTTP状态码
                 if (req.responseCode >= 400)
                 {
-                    throw new Exception($"HTTP错误: {link}, 状态码: {req.responseCode}, 响应: {req.downloadHandler?.text ?? "无响应内容"}");
+                    Log.Error($"HTTP错误: {link}, 状态码: {req.responseCode}, 响应: {req.downloadHandler?.text ?? "无响应内容"}");
                 }
                 return req.downloadHandler.text;
 #else

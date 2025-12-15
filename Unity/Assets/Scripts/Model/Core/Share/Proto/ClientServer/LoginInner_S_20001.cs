@@ -244,10 +244,19 @@ namespace ET
         [NinoMember(2)]
         public long RealmKey { get; set; }
 
+        /// <summary>
+        /// 用户ID
+        /// </summary>
         [NinoMember(3)]
+        public long UserId { get; set; }
+
+        /// <summary>
+        /// 角色ID
+        /// </summary>
+        [NinoMember(4)]
         public long RoleId { get; set; }
 
-        [NinoMember(4)]
+        [NinoMember(5)]
         public string GateAddress { get; set; }
 
         public override void Dispose()
@@ -260,6 +269,7 @@ namespace ET
             this.RpcId = default;
             this.Account = default;
             this.RealmKey = default;
+            this.UserId = default;
             this.RoleId = default;
             this.GateAddress = default;
 

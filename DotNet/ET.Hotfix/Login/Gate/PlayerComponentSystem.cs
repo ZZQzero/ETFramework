@@ -16,7 +16,7 @@ namespace ET
             player.Dispose();
         }
         
-        public static Player GetByAccount(this PlayerComponent self,  string account)
+        public static Player GetByAccount(this PlayerComponent self, string account)
         {
             self.dictionary.TryGetValue(account, out EntityRef<Player> player);
             return player;

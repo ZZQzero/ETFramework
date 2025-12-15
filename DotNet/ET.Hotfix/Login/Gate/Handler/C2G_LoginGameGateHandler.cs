@@ -55,8 +55,9 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
                 var player = playerComponent.GetByAccount(request.AccountName);
                 if (player == null)
                 {
-                    player = playerComponent.AddChildWithId<Player, string>(request.RoleId, request.AccountName);
-                    player.PlayerId = request.RoleId;
+                    // 使用RoleId作为Player的Id（保持现有逻辑），但同时存储UserId
+                    player = playerComponent.AddChildWithId<Player, string, long>(request.UserId, request.AccountName, request.UserId);
+                    player.CurrentRoleId = request.RoleId;
                     playerComponent.Add(player);
 
                     PlayerSessionComponent playerSessionComponent = player.AddComponent<PlayerSessionComponent>();
@@ -66,14 +67,14 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
                     List<(int type, long key, ActorId actorId)> batchItems =
                         new List<(int type, long key, ActorId actorId)>
                         {
-                            (LocationType.GateSession, playerSessionComponent.Id, playerSessionComponent.GetActorId()),
-                            (LocationType.Player, player.Id, player.GetActorId())
+                            (LocationType.GateSession, player.CurrentRoleId, playerSessionComponent.GetActorId()),
+                            (LocationType.Player, player.UserId, player.GetActorId())
                         };
                     await root.GetComponent<LocationProxyComponent>().AddBatchLocation(batchItems);
 
                     session.AddComponent<SessionPlayerComponent>().Player = player;
                     playerSessionComponent.Session = session;
-                    player.PlayerState = PlayerState.Gate;
+                    player.State = PlayerSessionState.Gate;
                 }
                 else
                 {
@@ -91,15 +92,14 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
                         List<(int type, long key, ActorId actorId)> batchItems =
                             new List<(int type, long key, ActorId actorId)>
                             {
-                                (LocationType.GateSession, playerSessionComponent.Id, playerSessionComponent.GetActorId()),
-                                (LocationType.Player, player.Id, player.GetActorId())
+                                (LocationType.GateSession, player.CurrentRoleId, playerSessionComponent.GetActorId()),
+                                (LocationType.Player, player.UserId, player.GetActorId())
                             };
                         await root.GetComponent<LocationProxyComponent>().AddBatchLocation(batchItems);
                     }
                     
                     playerSessionComponent.Session = session;
                 }
-                response.PlayerId = player.PlayerId;
             }
         }
     }

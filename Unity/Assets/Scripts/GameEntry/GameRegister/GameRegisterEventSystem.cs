@@ -36,8 +36,10 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.ClientSenderComponentSystem.ET_ClientSenderComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ClientSessionErrorComponentSystem.ET_ClientSessionErrorComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ClientSessionErrorComponentSystem.ET_ClientSessionErrorComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.FiberParentComponentSystem.ET_FiberParentComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.PingComponentSystem.ET_PingComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.PingComponentSystem.ET_PingComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.UserComponentSystem.ET_UserComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MoveComponentSystem.ET_MoveComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MoveComponentSystem.ET_MoveComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.RouterAddressComponentSystem.ET_RouterAddressComponent_string_AwakeSystem>();

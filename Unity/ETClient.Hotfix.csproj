@@ -55,6 +55,7 @@
     <Compile Include="Assets\Scripts\Hotfix\Scene\SceneChangeHelper.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Unit\M2C_CreateUnitsHandler.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Unit\Share\UnitComponentSystem.cs" />
+    <Compile Include="Assets\Scripts\Hotfix\Login\FiberParentComponentSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Move\Share\MoveTimerInvoke.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Login\LoginHelper.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Unit\UnitHelper.cs" />
@@ -107,6 +108,7 @@
     <Compile Include="Assets\Scripts\Hotfix\Numeric\Share\NumericWatcher_Hp_ShowUI.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\Actor\ProcessInnerSenderSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\AI\Share\AIComponentSystem.cs" />
+    <Compile Include="Assets\Scripts\Hotfix\Login\UserComponentSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Unit\UnitFactory.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Login\NetClient\NetComponentOnReadInvoker_NetClient.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\MailBoxType_UnOrderedMessageHandler.cs" />

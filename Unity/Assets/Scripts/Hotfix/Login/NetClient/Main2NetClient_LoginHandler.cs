@@ -31,13 +31,14 @@ namespace ET
             if(r2CLoginAccount.Error == ErrorCode.ERR_Success)
             {
                 root.AddComponent<SessionComponent>().Session = session;
+                response.Token = r2CLoginAccount.Token;
+                response.UserInfo = r2CLoginAccount.UserInfo;
+                response.Error = r2CLoginAccount.Error;
             }
             else
             {
                 session.Dispose();
             }
-            response.Token = r2CLoginAccount.Token;
-            response.Error = r2CLoginAccount.Error;
         }
     }
 }

@@ -2,6 +2,17 @@ syntax = "proto3";
 
 package ET;
 
+// 用户信息
+message UserInfo
+{
+	string Account = 1;			// 登录账号
+	int64 UserId = 2;			// 用户ID
+	string Username = 3;		// 用户昵称
+	int32 VipLevel = 4;			// VIP等级
+	int64 TotalRecharge = 5;	// 累计充值
+	repeated int64 RoleIds = 6;	// 角色ID列表
+}
+
 // ResponseType NetClient2Main_Login
 message Main2NetClient_Login // IRequest
 {
@@ -20,6 +31,7 @@ message NetClient2Main_Login // IResponse
 
 	int64 PlayerId = 4;
 	string Token = 5;
+	UserInfo UserInfo = 6;	// 用户信息
 }
 
 // ResponseType G2C_Ping
@@ -85,6 +97,7 @@ message R2C_LoginAccount // ISessionResponse
     string Message = 3;
 
     string Token = 4;
+	UserInfo UserInfo = 5;	// 用户信息
 }
 
 message A2C_Disconnect // ISessionMessage
@@ -120,7 +133,8 @@ message C2G_LoginGameGate // ISessionRequest
 	int32 RpcId = 1;
 	int64 Key = 2;
 	string AccountName = 3;
-	long RoleId = 4;
+	long UserId = 4;	// 用户ID（永久唯一标识）
+	long RoleId = 5;	// 角色ID（当前选择的角色）
 }
 
 message G2C_LoginGameGate // ISessionResponse
@@ -128,8 +142,6 @@ message G2C_LoginGameGate // ISessionResponse
 	int32 RpcId = 1;
 	int32 Error = 2;
 	string Message = 3;
-
-	int64 PlayerId = 4;
 }
 
 //ResponseType G2C_EnterGame
@@ -143,5 +155,4 @@ message G2C_EnterGame // ISessionResponse
 	int32 RpcId = 1;
 	int32 Error = 2;
 	string Message = 3;
-	int64 MyUnitId = 4;
 }

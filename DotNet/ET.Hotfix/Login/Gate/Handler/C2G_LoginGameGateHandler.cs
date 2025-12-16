@@ -67,7 +67,7 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
                     List<(int type, long key, ActorId actorId)> batchItems =
                         new List<(int type, long key, ActorId actorId)>
                         {
-                            (LocationType.GateSession, userEntity.CurrentRoleId, userEntitySessionComponent.GetActorId()),
+                            (LocationType.GateSession, userEntity.UserId, userEntitySessionComponent.GetActorId()),
                             (LocationType.User, userEntity.UserId, userEntity.GetActorId())
                         };
                     await root.GetComponent<LocationProxyComponent>().AddBatchLocation(batchItems);
@@ -92,7 +92,7 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
                         List<(int type, long key, ActorId actorId)> batchItems =
                             new List<(int type, long key, ActorId actorId)>
                             {
-                                (LocationType.GateSession, userEntity.CurrentRoleId, userEntitySessionComponent.GetActorId()),
+                                (LocationType.GateSession, userEntity.UserId, userEntitySessionComponent.GetActorId()),
                                 (LocationType.User, userEntity.UserId, userEntity.GetActorId())
                             };
                         await root.GetComponent<LocationProxyComponent>().AddBatchLocation(batchItems);

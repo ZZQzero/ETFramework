@@ -67,19 +67,19 @@ public class C2G_EnterGameHandler : MessageSessionHandler<C2G_EnterGame,G2C_Ente
                     List<(int type, long key, ActorId actorId)> locationBatchItems =
                         new List<(int type, long key, ActorId actorId)>
                         {
-                            (LocationType.GateSession, userEntitySessionComponent.Id, userEntitySessionComponent.GetActorId()),
+                            (LocationType.GateSession, userEntity.UserId, userEntitySessionComponent.GetActorId()),
                             (LocationType.User, userEntity.Id, userEntity.GetActorId())
                         };
                     await session.Root().GetComponent<LocationProxyComponent>().AddBatchLocation(locationBatchItems);
                     
                     G2M_SecondLogin g2MSecondLogin = G2M_SecondLogin.Create();
                     var locationSend = session.Root().GetComponent<MessageLocationSenderComponent>().Get(LocationType.Unit);
-                    var m2GSecondLogin = (M2G_SecondLogin) await locationSend.Call(userEntity.CurrentRoleId, g2MSecondLogin);
+                    var m2GSecondLogin = (M2G_SecondLogin) await locationSend.Call(userEntity.UserId, g2MSecondLogin);
                     
                     if (m2GSecondLogin.Error == ErrorCode.ERR_Success)
                     {
                         response.Error = ErrorCode.ERR_Success;
-                        Log.Info($"二次登录成功：账号 {userEntity.Account}, CurrentRoleId={userEntity.CurrentRoleId}");
+                        Log.Info($"二次登录成功：账号 {userEntity.Account}, UserId={userEntity.UserId}");
                         return;
                     }
                     
@@ -91,15 +91,40 @@ public class C2G_EnterGameHandler : MessageSessionHandler<C2G_EnterGame,G2C_Ente
 
                 try
                 {
-                    GateMapComponent gateMapComponent = userEntity.AddComponent<GateMapComponent>();
-                    gateMapComponent.Scene = await GateMapFactory.Create(gateMapComponent, userEntity.Id, GenerateIdManager.Instance.GenerateInstanceId(), "GateMap");
-
-                    Scene scene = gateMapComponent.Scene;
-                    // Unit.Id使用CurrentRoleId（角色ID），而不是player.Id（UserId）
-                    Unit unit = UnitFactory.Create(scene, userEntity.CurrentRoleId, UnitType.Player);
-          
+                    // 直接通知Map服务器创建Unit，不需要在Gate创建临时场景和Unit
                     StartSceneTable startSceneConfig = StartSceneConfigManager.Instance.GetBySceneName(session.Zone(), "Map1");
-                    TransferHelper.TransferAtFrameFinish(unit, startSceneConfig.ActorId, startSceneConfig.Name).NoContext();
+                    long unitId = userEntity.UserId; // 用UserId作为UnitId，确保全局唯一
+
+                    // 先设置GateSession的Location，以便Map服务器发送消息
+                    UserEntitySessionComponent userEntitySessionComponent = userEntity.GetComponent<UserEntitySessionComponent>();
+                    if (userEntitySessionComponent == null)
+                    {
+                        userEntitySessionComponent = userEntity.AddComponent<UserEntitySessionComponent>();
+                        userEntitySessionComponent.AddComponent<MailBoxComponent, int>(MailBoxType.GateSession);
+                    }
+                    userEntitySessionComponent.Session = session;
+
+                    // 设置GateSession Location，key为UnitId
+                    await session.Root().GetComponent<LocationProxyComponent>().Add(LocationType.GateSession, unitId, userEntitySessionComponent.GetActorId());
+
+                    // 发送创建Unit请求到Map服务器（首次创建，不需要Lock）
+                    M2M_UnitTransferRequest m2MUnitTransferRequest = M2M_UnitTransferRequest.Create();
+                    m2MUnitTransferRequest.OldActorId = default; // 首次创建，没有旧的ActorId
+                    m2MUnitTransferRequest.UnitInfo = UnitInfo.Create();
+                    m2MUnitTransferRequest.UnitInfo.ConfigId = 1001; // 默认配置ID，可以从数据库加载
+                    m2MUnitTransferRequest.UnitInfo.UnitId = unitId;
+
+                    M2M_UnitTransferResponse m2MUnitTransferResponse = (M2M_UnitTransferResponse)await session.Root().GetComponent<MessageSender>().Call(startSceneConfig.ActorId, m2MUnitTransferRequest);
+
+                    if (m2MUnitTransferResponse.Error != ErrorCode.ERR_Success)
+                    {
+                        Log.Error($"创建Unit失败：{m2MUnitTransferResponse.Message}");
+                        response.Error = ErrorCode.ERR_EnterGameError;
+                        await DisconnectHelper.KickUserNoLock(userEntity);
+                        session.Disconnect().NoContext();
+                        return;
+                    }
+
                     userEntity.State = UserSessionState.Game;
                 }
                 catch (Exception e)

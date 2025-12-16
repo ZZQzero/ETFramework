@@ -57,7 +57,7 @@ public static class DisconnectHelper
                 break;
             case UserSessionState.Game:
                 var m2GRequestExitGame = (M2G_RequestExitGame)await locationSenderComponent
-                    .Get(LocationType.Unit).Call(userEntity.CurrentRoleId, G2M_RequestExitGame.Create());
+                    .Get(LocationType.Unit).Call(userEntity.UserId, G2M_RequestExitGame.Create());
                 
                 G2L_RemoveLoginRecord g2LRemoveLoginRecord = G2L_RemoveLoginRecord.Create();
                 g2LRemoveLoginRecord.AccountName = userEntity.Account;
@@ -70,7 +70,7 @@ public static class DisconnectHelper
 
         TimerComponent timerComponent = userEntity.Root().GetComponent<TimerComponent>();
         userEntity.State = UserSessionState.Disconnect;
-        locationSenderComponent.Get(LocationType.GateSession).Remove(userEntity.CurrentRoleId);
+        locationSenderComponent.Get(LocationType.GateSession).Remove(userEntity.UserId);
         
         await userEntity.RemoveLocation(LocationType.User);
         

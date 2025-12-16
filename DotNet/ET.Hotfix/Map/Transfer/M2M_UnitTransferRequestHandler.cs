@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Unity.Mathematics;
 
 namespace ET
@@ -40,8 +40,18 @@ namespace ET
             // 加入aoi
             //unit.AddComponent<AOIEntity, int, float3>(9 * 1000, unit.Position);
 
-            // 解锁location，可以接收发给Unit的消息
-            await scene.Root().GetComponent<LocationProxyComponent>().UnLock(LocationType.Unit, unit.Id, request.OldActorId, unit.GetActorId());
+            // 注册Location：如果是首次创建（OldActorId为default），直接Add；否则UnLock（转移场景）
+            LocationProxyComponent locationProxyComponent = scene.Root().GetComponent<LocationProxyComponent>();
+            if (request.OldActorId == default)
+            {
+                // 首次创建，直接Add到Location
+                await locationProxyComponent.Add(LocationType.Unit, unit.Id, unit.GetActorId());
+            }
+            else
+            {
+                // 转移场景，UnLock（需要先Lock）
+                await locationProxyComponent.UnLock(LocationType.Unit, unit.Id, request.OldActorId, unit.GetActorId());
+            }
         }
     }
 }

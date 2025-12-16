@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Unity.Mathematics;
 
 namespace ET
@@ -19,8 +19,8 @@ namespace ET
                     NumericComponent numericComponent = unit.AddComponent<NumericComponent>();
                     numericComponent.Set(NumericType.Speed, 6f); // 速度是6米每秒
                     numericComponent.Set(NumericType.AOI, 15000); // 视野15米
-                    
-                    unitComponent.Add(unit);
+
+                    // 注意：unitComponent.Add(unit)已被移除，因为AddChildWithId已经添加了Unit到UnitComponent
                     // 加入aoi
                     unit.AddComponent<AOIEntity, int, float3>(9 * 1000, unit.Position);
                     return unit;

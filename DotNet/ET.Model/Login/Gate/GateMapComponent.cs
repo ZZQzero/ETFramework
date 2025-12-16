@@ -1,6 +1,6 @@
 ﻿namespace ET
 {
-    [ComponentOf(typeof(Player))]
+    [ComponentOf(typeof(UserEntity))]
     public class GateMapComponent: Entity, IAwake
     {
         private EntityRef<Scene> scene;

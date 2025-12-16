@@ -23,7 +23,7 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
+            this.RpcId = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -54,9 +54,9 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
-            this.Error = default;
-            this.Message = default;
+            this.RpcId = 0;
+            this.Error = 0;
+            this.Message = null;
 
             ObjectPool.Recycle(this);
         }
@@ -91,9 +91,10 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
+            this.RpcId = 0;
             this.OldActorId = default;
-            this.UnitInfo = default;
+            this.UnitInfo?.Dispose();
+            this.UnitInfo = null;
             this.Entitys.Clear();
 
             ObjectPool.Recycle(this);
@@ -125,9 +126,9 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
-            this.Error = default;
-            this.Message = default;
+            this.RpcId = 0;
+            this.Error = 0;
+            this.Message = null;
 
             ObjectPool.Recycle(this);
         }

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: GlobalConfig
   m_EditorClassIdentifier: 
   PlayMode: 2
-  Version: V1.0.1
+  Version: V1.0.3
   PackageName: DefaultPackage
   SceneName: StateSync
   IPAddress: 127.0.0.1:10101

@@ -1,7 +1,7 @@
 ﻿namespace ET
 {
-	[ComponentOf(typeof(Player))]
-	public class PlayerSessionComponent : Entity, IAwake
+	[ComponentOf(typeof(UserEntity))]
+	public class UserEntitySessionComponent : Entity, IAwake
 	{
 		private EntityRef<Session> session;
 

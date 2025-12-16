@@ -29,6 +29,9 @@ namespace ET
 
         // --- 新增：全局已用集合，保证跨文件不重复 ---
         private static readonly HashSet<int> usedOpcodes = new();
+        
+        // --- 全局message类型集合，用于判断类型是否需要Dispose ---
+        private static readonly HashSet<string> messageTypeNames = new();
 
         private static string GetProtoDir()
         {
@@ -95,6 +98,7 @@ namespace ET
         {
             usedOpcodes.Clear();
             msgOpcode.Clear();
+            messageTypeNames.Clear();
 
             string solutionRoot = GetSolutionRoot();
             clientServerMessagePath = Path.Combine(
@@ -109,6 +113,18 @@ namespace ET
                 "ClientServer");
 
             List<string> list = FileHelper.GetAllFiles(protoDir, "*proto");
+            
+            // 第一遍扫描：收集所有message类型名
+            foreach (string s in list)
+            {
+                if (!s.EndsWith(".proto"))
+                {
+                    continue;
+                }
+                CollectMessageTypes(s);
+            }
+            
+            // 第二遍扫描：生成代码
             foreach (string s in list)
             {
                 if (!s.EndsWith(".proto"))
@@ -122,6 +138,23 @@ namespace ET
                 string cs = ss2[1];
                 int startOpcode = int.Parse(ss2[2]);
                 ProtoFile2CS(s, "", protoName, cs, startOpcode);
+            }
+        }
+        
+        /// <summary>
+        /// 收集proto文件中的所有message类型名
+        /// </summary>
+        private static void CollectMessageTypes(string path)
+        {
+            string content = File.ReadAllText(path);
+            foreach (string line in content.Split('\n'))
+            {
+                string trimmed = line.Trim();
+                if (trimmed.StartsWith("message"))
+                {
+                    string msgName = trimmed.Split(splitChars, StringSplitOptions.RemoveEmptyEntries)[1];
+                    messageTypeNames.Add(msgName);
+                }
             }
         }
 
@@ -386,21 +419,43 @@ namespace ET
                 sb.Append($"\t\t[NinoMember({n - 1})]\n");
                 sb.Append($"\t\tpublic {typeCs} {name} {{ get; set; }}\n\n");
 
-                switch (typeCs)
-                {
-                    case "bytes":
-                    {
-                        break;
-                    }
-                    default:
-                        sbDispose.Append($"this.{name} = default;\n\t\t\t");
-                        break;
-                }
+                // 生成Dispose代码
+                sbDispose.Append(GetDisposeCode(typeCs, name));
             }
             catch (Exception e)
             {
                 Console.WriteLine($"{newline}\n {e}");
             }
+        }
+
+        /// <summary>
+        /// 根据类型生成Dispose代码
+        /// </summary>
+        private static string GetDisposeCode(string typeCs, string fieldName)
+        {
+            // 优先判断message类型（避免在switch的when子句中执行Contains）
+            if (messageTypeNames.Contains(typeCs))
+            {
+                // message类型（class，继承MessageObject）：先Dispose回收到对象池，再设置为null
+                return $"this.{fieldName}?.Dispose();\n\t\t\tthis.{fieldName} = null;\n\t\t\t";
+            }
+
+            // 使用switch表达式处理其他类型
+            return typeCs switch
+            {
+                // 基础值类型：设置为0（bool设置为false）
+                "int" or "long" or "short" or "ushort" or "uint" or "ulong" or 
+                "byte" or "sbyte" or "float" or "double" or "decimal" => $"this.{fieldName} = 0;\n\t\t\t",
+                "bool" => $"this.{fieldName} = false;\n\t\t\t",
+                
+                // 引用类型：设置为null
+                "string" or "byte[]" => $"this.{fieldName} = null;\n\t\t\t",
+                
+                // 其他类型（struct或class）：使用default
+                // struct类型（如ActorId, Address）不能设置为null，使用default安全
+                // class类型使用default也是null，同样安全
+                _ => $"this.{fieldName} = default;\n\t\t\t"
+            };
         }
 
         [GeneratedRegex(@"//\s*ResponseType")]

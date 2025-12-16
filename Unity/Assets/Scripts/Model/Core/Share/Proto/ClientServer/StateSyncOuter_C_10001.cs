@@ -25,8 +25,8 @@ namespace ET
                 return;
             }
 
-            this.ConnectId = default;
-            this.Address = default;
+            this.ConnectId = 0;
+            this.Address = null;
 
             ObjectPool.Recycle(this);
         }
@@ -55,8 +55,8 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
-            this.request = default;
+            this.RpcId = 0;
+            this.request = null;
 
             ObjectPool.Recycle(this);
         }
@@ -90,10 +90,10 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
-            this.Error = default;
-            this.Message = default;
-            this.response = default;
+            this.RpcId = 0;
+            this.Error = 0;
+            this.Message = null;
+            this.response = null;
 
             ObjectPool.Recycle(this);
         }
@@ -119,7 +119,7 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
+            this.RpcId = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -156,10 +156,10 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
-            this.Error = default;
-            this.Message = default;
-            this.MyId = default;
+            this.RpcId = 0;
+            this.Error = 0;
+            this.Message = null;
+            this.MyId = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -192,7 +192,7 @@ namespace ET
 
             this.Points.Clear();
             this.Rotation = default;
-            this.TurnSpeed = default;
+            this.TurnSpeed = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -237,13 +237,14 @@ namespace ET
                 return;
             }
 
-            this.UnitId = default;
-            this.ConfigId = default;
-            this.Type = default;
+            this.UnitId = 0;
+            this.ConfigId = 0;
+            this.Type = 0;
             this.Position = default;
             this.Forward = default;
             this.KV.Clear();
-            this.MoveInfo = default;
+            this.MoveInfo?.Dispose();
+            this.MoveInfo = null;
 
             ObjectPool.Recycle(this);
         }
@@ -293,7 +294,8 @@ namespace ET
                 return;
             }
 
-            this.Unit = default;
+            this.Unit?.Dispose();
+            this.Unit = null;
 
             ObjectPool.Recycle(this);
         }
@@ -321,8 +323,8 @@ namespace ET
                 return;
             }
 
-            this.SceneInstanceId = default;
-            this.SceneName = default;
+            this.SceneInstanceId = 0;
+            this.SceneName = null;
 
             ObjectPool.Recycle(this);
         }
@@ -375,7 +377,7 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
+            this.RpcId = 0;
             this.Position = default;
 
             ObjectPool.Recycle(this);
@@ -401,7 +403,7 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
+            this.RpcId = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -432,7 +434,7 @@ namespace ET
                 return;
             }
 
-            this.Id = default;
+            this.Id = 0;
             this.Position = default;
             this.Points.Clear();
 
@@ -468,8 +470,8 @@ namespace ET
                 return;
             }
 
-            this.Error = default;
-            this.Id = default;
+            this.Error = 0;
+            this.Id = 0;
             this.Position = default;
             this.Rotation = default;
 
@@ -524,9 +526,9 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
-            this.Account = default;
-            this.Password = default;
+            this.RpcId = 0;
+            this.Account = null;
+            this.Password = null;
 
             ObjectPool.Recycle(this);
         }
@@ -557,9 +559,9 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
-            this.Error = default;
-            this.Message = default;
+            this.RpcId = 0;
+            this.Error = 0;
+            this.Message = null;
 
             ObjectPool.Recycle(this);
         }
@@ -584,7 +586,7 @@ namespace ET
                 return;
             }
 
-            this.Info = default;
+            this.Info = null;
 
             ObjectPool.Recycle(this);
         }
@@ -613,8 +615,8 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
-            this.N = default;
+            this.RpcId = 0;
+            this.N = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -648,10 +650,10 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
-            this.Error = default;
-            this.Message = default;
-            this.N = default;
+            this.RpcId = 0;
+            this.Error = 0;
+            this.Message = null;
+            this.N = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -679,8 +681,8 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
-            this.N = default;
+            this.RpcId = 0;
+            this.N = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -708,8 +710,8 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
-            this.N = default;
+            this.RpcId = 0;
+            this.N = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -735,7 +737,7 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
+            this.RpcId = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -766,9 +768,9 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
-            this.Error = default;
-            this.Message = default;
+            this.RpcId = 0;
+            this.Error = 0;
+            this.Message = null;
 
             ObjectPool.Recycle(this);
         }
@@ -794,7 +796,7 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
+            this.RpcId = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -825,9 +827,9 @@ namespace ET
                 return;
             }
 
-            this.RpcId = default;
-            this.Error = default;
-            this.Message = default;
+            this.RpcId = 0;
+            this.Error = 0;
+            this.Message = null;
 
             ObjectPool.Recycle(this);
         }

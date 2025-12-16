@@ -51,54 +51,54 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
                     return;
                 }
 
-                var playerComponent = root.GetComponent<PlayerComponent>();
-                var player = playerComponent.GetByAccount(request.AccountName);
-                if (player == null)
+                var userEntityComponent = root.GetComponent<UserEntityComponent>();
+                var userEntity = userEntityComponent.GetByAccount(request.AccountName);
+                if (userEntity == null)
                 {
                     // 使用RoleId作为Player的Id（保持现有逻辑），但同时存储UserId
-                    player = playerComponent.AddChildWithId<Player, string, long>(request.UserId, request.AccountName, request.UserId);
-                    player.CurrentRoleId = request.RoleId;
-                    playerComponent.Add(player);
+                    userEntity = userEntityComponent.AddChildWithId<UserEntity, string, long>(request.UserId, request.AccountName, request.UserId);
+                    userEntity.CurrentRoleId = request.RoleId;
+                    userEntityComponent.Add(userEntity);
 
-                    PlayerSessionComponent playerSessionComponent = player.AddComponent<PlayerSessionComponent>();
-                    playerSessionComponent.AddComponent<MailBoxComponent, int>(MailBoxType.GateSession);
-                    player.AddComponent<MailBoxComponent, int>(MailBoxType.UnOrderedMessage);
+                    UserEntitySessionComponent userEntitySessionComponent = userEntity.AddComponent<UserEntitySessionComponent>();
+                    userEntitySessionComponent.AddComponent<MailBoxComponent, int>(MailBoxType.GateSession);
+                    userEntity.AddComponent<MailBoxComponent, int>(MailBoxType.UnOrderedMessage);
 
                     List<(int type, long key, ActorId actorId)> batchItems =
                         new List<(int type, long key, ActorId actorId)>
                         {
-                            (LocationType.GateSession, player.CurrentRoleId, playerSessionComponent.GetActorId()),
-                            (LocationType.Player, player.UserId, player.GetActorId())
+                            (LocationType.GateSession, userEntity.CurrentRoleId, userEntitySessionComponent.GetActorId()),
+                            (LocationType.User, userEntity.UserId, userEntity.GetActorId())
                         };
                     await root.GetComponent<LocationProxyComponent>().AddBatchLocation(batchItems);
 
-                    session.AddComponent<SessionPlayerComponent>().Player = player;
-                    playerSessionComponent.Session = session;
-                    player.State = PlayerSessionState.Gate;
+                    session.AddComponent<SessionUserEntityComponent>().UserEntity = userEntity;
+                    userEntitySessionComponent.Session = session;
+                    userEntity.State = UserSessionState.Gate;
                 }
                 else
                 {
-                    player.RemoveComponent<PlayerOfflineOutTimeComponent>();
-                    session.AddComponent<SessionPlayerComponent>().Player = player;
+                    userEntity.RemoveComponent<UserOfflineOutTimeComponent>();
+                    session.AddComponent<SessionUserEntityComponent>().UserEntity = userEntity;
                     
                     // 如果 PlayerSessionComponent 不存在（可能被顶号时移除了），需要重新创建
-                    PlayerSessionComponent playerSessionComponent = player.GetComponent<PlayerSessionComponent>();
-                    if (playerSessionComponent == null)
+                    UserEntitySessionComponent userEntitySessionComponent = userEntity.GetComponent<UserEntitySessionComponent>();
+                    if (userEntitySessionComponent == null)
                     {
-                        playerSessionComponent = player.AddComponent<PlayerSessionComponent>();
-                        playerSessionComponent.AddComponent<MailBoxComponent, int>(MailBoxType.GateSession);
+                        userEntitySessionComponent = userEntity.AddComponent<UserEntitySessionComponent>();
+                        userEntitySessionComponent.AddComponent<MailBoxComponent, int>(MailBoxType.GateSession);
                         
                         // 重新注册 Location
                         List<(int type, long key, ActorId actorId)> batchItems =
                             new List<(int type, long key, ActorId actorId)>
                             {
-                                (LocationType.GateSession, player.CurrentRoleId, playerSessionComponent.GetActorId()),
-                                (LocationType.Player, player.UserId, player.GetActorId())
+                                (LocationType.GateSession, userEntity.CurrentRoleId, userEntitySessionComponent.GetActorId()),
+                                (LocationType.User, userEntity.UserId, userEntity.GetActorId())
                             };
                         await root.GetComponent<LocationProxyComponent>().AddBatchLocation(batchItems);
                     }
                     
-                    playerSessionComponent.Session = session;
+                    userEntitySessionComponent.Session = session;
                 }
             }
         }

@@ -8,19 +8,19 @@ public class L2G_DisconnectGateUnitHandler : MessageHandler<Scene,L2G_Disconnect
         CoroutineLockComponent coroutineLockComponent = scene.GetComponent<CoroutineLockComponent>();
         using (await coroutineLockComponent.Wait(CoroutineLockType.LoginGate, request.AccountName.GetLongHashCode()))
         {
-            PlayerComponent playerComponent = scene.GetComponent<PlayerComponent>();
-            Player player = playerComponent.GetByAccount(request.AccountName);
-            if (player == null)
+            UserEntityComponent userEntityComponent = scene.GetComponent<UserEntityComponent>();
+            UserEntity userEntity = userEntityComponent.GetByAccount(request.AccountName);
+            if (userEntity == null)
             {
                 return;
             }
 
             scene.GetComponent<GateSessionKeyComponent>().Remove(request.AccountName.GetLongHashCode());
             
-            PlayerSessionComponent playerSessionComponent = player.GetComponent<PlayerSessionComponent>();
-            if (playerSessionComponent != null)
+            UserEntitySessionComponent userEntitySessionComponent = userEntity.GetComponent<UserEntitySessionComponent>();
+            if (userEntitySessionComponent != null)
             {
-                Session gateSession = playerSessionComponent.Session;
+                Session gateSession = userEntitySessionComponent.Session;
                 if (gateSession != null && !gateSession.IsDisposed)
                 {
                     Log.Debug($"通知另一个客户端下线 {gateSession.Id}");
@@ -30,13 +30,13 @@ public class L2G_DisconnectGateUnitHandler : MessageHandler<Scene,L2G_Disconnect
                     gateSession.Disconnect().NoContext();
                 }
                 
-                await playerSessionComponent.RemoveLocation(LocationType.GateSession);
-                player.RemoveComponent<PlayerSessionComponent>();
+                await userEntitySessionComponent.RemoveLocation(LocationType.GateSession);
+                userEntity.RemoveComponent<UserEntitySessionComponent>();
             }
             
-            await player.RemoveLocation(LocationType.Player);
+            await userEntity.RemoveLocation(LocationType.User);
 
-            player.AddComponent<PlayerOfflineOutTimeComponent>();
+            userEntity.AddComponent<UserOfflineOutTimeComponent>();
         }
            
     }

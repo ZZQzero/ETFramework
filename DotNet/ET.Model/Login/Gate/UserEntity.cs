@@ -1,6 +1,6 @@
 ﻿namespace ET
 {
-    public enum PlayerSessionState
+    public enum UserSessionState
     {
         Disconnect,
         Gate,
@@ -10,8 +10,8 @@
     /// <summary>
     /// Gate服务器的玩家会话实体
     /// </summary>
-    [ChildOf(typeof(PlayerComponent))]
-    public sealed class Player : Entity, IAwake<string, long>
+    [ChildOf(typeof(UserEntityComponent))]
+    public sealed class UserEntity : Entity, IAwake<string, long>
     {
         /// <summary>登录账号（关联User.Account，不可变）</summary>
         public string Account { get; set; }
@@ -20,7 +20,7 @@
         public long UserId { get; set; }
         
         /// <summary>会话状态</summary>
-        public PlayerSessionState State;
+        public UserSessionState State;
         
         /// <summary>当前角色ID（0表示未选择角色）</summary>
         public long CurrentRoleId;

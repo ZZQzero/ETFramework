@@ -24,11 +24,11 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.DBComponentSystem.ET_DBComponent_string_string_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HttpComponentSystem.ET_HttpComponent_string_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HttpComponentSystem.ET_HttpComponent_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.PlayerOfflineOutTimeComponentSystem.ET_PlayerOfflineOutTimeComponent_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.PlayerOfflineOutTimeComponentSystem.ET_PlayerOfflineOutTimeComponent_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.PlayerSystem.ET_Player_string_long_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.SessionPlayerComponentSystem.ET_SessionPlayerComponent_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.SessionPlayerComponentSystem.ET_SessionPlayerComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.SessionUserEntityComponentSystem.ET_SessionUserEntityComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.SessionUserEntityComponentSystem.ET_SessionUserEntityComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.UserEntitySystem.ET_UserEntity_string_long_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.UserOfflineOutTimeComponentSystem.ET_UserOfflineOutTimeComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.UserOfflineOutTimeComponentSystem.ET_UserOfflineOutTimeComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.LoginInfoRecordComponentSystem.ET_LoginInfoRecordComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.LoginInfoRecordComponentSystem.ET_LoginInfoRecordComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.TokenComponentSystem.ET_TokenComponent_AwakeSystem>();

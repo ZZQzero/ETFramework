@@ -10,7 +10,7 @@
             // 这里messageObject要发送出去，不能回收
             IMessage messageObject = args.MessageObject;
             
-            if (mailBoxComponent.Parent is PlayerSessionComponent playerSessionComponent)
+            if (mailBoxComponent.Parent is UserEntitySessionComponent playerSessionComponent)
             {
                 playerSessionComponent.Session?.Send(messageObject);
             }

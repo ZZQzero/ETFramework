@@ -22,66 +22,66 @@ public static class DisconnectHelper
         self.Dispose();
     }
 
-    public static async ETTask KickPlayer(Player player)
+    public static async ETTask KickUser(UserEntity userEntity)
     {
-        if (player == null || player.IsDisposed)
+        if (userEntity == null || userEntity.IsDisposed)
         {
             return;
         }
 
-        long instanceId = player.InstanceId;
-        CoroutineLockComponent coroutineLockComponent = player.Root().GetComponent<CoroutineLockComponent>();
-        using (await coroutineLockComponent.Wait(CoroutineLockType.LoginGate, player.Account.GetLongHashCode()))
+        long instanceId = userEntity.InstanceId;
+        CoroutineLockComponent coroutineLockComponent = userEntity.Root().GetComponent<CoroutineLockComponent>();
+        using (await coroutineLockComponent.Wait(CoroutineLockType.LoginGate, userEntity.Account.GetLongHashCode()))
         {
-            if (player.IsDisposed || player.InstanceId != instanceId)
+            if (userEntity.IsDisposed || userEntity.InstanceId != instanceId)
             {
                 return;
             }
-            await KickPlayerNoLock(player);
+            await KickUserNoLock(userEntity);
         }
     }
 
-    public static async ETTask KickPlayerNoLock(Player player)
+    public static async ETTask KickUserNoLock(UserEntity userEntity)
     {
-        if (player == null || player.IsDisposed)
+        if (userEntity == null || userEntity.IsDisposed)
         {
             return;
         }
-        var locationSenderComponent = player.Root().GetComponent<MessageLocationSenderComponent>();
+        var locationSenderComponent = userEntity.Root().GetComponent<MessageLocationSenderComponent>();
 
-        switch (player.State)
+        switch (userEntity.State)
         {
-            case PlayerSessionState.Disconnect:
+            case UserSessionState.Disconnect:
                 break;
-            case PlayerSessionState.Gate:
+            case UserSessionState.Gate:
                 break;
-            case PlayerSessionState.Game:
+            case UserSessionState.Game:
                 var m2GRequestExitGame = (M2G_RequestExitGame)await locationSenderComponent
-                    .Get(LocationType.Unit).Call(player.CurrentRoleId, G2M_RequestExitGame.Create());
+                    .Get(LocationType.Unit).Call(userEntity.CurrentRoleId, G2M_RequestExitGame.Create());
                 
                 G2L_RemoveLoginRecord g2LRemoveLoginRecord = G2L_RemoveLoginRecord.Create();
-                g2LRemoveLoginRecord.AccountName = player.Account;
-                g2LRemoveLoginRecord.ServerId = player.Zone();
+                g2LRemoveLoginRecord.AccountName = userEntity.Account;
+                g2LRemoveLoginRecord.ServerId = userEntity.Zone();
                 var config = StartSceneConfig.Instance.GetOrDefault(202);
-                var l2GRemoveLoginRecord = (L2G_RemoveLoginRecord)await player.Root().GetComponent<MessageSender>()
+                var l2GRemoveLoginRecord = (L2G_RemoveLoginRecord)await userEntity.Root().GetComponent<MessageSender>()
                     .Call(config.ActorId, g2LRemoveLoginRecord);
                 break;
         }
 
-        TimerComponent timerComponent = player.Root().GetComponent<TimerComponent>();
-        player.State = PlayerSessionState.Disconnect;
-        locationSenderComponent.Get(LocationType.GateSession).Remove(player.CurrentRoleId);
+        TimerComponent timerComponent = userEntity.Root().GetComponent<TimerComponent>();
+        userEntity.State = UserSessionState.Disconnect;
+        locationSenderComponent.Get(LocationType.GateSession).Remove(userEntity.CurrentRoleId);
         
-        await player.RemoveLocation(LocationType.Player);
+        await userEntity.RemoveLocation(LocationType.User);
         
-        PlayerSessionComponent playerSessionComponent = player.GetComponent<PlayerSessionComponent>();
-        if (playerSessionComponent != null)
+        UserEntitySessionComponent userEntitySessionComponent = userEntity.GetComponent<UserEntitySessionComponent>();
+        if (userEntitySessionComponent != null)
         {
-            await playerSessionComponent.RemoveLocation(LocationType.GateSession);
+            await userEntitySessionComponent.RemoveLocation(LocationType.GateSession);
         }
         
-        player.Root().GetComponent<PlayerComponent>()?.Remove(player);
-        player?.Dispose();
+        userEntity.Root().GetComponent<UserEntityComponent>()?.Remove(userEntity);
+        userEntity?.Dispose();
         await timerComponent.WaitAsync(300);
     }
 

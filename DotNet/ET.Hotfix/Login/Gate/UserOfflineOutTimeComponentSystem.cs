@@ -5,7 +5,7 @@ public class UserOfflineOurTime : ATimer<UserOfflineOutTimeComponent>
 {
     protected override void Run(UserOfflineOutTimeComponent t)
     {
-        t.KickPlayer();
+        t.KickUser();
     }
 }
 
@@ -25,7 +25,7 @@ public static partial class UserOfflineOutTimeComponentSystem
         self.Root().GetComponent<TimerComponent>().Remove(ref self.Timer);
     }
 
-    public static void KickPlayer(this UserOfflineOutTimeComponent self)
+    public static void KickUser(this UserOfflineOutTimeComponent self)
     {
         DisconnectHelper.KickUser(self.GetParent<UserEntity>()).NoContext();
     }

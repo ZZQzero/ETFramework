@@ -124,11 +124,11 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
         // 确保RoleIds不为null
         if (user.RoleIds != null && user.RoleIds.Count > 0)
         {
-            response.UserInfo.RoleIds = new System.Collections.Generic.List<long>(user.RoleIds);
+            response.UserInfo.RoleIds = new List<long>(user.RoleIds);
         }
         else
         {
-            response.UserInfo.RoleIds = new System.Collections.Generic.List<long>();
+            response.UserInfo.RoleIds = new List<long>();
         }
         
         Log.Info($"登录成功：用户 {request.Account}，UserId: {user.UserId}，角色数量: {response.UserInfo.RoleIds.Count}");

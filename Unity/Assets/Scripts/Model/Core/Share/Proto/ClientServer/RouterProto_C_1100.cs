@@ -34,6 +34,6 @@ namespace ET
 
     public static class RouterProto
     {
-        public const ushort HttpGetRouterResponse = 1101;
+        public const ushort HttpGetRouterResponse = 31221;
     }
 }

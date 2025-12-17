@@ -1,4 +1,4 @@
-﻿namespace ET;
+namespace ET;
 
 [Invoke(TimerInvokeType.MessageLocationSenderChecker)]
 public class MessageLocationSenderChecker: ATimer<MessageLocationSenderOneType>
@@ -58,7 +58,8 @@ public static partial class MessageLocationSenderOneTypeSystem
     {
         if (id == 0)
         {
-            throw new Exception($"actor id is 0");
+            Log.Warning($"尝试使用无效的actor id: 0，可能是清理过程中的并发访问");
+            return null;
         }
 
         if (self.Children.TryGetValue(id, out Entity actorLocationSender))
@@ -91,6 +92,10 @@ public static partial class MessageLocationSenderOneTypeSystem
     private static async ETTask SendInner(this MessageLocationSenderOneType self, long entityId, IMessage message)
     {
         MessageLocationSender messageLocationSender = self.GetOrCreate(entityId);
+        if (messageLocationSender == null)
+        {
+            return; // 跳过无效的actor id
+        }
 
         Scene root = self.Root();
 
@@ -131,6 +136,10 @@ public static partial class MessageLocationSenderOneTypeSystem
     public static async ETTask<IResponse> Call(this MessageLocationSenderOneType self, long entityId, IRequest request)
     {
         MessageLocationSender messageLocationSender = self.GetOrCreate(entityId);
+        if (messageLocationSender == null)
+        {
+            return MessageHelper.CreateResponse(request.GetType(), request.RpcId, ErrorCode.ERR_NotFoundActor);
+        }
 
         Scene root = self.Root();
 
@@ -174,6 +183,10 @@ public static partial class MessageLocationSenderOneTypeSystem
         ILocationRequest iRequest)
     {
         MessageLocationSender messageLocationSender = self.GetOrCreate(entityId);
+        if (messageLocationSender == null)
+        {
+            return MessageHelper.CreateResponse(iRequest.GetType(), iRequest.RpcId, ErrorCode.ERR_NotFoundActor);
+        }
 
         Scene root = self.Root();
         Type iRequestType = iRequest.GetType();

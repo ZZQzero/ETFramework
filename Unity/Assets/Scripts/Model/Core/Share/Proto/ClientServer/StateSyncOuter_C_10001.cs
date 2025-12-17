@@ -837,32 +837,32 @@ namespace ET
 
     public static class StateSyncOuter
     {
-        public const ushort RouterSync = 10002;
-        public const ushort C2M_TestRequest = 10003;
-        public const ushort M2C_TestResponse = 10004;
-        public const ushort C2G_EnterMap = 10005;
-        public const ushort G2C_EnterMap = 10006;
-        public const ushort MoveInfo = 10007;
-        public const ushort UnitInfo = 10008;
-        public const ushort M2C_CreateUnits = 10009;
-        public const ushort M2C_CreateMyUnit = 10010;
-        public const ushort M2C_StartSceneChange = 10011;
-        public const ushort M2C_RemoveUnits = 10012;
-        public const ushort C2M_PathfindingResult = 10013;
-        public const ushort C2M_Stop = 10014;
-        public const ushort M2C_PathfindingResult = 10015;
-        public const ushort M2C_Stop = 10016;
-        public const ushort G2C_Test = 10017;
-        public const ushort C2M_Reload = 10018;
-        public const ushort M2C_Reload = 10019;
-        public const ushort G2C_TestHotfixMessage = 10020;
-        public const ushort C2M_TestRobotCase = 10021;
-        public const ushort M2C_TestRobotCase = 10022;
-        public const ushort C2M_TestRobotCase2 = 10023;
-        public const ushort M2C_TestRobotCase2 = 10024;
-        public const ushort C2M_TransferMap = 10025;
-        public const ushort M2C_TransferMap = 10026;
-        public const ushort C2G_Benchmark = 10027;
-        public const ushort G2C_Benchmark = 10028;
+        public const ushort RouterSync = 3455;
+        public const ushort C2M_TestRequest = 18149;
+        public const ushort M2C_TestResponse = 53491;
+        public const ushort C2G_EnterMap = 23554;
+        public const ushort G2C_EnterMap = 5662;
+        public const ushort MoveInfo = 64148;
+        public const ushort UnitInfo = 5727;
+        public const ushort M2C_CreateUnits = 13127;
+        public const ushort M2C_CreateMyUnit = 50428;
+        public const ushort M2C_StartSceneChange = 18740;
+        public const ushort M2C_RemoveUnits = 9267;
+        public const ushort C2M_PathfindingResult = 4873;
+        public const ushort C2M_Stop = 45292;
+        public const ushort M2C_PathfindingResult = 597;
+        public const ushort M2C_Stop = 41916;
+        public const ushort G2C_Test = 50618;
+        public const ushort C2M_Reload = 52401;
+        public const ushort M2C_Reload = 17649;
+        public const ushort G2C_TestHotfixMessage = 47779;
+        public const ushort C2M_TestRobotCase = 56384;
+        public const ushort M2C_TestRobotCase = 58136;
+        public const ushort C2M_TestRobotCase2 = 36926;
+        public const ushort M2C_TestRobotCase2 = 43894;
+        public const ushort C2M_TransferMap = 3411;
+        public const ushort M2C_TransferMap = 9427;
+        public const ushort C2G_Benchmark = 29109;
+        public const ushort G2C_Benchmark = 50277;
     }
 }

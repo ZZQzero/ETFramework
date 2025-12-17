@@ -568,22 +568,22 @@ namespace ET
 
     public static class LoginInner
     {
-        public const ushort R2G_GetLoginKey = 20002;
-        public const ushort G2R_GetLoginKey = 20003;
-        public const ushort G2M_SessionDisconnect = 20004;
-        public const ushort R2L_AccountRequest = 20005;
-        public const ushort L2R_AccountResponse = 20006;
-        public const ushort L2G_DisconnectGateUnit = 20007;
-        public const ushort G2L_DisconnectGateUnit = 20008;
-        public const ushort Main2NetClient_LoginGame = 20009;
-        public const ushort NetClient2Main_LoginGame = 20010;
-        public const ushort G2L_AddLoginRecord = 20011;
-        public const ushort L2G_AddLoginRecord = 20012;
-        public const ushort G2M_RequestExitGame = 20013;
-        public const ushort M2G_RequestExitGame = 20014;
-        public const ushort G2L_RemoveLoginRecord = 20015;
-        public const ushort L2G_RemoveLoginRecord = 20016;
-        public const ushort G2M_SecondLogin = 20017;
-        public const ushort M2G_SecondLogin = 20018;
+        public const ushort R2G_GetLoginKey = 15589;
+        public const ushort G2R_GetLoginKey = 10201;
+        public const ushort G2M_SessionDisconnect = 12862;
+        public const ushort R2L_AccountRequest = 60896;
+        public const ushort L2R_AccountResponse = 38788;
+        public const ushort L2G_DisconnectGateUnit = 322;
+        public const ushort G2L_DisconnectGateUnit = 42370;
+        public const ushort Main2NetClient_LoginGame = 63694;
+        public const ushort NetClient2Main_LoginGame = 40110;
+        public const ushort G2L_AddLoginRecord = 50404;
+        public const ushort L2G_AddLoginRecord = 53028;
+        public const ushort G2M_RequestExitGame = 20011;
+        public const ushort M2G_RequestExitGame = 29035;
+        public const ushort G2L_RemoveLoginRecord = 24935;
+        public const ushort L2G_RemoveLoginRecord = 9271;
+        public const ushort G2M_SecondLogin = 24221;
+        public const ushort M2G_SecondLogin = 59145;
     }
 }

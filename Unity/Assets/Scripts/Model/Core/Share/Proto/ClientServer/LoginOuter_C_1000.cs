@@ -729,23 +729,23 @@ namespace ET
 
     public static class LoginOuter
     {
-        public const ushort UserInfo = 1001;
-        public const ushort Main2NetClient_Login = 1002;
-        public const ushort NetClient2Main_Login = 1003;
-        public const ushort C2G_Ping = 1004;
-        public const ushort G2C_Ping = 1005;
-        public const ushort C2R_Login = 1006;
-        public const ushort R2C_Login = 1007;
-        public const ushort C2G_LoginGate = 1008;
-        public const ushort G2C_LoginGate = 1009;
-        public const ushort C2R_LoginAccount = 1010;
-        public const ushort R2C_LoginAccount = 1011;
-        public const ushort A2C_Disconnect = 1012;
-        public const ushort C2R_GetRealmKey = 1013;
-        public const ushort R2C_GetRealmKey = 1014;
-        public const ushort C2G_LoginGameGate = 1015;
-        public const ushort G2C_LoginGameGate = 1016;
-        public const ushort C2G_EnterGame = 1017;
-        public const ushort G2C_EnterGame = 1018;
+        public const ushort UserInfo = 31906;
+        public const ushort Main2NetClient_Login = 41960;
+        public const ushort NetClient2Main_Login = 7172;
+        public const ushort C2G_Ping = 58286;
+        public const ushort G2C_Ping = 23994;
+        public const ushort C2R_Login = 44012;
+        public const ushort R2C_Login = 41840;
+        public const ushort C2G_LoginGate = 35780;
+        public const ushort G2C_LoginGate = 15628;
+        public const ushort C2R_LoginAccount = 49719;
+        public const ushort R2C_LoginAccount = 41035;
+        public const ushort A2C_Disconnect = 19762;
+        public const ushort C2R_GetRealmKey = 37663;
+        public const ushort R2C_GetRealmKey = 62751;
+        public const ushort C2G_LoginGameGate = 22110;
+        public const ushort G2C_LoginGameGate = 35278;
+        public const ushort C2G_EnterGame = 21958;
+        public const ushort G2C_EnterGame = 45366;
     }
 }

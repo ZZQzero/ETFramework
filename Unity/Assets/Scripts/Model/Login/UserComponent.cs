@@ -1,4 +1,6 @@
-﻿namespace ET
+﻿using System.Collections.Generic;
+
+namespace ET
 {
     /// <summary>
     /// 用户信息组件（Main Fiber全局组件）
@@ -23,7 +25,7 @@
         public long TotalRecharge { get; set; }
         
         /// <summary>角色ID列表</summary>
-        public System.Collections.Generic.List<long> RoleIds { get; set; }
+        public List<long> RoleIds { get; set; }
         
         /// <summary>当前选择的角色ID</summary>
         public long CurrentRoleId { get; set; }

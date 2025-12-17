@@ -465,18 +465,18 @@ namespace ET
 
     public static class ActorLocation
     {
-        public const ushort ObjectAddRequest = 20101;
-        public const ushort ObjectAddResponse = 20102;
-        public const ushort ObjectLockRequest = 20103;
-        public const ushort ObjectLockResponse = 20104;
-        public const ushort ObjectUnLockRequest = 20105;
-        public const ushort ObjectUnLockResponse = 20106;
-        public const ushort ObjectRemoveRequest = 20107;
-        public const ushort ObjectRemoveResponse = 20108;
-        public const ushort ObjectGetRequest = 20109;
-        public const ushort ObjectGetResponse = 20110;
-        public const ushort ObjectAddBatchItem = 20111;
-        public const ushort ObjectAddBatchRequest = 20112;
-        public const ushort ObjectAddBatchResponse = 20113;
+        public const ushort ObjectAddRequest = 14402;
+        public const ushort ObjectAddResponse = 62078;
+        public const ushort ObjectLockRequest = 1794;
+        public const ushort ObjectLockResponse = 5410;
+        public const ushort ObjectUnLockRequest = 4867;
+        public const ushort ObjectUnLockResponse = 4785;
+        public const ushort ObjectRemoveRequest = 2299;
+        public const ushort ObjectRemoveResponse = 39873;
+        public const ushort ObjectGetRequest = 59047;
+        public const ushort ObjectGetResponse = 48397;
+        public const ushort ObjectAddBatchItem = 15836;
+        public const ushort ObjectAddBatchRequest = 38524;
+        public const ushort ObjectAddBatchResponse = 11560;
     }
 }

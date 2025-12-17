@@ -135,9 +135,9 @@ namespace ET
                 string fileName = Path.GetFileNameWithoutExtension(s);
                 string[] ss2 = fileName.Split('_');
                 string protoName = ss2[0];
-                string cs = ss2[1];
-                int startOpcode = int.Parse(ss2[2]);
-                ProtoFile2CS(s, "", protoName, cs, startOpcode);
+                string cs = ss2.Length > 1 ? ss2[1] : "";
+                // 不再依赖文件名中的起始 opcode，完全基于消息名称生成
+                ProtoFile2CS(s, "", protoName, cs);
             }
         }
         
@@ -158,7 +158,7 @@ namespace ET
             }
         }
 
-        private static void ProtoFile2CS(string path, string module, string protoName, string cs, int startOpcode)
+        private static void ProtoFile2CS(string path, string module, string protoName, string cs)
         {
             msgOpcode.Clear();
 
@@ -219,13 +219,8 @@ namespace ET
                         parentClass = ss[1].Trim();
                     }
 
-                    int assignedOpcode = ++startOpcode;
-
-                    while (usedOpcodes.Contains(assignedOpcode))
-                    {
-                        assignedOpcode++;
-                    }
-                    
+                    // 基于消息名称生成稳定的全局唯一 opcode，自动处理冲突
+                    int assignedOpcode = GetStableOpcodeWithCollisionResolution(msgName, usedOpcodes);
                     usedOpcodes.Add(assignedOpcode);
                     msgOpcode.Add(new OpcodeInfo() { Name = msgName, Opcode = assignedOpcode });
 
@@ -318,7 +313,7 @@ namespace ET
             sb.Append("\tpublic static class " + protoName + "\n\t{\n");
             foreach (OpcodeInfo info in msgOpcode)
             {
-                sb.Append($"\t\tpublic const ushort {info.Name} = {info.Opcode};\n");
+                sb.Append($"\t\tpublic const ushort {info.Name} = {(ushort)info.Opcode};\n");
             }
 
             sb.Append("\t}\n");
@@ -456,6 +451,75 @@ namespace ET
                 // class类型使用default也是null，同样安全
                 _ => $"this.{fieldName} = default;\n\t\t\t"
             };
+        }
+
+        // 哈希算法常量
+        private const uint FNV_OFFSET_BASIS = 2166136261u;
+        private const uint FNV_PRIME = 16777619u;
+        private const uint DJB_HASH_SEED = 5381u;
+        private const int MAX_COLLISION_ATTEMPTS = 1000;
+
+        /// <summary>
+        /// 基于消息名称生成稳定的全局唯一 opcode，自动处理冲突
+        /// 保证同一消息名称总是得到相同的 opcode，即使插入新消息也不会改变
+        /// </summary>
+        private static int GetStableOpcodeWithCollisionResolution(string messageName, HashSet<int> usedOpcodes)
+        {
+            // 在整个 ushort 范围内生成 opcode（1-65535，0 通常保留）
+            const int minOpcode = 4;
+            const int maxOpcode = ushort.MaxValue;
+            const int range = maxOpcode - minOpcode + 1;
+            
+            // 使用主哈希生成基础 opcode
+            int baseOpcode = minOpcode + (int)(ComputeFNVHash(messageName) % range);
+            
+            // 无冲突直接返回
+            if (!usedOpcodes.Contains(baseOpcode))
+            {
+                return baseOpcode;
+            }
+            
+            // 冲突解决：使用二次哈希计算步长，循环查找可用位置
+            int step = (int)(ComputeDJBHash(messageName) % Math.Max(1, range / 10)) + 1;
+            int candidate = baseOpcode;
+            
+            for (int attempts = 0; attempts < MAX_COLLISION_ATTEMPTS; attempts++)
+            {
+                if (!usedOpcodes.Contains(candidate))
+                {
+                    return candidate;
+                }
+                candidate = minOpcode + ((candidate - minOpcode + step) % range);
+            }
+            
+            throw new Exception($"消息 {messageName} 无法找到可用的 Opcode（范围: {minOpcode}-{maxOpcode}），可能消息太多导致空间耗尽！");
+        }
+        
+        /// <summary>
+        /// 计算 FNV-1a 哈希值（主哈希算法）
+        /// </summary>
+        private static uint ComputeFNVHash(string str)
+        {
+            uint hash = FNV_OFFSET_BASIS;
+            foreach (char c in str)
+            {
+                hash ^= c;
+                hash *= FNV_PRIME;
+            }
+            return hash;
+        }
+        
+        /// <summary>
+        /// 计算 DJB 哈希值（用于冲突解决的二次哈希）
+        /// </summary>
+        private static uint ComputeDJBHash(string str)
+        {
+            uint hash = DJB_HASH_SEED;
+            foreach (char c in str)
+            {
+                hash = ((hash << 5) + hash) + c;
+            }
+            return hash;
         }
 
         [GeneratedRegex(@"//\s*ResponseType")]

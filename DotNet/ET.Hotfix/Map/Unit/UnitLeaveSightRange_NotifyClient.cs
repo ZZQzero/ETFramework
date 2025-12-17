@@ -14,6 +14,12 @@
                 return;
             }
 
+            var unit = a.GetParent<Unit>();
+            if (unit == null || unit.IsDisposed)
+            {
+                Log.Error("unit is null or disposed");
+                return;
+            }
             MapMessageHelper.NoticeUnitRemove(a.GetParent<Unit>(), b.GetParent<Unit>());
         }
     }

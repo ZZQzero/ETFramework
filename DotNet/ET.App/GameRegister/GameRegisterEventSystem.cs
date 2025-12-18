@@ -34,7 +34,7 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.TokenComponentSystem.ET_TokenComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.UserSessionComponentSystem.ET_UserSessionComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.UserSessionComponentSystem.ET_UserSessionComponent_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.UserSessionTimeoutComponentSystem.ET_UserSessionTimeoutComponent_string_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.UserSessionTimeoutComponentSystem.ET_UserSessionTimeoutComponent_long_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.UserSessionTimeoutComponentSystem.ET_UserSessionTimeoutComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MoveComponentSystem.ET_MoveComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MoveComponentSystem.ET_MoveComponent_AwakeSystem>();

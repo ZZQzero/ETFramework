@@ -72,10 +72,10 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
             }
         }
 
+        var userId = user.UserId;
         var r2LAccountRequest =  R2L_AccountRequest.Create();
-        r2LAccountRequest.Account = request.Account;
+        r2LAccountRequest.UserId = userId;
         var config = StartSceneConfig.Instance.GetOrDefault(202);
-        Log.Info($"{session.Fiber().Id}  {session.Root().Name}   ");
         var l2RAccountResponse = await session.Root().GetComponent<MessageSender>().Call(config.ActorId,r2LAccountRequest) as L2R_AccountResponse;
         if (l2RAccountResponse.Error != ErrorCode.ERR_Success)
         {
@@ -85,20 +85,20 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
         }
 
         var userSessionComponent = session.Root().GetComponent<UserSessionComponent>();
-        var otherSession = userSessionComponent.Get(request.Account);
+        var otherSession = userSessionComponent.Get(userId);
         if (otherSession != null && !otherSession.IsDisposed)
         {
-            Log.Info($"清理Realm上的旧Session：用户 {request.Account}");
+            Log.Info($"清理Realm上的旧Session：用户 {userId}");
             otherSession.Disconnect().NoContext();
         }
         
-        userSessionComponent.Add(request.Account, session);
-        session.AddComponent<UserSessionTimeoutComponent, string>(request.Account);
+        userSessionComponent.Add(userId, session);
+        session.AddComponent<UserSessionTimeoutComponent, long>(userId);
         
         string token = TokenHelper.GenerateToken();
         var tokenComponent = session.Root().GetComponent<TokenComponent>();
-        tokenComponent.Remove(request.Account);
-        tokenComponent.Add(request.Account, token);
+        tokenComponent.Remove(userId);
+        tokenComponent.Add(userId, token);
         
         response.Token = token;
         response.Error = ErrorCode.ERR_Success;
@@ -130,8 +130,6 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
         {
             response.UserInfo.RoleIds = new List<long>();
         }
-        
-        Log.Info($"登录成功：用户 {request.Account}，UserId: {user.UserId}，角色数量: {response.UserInfo.RoleIds.Count}");
         await ETTask.CompletedTask;
     }
 }

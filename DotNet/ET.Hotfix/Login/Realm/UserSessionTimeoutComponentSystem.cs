@@ -4,9 +4,9 @@
     public static partial class UserSessionTimeoutComponentSystem
     {
         [EntitySystem]
-        private static void Awake(this UserSessionTimeoutComponent self, string username)
+        private static void Awake(this UserSessionTimeoutComponent self, long userId)
         {
-            self.Username = username;
+            self.UserId = userId;
             CheckOutTime(self).NoContext();
         }
 
@@ -29,7 +29,7 @@
             protected override void Run(UserSessionTimeoutComponent self)
             {
                 var userSessionComponent = self.Root().GetComponent<UserSessionComponent>();
-                userSessionComponent.Remove(self.Username);
+                userSessionComponent.Remove(self.UserId);
                 
                 Session session = self.GetParent<Session>();
                 session?.Disconnect().NoContext();

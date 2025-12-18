@@ -6,7 +6,7 @@ package ET;
 message R2G_GetLoginKey // IRequest
 {
 	int32 RpcId = 1;
-	string Account = 2;
+	int64 UserId = 2;
 }
 
 message G2R_GetLoginKey // IResponse
@@ -27,7 +27,7 @@ message G2M_SessionDisconnect // ILocationMessage
 message R2L_AccountRequest // IRequest
 {
     int32 RpcId = 1;
-    string Account = 2;
+    int64 UserId = 2;
 }
 
 message L2R_AccountResponse // IResponse
@@ -41,7 +41,7 @@ message L2R_AccountResponse // IResponse
 message L2G_DisconnectGateUnit // IRequest
 {
     int32 RpcId = 1;
-	string AccountName = 2;
+	int64 UserId = 2;
 }
 
 message G2L_DisconnectGateUnit // IResponse
@@ -74,7 +74,7 @@ message NetClient2Main_LoginGame // IResponse
 message G2L_AddLoginRecord // IRequest
 {
 	int32 RpcId = 1;
-	string AccountName = 2;
+	int64 UserId = 2;
 	int32 ServerId = 3; 
 }
 

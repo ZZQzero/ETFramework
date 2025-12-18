@@ -521,7 +521,7 @@ namespace ET
         public string Token { get; set; }
 
         [NinoMember(2)]
-        public string Account { get; set; }
+        public long UserId { get; set; }
 
         [NinoMember(3)]
         public int ServerId { get; set; }
@@ -535,7 +535,7 @@ namespace ET
 
             this.RpcId = 0;
             this.Token = null;
-            this.Account = null;
+            this.UserId = 0;
             this.ServerId = 0;
 
             ObjectPool.Recycle(this);

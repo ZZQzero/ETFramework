@@ -2,5 +2,5 @@
 
 public class TokenComponent : Entity,IAwake
 {
-    public Dictionary<string, string> TokenDic = new Dictionary<string, string>();
+    public readonly Dictionary<long, string> TokenDic = new Dictionary<long, string>();
 }

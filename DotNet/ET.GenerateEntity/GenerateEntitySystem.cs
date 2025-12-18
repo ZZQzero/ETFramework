@@ -1,12 +1,32 @@
-﻿using System.Text;
+using System;
+using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace ET;
 
 public class GenerateEntitySystem
 {
-    private static string appProjectPath = Directory.GetCurrentDirectory();
+    private static string GetProjectRootPath()
+    {
+        var currentDir = Directory.GetCurrentDirectory();
+        var dirInfo = new DirectoryInfo(currentDir);
 
-    private static string outputDir = Path.Combine(appProjectPath, "GameRegister/GameRegisterEventSystem.cs");
+        // 向上查找项目根目录（包含 .gitignore 文件的目录）
+        while (dirInfo != null)
+        {
+            if (File.Exists(Path.Combine(dirInfo.FullName, ".gitignore")))
+            {
+                return dirInfo.FullName;
+            }
+            dirInfo = dirInfo.Parent;
+        }
+
+        // 如果没找到，假设当前目录就是项目根目录
+        return currentDir;
+    }
+
+    private static string outputDir = Path.Combine(GetProjectRootPath(), "DotNet", "ET.App", "GameRegister", "GameRegisterEventSystem.cs");
 
 
     private static void Init()

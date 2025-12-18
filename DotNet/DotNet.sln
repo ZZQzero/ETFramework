@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ET.Core", "ET.Core\ET.Core.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ET.App", "ET.App\ET.App.csproj", "{682B5185-1C90-442B-ABA8-05EF4111832B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ET.ExcelExporter", "ET.ExcelExporter\ET.ExcelExporter.csproj", "{B5DFEFDC-7FB7-4EB2-97F3-A2C252D642CD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ET.GenerateEntity", "ET.GenerateEntity\ET.GenerateEntity.csproj", "{B5DFEFDC-7FB7-4EB2-97F3-A2C252D642CD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ET.Hotfix", "ET.Hotfix\ET.Hotfix.csproj", "{0E334A40-FE3E-4E0C-B5D1-8368B8FAED8D}"
 EndProject

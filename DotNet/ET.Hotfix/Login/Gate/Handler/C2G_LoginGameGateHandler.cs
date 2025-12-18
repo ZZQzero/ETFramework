@@ -15,8 +15,8 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
         }
 
         var gateSession = root.GetComponent<GateSessionKeyComponent>();
-        var account = gateSession.Get(request.Key);
-        if (string.IsNullOrEmpty(account))
+        var userId = gateSession.Get(request.Key);
+        if (userId != request.UserId)
         {
             response.Error = ErrorCode.ERR_ConnectGateKeyError;
             session?.Disconnect().NoContext();
@@ -29,7 +29,7 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
         var instanceId = session.InstanceId;
         using (session.AddComponent<SessionLockingComponent>())
         {
-            using (await coroutineLock.Wait(CoroutineLockType.LoginGate, request.AccountName.GetLongHashCode()))
+            using (await coroutineLock.Wait(CoroutineLockType.LoginGate, userId))
             {
                 if (instanceId != session.InstanceId)
                 {
@@ -38,7 +38,7 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
                     return;
                 }
                 G2L_AddLoginRecord g2LAddLoginRecord = G2L_AddLoginRecord.Create();
-                g2LAddLoginRecord.AccountName = request.AccountName;
+                g2LAddLoginRecord.UserId = userId;
                 g2LAddLoginRecord.ServerId = root.Zone();
                 
                 var config = StartSceneConfig.Instance.GetOrDefault(202);
@@ -52,7 +52,7 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
                 }
 
                 var userEntityComponent = root.GetComponent<UserEntityComponent>();
-                var userEntity = userEntityComponent.GetByAccount(request.AccountName);
+                var userEntity = userEntityComponent.GetByAccount(request.UserId);
                 if (userEntity == null)
                 {
                     // 使用RoleId作为Player的Id（保持现有逻辑），但同时存储UserId

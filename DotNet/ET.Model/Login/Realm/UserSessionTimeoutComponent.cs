@@ -4,10 +4,10 @@
     /// 用户会话超时检测组件
     /// </summary>
     [ComponentOf(typeof(Session))]
-    public class UserSessionTimeoutComponent : Entity, IAwake<string>, IDestroy
+    public class UserSessionTimeoutComponent : Entity, IAwake<long>, IDestroy
     {
         public long Timer;
         
-        public string Username;
+        public long UserId;
     }
 }

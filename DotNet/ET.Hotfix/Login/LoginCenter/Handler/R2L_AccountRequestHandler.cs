@@ -5,20 +5,19 @@ public class R2L_AccountRequestHandler : MessageHandler<Scene,R2L_AccountRequest
 {
     protected override async ETTask Run(Scene scene, R2L_AccountRequest request, L2R_AccountResponse response)
     {
-        var accountId = request.Account.GetLongHashCode();
         var coroutineLock = scene.GetComponent<CoroutineLockComponent>();
-        using (await coroutineLock.Wait(CoroutineLockType.LoginCenterAccount,accountId))
+        using (await coroutineLock.Wait(CoroutineLockType.LoginCenterAccount,request.UserId))
         {
             var loginInfo = scene.GetComponent<LoginInfoRecordComponent>();
-            if (!loginInfo.IsExist(accountId))
+            if (!loginInfo.IsExist(request.UserId))
             {
                 return;
             }
 
-            int zone = loginInfo.Get(accountId);
-            var gateConfig = RealmGateAddressHelper.GetGate(zone, request.Account);
+            int zone = loginInfo.Get(request.UserId);
+            var gateConfig = RealmGateAddressHelper.GetGate(zone, request.UserId);
             L2G_DisconnectGateUnit l2GDisconnectGate = L2G_DisconnectGateUnit.Create();
-            l2GDisconnectGate.AccountName = request.Account;
+            l2GDisconnectGate.UserId = request.UserId;
             var g2LDisconnectGate = (G2L_DisconnectGateUnit)await scene.GetComponent<MessageSender>().Call(gateConfig.ActorId, l2GDisconnectGate);
             response.Error = g2LDisconnectGate.Error;
         }

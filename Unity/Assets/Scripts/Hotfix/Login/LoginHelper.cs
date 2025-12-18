@@ -23,7 +23,7 @@ namespace ET
             userComponent.SetUserInfo(resp.UserInfo);
             
             C2R_GetRealmKey c2RGetRealmKey = C2R_GetRealmKey.Create();
-            c2RGetRealmKey.Account = account;
+            c2RGetRealmKey.UserId = resp.UserInfo.UserId;
             c2RGetRealmKey.Token = resp.Token;
             c2RGetRealmKey.ServerId = 3;
             var r2CGateRealmKey = (R2C_GetRealmKey) await clientSenderComponent.Call(c2RGetRealmKey);

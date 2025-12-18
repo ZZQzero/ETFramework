@@ -8,6 +8,6 @@ namespace ET
     [ComponentOf(typeof(Scene))]
     public class UserSessionComponent : Entity, IAwake, IDestroy
     {
-        public Dictionary<string, EntityRef<Session>> UserSessions = new Dictionary<string, EntityRef<Session>>();
+        public readonly Dictionary<long, EntityRef<Session>> UserSessions = new Dictionary<long, EntityRef<Session>>();
     }
 }

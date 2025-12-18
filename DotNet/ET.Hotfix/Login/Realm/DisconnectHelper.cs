@@ -31,7 +31,7 @@ public static class DisconnectHelper
 
         long instanceId = userEntity.InstanceId;
         CoroutineLockComponent coroutineLockComponent = userEntity.Root().GetComponent<CoroutineLockComponent>();
-        using (await coroutineLockComponent.Wait(CoroutineLockType.LoginGate, userEntity.Account.GetLongHashCode()))
+        using (await coroutineLockComponent.Wait(CoroutineLockType.LoginGate, userEntity.UserId))
         {
             if (userEntity.IsDisposed || userEntity.InstanceId != instanceId)
             {

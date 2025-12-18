@@ -112,7 +112,7 @@ message C2R_GetRealmKey // ISessionRequest
 {
 	int32 RpcId = 1;
 	string Token = 2;
-	string Account = 3;
+	int64 UserId = 3;
 	int32 ServerId = 4;
 }
 

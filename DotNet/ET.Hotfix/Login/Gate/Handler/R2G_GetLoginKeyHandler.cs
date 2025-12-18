@@ -9,7 +9,7 @@ namespace ET
 		protected override async ETTask Run(Scene scene, R2G_GetLoginKey request, G2R_GetLoginKey response)
 		{
 			long key = RandomGenerator.RandInt64();
-			scene.GetComponent<GateSessionKeyComponent>().Add(key, request.Account);
+			scene.GetComponent<GateSessionKeyComponent>().Add(key, request.UserId);
 			response.Key = key;
 			response.GateId = scene.Id;
 			await ETTask.CompletedTask;

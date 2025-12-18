@@ -17,7 +17,7 @@ namespace ET
         public int RpcId { get; set; }
 
         [NinoMember(1)]
-        public string Account { get; set; }
+        public long UserId { get; set; }
 
         public override void Dispose()
         {
@@ -27,7 +27,7 @@ namespace ET
             }
 
             this.RpcId = 0;
-            this.Account = null;
+            this.UserId = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -113,7 +113,7 @@ namespace ET
         public int RpcId { get; set; }
 
         [NinoMember(1)]
-        public string Account { get; set; }
+        public long UserId { get; set; }
 
         public override void Dispose()
         {
@@ -123,7 +123,7 @@ namespace ET
             }
 
             this.RpcId = 0;
-            this.Account = null;
+            this.UserId = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -176,7 +176,7 @@ namespace ET
         public int RpcId { get; set; }
 
         [NinoMember(1)]
-        public string AccountName { get; set; }
+        public long UserId { get; set; }
 
         public override void Dispose()
         {
@@ -186,7 +186,7 @@ namespace ET
             }
 
             this.RpcId = 0;
-            this.AccountName = null;
+            this.UserId = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -328,7 +328,7 @@ namespace ET
         public int RpcId { get; set; }
 
         [NinoMember(1)]
-        public string AccountName { get; set; }
+        public long UserId { get; set; }
 
         [NinoMember(2)]
         public int ServerId { get; set; }
@@ -341,7 +341,7 @@ namespace ET
             }
 
             this.RpcId = 0;
-            this.AccountName = null;
+            this.UserId = 0;
             this.ServerId = 0;
 
             ObjectPool.Recycle(this);

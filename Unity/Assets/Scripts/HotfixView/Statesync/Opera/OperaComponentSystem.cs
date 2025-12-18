@@ -24,7 +24,6 @@ namespace ET
                     C2M_PathfindingResult c2MPathfindingResult = C2M_PathfindingResult.Create();
                     c2MPathfindingResult.Position = hit.point;
                     self.Root().GetComponent<ClientSenderComponent>().Send(c2MPathfindingResult);
-                    Debug.Log(hit.point);
                 }
             }
             

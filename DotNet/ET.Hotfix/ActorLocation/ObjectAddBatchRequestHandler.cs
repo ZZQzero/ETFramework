@@ -31,7 +31,7 @@ namespace ET
             {
                 var kvp = groupedItems.First();
                 LocationOneType locationOneType = locationManager.Get(kvp.Key);
-                await locationOneType.AddBatch(kvp.Value);
+                await locationOneType.AddBatch(kvp.Key,kvp.Value);
             }
             else
             {
@@ -39,7 +39,7 @@ namespace ET
                 foreach (var kvp in groupedItems)
                 {
                     LocationOneType locationOneType = locationManager.Get(kvp.Key);
-                    tasks.Add(locationOneType.AddBatch(kvp.Value));
+                    tasks.Add(locationOneType.AddBatch(kvp.Key,kvp.Value));
                 }
 
                 await ETTaskHelper.WaitAll(tasks);

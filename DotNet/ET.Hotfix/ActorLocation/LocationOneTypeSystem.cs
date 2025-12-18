@@ -25,16 +25,14 @@ namespace ET
         /// <summary>
         /// 批量添加Location
         /// </summary>
-        public static async ETTask AddBatch(this LocationOneType self, List<(long key, ActorId instanceId)> items)
+        public static async ETTask AddBatch(this LocationOneType self,long lockKey, List<(long key, ActorId instanceId)> items)
         {
             if (items == null || items.Count == 0)
             {
                 return;
             }
-            
+    
             long coroutineLockType = (self.Id << 32) | CoroutineLockType.Location;
-            long lockKey = 0; // 使用统一的锁key，性能最优
-            
             using (await self.Root().GetComponent<CoroutineLockComponent>().Wait(coroutineLockType, lockKey))
             {
                 foreach (var (key, instanceId) in items)

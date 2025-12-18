@@ -6,16 +6,17 @@ public class L2G_DisconnectGateUnitHandler : MessageHandler<Scene,L2G_Disconnect
     protected override async ETTask Run(Scene scene, L2G_DisconnectGateUnit request, G2L_DisconnectGateUnit response)
     {
         CoroutineLockComponent coroutineLockComponent = scene.GetComponent<CoroutineLockComponent>();
-        using (await coroutineLockComponent.Wait(CoroutineLockType.LoginGate, request.AccountName.GetLongHashCode()))
+        var userId = request.UserId;
+        using (await coroutineLockComponent.Wait(CoroutineLockType.LoginGate, userId))
         {
             UserEntityComponent userEntityComponent = scene.GetComponent<UserEntityComponent>();
-            UserEntity userEntity = userEntityComponent.GetByAccount(request.AccountName);
+            UserEntity userEntity = userEntityComponent.GetByAccount(userId);
             if (userEntity == null)
             {
                 return;
             }
 
-            scene.GetComponent<GateSessionKeyComponent>().Remove(request.AccountName.GetLongHashCode());
+            scene.GetComponent<GateSessionKeyComponent>().Remove(userId);
             
             UserEntitySessionComponent userEntitySessionComponent = userEntity.GetComponent<UserEntitySessionComponent>();
             if (userEntitySessionComponent != null)
@@ -33,9 +34,6 @@ public class L2G_DisconnectGateUnitHandler : MessageHandler<Scene,L2G_Disconnect
                 await userEntitySessionComponent.RemoveLocation(LocationType.GateSession);
                 userEntity.RemoveComponent<UserEntitySessionComponent>();
             }
-            
-            await userEntity.RemoveLocation(LocationType.User);
-
             userEntity.AddComponent<UserOfflineOutTimeComponent>();
         }
            

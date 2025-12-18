@@ -29,7 +29,7 @@ public class C2G_EnterGameHandler : MessageSessionHandler<C2G_EnterGame,G2C_Ente
         var instanceId = session.InstanceId;
         using (session.AddComponent<SessionLockingComponent>())
         {
-            using (await coroutineLockComponent.Wait(CoroutineLockType.LoginGate, userEntity.Account.GetLongHashCode()))
+            using (await coroutineLockComponent.Wait(CoroutineLockType.LoginGate, userEntity.UserId))
             {
                 if (session.InstanceId != instanceId || userEntity.IsDisposed)
                 {

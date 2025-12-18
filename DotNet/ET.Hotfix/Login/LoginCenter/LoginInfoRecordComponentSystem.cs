@@ -13,28 +13,23 @@ public static partial class LoginInfoRecordComponentSystem
         self.LoginAccountInfo.Clear();
     }
 
-    public static void Add(this LoginInfoRecordComponent self, long key, int value)
+    public static void Add(this LoginInfoRecordComponent self, long userId, int value)
     {
-        if (self.LoginAccountInfo.ContainsKey(key))
-        {
-            self.LoginAccountInfo[key] = value;
-        }
-
-        self.LoginAccountInfo.Add(key, value);
+        self.LoginAccountInfo[userId] = value;
     }
 
-    public static void Remove(this LoginInfoRecordComponent self, long key)
+    public static void Remove(this LoginInfoRecordComponent self, long userId)
     {
-        self.LoginAccountInfo.Remove(key);
+        self.LoginAccountInfo.Remove(userId);
     }
 
-    public static int Get(this LoginInfoRecordComponent self, long key)
+    public static int Get(this LoginInfoRecordComponent self, long userId)
     {
-        return self.LoginAccountInfo.GetValueOrDefault(key);
+        return self.LoginAccountInfo.GetValueOrDefault(userId);
     }
 
-    public static bool IsExist(this LoginInfoRecordComponent self, long key)
+    public static bool IsExist(this LoginInfoRecordComponent self, long userId)
     {
-        return self.LoginAccountInfo.ContainsKey(key);
+        return self.LoginAccountInfo.ContainsKey(userId);
     }
 }

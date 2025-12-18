@@ -13,5 +13,12 @@ namespace ET
 			
 			return zoneGates[(int)(hash % (ulong)zoneGates.Count)];
 		}
+		
+		public static StartSceneTable GetGate(int zone, long userId)
+		{
+			List<StartSceneTable> zoneGates = StartSceneConfigManager.Instance.GetBySceneType(zone, SceneType.Gate);
+			var index = (int)(userId % zoneGates.Count);
+			return zoneGates[index];
+		}
 	}
 }

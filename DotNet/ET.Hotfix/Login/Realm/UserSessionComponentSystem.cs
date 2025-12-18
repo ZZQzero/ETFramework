@@ -14,15 +14,15 @@
             self.UserSessions.Clear();
         }
 
-        public static Session Get(this UserSessionComponent self, string username)
+        public static Session Get(this UserSessionComponent self, long userId)
         {
-            if (self.UserSessions.TryGetValue(username, out var entityRef))
+            if (self.UserSessions.TryGetValue(userId, out var entityRef))
             {
                 Session session = entityRef;
                 if (session == null || session.IsDisposed)
                 {
-                    self.Remove(username);
-                    Log.Debug($"清理已释放的Realm Session：用户 {username}");
+                    self.Remove(userId);
+                    Log.Debug($"清理已释放的Realm Session：用户 {userId}");
                     return null;
                 }
                 return session;
@@ -30,14 +30,14 @@
             return null;
         }
 
-        public static void Add(this UserSessionComponent self, string username, EntityRef<Session> session)
+        public static void Add(this UserSessionComponent self, long userId, EntityRef<Session> session)
         {
-            self.UserSessions[username] = session;
+            self.UserSessions[userId] = session;
         }
         
-        public static void Remove(this UserSessionComponent self, string username)
+        public static void Remove(this UserSessionComponent self, long userId)
         {
-            self.UserSessions.Remove(username);
+            self.UserSessions.Remove(userId);
         }
     }
 }

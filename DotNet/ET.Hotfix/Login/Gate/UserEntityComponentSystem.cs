@@ -7,18 +7,18 @@ namespace ET
     {
         public static void Add(this UserEntityComponent self, UserEntity userEntity)
         {
-            self.dictionary.Add(userEntity.Account, userEntity);
+            self.dictionary.Add(userEntity.UserId, userEntity);
         }
         
         public static void Remove(this UserEntityComponent self, UserEntity userEntity)
         {
-            self.dictionary.Remove(userEntity.Account);
+            self.dictionary.Remove(userEntity.UserId);
             userEntity.Dispose();
         }
         
-        public static UserEntity GetByAccount(this UserEntityComponent self, string account)
+        public static UserEntity GetByAccount(this UserEntityComponent self, long userId)
         {
-            self.dictionary.TryGetValue(account, out EntityRef<UserEntity> player);
+            self.dictionary.TryGetValue(userId, out EntityRef<UserEntity> player);
             return player;
         }
     }

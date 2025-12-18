@@ -6,7 +6,6 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
         <PackageId>Apps.Tool</PackageId>
-        <AssemblyName>ET.ExcelExporter</AssemblyName>
         <RootNamespace>ET</RootNamespace>
     </PropertyGroup>
 
@@ -34,12 +33,6 @@
       <ProjectReference Include="..\ET.Hotfix\ET.Hotfix.csproj" />
       <ProjectReference Include="..\ET.Loader\ET.Loader.csproj" />
       <ProjectReference Include="..\ET.Model\ET.Model.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Update="Template.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
     </ItemGroup>
 
     <ItemGroup>

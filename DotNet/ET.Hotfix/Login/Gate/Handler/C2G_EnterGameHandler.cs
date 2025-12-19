@@ -40,38 +40,35 @@ public class C2G_EnterGameHandler : MessageSessionHandler<C2G_EnterGame,G2C_Ente
                 if (userEntity.State == UserSessionState.Game)
                 {
                     // 二次登录：账号被顶号后重新登录，Unit已经在Map服务器中
-                    // 流程：
-                    // 1. 更新Gate服务器的Session绑定和Location注册
-                    // 2. 通知Map服务器（通过RPC保证时序）
-                    // 3. Map服务器清理缓存并发送消息给客户端
-                    
-                    // 先更新Session绑定
+                    // 更新Session绑定
                     SessionUserEntityComponent sessionUserEntityComp = session.GetComponent<SessionUserEntityComponent>();
                     if (sessionUserEntityComp == null)
                     {
                         sessionUserEntityComp = session.AddComponent<SessionUserEntityComponent>();
+                        sessionUserEntityComp.UserEntity = userEntity;
                     }
-                    sessionUserEntityComp.UserEntity = userEntity;
                     
-                    // 更新PlayerSessionComponent的Session引用
+                    // 检查UserEntitySessionComponent（正常情况下已在C2G_LoginGameGateHandler中处理）
                     UserEntitySessionComponent userEntitySessionComponent = userEntity.GetComponent<UserEntitySessionComponent>();
                     if (userEntitySessionComponent == null)
                     {
-                        // 如果PlayerSessionComponent不存在，需要重新创建
+                        // 异常情况：正常情况下C2G_LoginGameGateHandler已经创建了组件
+                        // 如果为null，说明可能发生了异常，需要重新创建并注册
                         userEntitySessionComponent = userEntity.AddComponent<UserEntitySessionComponent>();
                         userEntitySessionComponent.AddComponent<MailBoxComponent, int>(MailBoxType.GateSession);
+                        
+                        // 重新创建时需要注册Location并设置Session引用
+                        List<(int type, long key, ActorId actorId)> locationBatchItems =
+                            new List<(int type, long key, ActorId actorId)>
+                            {
+                                (LocationType.GateSession, userEntity.UserId, userEntitySessionComponent.GetActorId()),
+                                (LocationType.User, userEntity.UserId, userEntity.GetActorId())
+                            };
+                        await session.Root().GetComponent<LocationProxyComponent>().AddBatchLocation(locationBatchItems);
+                        userEntitySessionComponent.Session = session;
                     }
-                    userEntitySessionComponent.Session = session;
                     
-                    // 重新注册Location（关键步骤）
-                    List<(int type, long key, ActorId actorId)> locationBatchItems =
-                        new List<(int type, long key, ActorId actorId)>
-                        {
-                            (LocationType.GateSession, userEntity.UserId, userEntitySessionComponent.GetActorId()),
-                            (LocationType.User, userEntity.Id, userEntity.GetActorId())
-                        };
-                    await session.Root().GetComponent<LocationProxyComponent>().AddBatchLocation(locationBatchItems);
-                    
+                    // 通知Map服务器处理二次登录
                     G2M_SecondLogin g2MSecondLogin = G2M_SecondLogin.Create();
                     var locationSend = session.Root().GetComponent<MessageLocationSenderComponent>().Get(LocationType.Unit);
                     var m2GSecondLogin = (M2G_SecondLogin) await locationSend.Call(userEntity.UserId, g2MSecondLogin);
@@ -91,23 +88,26 @@ public class C2G_EnterGameHandler : MessageSessionHandler<C2G_EnterGame,G2C_Ente
 
                 try
                 {
-                    // 直接通知Map服务器创建Unit，不需要在Gate创建临时场景和Unit
+                    // 首次进入游戏：通知Map服务器创建Unit
                     StartSceneTable startSceneConfig = StartSceneConfigManager.Instance.GetBySceneName(session.Zone(), "Map1");
                     long unitId = userEntity.UserId; // 用UserId作为UnitId，确保全局唯一
 
-                    // 先设置GateSession的Location，以便Map服务器发送消息
+                    // 检查UserEntitySessionComponent（正常情况下已在C2G_LoginGameGateHandler中创建）
                     UserEntitySessionComponent userEntitySessionComponent = userEntity.GetComponent<UserEntitySessionComponent>();
                     if (userEntitySessionComponent == null)
                     {
+                        // 异常情况：正常情况下C2G_LoginGameGateHandler已经创建了组件
+                        // 如果为null，说明可能发生了异常，需要重新创建并注册
                         userEntitySessionComponent = userEntity.AddComponent<UserEntitySessionComponent>();
                         userEntitySessionComponent.AddComponent<MailBoxComponent, int>(MailBoxType.GateSession);
+                        
+                        // 重新创建时需要注册Location并设置Session引用
+                        await session.Root().GetComponent<LocationProxyComponent>().Add(LocationType.GateSession, unitId, userEntitySessionComponent.GetActorId());
+                        userEntitySessionComponent.Session = session;
                     }
-                    userEntitySessionComponent.Session = session;
+                    // 正常情况：组件已存在，Location和Session已在C2G_LoginGameGateHandler中处理，无需重复操作
 
-                    // 设置GateSession Location，key为UnitId
-                    await session.Root().GetComponent<LocationProxyComponent>().Add(LocationType.GateSession, unitId, userEntitySessionComponent.GetActorId());
-
-                    // 发送创建Unit请求到Map服务器（首次创建，不需要Lock）
+                    // 发送创建Unit请求到Map服务器
                     M2M_UnitTransferRequest m2MUnitTransferRequest = M2M_UnitTransferRequest.Create();
                     m2MUnitTransferRequest.OldActorId = default; // 首次创建，没有旧的ActorId
                     m2MUnitTransferRequest.UnitInfo = UnitInfo.Create();

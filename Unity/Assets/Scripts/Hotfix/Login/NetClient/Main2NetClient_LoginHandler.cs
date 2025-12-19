@@ -28,17 +28,18 @@ namespace ET
             c2RLogin.Password = request.Password;
             var r2CLoginAccount = (R2C_LoginAccount)await session.Call(c2RLogin);
             
-            if(r2CLoginAccount.Error == ErrorCode.ERR_Success)
-            {
-                root.AddComponent<SessionComponent>().Session = session;
-                response.Token = r2CLoginAccount.Token;
-                response.UserInfo = r2CLoginAccount.UserInfo;
-                response.Error = r2CLoginAccount.Error;
-            }
-            else
+            if(r2CLoginAccount.Error != ErrorCode.ERR_Success)
             {
                 session.Dispose();
+                root.RemoveComponent<NetComponent>();
+                response.Error = r2CLoginAccount.Error;
+                return;
             }
+    
+            root.AddComponent<SessionComponent>().Session = session;
+            response.Token = r2CLoginAccount.Token;
+            response.UserInfo = r2CLoginAccount.UserInfo;
+            response.Error = r2CLoginAccount.Error;
         }
     }
 }

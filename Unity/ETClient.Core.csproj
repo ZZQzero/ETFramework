@@ -949,11 +949,11 @@
     <Reference Include="YooAsset">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\YooAsset.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

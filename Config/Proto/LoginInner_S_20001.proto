@@ -51,6 +51,12 @@ message G2L_DisconnectGateUnit // IResponse
     string Message = 3;
 }
 
+
+message Main2NetClient_Disconnect // IMessage
+{
+}
+
+
 // ResponseType NetClient2Main_LoginGame
 message Main2NetClient_LoginGame // IRequest
 {

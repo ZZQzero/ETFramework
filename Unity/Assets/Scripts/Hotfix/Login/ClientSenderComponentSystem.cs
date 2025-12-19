@@ -38,10 +38,6 @@ namespace ET
 
         public static async ETTask<NetClient2Main_Login> LoginAsync(this ClientSenderComponent self, string address, string account, string password)
         {
-            /*var fiber = await FiberManager.Instance.Create(SchedulerType.Main, 0, SceneType.NetClient, "");
-            self.fiberId = fiber.Id;
-            self.netClientActorId = new ActorId(self.Fiber().Process, self.fiberId);*/
-            
             Main2NetClient_Login main2NetClientLogin = Main2NetClient_Login.Create();
             main2NetClientLogin.OwnerFiberId = self.Fiber().Id;
             main2NetClientLogin.Account = account;
@@ -61,6 +57,12 @@ namespace ET
             main2NetClientLoginGame.GateAddress = address;
             var response = await self.Root().GetComponent<ProcessInnerSender>().Call(self.netClientActorId, main2NetClientLoginGame) as NetClient2Main_LoginGame;
             return response;
+        }
+
+        public static void NectClientDisconnect(this ClientSenderComponent self)
+        {
+            Main2NetClient_Disconnect disconnect = Main2NetClient_Disconnect.Create();
+            self.Root().GetComponent<ProcessInnerSender>().Send(self.netClientActorId, disconnect);
         }
        
         public static void Send(this ClientSenderComponent self, IMessage message)

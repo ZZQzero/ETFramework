@@ -35,8 +35,30 @@ namespace ET
             mongoClientSettings.ConnectTimeout = TimeSpan.FromSeconds(5);
             mongoClientSettings.SocketTimeout = TimeSpan.FromSeconds(10);
 
+            // 注意：连接池配置（maxPoolSize, minPoolSize）应在连接字符串中设置
+            // 例如：mongodb://localhost:27017/?maxPoolSize=100&minPoolSize=10
+            // MongoDB C# Driver 2.x+ 版本中，这些参数通过连接字符串配置更稳定
             self.mongoClient = new MongoClient(mongoClientSettings);
             self.database = self.mongoClient.GetDatabase(dbName);
+            WarmupConnectionPool(self).NoContext();
+        }
+        
+        /// <summary>
+        /// 预热MongoDB连接池（异步执行，不阻塞启动）
+        /// 通过执行一次轻量级操作来触发连接池初始化和服务器发现
+        /// </summary>
+        private static async ETTask WarmupConnectionPool(DBComponent self)
+        {
+            try
+            {
+                // 执行一次简单的操作来触发连接池初始化
+                // 这样可以避免首次查询时的连接建立延迟
+                await self.mongoClient.ListDatabasesAsync();
+            }
+            catch
+            {
+                // 预热失败不影响正常使用，静默忽略
+            }
         }
 
         /// <summary>

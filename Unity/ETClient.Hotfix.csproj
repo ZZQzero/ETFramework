@@ -105,6 +105,7 @@
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\CoroutineLock\WaitCoroutineLockTimerInvoke.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Login\NetClient\Main2NetClient_LoginHandler.cs" />
     <Compile Include="Assets\Scripts\Hotfix\AI\Share\AITimer.cs" />
+    <Compile Include="Assets\Scripts\Hotfix\Login\NetClient\Main2NetClient_DisconnectHandler.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Numeric\Share\NumericWatcher_Hp_ShowUI.cs" />
     <Compile Include="Assets\Scripts\Hotfix\Core\Share\Actor\ProcessInnerSenderSystem.cs" />
     <Compile Include="Assets\Scripts\Hotfix\AI\Share\AIComponentSystem.cs" />

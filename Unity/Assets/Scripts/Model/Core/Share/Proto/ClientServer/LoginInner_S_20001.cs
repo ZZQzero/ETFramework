@@ -226,6 +226,27 @@ namespace ET
     }
 
     [NinoType(false)]
+    [Message(LoginInner.Main2NetClient_Disconnect)]
+    public partial class Main2NetClient_Disconnect : MessageObject, IMessage
+    {
+        public static Main2NetClient_Disconnect Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<Main2NetClient_Disconnect>(isFromPool);
+        }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [NinoType(false)]
     [Message(LoginInner.Main2NetClient_LoginGame)]
     [ResponseType(nameof(NetClient2Main_LoginGame))]
     public partial class Main2NetClient_LoginGame : MessageObject, IRequest
@@ -575,6 +596,7 @@ namespace ET
         public const ushort L2R_AccountResponse = 38788;
         public const ushort L2G_DisconnectGateUnit = 322;
         public const ushort G2L_DisconnectGateUnit = 42370;
+        public const ushort Main2NetClient_Disconnect = 4425;
         public const ushort Main2NetClient_LoginGame = 63694;
         public const ushort NetClient2Main_LoginGame = 40110;
         public const ushort G2L_AddLoginRecord = 50404;

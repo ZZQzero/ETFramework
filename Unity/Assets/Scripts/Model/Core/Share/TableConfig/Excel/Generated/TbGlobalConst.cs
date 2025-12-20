@@ -31,6 +31,14 @@ public partial class TbGlobalConst
     /// 倍率
     /// </summary>
      public int Seed => _data.Seed;
+    /// <summary>
+    /// Realm服务器Id
+    /// </summary>
+     public int Realm => _data.Realm;
+    /// <summary>
+    /// 登录中心服Id
+    /// </summary>
+     public int LoginCenter => _data.LoginCenter;
     
     public void ResolveRef(Tables tables)
     {

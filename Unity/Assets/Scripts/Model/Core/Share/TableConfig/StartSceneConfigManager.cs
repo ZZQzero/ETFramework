@@ -37,7 +37,10 @@ namespace ET
         {
             return this.zoneSceneByType[zone][type][0];
         }
-        
+
+        private ActorId loginCenterActorId;
+        public ActorId LoginCenterActorId => this.loginCenterActorId;
+
         public void Init()
         {
             foreach (StartSceneTable startSceneConfig in StartSceneConfig.Instance.GetDataList())
@@ -58,6 +61,9 @@ namespace ET
                 }
                 this.zoneSceneByType[startSceneConfig.Zone].Add(startSceneConfig.Type, startSceneConfig);
             }
+            
+            var config = StartSceneConfig.Instance.Get(GlobalConstConfig.Data.LoginCenter);
+            loginCenterActorId = config.ActorId;
         }
 
         public void Awake()

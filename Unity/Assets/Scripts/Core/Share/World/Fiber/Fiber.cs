@@ -38,7 +38,6 @@ namespace ET
             this.EntitySystem = new EntitySystem();
             this.Mailboxes = new Mailboxes();
             this.ThreadSynchronizationContext = new ThreadSynchronizationContext();
-            Log.Info($"Fiber -->id:{id},process:{Process},sceneName:{SceneTypeSingleton.Instance.GetSceneName(sceneType)},schedulerType:{schedulerType}  name:{name}");
             this.Root = new Scene(this, id, 1, sceneType, name);
         }
 

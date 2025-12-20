@@ -89,7 +89,7 @@ public class C2G_EnterGameHandler : MessageSessionHandler<C2G_EnterGame,G2C_Ente
                 try
                 {
                     // 首次进入游戏：通知Map服务器创建Unit
-                    StartSceneTable startSceneConfig = StartSceneConfigManager.Instance.GetBySceneName(session.Zone(), "Map1");
+                    StartSceneTable startSceneConfig = StartSceneConfigManager.Instance.GetBySceneName(session.Zone(), UnityScene.Map1);
                     long unitId = userEntity.UserId; // 用UserId作为UnitId，确保全局唯一
 
                     // 检查UserEntitySessionComponent（正常情况下已在C2G_LoginGameGateHandler中创建）

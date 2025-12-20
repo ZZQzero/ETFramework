@@ -62,9 +62,8 @@ public static class DisconnectHelper
                 G2L_RemoveLoginRecord g2LRemoveLoginRecord = G2L_RemoveLoginRecord.Create();
                 g2LRemoveLoginRecord.AccountName = userEntity.Account;
                 g2LRemoveLoginRecord.ServerId = userEntity.Zone();
-                var config = StartSceneConfig.Instance.GetOrDefault(202);
                 var l2GRemoveLoginRecord = (L2G_RemoveLoginRecord)await userEntity.Root().GetComponent<MessageSender>()
-                    .Call(config.ActorId, g2LRemoveLoginRecord);
+                    .Call(StartSceneConfigManager.Instance.LoginCenterActorId, g2LRemoveLoginRecord);
                 break;
         }
 

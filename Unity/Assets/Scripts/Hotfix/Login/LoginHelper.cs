@@ -27,7 +27,7 @@ namespace ET
             c2RGetRealmKey.Token = resp.Token;
             c2RGetRealmKey.ServerId = 3;
             var r2CGateRealmKey = (R2C_GetRealmKey) await clientSenderComponent.Call(c2RGetRealmKey);
-            if (r2CGateRealmKey.Error == ErrorCode.ERR_Success)
+            if (r2CGateRealmKey.Error != ErrorCode.ERR_Success)
             {
                 clientSenderComponent.NectClientDisconnect();
                 Log.Error($"get realm key failed {r2CGateRealmKey.Error}");
@@ -58,7 +58,8 @@ namespace ET
             var netClient2MainLoginGame = await clientSenderComponent.LoginGameAsync(account, r2CGateRealmKey.Key, userComponent.UserId, roleId, r2CGateRealmKey.Address);
             if (netClient2MainLoginGame.Error != ErrorCode.ERR_Success)
             {
-                
+                clientSenderComponent.NectClientDisconnect();
+                return;
             }
             Log.Info($"进入游戏成功，CurrentRoleId={userComponent.CurrentRoleId}");
         }

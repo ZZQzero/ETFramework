@@ -21,7 +21,6 @@
             if (g2CLoginGameGate.Error != ErrorCode.ERR_Success)
             {
                 response.Error = g2CLoginGameGate.Error;
-                root.RemoveComponent<NetComponent>();
                 Log.Error($"登录Gate失败 {g2CLoginGameGate.Error}");
                 return;
             }
@@ -30,7 +29,6 @@
             if (g2CEnterGame.Error != ErrorCode.ERR_Success)
             {
                 response.Error = g2CEnterGame.Error;
-                root.RemoveComponent<NetComponent>();
                 Log.Error($"登录Map失败 {g2CEnterGame.Error}");
                 return;
             }

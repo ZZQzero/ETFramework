@@ -14,7 +14,7 @@ namespace ET
             var currentScene = root;
             UnitComponent unitComponent = currentScene.AddComponent<UnitComponent>();
             // 可以订阅这个事件中创建Loading界面
-            EventSystem.Instance.Publish(root, new SceneChangeStart(){SceneName = "Map1"});
+            EventSystem.Instance.Publish(root, new SceneChangeStart(){SceneName = UnityScene.Map1});
             // 等待CreateMyUnit的消息
             Wait_CreateMyUnit waitCreateMyUnit = await root.GetComponent<ObjectWait>().Wait<Wait_CreateMyUnit>();
             M2C_CreateMyUnit m2CCreateMyUnit = waitCreateMyUnit.Message;

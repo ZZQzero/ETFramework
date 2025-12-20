@@ -40,9 +40,8 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
                 G2L_AddLoginRecord g2LAddLoginRecord = G2L_AddLoginRecord.Create();
                 g2LAddLoginRecord.UserId = userId;
                 g2LAddLoginRecord.ServerId = root.Zone();
-                
-                var config = StartSceneConfig.Instance.GetOrDefault(202);
-                var l2GAddLoginRecord = (L2G_AddLoginRecord) await session.Root().GetComponent<MessageSender>().Call(config.ActorId, g2LAddLoginRecord);
+                var l2GAddLoginRecord = (L2G_AddLoginRecord) await session.Root().GetComponent<MessageSender>().
+                    Call(StartSceneConfigManager.Instance.LoginCenterActorId, g2LAddLoginRecord);
 
                 if (l2GAddLoginRecord.Error != ErrorCode.ERR_Success)
                 {

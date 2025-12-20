@@ -17,6 +17,8 @@ public sealed partial class GlobalConstTable : Luban.BeanBase
     public GlobalConstTable(ByteBuf _buf) 
     {
         Seed = _buf.ReadInt();
+        Realm = _buf.ReadInt();
+        LoginCenter = _buf.ReadInt();
     }
 
     public static GlobalConstTable DeserializeGlobalConstTable(ByteBuf _buf)
@@ -28,6 +30,14 @@ public sealed partial class GlobalConstTable : Luban.BeanBase
     /// 倍率
     /// </summary>
     public readonly int Seed;
+    /// <summary>
+    /// Realm服务器Id
+    /// </summary>
+    public readonly int Realm;
+    /// <summary>
+    /// 登录中心服Id
+    /// </summary>
+    public readonly int LoginCenter;
    
     public const int __ID__ = -638226866;
     public override int GetTypeId() => __ID__;
@@ -40,6 +50,8 @@ public sealed partial class GlobalConstTable : Luban.BeanBase
     {
         return "{ "
         + "Seed:" + Seed + ","
+        + "Realm:" + Realm + ","
+        + "LoginCenter:" + LoginCenter + ","
         + "}";
     }
 }

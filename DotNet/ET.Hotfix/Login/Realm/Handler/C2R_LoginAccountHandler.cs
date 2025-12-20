@@ -75,9 +75,9 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
         var userId = user.UserId;
         var r2LAccountRequest =  R2L_AccountRequest.Create();
         r2LAccountRequest.UserId = userId;
-        var config = StartSceneConfig.Instance.GetOrDefault(202);
-        var l2RAccountResponse = await session.Root().GetComponent<MessageSender>().Call(config.ActorId,r2LAccountRequest) as L2R_AccountResponse;
-        if (l2RAccountResponse.Error != ErrorCode.ERR_Success)
+        var messageSend = session.Root().GetComponent<MessageSender>();
+        var l2RAccountResponse = (L2R_AccountResponse)await messageSend.Call(StartSceneConfigManager.Instance.LoginCenterActorId,r2LAccountRequest);
+        if (l2RAccountResponse != null && l2RAccountResponse.Error != ErrorCode.ERR_Success)
         {
             response.Error = l2RAccountResponse.Error;
             session.Disconnect().NoContext();

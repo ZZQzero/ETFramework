@@ -13,15 +13,12 @@ namespace ET
         private static void Awake(this ResourcesLoaderComponent self)
         {
             self.package = YooAssets.GetPackage("DefaultPackage");
-            Debug.LogError($"self package  {self.package}");
         }
 
         [EntitySystem]
         private static void Awake(this ResourcesLoaderComponent self, string packageName)
         {
             self.package = YooAssets.GetPackage(packageName);
-            Debug.LogError($"self package  {self.package}");
-
         }
 
         [EntitySystem]

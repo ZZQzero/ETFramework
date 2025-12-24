@@ -12,7 +12,6 @@ namespace ET
             root.AddComponent<ResourcesLoaderComponent>();
             root.AddComponent<UserComponent>();
             root.AddComponent<CurrentScenesComponent>();
-            Log.Error("EntryEvent3_InitClient");
             await EventSystem.Instance.PublishAsync(root, new AppStartInitFinish());
         }
     }

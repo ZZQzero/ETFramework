@@ -9,7 +9,6 @@ namespace ET
     {
         protected override async ETTask Run(Scene root, Main2NetClient_Login request, NetClient2Main_Login response)
         {
-            Log.Error($"Main2NetClient_LoginHandler {root.Name}");
             RouterAddressComponent routerAddressComponent = root.GetComponent<RouterAddressComponent>();
             await routerAddressComponent.GetAllRouter();
             

@@ -30,7 +30,6 @@ namespace ET
         private async ETTask StartAsync()
         {
             WinPeriod.Init();
-            Log.Info("Entry Start");
             await FiberManager.Instance.Create(SchedulerType.Main, SceneType.Main, 0, SceneType.Main, "Main");
             await FiberManager.Instance.Create(SchedulerType.Main, SceneType.NetClient, 0, SceneType.NetClient, "NetClient");
         }

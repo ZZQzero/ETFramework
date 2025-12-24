@@ -20,12 +20,10 @@
             
             if (userEntity.GetComponent<UserOfflineOutTimeComponent>() != null)
             {
-                Log.Info($"Player {userEntity.Account} 已在离线保护期");
                 return;
             }
             
             DisconnectHelper.KickUser(userEntity).NoContext();
-            Log.Info($"Session断开，触发Player {userEntity.Account} 清理流程");
         }
         
         [EntitySystem]

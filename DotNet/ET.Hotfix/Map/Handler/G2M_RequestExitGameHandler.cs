@@ -32,7 +32,5 @@ public class G2M_RequestExitGameHandler : MessageLocationHandler<Unit,G2M_Reques
         {
             unitComponent.Remove(unit.Id);
         }
-          
-        Log.Info($"Unit {unit.Id} 清理完成");
     }
 }

@@ -70,12 +70,14 @@ namespace ET
                 if (req.result != UnityWebRequest.Result.Success)
                 {
                     Log.Error($"HTTP请求失败: {link}, {req.result} ,状态码: {req.responseCode}, 错误: {req.error}");
+                    return null;
                 }
                 
                 // 检查HTTP状态码
                 if (req.responseCode >= 400)
                 {
                     Log.Error($"HTTP错误: {link}, 状态码: {req.responseCode}, 响应: {req.downloadHandler?.text ?? "无响应内容"}");
+                    return null;
                 }
                 return req.downloadHandler.text;
 #else

@@ -7,8 +7,6 @@
         {
             // 先保存 root 引用（Dispose 后无法访问）
             Scene root = session.Root();
-            Log.Error($"客户端A2C_Disconnect  {root}  {root.Name}");
-            
             // 从 NetClient Fiber 向 Main Fiber 发送断线消息
             Fiber fiber = session.Fiber();
             NetClient2Main_SessionDispose disposeMessage = NetClient2Main_SessionDispose.Create();

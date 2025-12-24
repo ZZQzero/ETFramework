@@ -6,7 +6,6 @@
         public override async ETTask Handle(FiberInit fiberInit)
         {
             Scene root = fiberInit.Fiber.Root;
-            Log.Error($"FiberInit_NetClient {root.Name}  {root.Fiber.Id}");
             root.AddComponent<MailBoxComponent, int>(MailBoxType.UnOrderedMessage);
             root.AddComponent<TimerComponent>();
             root.AddComponent<CoroutineLockComponent>();

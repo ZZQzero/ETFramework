@@ -9,8 +9,6 @@ public class G2M_SecondLoginHandler : MessageLocationHandler<Unit,G2M_SecondLogi
         // 1. 清理旧的GateSession Location缓存，确保Map服务器重新从Location拉取新的ActorId
         var locationSenderComponent = unit.Root().GetComponent<MessageLocationSenderComponent>();
         locationSenderComponent.Get(LocationType.GateSession).Remove(unit.Id);
-        
-        Log.Info($"二次登录：Unit {unit.Id}，已清理GateSession Location缓存");
         response.Error = ErrorCode.ERR_Success;
         
         // 2. 等待Gate服务器更新完Location（通过RPC完成时间保证时序）
@@ -27,9 +25,6 @@ public class G2M_SecondLoginHandler : MessageLocationHandler<Unit,G2M_SecondLogi
         M2C_CreateMyUnit m2CCreateMyUnit = M2C_CreateMyUnit.Create();
         m2CCreateMyUnit.Unit = UnitHelper.CreateUnitInfo(unit);
         MapMessageHelper.SendToClient(unit, m2CCreateMyUnit);
-        
-        Log.Info($"二次登录：Unit {unit.Id}，场景 {unitScene.Name}，已发送场景切换和创建Unit消息");
-        
         await ETTask.CompletedTask;
     }
 }

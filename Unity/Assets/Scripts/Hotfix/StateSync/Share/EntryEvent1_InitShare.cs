@@ -7,7 +7,6 @@ namespace ET
     {
         protected override async ETTask Run(Scene root, EntryEvent1 args)
         {
-            Log.Info("EntryEvent1_InitShare");
             root.AddComponent<TimerComponent>();
             root.AddComponent<CoroutineLockComponent>();
             root.AddComponent<ObjectWait>();

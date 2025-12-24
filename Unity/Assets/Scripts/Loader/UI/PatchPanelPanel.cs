@@ -40,7 +40,6 @@ namespace GameUI
 				var handle = _package.LoadAssetSync<GameObject>("GameEntry");
 				var obj = handle.InstantiateSync();
 				GameObject.DontDestroyOnLoad(obj);
-				Debug.LogError("不用下载");
 				Destroy(gameObject);
 			}
 			else

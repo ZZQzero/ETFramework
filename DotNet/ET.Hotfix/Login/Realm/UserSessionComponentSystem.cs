@@ -22,7 +22,6 @@
                 if (session == null || session.IsDisposed)
                 {
                     self.Remove(userId);
-                    Log.Debug($"清理已释放的Realm Session：用户 {userId}");
                     return null;
                 }
                 return session;

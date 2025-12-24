@@ -68,7 +68,6 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
                     };
                     await db.Save<User, string>(user, request.Account);
                 }
-                Log.Info($" C2R_LoginAccountHandler: {session.Root().Name} | {dbManager}  {db}");
             }
         }
 

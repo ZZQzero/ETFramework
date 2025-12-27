@@ -41,6 +41,12 @@ namespace ET
             this.mainThreadScheduler.Update();
         }
 
+#if UNITY
+        public void FixedUpdate()
+        {
+            this.mainThreadScheduler.FixedUpdate();
+        }
+#endif
         public void LateUpdate()
         {
             this.mainThreadScheduler.LateUpdate();

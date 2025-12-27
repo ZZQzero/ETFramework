@@ -317,7 +317,7 @@ namespace ET
         /// </summary>
         /// <param name="sceneName"></param>
         /// <param name="loadSceneMode"></param>
-        public async ETTask LoadSceneAsync(string sceneName, LoadSceneMode loadSceneMode,Action<float> call = null)
+        public async ETTask LoadSceneAsync(string sceneName, LoadSceneMode loadSceneMode,Action<float> call = null,Action onComplete = null)
         {
             SceneHandle handler = YooAssets.LoadSceneAsync(sceneName, loadSceneMode);
             if (handler.Status == EOperationStatus.Failed)
@@ -336,6 +336,7 @@ namespace ET
                 }
                 await Task.Yield();
             }
+            onComplete?.Invoke();
             await handler.Task;
             handler.Release();
         }

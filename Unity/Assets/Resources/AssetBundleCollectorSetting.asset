@@ -30,7 +30,7 @@ MonoBehaviour:
       AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
-      - CollectPath: Assets/Demo/UI
+      - CollectPath: Assets/Game/UI
         CollectorGUID: aba46fdae3f587a418bb792dc4b20b55
         CollectorType: 0
         AddressRuleName: AddressByFileName
@@ -43,7 +43,7 @@ MonoBehaviour:
       AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
-      - CollectPath: Assets/Demo/Bundles
+      - CollectPath: Assets/Game/Bundles
         CollectorGUID: c6bd2b470bea1414eb44ce0fbd88070e
         CollectorType: 0
         AddressRuleName: AddressByFileName
@@ -51,7 +51,7 @@ MonoBehaviour:
         FilterRuleName: CollectAll
         AssetTags: 
         UserData: 
-      - CollectPath: Assets/Demo/Prefab
+      - CollectPath: Assets/Game/Prefab
         CollectorGUID: 83fa054619bf1874e8b0fd87e17a0903
         CollectorType: 0
         AddressRuleName: AddressByFileName
@@ -64,7 +64,7 @@ MonoBehaviour:
       AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
-      - CollectPath: Assets/Demo/Scenes
+      - CollectPath: Assets/Game/Scenes
         CollectorGUID: e528ff0fe84cd9a4587b007cc977279a
         CollectorType: 0
         AddressRuleName: AddressByFileName
@@ -90,7 +90,7 @@ MonoBehaviour:
       AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
-      - CollectPath: Assets/Demo/LocalUI
+      - CollectPath: Assets/Game/LocalUI
         CollectorGUID: 4faee3ee9c69f114d874fc8e41774c22
         CollectorType: 0
         AddressRuleName: AddressByFileName
@@ -131,4 +131,17 @@ MonoBehaviour:
         PackRuleName: PackDirectory
         FilterRuleName: CollectAll
         AssetTags: Local
+        UserData: 
+    - GroupName: PlayerAnimation
+      GroupDesc: 
+      AssetTags: 
+      ActiveRuleName: EnableGroup
+      Collectors:
+      - CollectPath: Assets/Game/Animation
+        CollectorGUID: 50f65e40dada5414081b2e43c2991153
+        CollectorType: 0
+        AddressRuleName: AddressByFileName
+        PackRuleName: PackDirectory
+        FilterRuleName: CollectAll
+        AssetTags: 
         UserData: 

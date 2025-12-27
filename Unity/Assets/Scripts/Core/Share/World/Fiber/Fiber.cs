@@ -52,7 +52,6 @@ namespace ET
                 Log.Error(e);
             }
         }
-        
         internal void LateUpdate()
         {
             try
@@ -66,7 +65,19 @@ namespace ET
                 Log.Error(e);
             }
         }
-
+#if UNITY
+        internal void FixedUpdate()
+        {
+            try
+            {
+                this.EntitySystem.Publish(new FixedUpdateEvent());
+            }
+            catch (Exception e)
+            {
+                Log.Error(e);
+            }
+        }
+#endif
         public async ETTask WaitFrameFinish()
         {
             ETTask task = ETTask.Create(true);

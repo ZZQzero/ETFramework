@@ -12,7 +12,7 @@ namespace GameUI
 			base.OnInitUI();
 			enterMapButton.onClick.AddListener(async delegate
 			{
-				await EnterMapHelper.EnterMapAsync(root);
+				//await EnterMapHelper.EnterMapAsync(root);
 				GameUIManager.Instance.CloseAndDestroyUI(GameUIName.UILobby);
 			});
 		}

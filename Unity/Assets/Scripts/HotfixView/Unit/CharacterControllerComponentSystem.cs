@@ -27,7 +27,7 @@ namespace ET
             self.Rigidbody.linearVelocity = Vector3.zero;
             self.Rigidbody.angularVelocity = Vector3.zero;
             self.PlayerUnit = self.GetParent<Unit>();
-            self.CheckGrounded = self.PlayerUnit.GetComponent<CheckGroundedComponent>();
+            self.Ground = self.PlayerUnit.GetComponent<CheckGroundedComponent>();
             self.Input = self.PlayerUnit.GetComponent<InputComponent>();
         }
         
@@ -39,27 +39,22 @@ namespace ET
             {
                 self.RequestJump();
             }
-
-            // 计算动画速度参数（基于最新的物理状态）
-            self.CalculateAnimationSpeeds();
         }
 
         [EntitySystem]
         private static void FixedUpdate(this CharacterControllerComponent self)
         {
             float deltaTime = Time.fixedDeltaTime;
-            // 地面检测（物理相关的）
-            self.CheckGrounded.Detect();
-            Log.Error($"{self.CheckGrounded.State}");
-            // 处理跳跃执行（在FixedUpdate中确保物理一致性）
+            self.Ground.Detect();
             if (self.JumpRequested)
             {
                 self.Jump();
+                self.JumpRequested = false;
             }
-            // 应用自定义重力（物理时间步长）
-            self.UpdateJumpState(deltaTime);
+            // 应用自定义重力
+            self.ApplyGravity(deltaTime);
 
-            // 应用移动和旋转（物理相关的）
+            // 应用移动和旋转
             if (!self.EnableMovement)
             {
                 // 如果禁用移动，逐渐减速
@@ -71,8 +66,10 @@ namespace ET
                 self.ApplyMovement(deltaTime);
             }
 
-            // 应用旋转（物理相关的）
+            // 应用旋转
             self.ApplyRotation(deltaTime);
+            // 计算动画速度参数
+            self.CalculateAnimationSpeeds();
         }
         
         [EntitySystem]
@@ -91,47 +88,52 @@ namespace ET
         private static void ApplyMovement(this CharacterControllerComponent self, float deltaTime)
         {
             Vector3 inputDirection = self.Input.GetMoveDirection();
-            Vector3 velocity = self.Rigidbody.linearVelocity;
             
-            if (self.CheckGrounded.State == GroundState.Grounded)
+            // 在地面时才能应用移动（包括稳定斜坡、边缘等状态）
+            if (inputDirection.magnitude > 0.01f)
             {
-                if (inputDirection.magnitude > 0.0f)
-                {
-                    // 计算目标速度
-                    var targetVelocity = inputDirection * self.MoveSpeed + new Vector3(0, velocity.y, 0);
-                    // 加速
-                    self.CurrentVelocity = Vector3.MoveTowards(
-                        self.CurrentVelocity,
-                        targetVelocity,
-                        self.Acceleration * deltaTime
-                    );
-                }
-                else
-                {
-                    // 减速
-                    self.CurrentVelocity = Vector3.MoveTowards(
-                        self.CurrentVelocity,
-                        new Vector3(0, velocity.y, 0),
-                        self.Deceleration * deltaTime
-                    );
-                }
-                self.Rigidbody.linearVelocity = self.CurrentVelocity;
+                // 计算目标速度
+                var targetVelocity = inputDirection * self.MoveSpeed + new Vector3(0, self.CurrentVelocity.y, 0);
+                // 加速
+                self.CurrentVelocity = Vector3.MoveTowards(
+                    self.CurrentVelocity,
+                    targetVelocity,
+                    self.Acceleration * deltaTime
+                );
             }
+            else
+            {
+                // 减速
+                self.CurrentVelocity = Vector3.MoveTowards(
+                    self.CurrentVelocity,
+                    new Vector3(0, self.CurrentVelocity.y, 0),
+                    self.Deceleration * deltaTime
+                );
+            }
+            self.Rigidbody.linearVelocity = self.CurrentVelocity;
         }
         
         /// <summary>
-        /// 应用旋转（面向移动方向，支持空中转向）
+        /// 应用旋转
         /// </summary>
         private static void ApplyRotation(this CharacterControllerComponent self, float deltaTime)
         {
             // 获取输入方向
-            Vector3 inputDirection = self.Input.GetMoveDirection().normalized;
+            Vector3 inputDirection = self.Input.GetMoveDirection();
+            
+            // 只有当输入方向有效时才旋转，否则保持当前旋转
+            if (inputDirection.magnitude < 0.01f)
+            {
+                return;
+            }
+            
+            inputDirection = inputDirection.normalized;
             var player = self.Rigidbody.transform;
             // 计算目标旋转
             Quaternion targetRotation = Quaternion.LookRotation(inputDirection);
 
             // 根据是否在空中调整旋转速度
-            float actualRotationSpeed = self.IsJumping ?
+            float actualRotationSpeed = self.Ground.IsAirborne(self.Ground.State) ?
                 self.RotationSpeed * 1.2f : // 空中旋转稍微快一点
                 self.RotationSpeed;
 
@@ -152,7 +154,7 @@ namespace ET
         {
             self.CurrentVelocity = Vector3.MoveTowards(
                 self.CurrentVelocity,
-                Vector3.zero,
+                new Vector3(self.CurrentVelocity.x, 0, self.CurrentVelocity.y),
                 self.Deceleration * deltaTime
             );
             
@@ -196,69 +198,40 @@ namespace ET
         /// </summary>
         private static void Jump(this CharacterControllerComponent self)
         {
-            if (!self.CanJump())
+            if (!self.Ground.CanJump())
             {
                 return;
             }
-
-            // 获取当前速度
+            self.Ground.Jump();
             Vector3 currentVelocity = self.Rigidbody.linearVelocity;
             currentVelocity.y = self.JumpForce;
             self.Rigidbody.linearVelocity = currentVelocity;
-            self.IsJumping = true;
-            self.IsFalling = false;
-            // 重置跳跃请求
-            self.JumpRequested = false;
+            self.CurrentVelocity = currentVelocity;
         }
 
         /// <summary>
-        /// 检查是否可以跳跃
+        /// 应用重力和处理落地（只在空中时应用重力）
         /// </summary>
-        private static bool CanJump(this CharacterControllerComponent self)
+        private static void ApplyGravity(this CharacterControllerComponent self, float deltaTime)
         {
-            // 必须启用移动
-            if (!self.EnableMovement)
+            // 只在空中时应用重力
+            if (self.Ground.IsAirborne(self.Ground.State))
             {
-                return false;
+                self.Rigidbody.linearVelocity = self.CurrentVelocity;
+                Vector3 velocity = self.CurrentVelocity;
+                float gravityAcceleration = self.Gravity * self.GravityMultiplier;
+                velocity.y -= gravityAcceleration * deltaTime;
+                self.CurrentVelocity = velocity;
             }
-
-            // 必须有Rigidbody
-            if (self.Rigidbody == null)
+            else
             {
-                return false;
-            }
-
-            return self.CheckGrounded.State == GroundState.Grounded;
-        }
-
-        /// <summary>
-        /// 始终应用重力
-        /// </summary>
-        private static void UpdateJumpState(this CharacterControllerComponent self, float deltaTime)
-        {
-            if (!self.IsJumping)
-            {
-                return;
-            }
-            // 获取当前速度
-            Vector3 velocity = self.Rigidbody.linearVelocity;
-            // 计算重力加速度
-            float gravityAcceleration = self.Gravity * self.GravityMultiplier;
-            velocity.y -= gravityAcceleration * deltaTime;
-            self.Rigidbody.linearVelocity = velocity;
-
-            if (velocity.y < 0f && self.CheckGrounded.State != GroundState.Grounded)
-            {
-                //下落过程中
-                self.IsFalling = true;
-            }
-            else if(velocity.y < 0f && self.CheckGrounded.State == GroundState.Grounded)
-            {
-                //已经在地面
-                self.IsJumping = false;
-                self.IsFalling = false;
-                velocity.y = 0f;
-                self.Rigidbody.linearVelocity = velocity;
+                Vector3 velocity = self.CurrentVelocity;
+                if (velocity.y < 0f)
+                {
+                    velocity.y = 0f;
+                    self.CurrentVelocity = velocity;
+                    self.Rigidbody.linearVelocity = self.CurrentVelocity;
+                }
             }
         }
 
@@ -270,7 +243,13 @@ namespace ET
         /// </summary>
         private static void CalculateAnimationSpeeds(this CharacterControllerComponent self)
         {
-            Vector3 velocity = self.Rigidbody.linearVelocity;
+            // 计算水平速度（去掉y分量）
+            Vector3 horizontalVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
+            float horizontalSpeed = horizontalVelocity.magnitude;
+            float normalizedSpeed = horizontalSpeed / self.MoveSpeed * 10f;
+            self.NormalizedAnimationSpeed = normalizedSpeed;
+            // 垂直速度（用于跳跃/下落动画）
+            self.VerticalAnimationSpeed = self.CurrentVelocity.y;
         }
 
         /// <summary>
@@ -287,30 +266,6 @@ namespace ET
         public static float GetVerticalAnimationSpeed(this CharacterControllerComponent self)
         {
             return self.VerticalAnimationSpeed;
-        }
-
-        /// <summary>
-        /// 获取跳跃状态（用于动画状态机）
-        /// 返回值：0=地面静止，1=行走/奔跑，2=跳跃上升，3=下落
-        /// </summary>
-        public static int GetAnimationState(this CharacterControllerComponent self)
-        {
-            if (self.IsJumping)
-            {
-                return 2; // 跳跃上升
-            }
-            else if (self.IsFalling)
-            {
-                return 3; // 下落
-            }
-            else if (self.NormalizedAnimationSpeed > 0.1f)
-            {
-                return 1; // 行走/奔跑
-            }
-            else
-            {
-                return 0; // 地面静止
-            }
         }
     }
 }

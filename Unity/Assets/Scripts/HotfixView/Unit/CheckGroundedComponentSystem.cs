@@ -7,7 +7,7 @@ namespace ET
         [EntitySystem]
         private static void Awake(this CheckGroundedComponent self, GameObject go)
         {
-            self.Transform = go.transform;
+            self.Player = go.transform;
             self.Capsule = go.GetComponent<CapsuleCollider>();
             self.Rigidbody = go.GetComponent<Rigidbody>();
 
@@ -27,7 +27,6 @@ namespace ET
                 self.CapsuleRadius = 0.5f;
                 self.CapsuleHeight = 2f;
             }
-
             self.State = GroundState.Airborne;
             self.PrevState = GroundState.Airborne;
             self.GroundHit.Reset();
@@ -59,9 +58,7 @@ namespace ET
             self.UpdateIgnoredPlatform();
 
             // 性能优化：空中降频
-            if (config.ReduceAirborneCheckFrequency &&
-                IsAirborne(self.State) &&
-                self.FrameCounter % config.AirborneCheckInterval != 0)
+            if (config.ReduceAirborneCheckFrequency && self.IsAirborne(self.State) && self.FrameCounter % config.AirborneCheckInterval != 0)
             {
                 self.UpdateTimers(Time.fixedDeltaTime);
                 return;
@@ -79,13 +76,13 @@ namespace ET
             self.GroundHit.Reset();
 
             var config = self.Config;
-            Vector3 position = self.Transform.position;
+            Vector3 position = self.Player.position;
 
             float checkRadius = self.CapsuleRadius * config.RadiusScale;
             float skinWidth = config.SkinWidth;
 
             // 自适应检测距离
-            float checkDistance = IsGrounded(self.State)
+            float checkDistance = self.IsGrounded(self.State)
                 ? config.GroundCheckDistance
                 : config.AirborneCheckDistance;
 
@@ -124,21 +121,22 @@ namespace ET
             }
 
             // 阶段2: Raycast 精修
-            if (self.GroundHit.HasGround || IsGrounded(self.State))
+            if (self.GroundHit.HasGround || self.IsGrounded(self.State))
             {
                 self.RaycastRefine(position, checkDistance + skinWidth, combinedMask);
             }
 
             // 阶段3: 边缘检测（降频）
-            if (config.EnableEdgeDetection && self.GroundHit.HasGround)
+            self.EdgeCheckCounter++;
+            bool forceCheck = self.State == GroundState.OnEdge;
+            bool intervalCheck = self.EdgeCheckCounter >= config.EdgeCheckInterval;
+            if (forceCheck || intervalCheck)
             {
-                self.EdgeCheckCounter++;
-                if (self.EdgeCheckCounter >= config.EdgeCheckInterval ||
-                    self.State == GroundState.OnEdge)
+                if (intervalCheck)
                 {
                     self.EdgeCheckCounter = 0;
-                    self.DetectEdge(position, checkRadius, checkDistance, combinedMask);
                 }
+                self.DetectEdge(position, checkRadius, checkDistance, combinedMask);
             }
 
             // 记录移动平台数据
@@ -178,7 +176,7 @@ namespace ET
                 ref RaycastHit hit = ref self.SphereCastBuffer[i];
 
                 // 忽略自身
-                if (hit.collider.transform.IsChildOf(self.Transform)) continue;
+                if (hit.collider.transform.IsChildOf(self.Player)) continue;
                 
                 // 忽略下跳穿透的平台
                 if (hit.collider == self.IgnoredPlatform) continue;
@@ -216,8 +214,8 @@ namespace ET
         {
             var config = self.Config;
             float offset = self.CapsuleRadius * 0.5f;
-            Vector3 forward = self.Transform.forward;
-            Vector3 right = self.Transform.right;
+            Vector3 forward = self.Player.forward;
+            Vector3 right = self.Player.right;
             float rayStartY = position.y + config.SkinWidth * 2;
 
             // 使用预分配数组
@@ -376,13 +374,21 @@ namespace ET
         {
             if (newState == self.State)
             {
-                self.ConsecutiveAirborneFrames = 0;
-                self.ConsecutiveGroundedFrames = 0;
+                if (self.IsAirborne(newState))
+                {
+                    self.ConsecutiveAirborneFrames++;
+                    self.ConsecutiveGroundedFrames = 0;
+                }
+                else
+                {
+                    self.ConsecutiveGroundedFrames++;
+                    self.ConsecutiveAirborneFrames = 0;
+                }
                 return;
             }
 
-            bool toAirborne = IsAirborne(newState);
-            bool fromAirborne = IsAirborne(self.State);
+            bool toAirborne = self.IsAirborne(newState);
+            bool fromAirborne = self.IsAirborne(self.State);
 
             if (toAirborne && !fromAirborne)
             {
@@ -424,11 +430,11 @@ namespace ET
 
         private static void UpdateTimers(this CheckGroundedComponent self, float deltaTime)
         {
-            if (IsGrounded(self.State))
+            if (self.IsGrounded(self.State))
             {
                 self.GroundedDuration += deltaTime;
                 self.AirborneDuration = 0;
-                self.LastGroundedPosition = self.Transform.position;
+                self.LastGroundedPosition = self.Player.position;
             }
             else
             {
@@ -437,15 +443,25 @@ namespace ET
             }
 
             // Coyote Time: 从地面状态离开，且不是下落状态
-            self.InCoyoteTime = IsAirborne(self.State) &&
+            self.InCoyoteTime = self.IsAirborne(self.State) &&
                                self.AirborneDuration < self.Config.CoyoteTime &&
                                self.AirborneReason == AirborneReason.WalkOff;
         }
 
+        /// <summary>
+        /// 处理地面状态的变化和事件触发。
+        /// </summary>
+        /// <remarks>
+        /// 1. 检查前一帧是否在地面（wasGrounded）和当前帧是否在地面（isGrounded）。
+        /// 2. 如果从地面离开（Grounded -> Airborne），记录离地时间并触发 OnLeftGround 事件。
+        /// 3. 如果从空中落地（Airborne -> Grounded），计算落地高度（fallHeight），
+        ///    触发 OnLanded 事件，并重置 AirborneReason。
+        /// 4. 当前的 fallHeight 变量可以用于计算落地伤害或其他逻辑，目前未使用。
+        /// </remarks>
         private static void HandleStateTransition(this CheckGroundedComponent self)
         {
-            bool wasGrounded = IsGrounded(self.PrevState);
-            bool isGrounded = IsGrounded(self.State);
+            bool wasGrounded = self.IsGrounded(self.PrevState);
+            bool isGrounded = self.IsGrounded(self.State);
 
             if (wasGrounded && !isGrounded)
             {
@@ -455,7 +471,7 @@ namespace ET
 
             if (!wasGrounded && isGrounded)
             {
-                float fallHeight = self.LastGroundedPosition.y - self.Transform.position.y;
+                float fallHeight = self.LastGroundedPosition.y - self.Player.position.y;
                 self.InvokeLanded();
                 self.AirborneReason = AirborneReason.None;
             }
@@ -465,8 +481,7 @@ namespace ET
         {
             if (self.IgnoredPlatform == null) return;
 
-            if (Time.time > self.IgnorePlatformUntil ||
-                self.Transform.position.y < self.IgnoredPlatform.bounds.min.y - 0.1f)
+            if (Time.time > self.IgnorePlatformUntil || self.Player.position.y < self.IgnoredPlatform.bounds.min.y - 0.1f)
             {
                 if (self.Capsule != null)
                 {
@@ -478,7 +493,12 @@ namespace ET
 
         // ==================== 公共接口 ====================
 
-        public static bool IsGrounded(GroundState state)
+        /// <summary>
+        /// 是否在地面
+        /// </summary>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public static bool IsGrounded(this CheckGroundedComponent self, GroundState state)
         {
             return state == GroundState.Grounded ||
                    state == GroundState.OnStableSlope ||
@@ -486,24 +506,38 @@ namespace ET
                    state == GroundState.Landing;
         }
 
-        public static bool IsAirborne(GroundState state)
+        /// <summary>
+        /// 是否在空中
+        /// </summary>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public static bool IsAirborne(this CheckGroundedComponent self, GroundState state)
         {
             return state == GroundState.Airborne || 
                    state == GroundState.Falling ||
                    state == GroundState.OnUnstableSlope;
         }
 
+        /// <summary>
+        /// 是否能跳跃
+        /// </summary>
+        /// <param name="self"></param>
+        /// <returns></returns>
         public static bool CanJump(this CheckGroundedComponent self)
         {
-            return IsGrounded(self.State) || self.InCoyoteTime;
+            return self.IsGrounded(self.State) || self.InCoyoteTime;
         }
 
+        /// <summary>
+        /// 跳跃
+        /// </summary>
+        /// <param name="self"></param>
         public static void Jump(this CheckGroundedComponent self)
         {
             self.State = GroundState.Airborne;
             self.AirborneReason = AirborneReason.Jump;
             self.TimeLeftGround = Time.time;
-            self.LastGroundedPosition = self.Transform.position;
+            self.LastGroundedPosition = self.Player.position;
             self.InCoyoteTime = false;
         }
 

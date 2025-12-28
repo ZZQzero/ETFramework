@@ -23,7 +23,10 @@ namespace ET
         public float stopSpeed;
         public Animator Animator;
         public LinearMixerTransition LocomotionMixer;
+        public LinearMixerTransition JumpMixer;
         public AnimancerComponent Animancer { get; set; }
         public CharacterControllerComponent CharacterController { get; set; }
+        
+        public CheckGroundedComponent Ground { get; set; }
     }
 }

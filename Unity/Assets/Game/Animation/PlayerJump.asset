@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5a8877f26e7a6a43aaf06fade1a064a, type: 3}
+  m_Name: PlayerJump
+  m_EditorClassIdentifier: Kybernetik.Animancer::Animancer.TransitionAsset
+  _Transition:
+    rid: 7949201426608816195
+  references:
+    version: 2
+    RefIds:
+    - rid: 7949201426608816195
+      type: {class: LinearMixerTransition, ns: Animancer, asm: Kybernetik.Animancer}
+      data:
+        _FadeDuration: 0.25
+        _Speed: 1
+        _Events:
+          _NormalizedTimes: []
+          _Callbacks: []
+          _Names: []
+        _Animations:
+        - {fileID: 7400000, guid: e6a235e8d3cc58747881167cd3742502, type: 3}
+        - {fileID: 7400010, guid: 1bbe72df8c2b6af46bfbadad72175372, type: 3}
+        - {fileID: 7400008, guid: 1bbe72df8c2b6af46bfbadad72175372, type: 3}
+        - {fileID: 7400006, guid: 1bbe72df8c2b6af46bfbadad72175372, type: 3}
+        - {fileID: 7400004, guid: 1bbe72df8c2b6af46bfbadad72175372, type: 3}
+        - {fileID: 7400002, guid: 1bbe72df8c2b6af46bfbadad72175372, type: 3}
+        - {fileID: 7400000, guid: 1bbe72df8c2b6af46bfbadad72175372, type: 3}
+        _Speeds: []
+        _SynchronizeChildren: 
+        _Thresholds:
+        - -12
+        - -10
+        - -5
+        - 0
+        - 3.4
+        - 7.2
+        - 10
+        _DefaultParameter: 0
+        _ExtrapolateSpeed: 1
+        _ParameterName: {fileID: 0}

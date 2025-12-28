@@ -13,7 +13,7 @@ namespace ET
         /// </summary>
         public Rigidbody Rigidbody { get; set; }
         public CapsuleCollider CapsuleCollider { get; set; }
-        public CheckGroundedComponent  CheckGrounded { get; set; }
+        public CheckGroundedComponent  Ground { get; set; }
         public InputComponent Input { get; set; }
         public Unit PlayerUnit { get; set; }
 
@@ -49,19 +49,11 @@ namespace ET
         /// <summary>
         /// 跳跃力（向上初速度，米/秒）
         /// </summary>
-        public float JumpForce { get; set; } = 8f;
+        public float JumpForce { get; set; } = 10f;
         /// <summary>
         /// 重力倍数（相对于标准物理重力的倍数，1.0 = 9.81 m/s²）
         /// </summary>
         public float GravityMultiplier { get; set; } = 1.5f;
-        /// <summary>
-        /// 是否在跳跃中
-        /// </summary>
-        public bool IsJumping { get; set; }
-        /// <summary>
-        /// 是否在下落中
-        /// </summary>
-        public bool IsFalling { get; set; }
         /// <summary>
         /// 跳跃请求标记（用于外部调用）
         /// </summary>

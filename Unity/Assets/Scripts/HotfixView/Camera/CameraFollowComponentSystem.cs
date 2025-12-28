@@ -41,6 +41,9 @@ namespace ET
             if (self.RotationComposer != null)
             {
                 self.RotationComposer.Damping = Vector2.one * 0.2f;
+                self.RotationComposer.Composition.DeadZone.Size = Vector2.one * 0.2f;
+                self.RotationComposer.Composition.DeadZone.Enabled = false;
+                self.RotationComposer.Composition.HardLimits.Enabled = false;
             }
         }
         
@@ -72,8 +75,9 @@ namespace ET
             if (self.CharacterController != null)
             {
                 // 检查是否有输入或正在移动（更精确的移动检测）
-                bool isActive = (self.CharacterController.Input != null && self.CharacterController.Input.HasMoveInput()) ||
-                               self.CharacterController.GetNormalizedAnimationSpeed() > 0.01f;
+                bool isActive = (self.CharacterController.Input != null && self.CharacterController.Input.HasMoveInput()) || 
+                                self.CharacterController.GetNormalizedAnimationSpeed() > 0.01f || 
+                                self.CharacterController.GetVerticalAnimationSpeed() > 0.01f;
 
                 if (isActive)
                 {

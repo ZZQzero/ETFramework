@@ -18,6 +18,8 @@ namespace ET
             unit.AddComponent<InputComponent>();
             unit.AddComponent<CheckGroundedComponent,GameObject>(go);
             unit.AddComponent<CharacterControllerComponent,GameObject>(go);
+            unit.AddComponent<AttackComponent,string>("");
+            unit.AddComponent<HitReactionComponent,Transform>(go.transform);
             unit.AddComponent<AnimatorComponent>();
             await ETTask.CompletedTask;
         }

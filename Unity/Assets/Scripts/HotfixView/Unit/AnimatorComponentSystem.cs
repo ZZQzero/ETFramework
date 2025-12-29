@@ -8,7 +8,7 @@ namespace ET
 	public static partial class AnimatorComponentSystem
 	{
 		[EntitySystem]
-		private static async void Awake(this AnimatorComponent self)
+		private static void Awake(this AnimatorComponent self)
 		{
 			var unit = self.GetParent<Unit>();
 			var obj = unit.GetComponent<GameObjectComponent>().GameObject;
@@ -18,10 +18,20 @@ namespace ET
 				Log.Error("AnimancerComponent未找到");
 				return;
 			}
-			
+
+			if (obj.GetComponent<AttackEventReceiver>() == null)
+			{
+				obj.AddComponent<AttackEventReceiver>();
+			}
+			self.Input = unit.GetComponent<InputComponent>();
+			self.Attack = unit.GetComponent<AttackComponent>();
 			self.CharacterController = unit.GetComponent<CharacterControllerComponent>();
 			self.Ground = self.CharacterController.Ground;
-			
+			self.LoadAnimation().NoContext();
+		}
+
+		private static async ETTask LoadAnimation(this AnimatorComponent self)
+		{
 			// 加载PlayerMove资源（水平移动混合动画）
 			var moveAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<ScriptableObject>("PlayerMove");
 			if (moveAsset == null)
@@ -29,28 +39,24 @@ namespace ET
 				Log.Error("加载PlayerMove资源失败：资源为null");
 				return;
 			}
-				
+
 			// 转换为TransitionAsset
 			if (moveAsset is TransitionAsset moveTransitionAsset)
 			{
 				ITransition moveTransition = moveTransitionAsset.GetTransition();
 				if (moveTransition is LinearMixerTransition linearMixer)
 				{
-					self.LocomotionMixer = linearMixer;
+					self.MoveMixer = linearMixer;
 					// 在Layer 0播放水平移动动画（初始状态）
-					self.Animancer.Play(self.LocomotionMixer);
-					self.LocomotionMixer.State.Parameter = 0;
+					self.Animancer.Play(self.MoveMixer);
+					self.MoveMixer.State.Parameter = 0;
 				}
 				else
 				{
 					Log.Error($"PlayerMove资源不包含LinearMixerTransition，实际类型: {moveTransition?.GetType().Name}");
 				}
 			}
-			else
-			{
-				Log.Error($"PlayerMove资源不是TransitionAsset类型，实际类型: {moveAsset.GetType().Name}");
-			}
-			
+
 			// 加载PlayerJump资源（跳跃混合动画）
 			var jumpAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<ScriptableObject>("PlayerJump");
 			if (jumpAsset == null)
@@ -58,7 +64,7 @@ namespace ET
 				Log.Error("加载PlayerJump资源失败：资源为null");
 				return;
 			}
-			
+
 			// 转换为TransitionAsset
 			if (jumpAsset is TransitionAsset jumpTransitionAsset)
 			{
@@ -72,28 +78,38 @@ namespace ET
 					Log.Error($"PlayerJump资源不包含LinearMixerTransition，实际类型: {jumpTransition?.GetType().Name}");
 				}
 			}
-			else
-			{
-				Log.Error($"PlayerJump资源不是TransitionAsset类型，实际类型: {jumpAsset.GetType().Name}");
-			}
+
+			await ETTask.CompletedTask;
 		}
-		
+
 		[EntitySystem]
 		private static void Update(this AnimatorComponent self)
 		{
-			if (self.CharacterController == null || self.LocomotionMixer == null || self.Animancer == null || self.JumpMixer == null)
+			if (self.CharacterController == null || self.MoveMixer == null || self.Animancer == null || self.JumpMixer == null)
 			{
 				return;
 			}
 
+			// 检测攻击输入，交给AttackComponent处理
+			if (self.Attack != null && self.Input != null && self.Input.HasAttackRequest())
+			{
+				self.Attack.HandleAttackInput();
+			}
+			// 如果正在攻击，不切换移动/跳跃动画
+			// 动画结束会通过OnEnd回调自动调用ExitAttackState
+			if (self.Attack != null && self.Attack.IsAttacking)
+			{
+				return;
+			}
+			
 			AnimancerLayer layer = self.Animancer; // 隐式转换到 Layer 0
 			if (self.Ground.IsGrounded(self.Ground.State))
 			{
-				if (layer.CurrentState != self.LocomotionMixer.State)
+				if (layer.CurrentState != self.MoveMixer.State)
 				{
-					self.Animancer.Play(self.LocomotionMixer,0.2f);
+					self.Animancer.Play(self.MoveMixer,0.2f);
 				}
-				self.LocomotionMixer.State.Parameter = self.CharacterController.GetNormalizedAnimationSpeed();
+				self.MoveMixer.State.Parameter = self.CharacterController.GetNormalizedAnimationSpeed();
 			}
 			else
 			{
@@ -108,10 +124,7 @@ namespace ET
 		[EntitySystem]
 		private static void Destroy(this AnimatorComponent self)
 		{
-			self.animationClips = null;
-			self.Parameter = null;
-			self.Animator = null;
-			self.LocomotionMixer = null;
+			self.MoveMixer = null;
 			self.JumpMixer = null;
 		}
 

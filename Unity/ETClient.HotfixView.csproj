@@ -48,6 +48,7 @@
     <Analyzer Include="G:\Unity\Unity6.3\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\HotfixView\Unit\Attack\HitReactionComponentSystem.cs" />
     <Compile Include="Assets\Scripts\HotfixView\UI\UIHelp\SceneChangeFinishEvent_CreateUIHelp.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Camera\SceneChangeFinish_InitCameraFollow.cs" />
     <Compile Include="Assets\Scripts\HotfixView\GameUI\UIScriptsGenerate\UILobbyPanelComponent.cs" />
@@ -59,20 +60,27 @@
     <Compile Include="Assets\Scripts\HotfixView\Opera\OperaComponentSystem.cs" />
     <Compile Include="Assets\Scripts\HotfixView\UI\UILogin\AppStartInitFinish_CreateLoginUI.cs" />
     <Compile Include="Assets\Scripts\HotfixView\GameUI\UIScriptsGenerate\UIHelpPanelComponent.cs" />
+    <Compile Include="Assets\Scripts\HotfixView\Unit\Attack\AttackComponentSystem.cs" />
+    <Compile Include="Assets\Scripts\HotfixView\Unit\Attack\PhysicsHelper.cs" />
     <Compile Include="Assets\Scripts\HotfixView\GameUI\UIScript\UILoginPanel.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Unit\ChangePosition_SyncGameObjectPos.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Scene\AfterCreateClientScene_AddComponent.cs" />
     <Compile Include="Assets\Scripts\HotfixView\UI\UILogin\LoginFinish_RemoveLoginUI.cs" />
+    <Compile Include="Assets\Scripts\HotfixView\AnimationClipAsset.cs" />
+    <Compile Include="Assets\Scripts\HotfixView\Unit\Attack\AttackEventReceiver.cs" />
+    <Compile Include="Assets\Scripts\HotfixView\Unit\Attack\UnitReference.cs" />
     <Compile Include="Assets\Scripts\HotfixView\ConfigLoaderInvoker.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Scene\AfterCreateCurrentScene_AddComponent.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Camera\CameraFollowComponentSystem.cs" />
     <Compile Include="Assets\Scripts\HotfixView\GameUI\UIScriptsGenerate\UILoginPanelComponent.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Scene\SceneChangeStart_AddComponent.cs" />
+    <Compile Include="Assets\Scripts\HotfixView\Unit\Attack\AttackConfigAsset.cs" />
     <Compile Include="Assets\Scripts\HotfixView\GameUI\UIScript\UILobbyPanel.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Unit\AnimatorComponentSystem.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Unit\GameObjectComponentSystem.cs" />
     <Compile Include="Assets\Scripts\HotfixView\EntryEvent3_InitClient.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Unit\ChangeRotation_SyncGameObjectRotation.cs" />
+    <Compile Include="Assets\Scripts\HotfixView\Unit\Attack\AttackComboTimeoutInvoke.cs" />
     <Compile Include="Assets\Scripts\HotfixView\UI\UILobby\LoginFinish_CreateLobbyUI.cs" />
     <Compile Include="Assets\Scripts\HotfixView\GameUI\UIScript\UIHelpPanel.cs" />
     <None Include="Assets\Scripts\HotfixView\ETClient.HotfixView.asmdef" />

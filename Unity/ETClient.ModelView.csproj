@@ -48,9 +48,12 @@
     <Analyzer Include="G:\Unity\Unity6.3\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\ModelView\Unit\Attack\HitReactionComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\YooAssets\ResourcesLoaderComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\Unit\InputComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\Opera\OperaComponent.cs" />
+    <Compile Include="Assets\Scripts\ModelView\Unit\Attack\AttackConfig.cs" />
+    <Compile Include="Assets\Scripts\ModelView\Unit\Attack\AttackComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\Unit\CheckGroundedComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\Unit\CharacterControllerComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\GameUI\UIScript\GameUIName.cs" />

@@ -53,6 +53,12 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.AnimatorComponentSystem.ET_AnimatorComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.AnimatorComponentSystem.ET_AnimatorComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.AnimatorComponentSystem.ET_AnimatorComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.AttackComponentSystem.ET_AttackComponent_string_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.AttackComponentSystem.ET_AttackComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.AttackComponentSystem.ET_AttackComponent_UpdateSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.HitReactionComponentSystem.ET_HitReactionComponent_UnityEngine_Transform_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.HitReactionComponentSystem.ET_HitReactionComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.HitReactionComponentSystem.ET_HitReactionComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CharacterControllerComponentSystem.ET_CharacterControllerComponent_UnityEngine_GameObject_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CharacterControllerComponentSystem.ET_CharacterControllerComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CharacterControllerComponentSystem.ET_CharacterControllerComponent_FixedUpdateSystem>();

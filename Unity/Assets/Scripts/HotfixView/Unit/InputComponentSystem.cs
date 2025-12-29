@@ -22,7 +22,9 @@ namespace ET
             float vertical = Input.GetAxisRaw("Vertical");
             self.MoveDirection = new Vector3(horizontal, 0f, vertical).normalized;
             // 读取跳跃输入
-            self.JumpPressed = Input.GetKeyDown(self.JumpKey);
+            self.JumpPressed = Input.GetKey(self.JumpKey);
+            // 读取攻击输入（鼠标左键按下）
+            self.AttackPressed = Input.GetMouseButtonDown(0);
         }
 
         /// <summary>
@@ -47,6 +49,14 @@ namespace ET
         public static bool HasMoveInput(this InputComponent self)
         {
             return self.MoveDirection.magnitude > 0.01f;
+        }
+        
+        /// <summary>
+        /// 检查是否有攻击请求
+        /// </summary>
+        public static bool HasAttackRequest(this InputComponent self)
+        {
+            return self.AttackPressed;
         }
     }
 }

@@ -29,6 +29,30 @@ namespace ET
             self.PlayerUnit = self.GetParent<Unit>();
             self.Ground = self.PlayerUnit.GetComponent<CheckGroundedComponent>();
             self.Input = self.PlayerUnit.GetComponent<InputComponent>();
+            
+            self.CapsuleCollider = player.GetComponent<CapsuleCollider>();
+            if (self.CapsuleCollider == null)
+            {
+                Log.Warning($"CharacterControllerComponent需要CapsuleCollider组件，GameObject: {player.name}");
+            }
+            else
+            {
+                // 配置物理材质：低摩擦力，让角色贴着墙也能跳起来
+                // 如果Collider已经有物理材质，使用现有的；否则创建新的
+                PhysicsMaterial physicsMaterial = self.CapsuleCollider.material;
+                if (physicsMaterial == null)
+                {
+                    physicsMaterial = new PhysicsMaterial("PlayerPhysicsMaterial");
+                    self.CapsuleCollider.material = physicsMaterial;
+                }
+                
+                // 设置低摩擦力参数（关键：让角色不会被墙"粘住"）
+                physicsMaterial.dynamicFriction = 0.1f;  // 动态摩擦力：0.1（默认0.6太高，会粘墙）
+                physicsMaterial.staticFriction = 0.2f;   // 静态摩擦力：0.2（默认0.6太高）
+                physicsMaterial.bounciness = 0f;         // 弹性：0（不需要弹跳）
+                physicsMaterial.frictionCombine = PhysicsMaterialCombine.Minimum;  // 摩擦力组合：取最小值（更滑）
+                physicsMaterial.bounceCombine = PhysicsMaterialCombine.Average;     // 弹性组合：平均值
+            }
         }
         
         [EntitySystem]

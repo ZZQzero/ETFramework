@@ -12,5 +12,7 @@
         public const int MoveTimer = PackageType.Move * ConstValue.Seed + 1;
         
         public const int MessageLocationSenderChecker = PackageType.ActorLocation * ConstValue.Seed + 2;
+        
+        public const int AttackComboTimeout = PackageType.Unit * ConstValue.Seed + 1;
     }
 }

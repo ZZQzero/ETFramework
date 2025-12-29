@@ -63,6 +63,7 @@
     <Compile Include="Assets\Scripts\Editor\Loader\Helper\ScriptingDefine.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\ServerCommandLineEditor\ServerCommandLineEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\BuildEditor\BuildHelper.cs" />
+    <Compile Include="Assets\Scripts\Editor\SkillEditorWindow.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\Helper\EditorLogHelper.cs" />
     <None Include="Assets\Scripts\Editor\ETClient.Editor.asmdef" />
     <Reference Include="UnityEngine">

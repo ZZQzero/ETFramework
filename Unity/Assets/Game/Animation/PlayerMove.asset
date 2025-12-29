@@ -31,7 +31,7 @@ MonoBehaviour:
         - {fileID: 7400000, guid: 9d703e84815204b499c34db7f9ec5cd9, type: 3}
         - {fileID: 4745793008729673284, guid: 591b8bf650e73d641a396d03b9f6af89, type: 3}
         _Speeds: []
-        _SynchronizeChildren: 
+        _SynchronizeChildren: 00
         _Thresholds:
         - 0
         - 5

@@ -25,5 +25,11 @@ namespace ET
         /// 跳跃键配置
         /// </summary>
         public KeyCode JumpKey = KeyCode.Space;
+        /// <summary>
+        /// 是否按下鼠标左键（本帧按下）
+        /// </summary>
+        public bool AttackPressed;
+
+        public AttackComponent Attack;
     }
 }

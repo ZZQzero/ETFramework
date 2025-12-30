@@ -1,0 +1,25 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/Scripts/Editor/Skill/SkillEditorWindow.uss?fileID=7433441132597879392&amp;guid=9e62f868e573ba34aa7272c3063ae733&amp;type=3#SkillEditorWindow"/>
+    <ui:VisualElement name="Top" style="flex-grow: 0.05; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; flex-direction: row; align-items: center; flex-basis: auto; height: 20px;">
+        <uie:ObjectField label="" name="SelectConfig" style="flex-grow: 1; height: auto; width: auto; align-self: auto;"/>
+        <uie:ObjectField label="" name="SelectObj" style="flex-grow: 1;"/>
+        <ui:Button text="Sub" name="Sub" style="flex-grow: 1;"/>
+        <ui:Button text="Add" name="Add" style="flex-grow: 1;"/>
+        <ui:Label text="Speed:" name="Speed" style="flex-grow: 1; width: 7px;"/>
+        <ui:Slider label="" value="42" high-value="100" style="flex-grow: 1; width: 100px;"/>
+        <ui:Label text="1.0x" name="SpeedNum" style="flex-grow: 1; width: 5px;"/>
+        <ui:Button text="Play" name="Play" style="flex-grow: 1;"/>
+        <ui:Button text="Stop" name="Stop" style="flex-grow: 1;"/>
+        <ui:Button text="Loop" name="Loop" style="flex-grow: 1;"/>
+        <ui:Label text="00.5s / 1.00s" name="Length" data-source-path="" view-data-key="" style="flex-grow: 1; -unity-text-align: middle-center; width: 100px;"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="Bottom" style="flex-grow: 1; flex-direction: row;">
+        <ui:VisualElement name="Left" style="flex-grow: 1; margin-top: 1px; margin-right: 1px; margin-bottom: 1px; margin-left: 1px; border-top-width: 1px; border-top-color: rgb(0, 0, 0); border-right-width: 1px; border-right-color: rgb(0, 0, 0);">
+            <ui:VisualElement name="Ruler" style="flex-grow: 0.05; height: auto; flex-basis: auto;"/>
+            <ui:ListView name="TrackListView" style="flex-grow: 1;"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="Right" style="flex-grow: 0.4; margin-top: 1px; margin-right: 1px; margin-bottom: 1px; margin-left: 1px; border-top-width: 1px; border-top-color: rgb(0, 0, 0);">
+            <ui:ListView name="InfoListView" style="flex-grow: 1; margin-top: 1px; margin-right: 1px; margin-bottom: 1px; margin-left: 1px;"/>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

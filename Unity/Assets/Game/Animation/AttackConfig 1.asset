@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 00fe286df6ef4461bd959ac3ddd7ea56, type: 3}
-  m_Name: AttackConfig
+  m_Name: AttackConfig 1
   m_EditorClassIdentifier: ETClient.HotfixView::ET.AttackConfigAsset
   _config:
     ConfigId: 0
@@ -23,13 +23,13 @@ MonoBehaviour:
       Name: 
       AnimationClipTrans:
         _FadeDuration: 0.25
-        _Speed: 0
+        _Speed: 1
         _Events:
           _NormalizedTimes: []
           _Callbacks: []
           _Names: []
         _Clip: {fileID: 7400000, guid: 3aeb280aa07caa148891a47a136fcee4, type: 3}
-        _NormalizedStartTime: 0
+        _NormalizedStartTime: NaN
       StartTime: 0
       AnimationSpeed: 0
       DamageMultiplier: 0

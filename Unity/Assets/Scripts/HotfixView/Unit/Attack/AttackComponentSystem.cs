@@ -99,8 +99,8 @@ namespace ET
             
             foreach (var segment in self.Config.Segments)
             {
-                if (string.IsNullOrEmpty(segment.AnimationPath))
-                    continue;
+                /*if (string.IsNullOrEmpty(segment.AnimationPath))
+                    continue;*/
 
                 var task = self.LoadSegmentAnimationAsync(segment);
                 loadTasks.Add(task);
@@ -313,7 +313,7 @@ namespace ET
             }
 
             var segment = self.Config.Segments[segmentIndex];
-            if (segment == null || !segment.IsLoaded || segment.Transition == null)
+            if (segment == null || !segment.IsLoaded)
             {
                 Log.Warning($"AttackComponent: Segment {segmentIndex} not loaded");
                 return false;
@@ -328,7 +328,7 @@ namespace ET
             self.ResetSegmentState(segment);
 
             // 播放动画
-            var animState = self.AnimatorComponent.Animancer.Play(segment.Transition, segment.FadeDuration);
+            var animState = self.AnimatorComponent.Animancer.Play(segment.AnimationClipTrans);
             if (animState == null)
             {
                 Log.Error($"AttackComponent: Failed to play animation for segment {segmentIndex}");

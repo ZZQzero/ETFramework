@@ -116,6 +116,101 @@ namespace ET
         /// <summary>时间缩放持续时间（毫秒）</summary>
         public int TimeScaleDurationMs = 0;
     }
+    
+    /// <summary>
+    /// 视觉特效轨道数据
+    /// </summary>
+    [Serializable]
+    public class VisualEffectData
+    {
+        /// <summary>特效名称</summary>
+        public string Name = "New VFX";
+        
+        /// <summary>特效预制体</summary>
+        public GameObject Prefab;
+        
+        /// <summary>触发时间（归一化时间 0-1，相对于Segment总时长）</summary>
+        public float TriggerTime;
+        
+        /// <summary>相对角色的偏移量</summary>
+        public Vector3 Offset;
+        
+        /// <summary>是否跟随目标移动</summary>
+        public bool FollowTarget;
+        
+        /// <summary>特效持续时间（秒），超过此时间自动销毁</summary>
+        public float Duration = 2f;
+    }
+
+    /// <summary>
+    /// 音效轨道数据
+    /// </summary>
+    [Serializable]
+    public class SoundEffectData
+    {
+        /// <summary>音效名称</summary>
+        public string Name = "New SFX";
+        
+        /// <summary>音频剪辑</summary>
+        public AudioClip Clip;
+        
+        /// <summary>触发时间（归一化时间 0-1，相对于Segment总时长）</summary>
+        public float TriggerTime;
+        
+        /// <summary>音量（0-1）</summary>
+        public float Volume = 1f;
+    }
+    
+    /// <summary>
+    /// 动画轨道片段
+    /// </summary>
+    [Serializable]
+    public class AnimationTrackClip
+    {
+        /// <summary>片段名称</summary>
+        public string Name = "Anim Clip";
+        
+        /// <summary>动画过渡配置</summary>
+        public ClipTransition Transition = new ClipTransition();
+        
+        /// <summary>开始时间（秒，绝对时间）</summary>
+        public float StartTime;
+
+        /// <summary>淡入时间（秒）</summary>
+        public float FadeInTime = 0.1f;
+        
+        /// <summary>淡出时间（秒）</summary>
+        public float FadeOutTime = 0.1f;
+        /// <summary>片段持续时间（秒），根据动画长度和速度自动计算</summary>
+        public float Duration
+        {
+            get
+            {
+                if (Transition.Clip == null) return 0.5f;
+                return Transition.Clip.length / Mathf.Max(Transition.Speed, 0.01f);
+            }
+        }
+
+        /// <summary>结束时间（秒，绝对时间）</summary>
+        public float EndTime
+        {
+            get
+            {
+                try
+                {
+                    return StartTime + Duration;
+                }
+                catch
+                {
+                    return StartTime + 0.5f;
+                }
+            }
+        }
+
+        /// <summary>总时长（秒），与Duration相同，用于兼容性</summary>
+        public float TotalDuration => Duration;
+    }
+
 
     /// <summary>
     /// 攻击移动数据
@@ -146,23 +241,60 @@ namespace ET
     }
 
     /// <summary>
-    /// 攻击段数据
+    /// 攻击段数据（每个AttackSegmentData就是一个动画片段）
     /// </summary>
     [Serializable]
     public class AttackSegmentData
     {
         /// <summary>攻击段ID</summary>
         public int Id;
-        
+
         /// <summary>攻击段名称</summary>
         public string Name = string.Empty;
-        
-        /// <summary>动画资源路径</summary>
-        public string AnimationPath = string.Empty;
-        
-        /// <summary>动画过渡时间（秒）</summary>
-        public float FadeDuration = 0.1f;
-        
+
+        /// <summary>动画过渡配置</summary>
+        public ClipTransition AnimationClipTrans;
+
+        /// <summary>开始时间（秒，绝对时间）</summary>
+        public float StartTime = 0f;
+
+        /// <summary>片段持续时间（秒），根据动画长度和速度自动计算</summary>
+        public float Duration
+        {
+            get
+            {
+                if (AnimationClipTrans.Clip == null)
+                {
+                    return 0.5f;
+                }
+                float speed = Mathf.Max(AnimationClipTrans.Speed, 0.01f);
+                if (speed <= 0.01f || AnimationClipTrans.Clip.length <= 0)
+                {
+                    return 0.5f;
+                }
+                return AnimationClipTrans.Clip.length / speed;
+            }
+        }
+
+        /// <summary>总时长（秒），与Duration相同，用于兼容性</summary>
+        public float TotalDuration => Duration;
+
+        /// <summary>结束时间（秒，绝对时间）</summary>
+        public float EndTime
+        {
+            get
+            {
+                try
+                {
+                    return StartTime + Duration;
+                }
+                catch
+                {
+                    return StartTime + 0.5f;
+                }
+            }
+        }
+
         /// <summary>动画播放速度</summary>
         public float AnimationSpeed = 1f;
         
@@ -188,14 +320,19 @@ namespace ET
         public float CancelableTime = 0.4f;
         
         /// <summary>动画结束时间点（NormalizedTime 0-1）</summary>
-        public float EndTime = 0.9f;
+        public float AnimationEndTime = 0.9f;
         
         /// <summary>适用的目标状态</summary>
         public TargetStateType TargetState = TargetStateType.Any;
         
-        /// <summary>攻击判定列表（支持多段判定）</summary>
+        /// <summary>攻击判定列表（支持多段判定，时间使用归一化时间0-1）</summary>
         public List<HitBoxData> HitBoxes = new List<HitBoxData>();
         
+        /// <summary>视觉特效轨道列表（时间使用归一化时间0-1）</summary>
+        public List<VisualEffectData> VisualEffects = new List<VisualEffectData>();
+        
+        /// <summary>音效轨道列表（时间使用归一化时间0-1）</summary>
+        public List<SoundEffectData> SoundEffects = new List<SoundEffectData>();
         /// <summary>攻击效果</summary>
         public AttackEffectData Effect = new AttackEffectData();
         
@@ -207,10 +344,6 @@ namespace ET
         
         /// <summary>连击分支（键为输入类型，值为下一段攻击ID）</summary>
         public Dictionary<ComboInputType, int> ComboBranches = new Dictionary<ComboInputType, int>();
-        
-        /// <summary>运行时：动画过渡引用</summary>
-        [NonSerialized]
-        public ITransition Transition;
         
         /// <summary>运行时：是否已加载</summary>
         [NonSerialized]

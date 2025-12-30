@@ -57,15 +57,18 @@
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\ETSceneNodeGraph.cs" />
     <Compile Include="Assets\Scripts\Editor\Excel\LubanGenerateExcels.cs" />
     <Compile Include="Assets\Scripts\Editor\Define.cs" />
+    <Compile Include="Assets\Scripts\Editor\SkillEditorWindow1.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\AssetPostProcessor\OnGenerateCSProjectProcessor.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\LogRedirection\LogRedirection.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\Helper\ETTaskPoolWindow.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\Helper\ScriptingDefine.cs" />
+    <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\ServerCommandLineEditor\ServerCommandLineEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\BuildEditor\BuildHelper.cs" />
-    <Compile Include="Assets\Scripts\Editor\SkillEditorWindow.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\Helper\EditorLogHelper.cs" />
+    <None Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.uxml" />
     <None Include="Assets\Scripts\Editor\ETClient.Editor.asmdef" />
+    <None Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.uss" />
     <Reference Include="UnityEngine">
       <HintPath>G:\Unity\Unity6.3\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>
@@ -969,6 +972,10 @@
     <ProjectReference Include="GameUIFramework.csproj">
       <Project>{9ccc3b91-3224-5f82-cf23-f8315ada15b5}</Project>
       <Name>GameUIFramework</Name>
+    </ProjectReference>
+    <ProjectReference Include="Kybernetik.Animancer.csproj">
+      <Project>{64e98628-a7af-c1e8-3ab7-38268588f0fb}</Project>
+      <Name>Kybernetik.Animancer</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

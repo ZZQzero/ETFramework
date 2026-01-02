@@ -65,6 +65,7 @@
     <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\ServerCommandLineEditor\ServerCommandLineEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\BuildEditor\BuildHelper.cs" />
+    <Compile Include="Assets\Scripts\Editor\Skill\SkillTrack.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\Helper\EditorLogHelper.cs" />
     <None Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.uxml" />
     <None Include="Assets\Scripts\Editor\ETClient.Editor.asmdef" />

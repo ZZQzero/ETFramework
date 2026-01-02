@@ -28,9 +28,73 @@ MonoBehaviour:
           _NormalizedTimes: []
           _Callbacks: []
           _Names: []
+        _Clip: {fileID: 7400000, guid: 506fbaf36141f7842ad5ad583349cc87, type: 3}
+        _NormalizedStartTime: NaN
+      StartTime: 0
+      AnimationSpeed: 0
+      DamageMultiplier: 0
+      HitReaction: 0
+      KnockbackForce: 0
+      KnockupForce: 0
+      HitStunMs: 0
+      InputBufferStartTime: 0
+      CancelableTime: 0
+      AnimationEndTime: 0
+      TargetState: 0
+      HitBoxes:
+      - ShapeType: 0
+        Offset: {x: 0, y: 0, z: 0}
+        Size: {x: 0, y: 0, z: 0}
+        StartTime: 1
+        EndTime: 1
+      VisualEffects:
+      - Name: 
+        Prefab: {fileID: 5858237581049168134, guid: 4a8340ca2eb7b3d4e8a212d63df96324, type: 3}
+        TriggerTime: 1
+        Offset: {x: 0, y: 0, z: 0}
+        FollowTarget: 0
+        Duration: 0
+      SoundEffects:
+      - Name: 
+        Clip: {fileID: 0}
+        TriggerTime: 0
+        Volume: 0
+      Effect:
+        AttackEffectPath: 
+        HitEffectPath: 
+        AttackSoundPath: 
+        HitSoundPath: 
+        ScreenShakeIntensity: 0
+        ScreenShakeDuration: 0
+        HitStopMs: 0
+        TimeScale: 0
+        TimeScaleDurationMs: 0
+      Movement:
+        EnableMovement: 0
+        Distance: 0
+        StartTime: 0
+        EndTime: 0
+        MoveCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 0
+          m_PostInfinity: 0
+          m_RotationOrder: 0
+        TrackTarget: 0
+        TrackRange: 0
+      CancelableSkillIds: 
+    - Id: 0
+      Name: 
+      AnimationClipTrans:
+        _FadeDuration: 0.25
+        _Speed: 0
+        _Events:
+          _NormalizedTimes: []
+          _Callbacks: []
+          _Names: []
         _Clip: {fileID: 7400000, guid: 3aeb280aa07caa148891a47a136fcee4, type: 3}
         _NormalizedStartTime: 0
-      StartTime: 0
+      StartTime: 1.24
       AnimationSpeed: 0
       DamageMultiplier: 0
       HitReaction: 0
@@ -67,6 +131,356 @@ MonoBehaviour:
           m_RotationOrder: 0
         TrackTarget: 0
         TrackRange: 0
+      CancelableSkillIds: 
+    - Id: 0
+      Name: 
+      AnimationClipTrans:
+        _FadeDuration: 0.25
+        _Speed: 1
+        _Events:
+          _NormalizedTimes: []
+          _Callbacks: []
+          _Names: []
+        _Clip: {fileID: 7400000, guid: 6fd1fb8479e6a994f9e4cc7fb79d2ac2, type: 3}
+        _NormalizedStartTime: NaN
+      StartTime: 2.54
+      AnimationSpeed: 1
+      DamageMultiplier: 1
+      HitReaction: 1
+      KnockbackForce: 0
+      KnockupForce: 0
+      HitStunMs: 200
+      InputBufferStartTime: 0.5
+      CancelableTime: 0.4
+      AnimationEndTime: 0.9
+      TargetState: 0
+      HitBoxes: []
+      VisualEffects: []
+      SoundEffects: []
+      Effect:
+        AttackEffectPath: 
+        HitEffectPath: 
+        AttackSoundPath: 
+        HitSoundPath: 
+        ScreenShakeIntensity: 0
+        ScreenShakeDuration: 0
+        HitStopMs: 0
+        TimeScale: 1
+        TimeScaleDurationMs: 0
+      Movement:
+        EnableMovement: 0
+        Distance: 0
+        StartTime: 0
+        EndTime: 0.3
+        MoveCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        TrackTarget: 0
+        TrackRange: 5
+      CancelableSkillIds: 
+    - Id: 0
+      Name: 
+      AnimationClipTrans:
+        _FadeDuration: 0.25
+        _Speed: 1
+        _Events:
+          _NormalizedTimes: []
+          _Callbacks: []
+          _Names: []
+        _Clip: {fileID: 0}
+        _NormalizedStartTime: NaN
+      StartTime: 3.98
+      AnimationSpeed: 1
+      DamageMultiplier: 1
+      HitReaction: 1
+      KnockbackForce: 0
+      KnockupForce: 0
+      HitStunMs: 200
+      InputBufferStartTime: 0.5
+      CancelableTime: 0.4
+      AnimationEndTime: 0.9
+      TargetState: 0
+      HitBoxes: []
+      VisualEffects: []
+      SoundEffects: []
+      Effect:
+        AttackEffectPath: 
+        HitEffectPath: 
+        AttackSoundPath: 
+        HitSoundPath: 
+        ScreenShakeIntensity: 0
+        ScreenShakeDuration: 0
+        HitStopMs: 0
+        TimeScale: 1
+        TimeScaleDurationMs: 0
+      Movement:
+        EnableMovement: 0
+        Distance: 0
+        StartTime: 0
+        EndTime: 0.3
+        MoveCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        TrackTarget: 0
+        TrackRange: 5
+      CancelableSkillIds: 
+    - Id: 0
+      Name: 
+      AnimationClipTrans:
+        _FadeDuration: 0.25
+        _Speed: 1
+        _Events:
+          _NormalizedTimes: []
+          _Callbacks: []
+          _Names: []
+        _Clip: {fileID: 0}
+        _NormalizedStartTime: NaN
+      StartTime: 5.38
+      AnimationSpeed: 1
+      DamageMultiplier: 1
+      HitReaction: 1
+      KnockbackForce: 0
+      KnockupForce: 0
+      HitStunMs: 200
+      InputBufferStartTime: 0.5
+      CancelableTime: 0.4
+      AnimationEndTime: 0.9
+      TargetState: 0
+      HitBoxes: []
+      VisualEffects: []
+      SoundEffects: []
+      Effect:
+        AttackEffectPath: 
+        HitEffectPath: 
+        AttackSoundPath: 
+        HitSoundPath: 
+        ScreenShakeIntensity: 0
+        ScreenShakeDuration: 0
+        HitStopMs: 0
+        TimeScale: 1
+        TimeScaleDurationMs: 0
+      Movement:
+        EnableMovement: 0
+        Distance: 0
+        StartTime: 0
+        EndTime: 0.3
+        MoveCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        TrackTarget: 0
+        TrackRange: 5
+      CancelableSkillIds: 
+    - Id: 0
+      Name: 
+      AnimationClipTrans:
+        _FadeDuration: 0.25
+        _Speed: 1
+        _Events:
+          _NormalizedTimes: []
+          _Callbacks: []
+          _Names: []
+        _Clip: {fileID: 0}
+        _NormalizedStartTime: NaN
+      StartTime: 9.02
+      AnimationSpeed: 1
+      DamageMultiplier: 1
+      HitReaction: 1
+      KnockbackForce: 0
+      KnockupForce: 0
+      HitStunMs: 200
+      InputBufferStartTime: 0.5
+      CancelableTime: 0.4
+      AnimationEndTime: 0.9
+      TargetState: 0
+      HitBoxes:
+      - ShapeType: 0
+        Offset: {x: 0, y: 0, z: 0}
+        Size: {x: 0, y: 0, z: 0}
+        StartTime: 0
+        EndTime: 0
+      VisualEffects:
+      - Name: 
+        Prefab: {fileID: 0}
+        TriggerTime: 0
+        Offset: {x: 0, y: 0, z: 0}
+        FollowTarget: 0
+        Duration: 0
+      SoundEffects:
+      - Name: 
+        Clip: {fileID: 0}
+        TriggerTime: 0
+        Volume: 0
+      Effect:
+        AttackEffectPath: 
+        HitEffectPath: 
+        AttackSoundPath: 
+        HitSoundPath: 
+        ScreenShakeIntensity: 0
+        ScreenShakeDuration: 0
+        HitStopMs: 0
+        TimeScale: 1
+        TimeScaleDurationMs: 0
+      Movement:
+        EnableMovement: 0
+        Distance: 0
+        StartTime: 0
+        EndTime: 0.3
+        MoveCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        TrackTarget: 0
+        TrackRange: 5
+      CancelableSkillIds: 
+    - Id: 0
+      Name: 
+      AnimationClipTrans:
+        _FadeDuration: 0.25
+        _Speed: 1
+        _Events:
+          _NormalizedTimes: []
+          _Callbacks: []
+          _Names: []
+        _Clip: {fileID: 7400000, guid: 6fd1fb8479e6a994f9e4cc7fb79d2ac2, type: 3}
+        _NormalizedStartTime: NaN
+      StartTime: 19
+      AnimationSpeed: 1
+      DamageMultiplier: 1
+      HitReaction: 1
+      KnockbackForce: 0
+      KnockupForce: 0
+      HitStunMs: 200
+      InputBufferStartTime: 0.5
+      CancelableTime: 0.4
+      AnimationEndTime: 0.9
+      TargetState: 0
+      HitBoxes: []
+      VisualEffects: []
+      SoundEffects: []
+      Effect:
+        AttackEffectPath: 
+        HitEffectPath: 
+        AttackSoundPath: 
+        HitSoundPath: 
+        ScreenShakeIntensity: 0
+        ScreenShakeDuration: 0
+        HitStopMs: 0
+        TimeScale: 1
+        TimeScaleDurationMs: 0
+      Movement:
+        EnableMovement: 0
+        Distance: 0
+        StartTime: 0
+        EndTime: 0.3
+        MoveCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        TrackTarget: 0
+        TrackRange: 5
       CancelableSkillIds: 
   references:
     version: 2

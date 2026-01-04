@@ -74,7 +74,6 @@
     <Compile Include="Assets\Scripts\HotfixView\Camera\CameraFollowComponentSystem.cs" />
     <Compile Include="Assets\Scripts\HotfixView\GameUI\UIScriptsGenerate\UILoginPanelComponent.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Scene\SceneChangeStart_AddComponent.cs" />
-    <Compile Include="Assets\Scripts\HotfixView\Unit\Attack\AttackConfigAsset.cs" />
     <Compile Include="Assets\Scripts\HotfixView\GameUI\UIScript\UILobbyPanel.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Unit\AnimatorComponentSystem.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Unit\GameObjectComponentSystem.cs" />

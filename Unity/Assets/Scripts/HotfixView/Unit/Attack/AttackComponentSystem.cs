@@ -19,6 +19,7 @@ namespace ET
             self.ResetState();
             Unit unit = self.GetParent<Unit>();
             self.AnimatorComponent = unit.GetComponent<AnimatorComponent>();
+            self.CharacterController = unit.GetComponent<CharacterControllerComponent>();
             self.Player = unit.GetComponent<GameObjectComponent>().Transform;
             self.LoadConfigAsync().NoContext();
         }
@@ -40,13 +41,23 @@ namespace ET
         [EntitySystem]
         private static void Update(this AttackComponent self)
         {
-            if (!self.IsAttacking)
+            if (!self.IsInAttack)
                 return;
 
             self.UpdateHitStop();
-            self.UpdateHitDetection();
-            self.UpdateMovement();
+            self.UpdateBufferedInputTimeout();
             self.UpdateAnimationState();
+        }
+
+        [EntitySystem]
+        private static void FixedUpdate(this AttackComponent self)
+        {
+            if (!self.IsInAttack)
+                return;
+
+            // 物理相关（位移/命中检测）放在 FixedUpdate，避免与 Rigidbody/地面检测打架
+            self.UpdateMovement(Time.fixedDeltaTime);
+            self.UpdateHitDetection();
         }
         
         #endregion
@@ -64,76 +75,15 @@ namespace ET
                 return;
             }
 
-            try
+            var configAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<AttackConfigAsset>(self.ConfigPath);
+            if (configAsset == null)
             {
-                // 加载配置资源
-                var configAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<AttackConfigAsset>(self.ConfigPath);
-                if (configAsset == null)
-                {
-                    Log.Error($"AttackComponent: Failed to load config from {self.ConfigPath}");
-                    return;
-                }
-
-                self.Config = configAsset.Config;
-                
-                // 预加载所有动画
-                await self.PreloadAnimationsAsync();
-                
-                Log.Info($"AttackComponent: Config loaded successfully, {self.Config.Segments.Count} segments");
-            }
-            catch (Exception e)
-            {
-                Log.Error($"AttackComponent: LoadConfigAsync failed - {e}");
-            }
-        }
-
-        /// <summary>
-        /// 预加载动画资源
-        /// </summary>
-        private static async ETTask PreloadAnimationsAsync(this AttackComponent self)
-        {
-            if (self.Config == null)
+                Log.Error($"AttackComponent: Failed to load config from {self.ConfigPath}");
                 return;
-
-            var loadTasks = new List<ETTask>();
-            
-            foreach (var segment in self.Config.Segments)
-            {
-                /*if (string.IsNullOrEmpty(segment.AnimationPath))
-                    continue;*/
-
-                var task = self.LoadSegmentAnimationAsync(segment);
-                loadTasks.Add(task);
             }
 
-            await ETTaskHelper.WaitAll(loadTasks);
+            self.Config = configAsset.Config;
         }
-
-        /// <summary>
-        /// 加载单个攻击段动画
-        /// </summary>
-        private static async ETTask LoadSegmentAnimationAsync(this AttackComponent self, AttackSegmentData segment)
-        {
-            try
-            {
-                var animationSetAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<AnimationClipAsset>("PlayerAttack");
-                if (animationSetAsset != null)
-                {
-                    var transitions = animationSetAsset.GetAllTransitions();
-                    for (int i = 0; i < transitions.Length && i < 4; i++)
-                    {
-                        //self.AttackTransitions[i] = transitions[i];
-                    }
-                    //segment.Transition = transition;
-                    segment.IsLoaded = true;
-                }
-            }
-            catch (Exception e)
-            {
-                Log.Error($"AttackComponent: LoadSegmentAnimationAsync failed for segment {segment.Id} - {e}");
-            }
-        }
-        
         #endregion
 
         #region 状态管理
@@ -146,17 +96,33 @@ namespace ET
             self.State = AttackState.Idle;
             self.CurrentSegmentIndex = -1;
             self.CurrentSegment = null;
-            self.PendingSegmentIndex = -1;
-            self.PendingInputType = ComboInputType.None;
             self.ComboCount = 0;
             self.HasBufferedInput = false;
             self.BufferedInputType = ComboInputType.None;
+            self.BufferedInputTime = 0;
             self.HasHitThisSegment = false;
             self.HitTargetsThisSegment.Clear();
             self.TotalHitCount = 0;
             self.IsMovementActive = false;
             self.TrackTarget = null;
             self.HitStopEndTime = 0;
+            self.CurrentSegmentEnded = false;
+            self.IsInputBufferWindowOpen = false;
+            self.IsCancelWindowOpen = false;
+
+            // 退出时确保外部运动关闭，避免残留
+            if (self.CharacterController != null)
+            {
+                self.CharacterController.ExternalMotorActive = false;
+                self.CharacterController.ExternalMotorVelocity = Vector3.zero;
+            }
+
+            // 恢复移动锁
+            if (self.CharacterController != null && self.MovementLocked)
+            {
+                self.CharacterController.EnableMovement = self.PrevEnableMovement;
+            }
+            self.MovementLocked = false;
         }
 
         /// <summary>
@@ -192,7 +158,7 @@ namespace ET
             self.LastInputTime = TimeInfo.Instance.ClientFrameTime();
 
             // 如果不在攻击状态，开始第一段攻击
-            if (!self.IsAttacking)
+            if (!self.IsInAttack)
             {
                 return self.StartAttack(0, inputType);
             }
@@ -204,32 +170,38 @@ namespace ET
                 return true;
             }
 
-            // 检查是否可以输入缓冲
-            if (self.CanBufferInput)
+            // 先判断是否存在可衔接的下一段（无下一段则不缓存，避免脏输入滞留）
+            int nextIndexCandidate = self.GetNextSegmentIndex(inputType);
+            if (nextIndexCandidate < 0)
             {
-                // 尝试获取下一段攻击
-                int nextIndex = self.GetNextSegmentIndex(inputType);
-                if (nextIndex >= 0)
+                // 已经进入后摇且本段自然结束：允许立刻从第一段重新起手（更丝滑）
+                if (self.State == AttackState.Recovery && self.CurrentSegmentEnded)
                 {
-                    // 检查当前动画是否已结束
-                    if (self.IsCurrentAnimationEnded())
-                    {
-                        // 立即播放下一段
-                        return self.StartAttack(nextIndex, inputType);
-                    }
-                    else
-                    {
-                        // 缓存输入，等待当前动画结束
-                        self.BufferInput(inputType);
-                        self.PendingSegmentIndex = nextIndex;
-                        self.PendingInputType = inputType;
-                        self.ResetComboTimeout();
-                        return true;
-                    }
+                    self.ExitAttackState();
+                    return self.StartAttack(0, inputType);
                 }
+                return false;
             }
 
-            return false;
+            // 处于后摇阶段时，Layer0 可能已经恢复到 Move/Jump 等基础动画（不再推进攻击 clip）。
+            // 这时不能依赖“攻击动画是否结束”的判定来切段，否则输入会被缓存但永远等不到消费。
+            // 约定：进入 Recovery 且已标记本段自然结束（CurrentSegmentEnded），视为可立即衔接。
+            if (self.State == AttackState.Recovery && self.CurrentSegmentEnded)
+            {
+                return self.StartAttack(nextIndexCandidate, inputType);
+            }
+
+            // 动画已结束/到达结束阈值：直接切下一段（保证极限手速也能丝滑）
+            if (self.IsCurrentAnimationEnded())
+            {
+                return self.StartAttack(nextIndexCandidate, inputType);
+            }
+
+            // 无论是否已到输入窗口，都缓存输入；真正消费发生在动画结束时
+            // 配合 InputBufferWindowMs 做过期控制，解决“太早按键被吞”的不流畅问题
+            self.BufferInput(inputType);
+            self.ResetComboTimeout();
+            return true;
         }
 
         /// <summary>
@@ -239,27 +211,14 @@ namespace ET
         {
             self.HasBufferedInput = true;
             self.BufferedInputType = inputType;
+            self.BufferedInputTime = TimeInfo.Instance.ClientFrameTime();
         }
 
-        /// <summary>
-        /// 消费缓冲输入
-        /// </summary>
-        private static bool ConsumeBufferedInput(this AttackComponent self)
+        private static void ClearBufferedInput(this AttackComponent self)
         {
-            if (!self.HasBufferedInput)
-                return false;
-
-            var inputType = self.BufferedInputType;
             self.HasBufferedInput = false;
             self.BufferedInputType = ComboInputType.None;
-
-            int nextIndex = self.GetNextSegmentIndex(inputType);
-            if (nextIndex >= 0)
-            {
-                return self.StartAttack(nextIndex, inputType);
-            }
-
-            return false;
+            self.BufferedInputTime = 0;
         }
 
         /// <summary>
@@ -276,10 +235,10 @@ namespace ET
             // 检查分支连击
             if (self.CurrentSegment.ComboBranches.TryGetValue(inputType, out int branchId))
             {
-                var branchSegment = self.Config.GetSegmentById(branchId);
-                if (branchSegment != null && branchSegment.IsLoaded)
+                int branchIndex = self.Config.GetSegmentIndexById(branchId);
+                if (branchIndex >= 0)
                 {
-                    return self.Config.Segments.IndexOf(branchSegment);
+                    return branchIndex;
                 }
             }
 
@@ -287,11 +246,7 @@ namespace ET
             int nextIndex = self.CurrentSegmentIndex + 1;
             if (nextIndex < self.Config.Segments.Count)
             {
-                var nextSegment = self.Config.Segments[nextIndex];
-                if (nextSegment.IsLoaded)
-                {
-                    return nextIndex;
-                }
+                return nextIndex;
             }
 
             return -1;
@@ -313,7 +268,7 @@ namespace ET
             }
 
             var segment = self.Config.Segments[segmentIndex];
-            if (segment == null || !segment.IsLoaded)
+            if (segment == null || segment.AnimationClipTrans == null || !segment.AnimationClipTrans.IsValid())
             {
                 Log.Warning($"AttackComponent: Segment {segmentIndex} not loaded");
                 return false;
@@ -321,7 +276,7 @@ namespace ET
 
             if (self.AnimatorComponent == null)
             {
-                return false;
+                self.AnimatorComponent = self.GetParent<Unit>().GetComponent<AnimatorComponent>();
             }
 
             // 重置攻击段状态
@@ -335,18 +290,23 @@ namespace ET
                 return false;
             }
 
-            // 设置动画速度
-            animState.Speed = segment.AnimationSpeed;
-
             // 更新状态
             self.CurrentAnimState = animState;
             self.CurrentSegmentIndex = segmentIndex;
             self.CurrentSegment = segment;
             self.State = AttackState.Attacking;
-            self.PendingSegmentIndex = -1;
-            self.PendingInputType = ComboInputType.None;
-            self.HasBufferedInput = false;
-            self.BufferedInputType = ComboInputType.None;
+            self.CurrentSegmentEnded = false;
+            self.ClearBufferedInput();
+
+            // 锁定常规移动（避免攻击过程中输入移动与位移/硬直互相覆盖）
+            if (self.CharacterController != null && !self.MovementLocked)
+            {
+                self.PrevEnableMovement = self.CharacterController.EnableMovement;
+                self.CharacterController.EnableMovement = false;
+                self.MovementLocked = true;
+            }
+            
+            self.BindAnimancerEvents(animState, segment);
 
             // 更新连击计数
             self.ComboCount++;
@@ -376,6 +336,8 @@ namespace ET
             self.HasHitThisSegment = false;
             self.HitTargetsThisSegment.Clear();
             self.IsMovementActive = false;
+            self.IsInputBufferWindowOpen = false;
+            self.IsCancelWindowOpen = false;
 
             // 重置判定框状态
             if (segment.HitBoxes != null)
@@ -396,7 +358,10 @@ namespace ET
             if (segment.Movement == null || !segment.Movement.EnableMovement)
                 return;
 
-            self.MovementStartPosition = self.Player.position;
+            Vector3 startPos = self.CharacterController?.Rigidbody != null
+                ? self.CharacterController.Rigidbody.position
+                : self.Player.position;
+            self.MovementStartPosition = startPos;
 
             // 如果启用追踪，寻找最近目标
             if (segment.Movement.TrackTarget)
@@ -436,24 +401,8 @@ namespace ET
         /// </summary>
         private static void PlayAttackEffects(this AttackComponent self, AttackSegmentData segment)
         {
-            if (segment.Effect == null)
-                return;
-
-            var unit = self.GetParent<Unit>();
-            if (unit == null)
-                return;
-
-            // 播放攻击特效
-            if (!string.IsNullOrEmpty(segment.Effect.AttackEffectPath))
-            {
-                //EffectManager.Instance?.PlayEffect(segment.Effect.AttackEffectPath, unit.Position, unit.Rotation);
-            }
-
-            // 播放攻击音效
-            if (!string.IsNullOrEmpty(segment.Effect.AttackSoundPath))
-            {
-                //AudioManager.Instance?.PlaySound(segment.Effect.AttackSoundPath);
-            }
+            // 视觉/音效统一走 VisualEffects / SoundEffects 轨道（更贴近时间轴编辑/Animancer事件驱动）。
+            // 这里暂时保留入口，具体播放系统按项目的 VFX/SFX 管线接入。
         }
         
         #endregion
@@ -474,6 +423,14 @@ namespace ET
                 return;
             }
 
+            // 混合方案：
+            // - AnimancerEvent.Sequence.OnEnd + NormalizedEndTime 驱动段结束（更贴合时间轴/可维护）
+            // - 轮询仅作为兜底（例如事件绑定失败、或未初始化事件系统时）
+            if (self.CurrentAnimState.HasEvents)
+            {
+                return;
+            }
+
             // 检查动画是否结束
             if (self.IsCurrentAnimationEnded())
             {
@@ -488,9 +445,12 @@ namespace ET
         {
             if (self.CurrentAnimState == null || self.CurrentSegment == null)
                 return true;
-
-            // 检查是否超过结束时间点
-            return self.CurrentAnimState.NormalizedTime >= self.CurrentSegment.EndTime;
+            // 统一以配置的 TimeWindow.AnimationEnd（NormalizedTime）为准；未配置则默认 1.0
+            float endTime = self.CurrentSegment.TimeWindow.AnimationEnd;
+            if (endTime <= 0f)
+                endTime = 1f;
+            endTime = Mathf.Clamp01(endTime);
+            return self.CurrentAnimState.NormalizedTime >= endTime;
         }
 
         /// <summary>
@@ -501,27 +461,42 @@ namespace ET
             int completedIndex = self.CurrentSegmentIndex;
 
             // 触发攻击结束事件
-            self.OnAttackEnd?.Invoke(completedIndex);
-
-            // 检查是否有待播放的下一段
-            if (self.PendingSegmentIndex >= 0)
+            if (!self.CurrentSegmentEnded && completedIndex >= 0)
             {
-                int nextIndex = self.PendingSegmentIndex;
-                var nextInputType = self.PendingInputType;
-                self.PendingSegmentIndex = -1;
-                self.PendingInputType = ComboInputType.None;
-                self.StartAttack(nextIndex, nextInputType);
-                return;
+                self.CurrentSegmentEnded = true;
+                self.OnAttackEnd?.Invoke(completedIndex);
             }
 
-            // 检查是否有缓冲输入
-            if (self.ConsumeBufferedInput())
+            // 检查是否有缓冲输入（且未过期）
+            if (self.HasBufferedInput && self.IsBufferedInputValid())
             {
+                var inputType = self.BufferedInputType;
+                self.ClearBufferedInput();
+
+                int nextIndex = self.GetNextSegmentIndex(inputType);
+                if (nextIndex >= 0)
+                {
+                    self.StartAttack(nextIndex, inputType);
+                }
                 return;
             }
 
             // 没有后续攻击，进入后摇状态
             self.State = AttackState.Recovery;
+
+            // 后摇阶段不应继续外部位移
+            if (self.CharacterController != null)
+            {
+                self.CharacterController.ExternalMotorActive = false;
+                self.CharacterController.ExternalMotorVelocity = Vector3.zero;
+
+                // 后摇阶段允许恢复常规移动（避免“打完一段还锁死 800ms”带来的粘滞感）
+                if (self.MovementLocked)
+                {
+                    self.CharacterController.EnableMovement = self.PrevEnableMovement;
+                    self.MovementLocked = false;
+                }
+            }
             
             // 等待超时后退出攻击状态
             // 超时由定时器处理
@@ -542,24 +517,8 @@ namespace ET
             if (self.CurrentSegment?.HitBoxes == null)
                 return;
 
-            float normalizedTime = self.CurrentNormalizedTime;
-
             foreach (var hitBox in self.CurrentSegment.HitBoxes)
             {
-                // 更新判定框激活状态
-                if (!hitBox.IsCompleted)
-                {
-                    if (!hitBox.IsActive && normalizedTime >= hitBox.StartTime)
-                    {
-                        hitBox.IsActive = true;
-                    }
-                    else if (hitBox.IsActive && normalizedTime >= hitBox.EndTime)
-                    {
-                        hitBox.IsActive = false;
-                        hitBox.IsCompleted = true;
-                    }
-                }
-
                 // 执行命中检测
                 if (hitBox.IsActive)
                 {
@@ -567,6 +526,218 @@ namespace ET
                 }
             }
         }
+
+        #region Animancer Events 绑定（Pro）
+
+        private static void BindAnimancerEvents(this AttackComponent self, AnimancerState animState, AttackSegmentData segment)
+        {
+            if (animState == null || segment == null)
+                return;
+
+            try
+            {
+                // 通过 owner 绑定，避免事件所有权冲突。
+                if (animState.Events(self, out var events))
+                {
+                    // 首次初始化时，确保没有遗留事件。
+                    events.Clear();
+                }
+                else
+                {
+                    // 已有事件时也清掉，确保不同 Segment 不会复用到旧事件（同 Clip 复用 state 的情况很常见）。
+                    events.Clear();
+                }
+
+                // 窗口：输入缓冲 / 取消。由事件驱动置位，避免分散在逻辑里到处比较时间。
+                float inputWindow = Mathf.Clamp01(segment.TimeWindow.InputBufferStart);
+                if (inputWindow > 0f)
+                {
+                    events.Add(inputWindow, () =>
+                    {
+                        if (self.CurrentAnimState != animState || self.CurrentSegment != segment || self.State != AttackState.Attacking)
+                            return;
+                        self.IsInputBufferWindowOpen = true;
+                    });
+                }
+                else
+                {
+                    // 0 表示从一开始就可缓冲
+                    self.IsInputBufferWindowOpen = true;
+                }
+
+                float cancelWindow = Mathf.Clamp01(segment.TimeWindow.CancelableTime);
+                if (cancelWindow > 0f)
+                {
+                    events.Add(cancelWindow, () =>
+                    {
+                        if (self.CurrentAnimState != animState || self.CurrentSegment != segment || self.State != AttackState.Attacking)
+                            return;
+                        self.IsCancelWindowOpen = true;
+                    });
+                }
+                else
+                {
+                    // 0 表示从一开始就可取消
+                    self.IsCancelWindowOpen = true;
+                }
+
+                // 段结束阈值：使用 TimeWindow.AnimationEnd（可早于 1），实现提前进入后摇/接段。
+                float endTime = segment.TimeWindow.AnimationEnd;
+                if (endTime > 0f && endTime < 1f)
+                {
+                    events.NormalizedEndTime = Mathf.Clamp01(endTime);
+                }
+                // endTime <= 0 或 >= 1 则保持默认（NaN -> 自动取 1 或 0，取决于播放方向）
+
+                // 段结束事件：不要用 End Event（events.OnEnd），因为 End Event 在超过时间后会“每帧触发”，
+                // 如果回调没有明确停止该动画（例如立刻播放其他 State），Animancer 会给出 OptionalWarning.EndEventInterrupt。
+                // 这里改为普通 Animancer Event（只触发一次），触发点与 AnimationEnd 对齐。
+                float endTrigger = endTime;
+                if (endTrigger <= 0f)
+                {
+                    endTrigger = 1f;
+                }
+                endTrigger = Mathf.Clamp01(endTrigger);
+                events.Add(endTrigger, () =>
+                {
+                    // 防止旧 state 的事件误触发；且只在 Attacking 阶段响应（进入 Recovery/Idle 后不再触发）
+                    if (self.CurrentAnimState == animState && self.State == AttackState.Attacking)
+                    {
+                        self.OnCurrentAnimationEnd();
+                    }
+                });
+
+                // HitBox 开关事件：StartTime -> active, EndTime -> inactive
+                if (segment.HitBoxes != null)
+                {
+                    int hint = 0;
+                    for (int i = 0; i < segment.HitBoxes.Count; i++)
+                    {
+                        var hitBox = segment.HitBoxes[i];
+                        if (hitBox == null)
+                            continue;
+
+                        float start = Mathf.Clamp01(hitBox.StartTime);
+                        float end = Mathf.Clamp01(hitBox.EndTime);
+                        if (end <= start)
+                            continue;
+
+                        hint = events.Add(hint, start, () =>
+                        {
+                            if (self.CurrentAnimState != animState || self.CurrentSegment != segment || self.State != AttackState.Attacking)
+                                return;
+                            hitBox.IsActive = true;
+                            hitBox.IsCompleted = false;
+                        });
+
+                        hint = events.Add(hint, end, () =>
+                        {
+                            if (self.CurrentAnimState != animState || self.CurrentSegment != segment)
+                                return;
+                            hitBox.IsActive = false;
+                            hitBox.IsCompleted = true;
+                        });
+                    }
+                }
+
+                // VisualEffects：一次性触发（使用 StartTime）
+                if (segment.VisualEffects != null)
+                {
+                    int hint = 0;
+                    for (int i = 0; i < segment.VisualEffects.Count; i++)
+                    {
+                        var vfx = segment.VisualEffects[i];
+                        if (vfx == null)
+                            continue;
+                        float t = Mathf.Clamp01(vfx.StartTime);
+                        hint = events.Add(hint, t, () =>
+                        {
+                            if (self.CurrentAnimState != animState || self.CurrentSegment != segment || self.State != AttackState.Attacking)
+                                return;
+                            self.PlayVisualEffect(vfx);
+                        });
+                    }
+                }
+
+                // SoundEffects：一次性触发（使用 StartTime）
+                if (segment.SoundEffects != null)
+                {
+                    int hint = 0;
+                    for (int i = 0; i < segment.SoundEffects.Count; i++)
+                    {
+                        var sfx = segment.SoundEffects[i];
+                        if (sfx == null)
+                            continue;
+                        float t = Mathf.Clamp01(sfx.StartTime);
+                        hint = events.Add(hint, t, () =>
+                        {
+                            if (self.CurrentAnimState != animState || self.CurrentSegment != segment || self.State != AttackState.Attacking)
+                                return;
+                            self.PlaySoundEffect(sfx);
+                        });
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Warning($"AttackComponent: BindAnimancerEvents failed - {e}");
+            }
+        }
+
+        private static void PlayVisualEffect(this AttackComponent self, VisualEffectData vfx)
+        {
+            if (vfx == null || vfx.Prefab == null || self.Player == null)
+                return;
+
+            try
+            {
+                if (vfx.FollowTarget)
+                {
+                    // 商用项目建议替换为统一的特效系统/对象池（这里先用原生 Instantiate 作为最小可用实现）
+                    var instance = Object.Instantiate(vfx.Prefab, self.Player);
+                    instance.transform.localPosition = vfx.Offset;
+                    instance.transform.localRotation = Quaternion.identity;
+                    if (vfx.Length > 0)
+                    {
+                        Object.Destroy(instance, vfx.Length);
+                    }
+                }
+                else
+                {
+                    Vector3 pos = self.Player.position + self.Player.rotation * vfx.Offset;
+                    Quaternion rot = self.Player.rotation;
+                    // 商用项目建议替换为统一的特效系统/对象池（这里先用原生 Instantiate 作为最小可用实现）
+                    var instance = Object.Instantiate(vfx.Prefab, pos, rot);
+                    if (vfx.Length > 0)
+                    {
+                        Object.Destroy(instance, vfx.Length);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Warning($"AttackComponent: PlayVisualEffect failed - {e.Message}");
+            }
+        }
+
+        private static void PlaySoundEffect(this AttackComponent self, SoundEffectData sfx)
+        {
+            if (sfx == null || sfx.Clip == null || self.Player == null)
+                return;
+
+            try
+            {
+                float volume = Mathf.Clamp01(sfx.Volume);
+                // 商用项目建议替换为统一的音频系统（这里先用 PlayClipAtPoint 作为最小可用实现）
+                AudioSource.PlayClipAtPoint(sfx.Clip, self.Player.position, volume);
+            }
+            catch (Exception e)
+            {
+                Log.Warning($"AttackComponent: PlaySoundEffect failed - {e.Message}");
+            }
+        }
+
+        #endregion
 
         /// <summary>
         /// 执行命中检测
@@ -613,51 +784,59 @@ namespace ET
                 self.HasHitThisSegment = true;
                 self.TotalHitCount++;
 
-                // 处理命中效果
-                self.ProcessHit(target, self.CurrentSegment);
+                // 处理命中效果（使用 HitBox 的独立效果配置）
+                self.ProcessHit(target, hitBox);
             }
         }
 
         /// <summary>
-        /// TODO 处理命中效果
+        /// 处理命中效果（使用 HitBox 的独立效果配置）
         /// </summary>
-        private static void ProcessHit(this AttackComponent self, GameObject target, AttackSegmentData segment)
+        private static void ProcessHit(this AttackComponent self, GameObject target, HitBoxData hitBox)
         {
+            var effect = hitBox.Effect;
+            var feedback = hitBox.Feedback;
+
             // 计算伤害
-            float damage = self.CalculateDamage(target, segment);
+            float damage = self.CalculateDamage(target, effect);
 
             //TODO 应用伤害 
             /*var targetHealth = target.GetComponent<HealthComponent>();
             targetHealth?.TakeDamage(damage, attacker);*/
 
             // 应用受击反应
-            self.ApplyHitReaction(target, segment);
+            self.ApplyHitReaction(target, effect);
 
             // 播放命中特效和音效
-            self.PlayHitEffects(target, segment);
+            self.PlayHitEffects(target, hitBox);
 
             // 应用顿帧
-            if (segment.Effect != null && segment.Effect.HitStopMs > 0)
+            int hitStopMs = feedback.HitStopMs;
+            if (hitStopMs <= 0)
             {
-                self.ApplyHitStop(segment.Effect.HitStopMs);
+                hitStopMs = self.Config?.DefaultHitStopMs ?? 0;
+            }
+            if (hitStopMs > 0)
+            {
+                self.ApplyHitStop(hitStopMs);
             }
 
             // 应用屏幕震动
-            if (segment.Effect != null && segment.Effect.ScreenShakeIntensity > 0)
+            if (feedback.ScreenShakeIntensity > 0)
             {
-                //CameraManager.Instance?.Shake(segment.Effect.ScreenShakeIntensity, segment.Effect.ScreenShakeDuration);
+                //CameraManager.Instance?.Shake(feedback.ScreenShakeIntensity, feedback.ScreenShakeDuration);
             }
 
             // 触发命中事件
-            self.OnHit?.Invoke(target, segment);
+            self.OnHit?.Invoke(target, self.CurrentSegment);
 
             Log.Debug($"AttackComponent: Hit target {target.name}, damage: {damage}");
         }
 
         /// <summary>
-        /// TODO 计算伤害
+        /// 计算伤害（使用 HitEffectData）
         /// </summary>
-        private static float CalculateDamage(this AttackComponent self, GameObject target, AttackSegmentData segment)
+        private static float CalculateDamage(this AttackComponent self, GameObject target, HitEffectData effect)
         {
             // 获取攻击者属性
             /*var attackerAttr = attacker.GetComponent<AttributeComponent>();
@@ -668,16 +847,16 @@ namespace ET
             float defense = targetAttr?.GetAttribute(AttributeType.Defense) ?? 0f;
 
             // 计算最终伤害
-            float damage = baseAttack * segment.DamageMultiplier;
+            float damage = baseAttack * effect.DamageMultiplier;
             damage = Mathf.Max(1, damage - defense);*/
-            float damage = 100;
+            float damage = 100 * effect.DamageMultiplier;
             return damage;
         }
 
         /// <summary>
-        /// 应用受击反应
+        /// 应用受击反应（使用 HitEffectData）
         /// </summary>
-        private static void ApplyHitReaction(this AttackComponent self, GameObject target, AttackSegmentData segment)
+        private static void ApplyHitReaction(this AttackComponent self, GameObject target, HitEffectData effect)
         {
             var hitReactionComponent = target.GetComponent<HitReactionComponent>();
             if (hitReactionComponent == null)
@@ -687,49 +866,36 @@ namespace ET
             Vector3 hitDirection = (target.transform.position - self.Player.position).normalized;
             hitDirection.y = 0;
 
-            switch (segment.HitReaction)
+            switch (effect.HitReaction)
             {
                 case HitReactionType.Light:
-                    hitReactionComponent.PlayLightHit(hitDirection, segment.HitStunMs);
+                    hitReactionComponent.PlayLightHit(hitDirection, effect.HitStunMs);
                     break;
                 case HitReactionType.Medium:
-                    hitReactionComponent.PlayMediumHit(hitDirection, segment.HitStunMs);
+                    hitReactionComponent.PlayMediumHit(hitDirection, effect.HitStunMs);
                     break;
                 case HitReactionType.Heavy:
-                    hitReactionComponent.PlayHeavyHit(hitDirection, segment.HitStunMs);
+                    hitReactionComponent.PlayHeavyHit(hitDirection, effect.HitStunMs);
                     break;
                 case HitReactionType.Knockback:
-                    hitReactionComponent.PlayKnockback(hitDirection, segment.KnockbackForce, segment.HitStunMs);
+                    hitReactionComponent.PlayKnockback(hitDirection, effect.KnockbackForce, effect.HitStunMs);
                     break;
                 case HitReactionType.Knockup:
-                    hitReactionComponent.PlayKnockup(segment.KnockupForce, segment.HitStunMs);
+                    hitReactionComponent.PlayKnockup(effect.KnockupForce, effect.HitStunMs);
                     break;
                 case HitReactionType.Knockdown:
-                    hitReactionComponent.PlayKnockdown(hitDirection, segment.KnockbackForce, segment.HitStunMs);
+                    hitReactionComponent.PlayKnockdown(hitDirection, effect.KnockbackForce, effect.HitStunMs);
                     break;
             }
         }
 
         /// <summary>
-        /// TODO 播放命中特效和音效
+        /// 播放命中特效和音效
         /// </summary>
-        private static void PlayHitEffects(this AttackComponent self, GameObject target, AttackSegmentData segment)
+        private static void PlayHitEffects(this AttackComponent self, GameObject target, HitBoxData hitBox)
         {
-            if (segment.Effect == null)
-                return;
-
-            // 播放命中特效
-            if (!string.IsNullOrEmpty(segment.Effect.HitEffectPath))
-            {
-                Vector3 hitPosition = target.transform.position + Vector3.up * 1f; // 命中点偏移
-                //EffectManager.Instance?.PlayEffect(segment.Effect.HitEffectPath, hitPosition, Quaternion.identity);
-            }
-
-            // 播放命中音效
-            if (!string.IsNullOrEmpty(segment.Effect.HitSoundPath))
-            {
-                //AudioManager.Instance?.PlaySound(segment.Effect.HitSoundPath);
-            }
+            // 命中特效/音效同样建议通过轨道驱动（例如在命中点触发一条 VisualEffectData）。
+            // 这里保留扩展点，避免把资源路径硬编码在配置里。
         }
         
         #endregion
@@ -796,13 +962,21 @@ namespace ET
         /// <summary>
         /// 更新攻击位移
         /// </summary>
-        private static void UpdateMovement(this AttackComponent self)
+        private static void UpdateMovement(this AttackComponent self, float fixedDeltaTime)
         {
             if (self.State != AttackState.Attacking)
                 return;
 
             if (self.CurrentSegment?.Movement == null || !self.CurrentSegment.Movement.EnableMovement)
+            {
+                // 无攻击位移时，关闭外部运动驱动
+                if (self.CharacterController != null)
+                {
+                    self.CharacterController.ExternalMotorActive = false;
+                    self.CharacterController.ExternalMotorVelocity = Vector3.zero;
+                }
                 return;
+            }
 
             var movement = self.CurrentSegment.Movement;
             float normalizedTime = self.CurrentNormalizedTime;
@@ -811,12 +985,22 @@ namespace ET
             if (normalizedTime < movement.StartTime)
             {
                 self.IsMovementActive = false;
+                if (self.CharacterController != null)
+                {
+                    self.CharacterController.ExternalMotorActive = false;
+                    self.CharacterController.ExternalMotorVelocity = Vector3.zero;
+                }
                 return;
             }
 
             if (normalizedTime > movement.EndTime)
             {
                 self.IsMovementActive = false;
+                if (self.CharacterController != null)
+                {
+                    self.CharacterController.ExternalMotorActive = false;
+                    self.CharacterController.ExternalMotorVelocity = Vector3.zero;
+                }
                 return;
             }
 
@@ -832,20 +1016,16 @@ namespace ET
             // 计算目标位置
             Vector3 targetPos = Vector3.Lerp(self.MovementStartPosition, self.MovementTargetPosition, curveValue);
 
-            // TODO 移动角色,要和角色控制关联 CharacterControllerComponentSystem
-            /*var unit = self.GetParent<Unit>();
-            if (unit != null)
+            // 通过 CharacterController 外部运动驱动提供 XZ 速度，避免与常规移动覆盖
+            if (self.CharacterController?.Rigidbody != null)
             {
-                var moveComponent = unit.GetComponent<MoveComponent>();
-                if (moveComponent != null)
-                {
-                    moveComponent.SetPosition(targetPos);
-                }
-                else
-                {
-                    unit.Position = targetPos;
-                }
-            }*/
+                Vector3 currentPos = self.CharacterController.Rigidbody.position;
+                Vector3 delta = targetPos - currentPos;
+                float dt = Mathf.Max(fixedDeltaTime, 0.0001f);
+                Vector3 externalVel = new Vector3(delta.x / dt, 0f, delta.z / dt);
+                self.CharacterController.ExternalMotorActive = true;
+                self.CharacterController.ExternalMotorVelocity = externalVel;
+            }
         }
         
         #endregion
@@ -869,7 +1049,7 @@ namespace ET
 
             // 创建新定时器
             int timeoutMs = self.Config?.ComboTimeoutMs ?? 800;
-            long timeoutTime = TimeInfo.Instance.ClientFrameTime() + timeoutMs;
+            long timeoutTime = TimeInfo.Instance.ServerFrameTime() + timeoutMs;
             self.ComboTimeoutTimer = timerComponent.NewOnceTimer(timeoutTime, TimerInvokeType.AttackComboTimeout, self);
         }
 
@@ -943,7 +1123,7 @@ namespace ET
             }
 
             // 触发攻击结束事件
-            if (lastIndex >= 0)
+            if (lastIndex >= 0 && !self.CurrentSegmentEnded)
             {
                 self.OnAttackEnd?.Invoke(lastIndex);
             }
@@ -1000,6 +1180,34 @@ namespace ET
             return (self.CurrentSegmentIndex, self.CurrentSegment.Name, self.CurrentNormalizedTime);
         }
         
+        #endregion
+
+        #region 输入缓冲过期控制
+
+        private static bool IsBufferedInputValid(this AttackComponent self)
+        {
+            if (!self.HasBufferedInput)
+                return false;
+
+            int windowMs = self.Config?.InputBufferWindowMs ?? 200;
+            if (windowMs <= 0)
+                return true;
+
+            long now = TimeInfo.Instance.ClientFrameTime();
+            return now - self.BufferedInputTime <= windowMs;
+        }
+
+        private static void UpdateBufferedInputTimeout(this AttackComponent self)
+        {
+            if (!self.HasBufferedInput)
+                return;
+
+            if (!self.IsBufferedInputValid())
+            {
+                self.ClearBufferedInput();
+            }
+        }
+
         #endregion
     }
 }

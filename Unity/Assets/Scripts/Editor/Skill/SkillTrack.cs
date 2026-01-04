@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace ET
 {
@@ -18,6 +19,7 @@ namespace ET
         public TrackType Type { get; }
         public int Index { get; set; }
         public float TotalDuration { get; set; }
+        public Color Color { get; set; }
     }
 
     public interface IClipItem
@@ -25,15 +27,19 @@ namespace ET
         public string Name { get; set; }
         public TrackType Type { get; }
         public int Index { get; set; }
-        public float Duration { get; set; }
+        public float Length { get; set; }
         public float StartTime { get; set; }
+        public int Frame  { get; set; } 
+        public Color Color { get; set; }
     }
 
     public class AnimationClipItem : IClipItem
     {
         public int Index { get; set; }
-        public float Duration { get; set; }
+        public float Length { get; set; }
         public float StartTime { get; set; }
+        public int Frame { get; set; }
+        public Color Color { get; set; }
         public string Name { get; set; }
         public TrackType Type { get; } = TrackType.Animation;
         public AttackSegmentData SegmentData { get; set; }
@@ -43,6 +49,7 @@ namespace ET
     {
         public int Index { get; set; }
         public float TotalDuration { get; set; }
+        public Color Color { get; set; }
         public string Name { get; set; }
         public TrackType Type { get; } = TrackType.Animation;
         public List<AnimationClipItem> ClipList = new();
@@ -51,8 +58,10 @@ namespace ET
     public class EffectClipItem : IClipItem
     {
         public int Index { get; set; }
-        public float Duration { get; set; }
+        public float Length { get; set; }
         public float StartTime { get; set; }
+        public int Frame { get; set; }
+        public Color Color { get; set; }
         public string Name { get; set; }
         public TrackType Type { get; } = TrackType.Effect;
         public VisualEffectData EffectData { get; set; }
@@ -62,6 +71,7 @@ namespace ET
     {
         public int Index { get; set; }
         public float TotalDuration { get; set; }
+        public Color Color { get; set; }
         public string Name { get; set; }
         public TrackType Type { get; } = TrackType.Effect;
         public List<EffectClipItem> ClipList = new();
@@ -72,8 +82,10 @@ namespace ET
         public string Name { get; set; }
         public TrackType Type { get; } = TrackType.Sound;
         public int Index { get; set; }
-        public float Duration { get; set; }
+        public float Length { get; set; }
         public float StartTime { get; set; }
+        public int Frame { get; set; }
+        public Color Color { get; set; }
         public SoundEffectData SoundData { get; set; }
     }
 
@@ -81,6 +93,7 @@ namespace ET
     {
         public int Index { get; set; }
         public float TotalDuration { get; set; }
+        public Color Color { get; set; }
         public string Name { get; set; }
         public TrackType Type { get; } = TrackType.Sound;
         public List<SoundClipItem> ClipList = new();
@@ -91,8 +104,10 @@ namespace ET
         public string Name { get; set; }
         public TrackType Type { get; } = TrackType.Hitbox;
         public int Index { get; set; }
-        public float Duration { get; set; }
+        public float Length { get; set; }
         public float StartTime { get; set; }
+        public int Frame { get; set; }
+        public Color Color { get; set; }
         public HitBoxData HitBoxData { get; set; }
     }
 
@@ -100,6 +115,7 @@ namespace ET
     {
         public int Index { get; set; }
         public float TotalDuration { get; set; }
+        public Color Color { get; set; }
         public string Name { get; set; }
         public TrackType Type { get; } = TrackType.Hitbox;
         public List<HitBoxClipItem> ClipList = new();

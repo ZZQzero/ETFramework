@@ -56,6 +56,7 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.AttackComponentSystem.ET_AttackComponent_string_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.AttackComponentSystem.ET_AttackComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.AttackComponentSystem.ET_AttackComponent_UpdateSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.AttackComponentSystem.ET_AttackComponent_FixedUpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HitReactionComponentSystem.ET_HitReactionComponent_UnityEngine_Transform_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HitReactionComponentSystem.ET_HitReactionComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HitReactionComponentSystem.ET_HitReactionComponent_UpdateSystem>();

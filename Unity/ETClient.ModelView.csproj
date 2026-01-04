@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\ModelView\Unit\Attack\HitReactionComponent.cs" />
+    <Compile Include="Assets\Scripts\ModelView\Unit\Attack\AttackData.cs" />
     <Compile Include="Assets\Scripts\ModelView\YooAssets\ResourcesLoaderComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\Unit\InputComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\Opera\OperaComponent.cs" />
@@ -60,6 +61,7 @@
     <Compile Include="Assets\Scripts\ModelView\Unit\GameObjectComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\Unit\CameraFollowComponent.cs" />
     <Compile Include="Assets\Scripts\ModelView\Unit\AnimatorComponent.cs" />
+    <Compile Include="Assets\Scripts\ModelView\Unit\Attack\AttackConfigAsset.cs" />
     <None Include="Assets\Scripts\ModelView\ETClient.ModelView.asmdef" />
     <Reference Include="UnityEngine">
       <HintPath>G:\Unity\Unity6.3\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>

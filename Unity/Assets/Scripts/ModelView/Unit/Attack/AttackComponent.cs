@@ -6,23 +6,13 @@ using UnityEngine;
 namespace ET
 {
     /// <summary>
-    /// 攻击状态枚举
-    /// </summary>
-    public enum AttackState
-    {
-        Idle = 0,           // 空闲
-        Attacking = 1,      // 攻击中
-        Recovery = 2,       // 后摇恢复中
-        HitStop = 3,        // 顿帧中
-    }
-
-    /// <summary>
     /// 攻击组件 - 负责管理攻击连击逻辑
     /// </summary>
     [ComponentOf(typeof(Unit))]
-    public class AttackComponent : Entity, IAwake<string>, IDestroy, IUpdate
+    public class AttackComponent : Entity, IAwake<string>, IDestroy, IUpdate, IFixedUpdate
     {
         public AnimatorComponent AnimatorComponent { get; set; }
+        public CharacterControllerComponent CharacterController { get; set; }
         #region 配置数据
         
         /// <summary>攻击配置资源路径</summary>
@@ -47,12 +37,6 @@ namespace ET
         /// <summary>当前动画状态</summary>
         public AnimancerState CurrentAnimState { get; set; }
         
-        /// <summary>待播放的下一段攻击索引</summary>
-        public int PendingSegmentIndex { get; set; } = -1;
-        
-        /// <summary>待播放的输入类型</summary>
-        public ComboInputType PendingInputType { get; set; } = ComboInputType.None;
-        
         /// <summary>连击计数</summary>
         public int ComboCount { get; set; }
 
@@ -64,6 +48,21 @@ namespace ET
         
         /// <summary>顿帧前的动画速度</summary>
         public float HitStopPreviousSpeed { get; set; }
+
+        /// <summary>当前攻击段是否已经自然结束（避免 ExitAttackState 重复触发 OnAttackEnd）</summary>
+        public bool CurrentSegmentEnded { get; set; }
+
+        /// <summary>输入缓冲窗口是否已打开（由 AnimancerEvent 或轮询兜底驱动）</summary>
+        public bool IsInputBufferWindowOpen { get; set; }
+
+        /// <summary>取消窗口是否已打开（由 AnimancerEvent 或轮询兜底驱动）</summary>
+        public bool IsCancelWindowOpen { get; set; }
+
+        /// <summary>攻击期间是否锁定了角色移动</summary>
+        public bool MovementLocked { get; set; }
+
+        /// <summary>锁定移动前的 EnableMovement 状态</summary>
+        public bool PrevEnableMovement { get; set; }
         
         #endregion
 
@@ -74,6 +73,9 @@ namespace ET
         
         /// <summary>缓冲输入类型</summary>
         public ComboInputType BufferedInputType { get; set; } = ComboInputType.None;
+
+        /// <summary>缓冲输入时间（用于 InputBufferWindowMs 过期）</summary>
+        public long BufferedInputTime { get; set; }
         
         /// <summary>最后输入时间</summary>
         public long LastInputTime { get; set; }
@@ -114,6 +116,9 @@ namespace ET
         
         /// <summary>是否正在攻击</summary>
         public bool IsAttacking => State == AttackState.Attacking || State == AttackState.HitStop;
+
+        /// <summary>是否处于攻击流程中（包含后摇/顿帧），用于动画/移动系统判定</summary>
+        public bool IsInAttack => State != AttackState.Idle;
         
         /// <summary>是否在顿帧中</summary>
         public bool IsInHitStop => State == AttackState.HitStop;
@@ -125,7 +130,12 @@ namespace ET
             {
                 if (CurrentAnimState == null || CurrentSegment == null)
                     return false;
-                return CurrentAnimState.NormalizedTime >= CurrentSegment.InputBufferStartTime;
+                // 混合方案：
+                // - 若 Animancer Events 已绑定，则以事件驱动的窗口标志为准（单一真相来源）
+                // - 否则回退到 NormalizedTime 轮询兜底
+                return CurrentAnimState.HasEvents
+                    ? IsInputBufferWindowOpen
+                    : CurrentAnimState.NormalizedTime >= CurrentSegment.TimeWindow.InputBufferStart;
             }
         }
         
@@ -136,7 +146,12 @@ namespace ET
             {
                 if (CurrentAnimState == null || CurrentSegment == null)
                     return false;
-                return CurrentAnimState.NormalizedTime >= CurrentSegment.CancelableTime;
+                // 混合方案：
+                // - 若 Animancer Events 已绑定，则以事件驱动的窗口标志为准（单一真相来源）
+                // - 否则回退到 NormalizedTime 轮询兜底
+                return CurrentAnimState.HasEvents
+                    ? IsCancelWindowOpen
+                    : CurrentAnimState.NormalizedTime >= CurrentSegment.TimeWindow.CancelableTime;
             }
         }
         

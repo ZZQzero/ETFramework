@@ -55,7 +55,7 @@ namespace ET
         private static async ETTask LoadAnimationsAsync(this HitReactionComponent self)
         {
             // 加载受击动画（根据实际资源路径调整）
-            var asset = await ResourcesLoadManager.Instance.LoadAssetAsync<AnimationClipAsset>("HitLight");
+            //var asset = await ResourcesLoadManager.Instance.LoadAssetAsync<AnimationClipAsset>("HitLight");
             
             // ... 加载其他动画
         }

@@ -1,4 +1,5 @@
-﻿#if UNITY_EDITOR
+﻿/*
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using UnityEditor;
@@ -1380,7 +1381,7 @@ public class SkillEditorWindow1 : EditorWindow
             EditorGUI.BeginChangeCheck();
             segment.Name = EditorGUILayout.TextField("Segment Name", segment.Name);
             EditorGUILayout.LabelField("Total Duration", $"{segment.TotalDuration:F2}s");
-            segment.AnimationSpeed = EditorGUILayout.FloatField("Animation Speed", segment.AnimationSpeed);
+            segment.AnimationClipTrans.Speed = EditorGUILayout.FloatField("Animation Speed", segment.AnimationClipTrans.Speed);
             if (EditorGUI.EndChangeCheck())
             {
                 RegisterUndoAndSave("Edit Segment");
@@ -2065,3 +2066,4 @@ public class SkillEditorWindow1 : EditorWindow
     #endregion
 }
 #endif
+*/

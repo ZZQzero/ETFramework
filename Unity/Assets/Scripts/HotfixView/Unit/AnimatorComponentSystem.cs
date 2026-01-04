@@ -95,8 +95,8 @@ namespace ET
 			{
 				self.Attack.HandleAttackInput();
 			}
-			// 如果正在攻击，不切换移动/跳跃动画
-			// 动画结束会通过OnEnd回调自动调用ExitAttackState
+			// 仅在“真正攻击播放中/顿帧中”时阻止移动/跳跃动画切换。
+			// Recovery 阶段允许恢复移动/待机动画，否则攻击段播完后会出现“没有动画”的空窗。
 			if (self.Attack != null && self.Attack.IsAttacking)
 			{
 				return;

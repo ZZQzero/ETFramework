@@ -3,15 +3,14 @@
     <ui:VisualElement name="Top" style="height: 30px; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; flex-direction: row; align-items: center; flex-shrink: 0;">
         <uie:ObjectField label="" name="SelectConfig" style="flex-grow: 1; height: auto; width: auto; align-self: auto;"/>
         <uie:ObjectField label="" name="SelectObj" style="flex-grow: 1;"/>
-        <ui:Button text="Sub" name="Sub" style="flex-grow: 1;"/>
-        <ui:Button text="Add" name="Add" style="flex-grow: 1;"/>
+        <ui:Button text="&#21047;&#26032;" name="Refresh" style="flex-grow: 1;"/>
         <ui:Label text="Speed:" name="Speed" style="flex-grow: 1; width: 7px;"/>
         <ui:Slider label="" value="42" high-value="100" style="flex-grow: 1; width: 100px;"/>
         <ui:TextField value="1.0x" name="SpeedNum" style="flex-grow: 1; width: 5px; -unity-text-align: middle-center;"/>
         <ui:Button text="Play" name="Play" class="playback-button play-button" style="flex-grow: 1;"/>
         <ui:Button text="Stop" name="Stop" class="playback-button stop-button" style="flex-grow: 1;"/>
         <ui:Button text="Loop" name="Loop" class="playback-button loop-button" style="flex-grow: 1;"/>
-        <ui:Label text="00.5s / 1.00s" name="TimeLength" class="time-display" data-source-path="" view-data-key="" style="flex-grow: 1; -unity-text-align: middle-center; width: 100px;"/>
+        <ui:Label text="00.5s / 1.00s" name="TimeLength" data-source-path="" view-data-key="" class="time-display" style="flex-grow: 1; -unity-text-align: middle-center; width: 100px;"/>
     </ui:VisualElement>
     <ui:VisualElement name="Bottom" style="flex-grow: 1; flex-direction: row;">
         <ui:VisualElement name="Left" style="flex-direction: column; flex-grow: 1; flex-shrink: 1; margin-top: 1px; margin-right: 1px; margin-bottom: 1px; margin-left: 1px; border-top-width: 1px; border-top-color: rgb(0, 0, 0); border-right-width: 1px; border-right-color: rgb(0, 0, 0); overflow: hidden;">
@@ -23,30 +22,26 @@
             </ui:ScrollView>
         </ui:VisualElement>
         <ui:VisualElement name="Right" style="flex-grow: 0; flex-shrink: 0; width: 300px; margin-top: 1px; margin-right: 1px; margin-bottom: 1px; margin-left: 1px; border-top-width: 1px; border-top-color: rgb(0, 0, 0); flex-direction: column;">
-            <!-- 轨道信息区域（固定显示在顶部） -->
             <ui:VisualElement name="TrackInfoPanel" style="flex-shrink: 0; padding: 8px; border-bottom-width: 1px; border-bottom-color: rgb(100, 100, 100); flex-direction: column;">
-                <ui:Label text="轨道信息" style="font-size: 14px; font-weight: bold; margin-bottom: 8px;"/>
+                <ui:Label text="&#36712;&#36947;&#20449;&#24687;" style="font-size: 14px; font-weight: bold; margin-bottom: 8px;"/>
                 <ui:VisualElement style="flex-direction: column; gap: 4px;">
                     <ui:VisualElement style="flex-direction: row; align-items: center;">
-                        <ui:Label text="轨道类型:" style="width: 100px;"/>
+                        <ui:Label text="&#36712;&#36947;&#31867;&#22411;:" style="width: 100px;"/>
                         <ui:Label text="" name="TrackTypeLabel" style="flex-grow: 1;"/>
                     </ui:VisualElement>
                     <ui:VisualElement style="flex-direction: row; align-items: center;">
-                        <ui:Label text="片段数:" style="width: 100px;"/>
+                        <ui:Label text="&#29255;&#27573;&#25968;:" style="width: 100px;"/>
                         <ui:Label text="" name="ClipCountLabel" style="flex-grow: 1;"/>
                     </ui:VisualElement>
                     <ui:VisualElement style="flex-direction: row; align-items: center;">
-                        <ui:Label text="总时长:" style="width: 100px;"/>
+                        <ui:Label text="&#24635;&#26102;&#38271;:" style="width: 100px;"/>
                         <ui:Label text="" name="TotalDurationLabel" style="flex-grow: 1;"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
-            
-            <!-- Clip属性区域（当选择Clip时显示） -->
             <ui:VisualElement name="ClipPropertiesPanel" style="flex-grow: 1; padding: 8px; flex-direction: column; overflow-y: auto;">
                 <ui:Label text="Clip Properties" name="ClipPropertiesTitle" style="font-size: 14px; font-weight: bold; margin-bottom: 8px;"/>
                 <ui:VisualElement style="flex-direction: column; gap: 8px;">
-                    <!-- 通用字段：名称和开始时间 -->
                     <ui:VisualElement style="flex-direction: row; align-items: center;">
                         <ui:Label text="Name:" style="width: 120px;"/>
                         <ui:TextField value="" name="ClipNameField" style="flex-grow: 1;"/>
@@ -55,8 +50,10 @@
                         <ui:Label text="Start Time (s):" style="width: 120px;"/>
                         <ui:FloatField value="0" name="StartTimeField" style="flex-grow: 1;"/>
                     </ui:VisualElement>
-                    
-                    <!-- Animation Clip 专用字段 -->
+                    <ui:VisualElement style="flex-direction: row; align-items: center;">
+                        <ui:Label text="Frame:" style="width: 120px;"/>
+                        <ui:FloatField value="0" name="FrameField" style="flex-grow: 1;"/>
+                    </ui:VisualElement>
                     <ui:VisualElement name="AnimationFields" style="flex-direction: column; gap: 8px;">
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
                             <ui:Label text="Animation Clip:" style="width: 120px;"/>
@@ -67,12 +64,19 @@
                             <ui:FloatField value="1" name="SpeedField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="Duration (s):" style="width: 120px;"/>
+                            <ui:FloatField value="0" name="DurationField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
                             <ui:Label text="Fade Duration:" style="width: 120px;"/>
                             <ui:FloatField value="0.25" name="FadeDurationField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
+                        <ui:VisualElement name="AnimationActionButtons" style="flex-direction: row; gap: 4px; margin-top: 8px;">
+                            <ui:Button text="添加特效" name="AddEffectButton" style="flex-grow: 1;"/>
+                            <ui:Button text="添加音效" name="AddSoundButton" style="flex-grow: 1;"/>
+                            <ui:Button text="添加Hitbox" name="AddHitboxButton" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
                     </ui:VisualElement>
-                    
-                    <!-- Effect Clip 专用字段 -->
                     <ui:VisualElement name="EffectFields" style="flex-direction: column; gap: 8px;">
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
                             <ui:Label text="Effect Prefab:" style="width: 120px;"/>
@@ -91,8 +95,6 @@
                             <ui:Toggle name="FollowTargetField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    
-                    <!-- Sound Clip 专用字段 -->
                     <ui:VisualElement name="SoundFields" style="flex-direction: column; gap: 8px;">
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
                             <ui:Label text="Audio Clip:" style="width: 120px;"/>
@@ -107,8 +109,6 @@
                             <ui:FloatField value="1" name="VolumeField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    
-                    <!-- HitBox Clip 专用字段 -->
                     <ui:VisualElement name="HitBoxFields" style="flex-direction: column; gap: 8px;">
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
                             <ui:Label text="Shape Type:" style="width: 120px;"/>
@@ -125,8 +125,6 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
-            
-            <!-- 保留原有的ListView（如果需要的话可以隐藏） -->
             <ui:ListView name="InfoListView" style="display: none; flex-grow: 0; margin-top: 1px; margin-right: 1px; margin-bottom: 1px; margin-left: 1px;"/>
         </ui:VisualElement>
     </ui:VisualElement>

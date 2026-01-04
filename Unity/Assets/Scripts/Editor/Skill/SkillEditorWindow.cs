@@ -36,11 +36,17 @@ public class SkillEditorWindow : EditorWindow
     // 通用字段
     private TextField clipNameField; // Clip名称输入框
     private FloatField startTimeField; // 开始时间字段
+    private FloatField frameField; // 帧数字段
     
     // Animation Clip字段
     private VisualElement animationFields; // Animation字段组
+    private VisualElement animationActionButtons; // Animation操作按钮组
+    private Button addEffectButton; // 添加特效按钮
+    private Button addSoundButton; // 添加音效按钮
+    private Button addHitboxButton; // 添加Hitbox按钮
     private ObjectField animationClipField; // 动画Clip引用字段
     private FloatField speedField; // 播放速度字段
+    private FloatField durationField; // 持续时间字段
     private FloatField fadeDurationField; // 过渡时间字段
     
     // Effect Clip字段
@@ -88,15 +94,36 @@ public class SkillEditorWindow : EditorWindow
     private float playbackSpeed = 1f; // 播放速度（0-6）
     private bool isPlaying = false; // 是否正在播放
     private bool isLooping = false; // 是否循环播放
-
-    // Playhead（播放进度条）几何常量：
-    // 注意：ScrollView 的横向滚动条是否出现取决于内容是否“越界”。
-    // 如果 playhead 或其子元素出现负坐标（例如 x = -6），即使内容宽度等于视口宽度，
-    // ScrollView 也可能认为需要横向滚动，从而显示水平滚动条。
-    // 去掉箭头后，播放条只保留 2px 红线；将 playhead 容器宽度收敛到线宽，避免任何越界几何。
+    
     private const float PLAYHEAD_LINE_WIDTH = 2f;
     private const float PLAYHEAD_WIDTH = PLAYHEAD_LINE_WIDTH;
     private const float PLAYHEAD_HALF_WIDTH = PLAYHEAD_WIDTH * 0.5f;
+    
+    // 根据轨道类型获取颜色
+    private Color GetTrackColor(TrackType type)
+    {
+        return type switch
+        {
+            TrackType.Animation => new Color(0.2f, 0.6f, 0.9f, 0.3f), // 蓝色
+            TrackType.Effect => new Color(0.9f, 0.4f, 0.2f, 0.3f), // 橙色
+            TrackType.Sound => new Color(0.4f, 0.8f, 0.4f, 0.3f), // 绿色
+            TrackType.Hitbox => new Color(0.9f, 0.2f, 0.2f, 0.3f), // 红色
+            _ => new Color(0.5f, 0.5f, 0.5f, 0.3f) // 灰色默认
+        };
+    }
+    
+    // 根据clip类型获取颜色
+    private Color GetClipColor(TrackType type)
+    {
+        return type switch
+        {
+            TrackType.Animation => new Color(0.2f, 0.6f, 0.9f, 0.5f), // 蓝色
+            TrackType.Effect => new Color(0.9f, 0.4f, 0.2f, 0.5f), // 橙色
+            TrackType.Sound => new Color(0.4f, 0.8f, 0.4f, 0.5f), // 绿色
+            TrackType.Hitbox => new Color(0.9f, 0.2f, 0.2f, 0.5f), // 红色
+            _ => new Color(0.5f, 0.5f, 0.5f, 0.8f) // 灰色默认
+        };
+    }
     
     [MenuItem("ET/SkillEditorWindow")]
     public static void ShowExample()
@@ -134,8 +161,8 @@ public class SkillEditorWindow : EditorWindow
         trackContainer = root.Q<VisualElement>("TrackContainer");
         
         listView = root.Q<ListView>("InfoListView");
-        var addBtn = root.Q<Button>("Add");
-        addBtn.clicked += OnAddTrack;
+        var refresh = root.Q<Button>("Refresh");
+        refresh.clicked += RefreshTrackContent;
         
         // 注册播放控制按钮的点击事件
         var playBtn = root.Q<Button>("Play");
@@ -214,14 +241,20 @@ public class SkillEditorWindow : EditorWindow
         // 获取通用字段
         clipNameField = rightContainer.Q<TextField>("ClipNameField");
         startTimeField = rightContainer.Q<FloatField>("StartTimeField");
+        frameField = rightContainer.Q<FloatField>("FrameField");
         
         // 获取Animation Clip字段
+        animationActionButtons = rightContainer.Q<VisualElement>("AnimationActionButtons");
+        addEffectButton = rightContainer.Q<Button>("AddEffectButton");
+        addSoundButton = rightContainer.Q<Button>("AddSoundButton");
+        addHitboxButton = rightContainer.Q<Button>("AddHitboxButton");
         animationClipField = rightContainer.Q<ObjectField>("AnimationClipField");
         if (animationClipField != null)
         {
             animationClipField.objectType = typeof(UnityEngine.AnimationClip);
         }
         speedField = rightContainer.Q<FloatField>("SpeedField");
+        durationField = rightContainer.Q<FloatField>("DurationField");
         fadeDurationField = rightContainer.Q<FloatField>("FadeDurationField");
         
         // 获取Effect Clip字段
@@ -260,6 +293,19 @@ public class SkillEditorWindow : EditorWindow
         if (startTimeField != null)
         {
             startTimeField.RegisterValueChangedCallback(OnStartTimeChanged);
+        }
+        // Frame字段不注册回调，因为AnimationClip的帧数是只读的，由动画时长自动计算
+        if (addEffectButton != null)
+        {
+            addEffectButton.clicked += OnAddEffectButtonClicked;
+        }
+        if (addSoundButton != null)
+        {
+            addSoundButton.clicked += OnAddSoundButtonClicked;
+        }
+        if (addHitboxButton != null)
+        {
+            addHitboxButton.clicked += OnAddHitboxButtonClicked;
         }
         if (animationClipField != null)
         {
@@ -329,6 +375,7 @@ public class SkillEditorWindow : EditorWindow
         if (effectFields != null) effectFields.style.display = DisplayStyle.None;
         if (soundFields != null) soundFields.style.display = DisplayStyle.None;
         if (hitBoxFields != null) hitBoxFields.style.display = DisplayStyle.None;
+        if (animationActionButtons != null) animationActionButtons.style.display = DisplayStyle.None;
     }
     
     // 初始化Config提示标签
@@ -395,7 +442,6 @@ public class SkillEditorWindow : EditorWindow
         {
             return viewWidth;
         }
-        
         // 基础内容宽度 = 可视区域宽度 × 缩放倍数
         float baseContentWidth = viewWidth * zoomScale;
         
@@ -451,7 +497,7 @@ public class SkillEditorWindow : EditorWindow
             {
                 foreach (var clip in animTrack.ClipList)
                 {
-                    float endTime = clip.StartTime + clip.Duration;
+                    float endTime = clip.StartTime + clip.Length;
                     if (endTime > maxEndTime) maxEndTime = endTime;
                 }
             }
@@ -459,7 +505,7 @@ public class SkillEditorWindow : EditorWindow
             {
                 foreach (var clip in effectTrack.ClipList)
                 {
-                    float endTime = clip.StartTime + clip.Duration;
+                    float endTime = clip.StartTime + clip.Length;
                     if (endTime > maxEndTime) maxEndTime = endTime;
                 }
             }
@@ -467,7 +513,7 @@ public class SkillEditorWindow : EditorWindow
             {
                 foreach (var clip in soundTrack.ClipList)
                 {
-                    float endTime = clip.StartTime + clip.Duration;
+                    float endTime = clip.StartTime + clip.Length;
                     if (endTime > maxEndTime) maxEndTime = endTime;
                 }
             }
@@ -475,7 +521,7 @@ public class SkillEditorWindow : EditorWindow
             {
                 foreach (var clip in hitBoxTrack.ClipList)
                 {
-                    float endTime = clip.StartTime + clip.Duration;
+                    float endTime = clip.StartTime + clip.Length;
                     if (endTime > maxEndTime) maxEndTime = endTime;
                 }
             }
@@ -600,9 +646,10 @@ public class SkillEditorWindow : EditorWindow
         if (selectObj != null && selectObj.value != null &&
             selectConfigAsset != null && selectConfigAsset.value != null)
         {
+            InitTrackData();
             InitTimelineRuler();
             InitPlayHead();
-            OnAddTrack();
+            CreateTrack();
             UpdateConfigHint();
             DrawTimelineRulerMarks();
         }
@@ -610,7 +657,7 @@ public class SkillEditorWindow : EditorWindow
 
     #region 轨道相关
 
-    private void OnAddTrack()
+    private void InitTrackData()
     {
         if (config == null)
         {
@@ -644,6 +691,7 @@ public class SkillEditorWindow : EditorWindow
 
         AnimationTrack animationTrack = new AnimationTrack();
         animationTrack.Name = nameof(TrackType.Animation);
+        animationTrack.Color = GetTrackColor(TrackType.Animation);
         trackDataList.Add(animationTrack);
         
         if (config.Segments.Count > 0)
@@ -651,24 +699,46 @@ public class SkillEditorWindow : EditorWindow
             foreach (var segment in config.Segments)
             {
                 AnimationClipItem clipItem = new AnimationClipItem();
-                clipItem.Name = segment.Name;
-                clipItem.StartTime = segment.StartTime;
-                clipItem.Duration = segment.Duration;
+
                 clipItem.SegmentData = segment;
+                clipItem.Length = 2f;
+                clipItem.Name = "NULL";
+                if (clipItem.SegmentData != null && clipItem.SegmentData.AnimationClipTrans != null)
+                {
+                    if (clipItem.SegmentData.AnimationClipTrans.Clip != null)
+                    {
+                        clipItem.Length = clipItem.SegmentData.AnimationClipTrans.Clip.length;
+                    }
+                    if (!string.IsNullOrEmpty(clipItem.SegmentData.Name))
+                    {
+                        clipItem.Name = clipItem.SegmentData.Name;
+                    }
+                    else
+                    {
+                        clipItem.Name = clipItem.SegmentData.AnimationClipTrans.Name;
+                    }
+                    clipItem.Frame = Mathf.RoundToInt(clipItem.Length * 60f);
+                }
+
+                clipItem.StartTime = segment.StartTime;
+                clipItem.Color = GetClipColor(TrackType.Animation);
                 animationTrack.ClipList.Add(clipItem);
                 
                 if (segment.VisualEffects.Count > 0)
                 {
                     EffectTrack effectTrack = new EffectTrack();
                     effectTrack.Name = nameof(TrackType.Effect);
+                    effectTrack.Color = GetTrackColor(TrackType.Effect);
                     trackDataList.Add(effectTrack);
                     foreach (var effect in segment.VisualEffects)
                     {
                         EffectClipItem effectClipItem = new EffectClipItem();
-                        effectClipItem.Name = effect.Name;
-                        effectClipItem.StartTime = segment.StartTime + (effect.TriggerTime * segment.Duration);
-                        effectClipItem.Duration = effect.Duration;
                         effectClipItem.EffectData = effect;
+                        effectClipItem.Name = effect.Name;
+                        effectClipItem.StartTime = segment.StartTime + effect.StartTime * clipItem.Length;;
+                        effectClipItem.Length = effect.Length;
+                        effectClipItem.Color = GetClipColor(TrackType.Effect);
+                        effectClipItem.Frame = Mathf.RoundToInt(effectClipItem.Length * 60f);
                         effectTrack.ClipList.Add(effectClipItem);
                     }
                 }
@@ -677,14 +747,17 @@ public class SkillEditorWindow : EditorWindow
                 {
                     SoundTrack soundTrack = new SoundTrack();
                     soundTrack.Name = nameof(TrackType.Sound);
+                    soundTrack.Color = GetTrackColor(TrackType.Sound);
                     trackDataList.Add(soundTrack);
                     foreach (var sound in segment.SoundEffects)
                     {
                         SoundClipItem soundClipItem = new SoundClipItem();
-                        soundClipItem.Name = sound.Name;
-                        soundClipItem.StartTime = segment.StartTime + (sound.TriggerTime * segment.Duration);
-                        soundClipItem.Duration = 0.5f; // 默认音效持续时间
                         soundClipItem.SoundData = sound;
+                        soundClipItem.Name = sound.Name;
+                        soundClipItem.StartTime = segment.StartTime + (sound.StartTime * clipItem.Length);
+                        soundClipItem.Length = sound.Clip != null ?  sound.Clip.length : 2;
+                        soundClipItem.Color = GetClipColor(TrackType.Sound);
+                        soundClipItem.Frame = Mathf.RoundToInt(soundClipItem.Length * 60f);
                         soundTrack.ClipList.Add(soundClipItem);
                     }
                 }
@@ -693,20 +766,26 @@ public class SkillEditorWindow : EditorWindow
                 {
                     HitBoxTrack hitBoxTrack = new HitBoxTrack();
                     hitBoxTrack.Name = nameof(TrackType.Hitbox);
+                    hitBoxTrack.Color = GetTrackColor(TrackType.Hitbox);
                     trackDataList.Add(hitBoxTrack);
                     foreach (var hitbox in segment.HitBoxes)
                     {
                         HitBoxClipItem hitboxClipItem = new HitBoxClipItem();
-                        hitboxClipItem.Name = hitbox.ShapeType.ToString();
-                        hitboxClipItem.StartTime = segment.StartTime + (hitbox.StartTime * segment.Duration);
-                        hitboxClipItem.Duration = (hitbox.EndTime - hitbox.StartTime) * segment.Duration;
                         hitboxClipItem.HitBoxData = hitbox;
+                        hitboxClipItem.Name = hitbox.ShapeType.ToString();
+                        hitboxClipItem.StartTime = segment.StartTime + (hitbox.StartTime * clipItem.Length);
+                        hitboxClipItem.Length = (hitbox.EndTime - hitbox.StartTime) * clipItem.Length;
+                        hitboxClipItem.Color = GetClipColor(TrackType.Hitbox);
+                        hitboxClipItem.Frame = Mathf.RoundToInt(hitboxClipItem.Length * 60f);
                         hitBoxTrack.ClipList.Add(hitboxClipItem);
                     }
                 }
             }
         }
-        
+    }
+
+    private void CreateTrack()
+    {
         // 创建轨道元素
         for (int i = 0; i < trackDataList.Count; i++)
         {
@@ -760,6 +839,9 @@ public class SkillEditorWindow : EditorWindow
         trackElement.style.width = trackWidth;
         trackElement.style.minWidth = trackWidth;
         
+        // 设置轨道背景颜色
+        trackElement.style.backgroundColor = trackData.Color;
+        
         // 给轨道容器添加点击事件和右键菜单
         SetupTrackInteractions(trackElement);
         ContextualMenuManipulator menuManipulator = new ContextualMenuManipulator(menuEvent => 
@@ -774,6 +856,13 @@ public class SkillEditorWindow : EditorWindow
             foreach (var clipItem in animationTrack.ClipList)
             {
                 var clipElement = SetClipItem(trackElement, clipItem);
+                if (clipItem.SegmentData != null && clipItem.SegmentData.AnimationClipTrans != null)
+                {
+                    if (clipElement is Label label)
+                    {
+                        label.text = clipItem.Name;
+                    }
+                }
                 clipElements.Add(clipElement);
             }
         }
@@ -818,8 +907,11 @@ public class SkillEditorWindow : EditorWindow
                 AttackSegmentData data = new AttackSegmentData();
                 config.Segments.Add(data);
                 clipItem.Name = "AnimationClip";
-                clipItem.Duration = 2;
+                clipItem.Length = 2;
                 clipItem.SegmentData = data;
+                clipItem.Color = GetClipColor(TrackType.Animation);
+                // AnimationClip的帧数根据动画时长和速度自动计算，这里先设置为0
+                clipItem.Frame = 0;
                 trackData.ClipList.Add(clipItem);
                 
                 // 重新创建轨道内容
@@ -864,11 +956,23 @@ public class SkillEditorWindow : EditorWindow
 
         // 根据开始时间和时长计算位置和宽度
         float xPosition = clipItem.StartTime * pixelsPerSecond;
-        float clipWidth = Mathf.Max(clipItem.Duration * pixelsPerSecond, 20f); // 最小宽度20像素
+        float clipWidth = Mathf.Max(clipItem.Length * pixelsPerSecond, 20f); // 最小宽度20像素
         clipElement.style.left = xPosition;
         clipElement.style.top = (TRACK_ITEM_HEIGHT - CLIP_ITEM_HEIGHT) / 2; // 垂直居中
         clipElement.style.height = CLIP_ITEM_HEIGHT;
         clipElement.style.width = clipWidth;
+        clipElement.text = clipItem.Name;
+        
+        // 设置clip背景颜色
+        clipElement.style.backgroundColor = clipItem.Color;
+        clipElement.style.borderTopWidth = 1;
+        clipElement.style.borderBottomWidth = 1;
+        clipElement.style.borderLeftWidth = 1;
+        clipElement.style.borderRightWidth = 1;
+        clipElement.style.borderTopColor = new Color(clipItem.Color.r * 0.7f, clipItem.Color.g * 0.7f, clipItem.Color.b * 0.7f, 1f);
+        clipElement.style.borderBottomColor = new Color(clipItem.Color.r * 0.7f, clipItem.Color.g * 0.7f, clipItem.Color.b * 0.7f, 1f);
+        clipElement.style.borderLeftColor = new Color(clipItem.Color.r * 0.7f, clipItem.Color.g * 0.7f, clipItem.Color.b * 0.7f, 1f);
+        clipElement.style.borderRightColor = new Color(clipItem.Color.r * 0.7f, clipItem.Color.g * 0.7f, clipItem.Color.b * 0.7f, 1f);
 
         SetupClipInteractions(clipElement);
         element.Add(clipElement);
@@ -897,7 +1001,7 @@ public class SkillEditorWindow : EditorWindow
             if (clipItem1 == null) continue;
 
             float clip1Start = clipItem1.StartTime;
-            float clip1End = clipItem1.StartTime + clipItem1.Duration;
+            float clip1End = clipItem1.StartTime + clipItem1.Length;
 
             for (int j = i + 1; j < clipElements.Count; j++)
             {
@@ -906,7 +1010,7 @@ public class SkillEditorWindow : EditorWindow
                 if (clipItem2 == null) continue;
 
                 float clip2Start = clipItem2.StartTime;
-                float clip2End = clipItem2.StartTime + clipItem2.Duration;
+                float clip2End = clipItem2.StartTime + clipItem2.Length;
 
                 // 检查是否重叠
                 if (clip1Start < clip2End && clip2Start < clip1End)
@@ -975,7 +1079,7 @@ public class SkillEditorWindow : EditorWindow
 
         // 计算拖拽clip的当前时间位置
         float draggingClipStart = draggingClip.style.left.value.value / pixelsPerSecond;
-        float draggingClipEnd = draggingClipStart + draggingClipItem.Duration;
+        float draggingClipEnd = draggingClipStart + draggingClipItem.Length;
 
         // 检测所有clip之间的重叠（包括被拖动clip与其他clip的重叠，以及其他clip之间的重叠）
         for (int i = 0; i < clipElements.Count; i++)
@@ -994,7 +1098,7 @@ public class SkillEditorWindow : EditorWindow
             else
             {
                 clip1Start = clipItem1.StartTime;
-                clip1End = clipItem1.StartTime + clipItem1.Duration;
+                clip1End = clipItem1.StartTime + clipItem1.Length;
             }
 
             for (int j = i + 1; j < clipElements.Count; j++)
@@ -1013,7 +1117,7 @@ public class SkillEditorWindow : EditorWindow
                 else
                 {
                     clip2Start = clipItem2.StartTime;
-                    clip2End = clipItem2.StartTime + clipItem2.Duration;
+                    clip2End = clipItem2.StartTime + clipItem2.Length;
                 }
 
                 // 检查是否重叠
@@ -1097,7 +1201,7 @@ public class SkillEditorWindow : EditorWindow
 
         // 使用已经同步的StartTime
         float draggedClipStart = draggedClipItem.StartTime;
-        float draggedClipEnd = draggedClipStart + draggedClipItem.Duration;
+        float draggedClipEnd = draggedClipStart + draggedClipItem.Length;
 
         // 检测与其他clip的重叠
         List<(VisualElement clip, float overlapStart, float overlapEnd)> overlappingClips = new List<(VisualElement, float, float)>();
@@ -1110,7 +1214,7 @@ public class SkillEditorWindow : EditorWindow
             if (otherClipItem == null) continue;
 
             float otherClipStart = otherClipItem.StartTime;
-            float otherClipEnd = otherClipItem.StartTime + otherClipItem.Duration;
+            float otherClipEnd = otherClipItem.StartTime + otherClipItem.Length;
 
             if (draggedClipStart < otherClipEnd && otherClipStart < draggedClipEnd)
             {
@@ -1130,7 +1234,7 @@ public class SkillEditorWindow : EditorWindow
                 totalOverlapDuration += (overlapEnd - overlapStart);
             }
 
-            float overlapRatio = totalOverlapDuration / draggedClipItem.Duration;
+            float overlapRatio = totalOverlapDuration / draggedClipItem.Length;
             Debug.Log($"clip重叠检测 - 重叠占比: {overlapRatio:P1}, 位置保持不变");
         }
 
@@ -1252,7 +1356,7 @@ public class SkillEditorWindow : EditorWindow
                     else if (draggedClipItem is HitBoxClipItem hitBoxClipItem && hitBoxClipItem.HitBoxData != null && config != null)
                     {
                         // HitBoxClipItem: 需要找到对应的Segment，计算归一化时间并更新StartTime和EndTime
-                        UpdateHitBoxClipTimes(hitBoxClipItem, draggedClipItem.StartTime, draggedClipItem.Duration);
+                        UpdateHitBoxClipTimes(hitBoxClipItem, draggedClipItem.StartTime, draggedClipItem.Length);
                         dataChanged = true;
                     }
                     
@@ -1333,17 +1437,24 @@ public class SkillEditorWindow : EditorWindow
     private void UpdateEffectClipTriggerTime(EffectClipItem effectClipItem, float absoluteStartTime)
     {
         if (config == null || effectClipItem.EffectData == null) return;
-        
+
         // 遍历所有Segment，找到包含该EffectData的Segment
         foreach (var segment in config.Segments)
         {
             if (segment.VisualEffects.Contains(effectClipItem.EffectData))
             {
-                // 计算归一化时间：TriggerTime = (绝对时间 - Segment开始时间) / Segment持续时间
-                if (segment.Duration > 0)
+                // 获取动画片段长度作为基准
+                float animationLength = 2f; // 默认长度
+                if (segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
                 {
-                    float normalizedTime = (absoluteStartTime - segment.StartTime) / segment.Duration;
-                    effectClipItem.EffectData.TriggerTime = Mathf.Clamp01(normalizedTime);
+                    animationLength = segment.AnimationClipTrans.Clip.length;
+                }
+
+                // 计算归一化时间：StartTime = (绝对时间 - Segment开始时间) / 动画片段长度
+                if (animationLength > 0)
+                {
+                    float normalizedTime = (absoluteStartTime - segment.StartTime) / animationLength;
+                    effectClipItem.EffectData.StartTime = Mathf.Clamp01(normalizedTime);
                 }
                 break;
             }
@@ -1354,17 +1465,24 @@ public class SkillEditorWindow : EditorWindow
     private void UpdateSoundClipTriggerTime(SoundClipItem soundClipItem, float absoluteStartTime)
     {
         if (config == null || soundClipItem.SoundData == null) return;
-        
+
         // 遍历所有Segment，找到包含该SoundData的Segment
         foreach (var segment in config.Segments)
         {
             if (segment.SoundEffects.Contains(soundClipItem.SoundData))
             {
-                // 计算归一化时间：TriggerTime = (绝对时间 - Segment开始时间) / Segment持续时间
-                if (segment.Duration > 0)
+                // 获取动画片段长度作为基准
+                float animationLength = 2f; // 默认长度
+                if (segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
                 {
-                    float normalizedTime = (absoluteStartTime - segment.StartTime) / segment.Duration;
-                    soundClipItem.SoundData.TriggerTime = Mathf.Clamp01(normalizedTime);
+                    animationLength = segment.AnimationClipTrans.Clip.length;
+                }
+
+                // 计算归一化时间：StartTime = (绝对时间 - Segment开始时间) / 动画片段长度
+                if (animationLength > 0)
+                {
+                    float normalizedTime = (absoluteStartTime - segment.StartTime) / animationLength;
+                    soundClipItem.SoundData.StartTime = Mathf.Clamp01(normalizedTime);
                 }
                 break;
             }
@@ -1375,21 +1493,28 @@ public class SkillEditorWindow : EditorWindow
     private void UpdateHitBoxClipTimes(HitBoxClipItem hitBoxClipItem, float absoluteStartTime, float absoluteDuration)
     {
         if (config == null || hitBoxClipItem.HitBoxData == null) return;
-        
+
         // 遍历所有Segment，找到包含该HitBoxData的Segment
         foreach (var segment in config.Segments)
         {
             if (segment.HitBoxes.Contains(hitBoxClipItem.HitBoxData))
             {
-                // 计算归一化时间
-                if (segment.Duration > 0)
+                // 获取动画片段长度作为基准
+                float animationLength = 2f; // 默认长度
+                if (segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
                 {
-                    float normalizedStartTime = (absoluteStartTime - segment.StartTime) / segment.Duration;
-                    float normalizedEndTime = normalizedStartTime + (absoluteDuration / segment.Duration);
-                    
+                    animationLength = segment.AnimationClipTrans.Clip.length;
+                }
+
+                // 计算归一化时间
+                if (animationLength > 0)
+                {
+                    float normalizedStartTime = (absoluteStartTime - segment.StartTime) / animationLength;
+                    float normalizedEndTime = normalizedStartTime + (absoluteDuration / animationLength);
+
                     hitBoxClipItem.HitBoxData.StartTime = Mathf.Clamp01(normalizedStartTime);
                     hitBoxClipItem.HitBoxData.EndTime = Mathf.Clamp01(normalizedEndTime);
-                    
+
                     // 确保EndTime >= StartTime
                     if (hitBoxClipItem.HitBoxData.EndTime < hitBoxClipItem.HitBoxData.StartTime)
                     {
@@ -1421,9 +1546,6 @@ public class SkillEditorWindow : EditorWindow
     private void UpdateTrackInfo(ITrackItem track)
     {
         selectedTrack = track;
-        
-        Debug.Log($"UpdateTrackInfo被调用，track={(track != null ? track.Type.ToString() : "null")}");
-        
         if (track == null)
         {
             if (trackTypeLabel != null) trackTypeLabel.text = "-";
@@ -1452,7 +1574,7 @@ public class SkillEditorWindow : EditorWindow
             clipCount = animTrack.ClipList.Count;
             foreach (var clip in animTrack.ClipList)
             {
-                totalDuration = Mathf.Max(totalDuration, clip.StartTime + clip.Duration);
+                totalDuration = Mathf.Max(totalDuration, clip.StartTime + clip.Length);
             }
         }
         else if (track is EffectTrack effectTrack)
@@ -1460,7 +1582,7 @@ public class SkillEditorWindow : EditorWindow
             clipCount = effectTrack.ClipList.Count;
             foreach (var clip in effectTrack.ClipList)
             {
-                totalDuration = Mathf.Max(totalDuration, clip.StartTime + clip.Duration);
+                totalDuration = Mathf.Max(totalDuration, clip.StartTime + clip.Length);
             }
         }
         else if (track is SoundTrack soundTrack)
@@ -1468,7 +1590,7 @@ public class SkillEditorWindow : EditorWindow
             clipCount = soundTrack.ClipList.Count;
             foreach (var clip in soundTrack.ClipList)
             {
-                totalDuration = Mathf.Max(totalDuration, clip.StartTime + clip.Duration);
+                totalDuration = Mathf.Max(totalDuration, clip.StartTime + clip.Length);
             }
         }
         else if (track is HitBoxTrack hitBoxTrack)
@@ -1476,7 +1598,7 @@ public class SkillEditorWindow : EditorWindow
             clipCount = hitBoxTrack.ClipList.Count;
             foreach (var clip in hitBoxTrack.ClipList)
             {
-                totalDuration = Mathf.Max(totalDuration, clip.StartTime + clip.Duration);
+                totalDuration = Mathf.Max(totalDuration, clip.StartTime + clip.Length);
             }
         }
         
@@ -1495,9 +1617,6 @@ public class SkillEditorWindow : EditorWindow
     private void UpdateClipProperties(IClipItem clip)
     {
         selectedClip = clip;
-        
-        Debug.Log($"UpdateClipProperties被调用，clip={(clip != null ? clip.Name : "null")}, type={(clip != null ? clip.Type.ToString() : "null")}");
-        
         // 先隐藏所有字段组
         HideAllClipFields();
         
@@ -1523,7 +1642,7 @@ public class SkillEditorWindow : EditorWindow
             clipPropertiesTitle.text = title;
         }
         
-        // 更新通用字段：名称和开始时间
+        // 更新通用字段：名称、开始时间和帧数
         if (clipNameField != null)
         {
             clipNameField.SetValueWithoutNotify(clip.Name ?? "");
@@ -1537,18 +1656,37 @@ public class SkillEditorWindow : EditorWindow
         if (clip is AnimationClipItem animClipItem)
         {
             UpdateAnimationClipProperties(animClipItem);
+            // AnimationClip的帧数在UpdateAnimationClipProperties中根据动画时长计算
         }
         else if (clip is EffectClipItem effectClipItem)
         {
             UpdateEffectClipProperties(effectClipItem);
+            // 其他类型的Clip直接显示帧数
+            if (frameField != null)
+            {
+                frameField.SetValueWithoutNotify(clip.Frame);
+                frameField.SetEnabled(true); // 其他类型可以编辑
+            }
         }
         else if (clip is SoundClipItem soundClipItem)
         {
             UpdateSoundClipProperties(soundClipItem);
+            // 其他类型的Clip直接显示帧数
+            if (frameField != null)
+            {
+                frameField.SetValueWithoutNotify(clip.Frame);
+                frameField.SetEnabled(true); // 其他类型可以编辑
+            }
         }
         else if (clip is HitBoxClipItem hitBoxClipItem)
         {
             UpdateHitBoxClipProperties(hitBoxClipItem);
+            // 其他类型的Clip直接显示帧数
+            if (frameField != null)
+            {
+                frameField.SetValueWithoutNotify(clip.Frame);
+                frameField.SetEnabled(true); // 其他类型可以编辑
+            }
         }
     }
     
@@ -1556,6 +1694,12 @@ public class SkillEditorWindow : EditorWindow
     private void UpdateAnimationClipProperties(AnimationClipItem clipItem)
     {
         if (animationFields != null) animationFields.style.display = DisplayStyle.Flex;
+        
+        // 显示操作按钮组（只有AnimationClip才显示）
+        if (animationActionButtons != null)
+        {
+            animationActionButtons.style.display = DisplayStyle.Flex;
+        }
         
         var segmentData = clipItem.SegmentData;
         if (segmentData == null)
@@ -1565,9 +1709,9 @@ public class SkillEditorWindow : EditorWindow
         }
         
         // 更新动画Clip引用
+        AnimationClip animClip = null;
         if (animationClipField != null)
         {
-            UnityEngine.AnimationClip animClip = null;
             if (segmentData.AnimationClipTrans != null)
             {
                 animClip = segmentData.AnimationClipTrans.Clip;
@@ -1576,15 +1720,30 @@ public class SkillEditorWindow : EditorWindow
         }
         
         // 更新播放速度
+        float speed = 1f;
         if (speedField != null)
         {
-            float speed = segmentData.AnimationSpeed;
-            if (speed <= 0 && segmentData.AnimationClipTrans != null)
+            if (segmentData.AnimationClipTrans != null)
             {
                 speed = segmentData.AnimationClipTrans.Speed;
             }
-            if (speed <= 0) speed = 1f;
             speedField.SetValueWithoutNotify(speed);
+        }
+        
+        // 计算并更新Duration（根据动画Clip的时长和播放速度）
+        float calculatedDuration = clipItem.Length;
+        if (animClip != null)
+        {
+            // Duration = 动画时长 / 播放速度
+            calculatedDuration = animClip.length / Mathf.Max(speed, 0.01f);
+            clipItem.Length = animClip.length;
+        }
+        
+        // 更新Duration字段显示
+        if (durationField != null)
+        {
+            durationField.SetValueWithoutNotify(calculatedDuration);
+            durationField.SetEnabled(false); // 设置为只读，因为是根据动画Clip自动计算的
         }
         
         // 更新过渡时间
@@ -1596,6 +1755,25 @@ public class SkillEditorWindow : EditorWindow
                 fadeDuration = segmentData.AnimationClipTrans.FadeDuration;
             }
             fadeDurationField.SetValueWithoutNotify(fadeDuration);
+        }
+        
+        // 计算并更新帧数（根据动画Clip的时长和播放速度）
+        if (frameField != null)
+        {
+            float calculatedFrame = 0;
+            if (animClip != null)
+            {
+                // 帧数 = (动画时长 / 播放速度) * 60fps
+                calculatedFrame = Mathf.RoundToInt(animClip.length * 60f);
+            }
+            else
+            {
+                // 如果没有动画Clip，使用Duration计算
+                calculatedFrame = Mathf.RoundToInt(clipItem.Length * 60f);
+            }
+            
+            frameField.SetValueWithoutNotify(calculatedFrame);
+            frameField.SetEnabled(false); // 设置为只读
         }
     }
     
@@ -1626,7 +1804,15 @@ public class SkillEditorWindow : EditorWindow
             {
                 if (segment.VisualEffects.Contains(effectData))
                 {
-                    absoluteTriggerTime = segment.StartTime + (effectData.TriggerTime * segment.Duration);
+                    // 获取动画片段长度
+                    float animationLength = 2f; // 默认长度
+                    if (segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
+                    {
+                        animationLength = segment.AnimationClipTrans.Clip.length;
+                    }
+            
+                    // 计算绝对触发时间：segment开始时间 + (归一化时间 × 动画长度)
+                    absoluteTriggerTime = segment.StartTime + (effectData.StartTime * animationLength);
                     break;
                 }
             }
@@ -1636,7 +1822,7 @@ public class SkillEditorWindow : EditorWindow
         // 更新持续时间
         if (effectDurationField != null)
         {
-            effectDurationField.SetValueWithoutNotify(effectData.Duration);
+            effectDurationField.SetValueWithoutNotify(effectData.Length);
         }
         
         // 更新是否跟随目标
@@ -1673,7 +1859,15 @@ public class SkillEditorWindow : EditorWindow
             {
                 if (segment.SoundEffects.Contains(soundData))
                 {
-                    absoluteTriggerTime = segment.StartTime + (soundData.TriggerTime * segment.Duration);
+                    // 获取动画片段长度
+                    float animationLength = 2f; // 默认长度
+                    if (segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
+                    {
+                        animationLength = segment.AnimationClipTrans.Clip.length;
+                    }
+            
+                    // 计算绝对触发时间：segment开始时间 + (归一化时间 × 动画长度)
+                    absoluteTriggerTime = segment.StartTime + (soundData.StartTime * animationLength);
                     break;
                 }
             }
@@ -1684,6 +1878,11 @@ public class SkillEditorWindow : EditorWindow
         if (volumeField != null)
         {
             volumeField.SetValueWithoutNotify(soundData.Volume);
+        }
+        //TODO 需要添加时长显示面板
+        if (soundData.Clip != null)
+        {
+            clipItem.Length = soundData.Clip.length;
         }
     }
     
@@ -1721,10 +1920,12 @@ public class SkillEditorWindow : EditorWindow
     {
         if (clipNameField != null) clipNameField.SetValueWithoutNotify("");
         if (startTimeField != null) startTimeField.SetValueWithoutNotify(0f);
+        if (frameField != null) frameField.SetValueWithoutNotify(0);
         
         // Animation字段
         if (animationClipField != null) animationClipField.SetValueWithoutNotify(null);
         if (speedField != null) speedField.SetValueWithoutNotify(1f);
+        if (durationField != null) durationField.SetValueWithoutNotify(0f);
         if (fadeDurationField != null) fadeDurationField.SetValueWithoutNotify(0.25f);
         
         // Effect字段
@@ -1796,8 +1997,21 @@ public class SkillEditorWindow : EditorWindow
             }
             
             animClipItem.SegmentData.AnimationClipTrans.Clip = evt.newValue as UnityEngine.AnimationClip;
+            
+            // 更新Duration（根据新的动画Clip长度和速度）
+            if (animClipItem.SegmentData.AnimationClipTrans.Clip != null)
+            {
+                animClipItem.Length = animClipItem.SegmentData.AnimationClipTrans.Clip.length;
+            }
+            
             MarkAssetDirty();
             RefreshTrackContent();
+            
+            // 更新帧数显示（因为动画Clip改变了）
+            if (selectedClip == animClipItem)
+            {
+                UpdateAnimationClipProperties(animClipItem);
+            }
         }
     }
     
@@ -1805,15 +2019,27 @@ public class SkillEditorWindow : EditorWindow
     {
         if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null)
         {
-            animClipItem.SegmentData.AnimationSpeed = Mathf.Max(0.01f, evt.newValue);
+            var speed = Mathf.Max(0.01f, evt.newValue);
             
             if (animClipItem.SegmentData.AnimationClipTrans != null)
             {
-                animClipItem.SegmentData.AnimationClipTrans.Speed = animClipItem.SegmentData.AnimationSpeed;
+                animClipItem.SegmentData.AnimationClipTrans.Speed = speed;
+                
+                // 更新Duration（根据新的速度）
+                if (animClipItem.SegmentData.AnimationClipTrans.Clip != null)
+                {
+                    animClipItem.Length = animClipItem.SegmentData.AnimationClipTrans.Clip.length;
+                }
             }
             
             MarkAssetDirty();
             RefreshTrackContent();
+            
+            // 更新帧数显示（因为速度改变了）
+            if (selectedClip == animClipItem)
+            {
+                UpdateAnimationClipProperties(animClipItem);
+            }
         }
     }
     
@@ -1851,10 +2077,17 @@ public class SkillEditorWindow : EditorWindow
             {
                 if (segment.VisualEffects.Contains(effectClipItem.EffectData))
                 {
-                    if (segment.Duration > 0)
+                    // 获取动画片段长度作为基准
+                    float animationLength = 2f; // 默认长度
+                    if (segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
                     {
-                        float normalizedTime = (absoluteTime - segment.StartTime) / segment.Duration;
-                        effectClipItem.EffectData.TriggerTime = Mathf.Clamp01(normalizedTime);
+                        animationLength = segment.AnimationClipTrans.Clip.length;
+                    }
+
+                    if (animationLength > 0)
+                    {
+                        float normalizedTime = (absoluteTime - segment.StartTime) / animationLength;
+                        effectClipItem.EffectData.StartTime = Mathf.Clamp01(normalizedTime);
                     }
                     break;
                 }
@@ -1868,8 +2101,9 @@ public class SkillEditorWindow : EditorWindow
     {
         if (selectedClip is EffectClipItem effectClipItem && effectClipItem.EffectData != null)
         {
-            effectClipItem.EffectData.Duration = Mathf.Max(0f, evt.newValue);
-            effectClipItem.Duration = effectClipItem.EffectData.Duration;
+            //TODO 这里有问题
+            effectClipItem.EffectData.StartTime = Mathf.Max(0f, evt.newValue);
+            effectClipItem.Length = effectClipItem.EffectData.EndTime;
             MarkAssetDirty();
             RefreshTrackContent();
         }
@@ -1904,10 +2138,17 @@ public class SkillEditorWindow : EditorWindow
             {
                 if (segment.SoundEffects.Contains(soundClipItem.SoundData))
                 {
-                    if (segment.Duration > 0)
+                    // 获取动画片段长度作为基准
+                    float animationLength = 2f; // 默认长度
+                    if (segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
                     {
-                        float normalizedTime = (absoluteTime - segment.StartTime) / segment.Duration;
-                        soundClipItem.SoundData.TriggerTime = Mathf.Clamp01(normalizedTime);
+                        animationLength = segment.AnimationClipTrans.Clip.length;
+                    }
+
+                    if (animationLength > 0)
+                    {
+                        float normalizedTime = (absoluteTime - segment.StartTime) / animationLength;
+                        soundClipItem.SoundData.StartTime = Mathf.Clamp01(normalizedTime);
                     }
                     break;
                 }
@@ -1943,34 +2184,44 @@ public class SkillEditorWindow : EditorWindow
     
     private void OnHitBoxStartTimeChanged(ChangeEvent<float> evt)
     {
-        if (selectedClip is HitBoxClipItem hitBoxClipItem && hitBoxClipItem.HitBoxData != null)
+        if (selectedClip is HitBoxClipItem hitBoxClipItem && hitBoxClipItem.HitBoxData != null && config != null)
         {
-            hitBoxClipItem.HitBoxData.StartTime = Mathf.Clamp01(evt.newValue);
-            
-            // 确保EndTime >= StartTime
-            if (hitBoxClipItem.HitBoxData.EndTime < hitBoxClipItem.HitBoxData.StartTime)
+            // 将绝对时间转换为归一化时间
+            float absoluteTime = evt.newValue;
+            foreach (var segment in config.Segments)
             {
-                hitBoxClipItem.HitBoxData.EndTime = hitBoxClipItem.HitBoxData.StartTime;
-                if (hitBoxEndTimeField != null)
+                if (segment.HitBoxes.Contains(hitBoxClipItem.HitBoxData))
                 {
-                    hitBoxEndTimeField.SetValueWithoutNotify(hitBoxClipItem.HitBoxData.EndTime);
-                }
-            }
-            
-            // 更新Clip的Duration（基于归一化时间）
-            if (config != null)
-            {
-                foreach (var segment in config.Segments)
-                {
-                    if (segment.HitBoxes.Contains(hitBoxClipItem.HitBoxData))
+                    // 获取动画片段长度作为基准
+                    float animationLength = 2f; // 默认长度
+                    if (segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
                     {
-                        float normalizedDuration = hitBoxClipItem.HitBoxData.EndTime - hitBoxClipItem.HitBoxData.StartTime;
-                        hitBoxClipItem.Duration = normalizedDuration * segment.Duration;
-                        break;
+                        animationLength = segment.AnimationClipTrans.Clip.length;
                     }
+
+                    if (animationLength > 0)
+                    {
+                        float normalizedStartTime = (absoluteTime - segment.StartTime) / animationLength;
+                        hitBoxClipItem.HitBoxData.StartTime = Mathf.Clamp01(normalizedStartTime);
+
+                        // 确保EndTime >= StartTime
+                        if (hitBoxClipItem.HitBoxData.EndTime < hitBoxClipItem.HitBoxData.StartTime)
+                        {
+                            hitBoxClipItem.HitBoxData.EndTime = hitBoxClipItem.HitBoxData.StartTime;
+                            if (hitBoxEndTimeField != null)
+                            {
+                                hitBoxEndTimeField.SetValueWithoutNotify(hitBoxClipItem.HitBoxData.EndTime);
+                            }
+                        }
+
+                        // 更新Clip的Duration（基于归一化时间）
+                        float normalizedDuration = hitBoxClipItem.HitBoxData.EndTime - hitBoxClipItem.HitBoxData.StartTime;
+                        hitBoxClipItem.Length = normalizedDuration * animationLength;
+                    }
+                    break;
                 }
             }
-            
+
             MarkAssetDirty();
             RefreshTrackContent();
         }
@@ -1978,34 +2229,44 @@ public class SkillEditorWindow : EditorWindow
     
     private void OnHitBoxEndTimeChanged(ChangeEvent<float> evt)
     {
-        if (selectedClip is HitBoxClipItem hitBoxClipItem && hitBoxClipItem.HitBoxData != null)
+        if (selectedClip is HitBoxClipItem hitBoxClipItem && hitBoxClipItem.HitBoxData != null && config != null)
         {
-            hitBoxClipItem.HitBoxData.EndTime = Mathf.Clamp01(evt.newValue);
-            
-            // 确保EndTime >= StartTime
-            if (hitBoxClipItem.HitBoxData.EndTime < hitBoxClipItem.HitBoxData.StartTime)
+            // 将绝对时间转换为归一化时间
+            float absoluteTime = evt.newValue;
+            foreach (var segment in config.Segments)
             {
-                hitBoxClipItem.HitBoxData.EndTime = hitBoxClipItem.HitBoxData.StartTime;
-                if (hitBoxEndTimeField != null)
+                if (segment.HitBoxes.Contains(hitBoxClipItem.HitBoxData))
                 {
-                    hitBoxEndTimeField.SetValueWithoutNotify(hitBoxClipItem.HitBoxData.EndTime);
-                }
-            }
-            
-            // 更新Clip的Duration（基于归一化时间）
-            if (config != null)
-            {
-                foreach (var segment in config.Segments)
-                {
-                    if (segment.HitBoxes.Contains(hitBoxClipItem.HitBoxData))
+                    // 获取动画片段长度作为基准
+                    float animationLength = 2f; // 默认长度
+                    if (segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
                     {
-                        float normalizedDuration = hitBoxClipItem.HitBoxData.EndTime - hitBoxClipItem.HitBoxData.StartTime;
-                        hitBoxClipItem.Duration = normalizedDuration * segment.Duration;
-                        break;
+                        animationLength = segment.AnimationClipTrans.Clip.length;
                     }
+
+                    if (animationLength > 0)
+                    {
+                        float normalizedEndTime = (absoluteTime - segment.StartTime) / animationLength;
+                        hitBoxClipItem.HitBoxData.EndTime = Mathf.Clamp01(normalizedEndTime);
+
+                        // 确保EndTime >= StartTime
+                        if (hitBoxClipItem.HitBoxData.EndTime < hitBoxClipItem.HitBoxData.StartTime)
+                        {
+                            hitBoxClipItem.HitBoxData.EndTime = hitBoxClipItem.HitBoxData.StartTime;
+                            if (hitBoxEndTimeField != null)
+                            {
+                                hitBoxEndTimeField.SetValueWithoutNotify(hitBoxClipItem.HitBoxData.EndTime);
+                            }
+                        }
+
+                        // 更新Clip的Duration（基于归一化时间）
+                        float normalizedDuration = hitBoxClipItem.HitBoxData.EndTime - hitBoxClipItem.HitBoxData.StartTime;
+                        hitBoxClipItem.Length = normalizedDuration * animationLength;
+                    }
+                    break;
                 }
             }
-            
+
             MarkAssetDirty();
             RefreshTrackContent();
         }
@@ -2140,7 +2401,9 @@ public class SkillEditorWindow : EditorWindow
 
                 // 计算实际播放时间
                 currentPlaybackTime = newX / pixelsPerSecond;
-                currentPlaybackTime = Mathf.Max(0f, currentPlaybackTime); // 确保不为负
+                // 限制在clip的最大时间范围内
+                float maxClipTime = GetMaxClipEndTime();
+                currentPlaybackTime = Mathf.Clamp(currentPlaybackTime, 0f, maxClipTime);
 
                 // 更新位置
                 UpdatePlayheadPosition();
@@ -2196,7 +2459,9 @@ public class SkillEditorWindow : EditorWindow
                     {
                         // 计算实际播放时间
                         currentPlaybackTime = newX / pixelsPerSecond;
-                        currentPlaybackTime = Mathf.Max(0f, currentPlaybackTime); // 确保不为负
+                        // 限制在clip的最大时间范围内
+                        float maxClipTime = GetMaxClipEndTime();
+                        currentPlaybackTime = Mathf.Clamp(currentPlaybackTime, 0f, maxClipTime);
 
                         UpdatePlayheadPosition();
                         UpdateAnimationPreview();
@@ -2215,12 +2480,20 @@ public class SkillEditorWindow : EditorWindow
         foreach (var segment in config.Segments)
         {
             float segmentStart = segment.StartTime;
-            float segmentEnd = segment.StartTime + segment.Duration;
+
+            // 获取动画片段长度作为segment持续时间
+            float animationLength = 2f; // 默认长度
+            if (segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
+            {
+                animationLength = segment.AnimationClipTrans.Clip.length;
+            }
+
+            float segmentEnd = segment.StartTime + animationLength;
 
             if (currentPlaybackTime >= segmentStart && currentPlaybackTime <= segmentEnd)
             {
                 // 计算在这个segment内的归一化时间 (0-1)
-                float normalizedTime = (currentPlaybackTime - segmentStart) / segment.Duration;
+                float normalizedTime = (currentPlaybackTime - segmentStart) / animationLength;
                 
                 // 这里可以更新Animancer的播放进度
                 // 示例：如果segment有对应的动画剪辑，可以设置时间
@@ -2257,9 +2530,6 @@ public class SkillEditorWindow : EditorWindow
         {
             timelineScrollView.RegisterCallback<WheelEvent>(OnTimelineWheel);
         }
-
-        // 不立即绘制，等待布局完成后再绘制（通过 GeometryChangedEvent 回调或延迟执行）
-        // 这样可以确保 timelineScrollView.layout.width 有正确的值
     }
     
     // 根据缩放级别获取数字标签显示间隔
@@ -2408,7 +2678,7 @@ public class SkillEditorWindow : EditorWindow
                         var clipItem = clipList[i];
 
                         float xPosition = clipItem.StartTime * pixelsPerSecond;
-                        float clipWidth = clipItem.Duration * pixelsPerSecond;
+                        float clipWidth = clipItem.Length * pixelsPerSecond;
 
                         clipElement.style.left = xPosition;
                         clipElement.style.width = clipWidth;
@@ -2558,6 +2828,89 @@ public class SkillEditorWindow : EditorWindow
         Debug.Log($"Loop clicked. Loop mode: {isLooping}");
     }
 
+    #endregion
+    
+    #region Animation Clip操作按钮
+    
+    /// <summary>
+    /// 添加特效按钮点击事件
+    /// </summary>
+    private void OnAddEffectButtonClicked()
+    {
+        if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null && config != null)
+        {
+            var segment = animClipItem.SegmentData;
+            
+            //TODO
+            // 创建新的特效数据
+            var newEffect = new VisualEffectData
+            {
+                Name = "New Effect",
+                StartTime = 0.5f, // 默认在中间触发
+                Length = 2.0f
+            };
+            
+            segment.VisualEffects.Add(newEffect);
+            
+            MarkAssetDirty();
+            RefreshTrackContent();
+            
+            Debug.Log($"已为AnimationClip {animClipItem.Name} 添加特效");
+        }
+    }
+    
+    /// <summary>
+    /// 添加音效按钮点击事件
+    /// </summary>
+    private void OnAddSoundButtonClicked()
+    {
+        if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null && config != null)
+        {
+            var segment = animClipItem.SegmentData;
+            
+            // 创建新的音效数据
+            var newSound = new SoundEffectData
+            {
+                Name = "New Sound",
+                StartTime = 0.5f, // 默认在中间触发
+                Volume = 1f
+            };
+            
+            segment.SoundEffects.Add(newSound);
+            
+            MarkAssetDirty();
+            RefreshTrackContent();
+            
+            Debug.Log($"已为AnimationClip {animClipItem.Name} 添加音效");
+        }
+    }
+    
+    /// <summary>
+    /// 添加Hitbox按钮点击事件
+    /// </summary>
+    private void OnAddHitboxButtonClicked()
+    {
+        if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null && config != null)
+        {
+            var segment = animClipItem.SegmentData;
+            
+            // 创建新的Hitbox数据
+            var newHitbox = new HitBoxData
+            {
+                ShapeType = HitShapeType.Box,
+                StartTime = 0.2f, // 默认开始时间
+                EndTime = 0.5f    // 默认结束时间
+            };
+            
+            segment.HitBoxes.Add(newHitbox);
+            
+            MarkAssetDirty();
+            RefreshTrackContent();
+            
+            Debug.Log($"已为AnimationClip {animClipItem.Name} 添加Hitbox");
+        }
+    }
+    
     #endregion
 
 }

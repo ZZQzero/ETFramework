@@ -79,7 +79,16 @@ namespace ET
             self.ApplyGravity(deltaTime);
 
             // 应用移动和旋转
-            if (!self.EnableMovement)
+            if (self.ExternalMotorActive)
+            {
+                // 外部运动驱动（攻击位移等）：由外部提供XZ速度，Y保持自定义重力计算结果
+                Vector3 v = self.CurrentVelocity;
+                v.x = self.ExternalMotorVelocity.x;
+                v.z = self.ExternalMotorVelocity.z;
+                self.CurrentVelocity = v;
+                self.Rigidbody.linearVelocity = self.CurrentVelocity;
+            }
+            else if (!self.EnableMovement)
             {
                 // 如果禁用移动，逐渐减速
                 self.ApplyDeceleration(deltaTime);
@@ -178,7 +187,7 @@ namespace ET
         {
             self.CurrentVelocity = Vector3.MoveTowards(
                 self.CurrentVelocity,
-                new Vector3(self.CurrentVelocity.x, 0, self.CurrentVelocity.y),
+                new Vector3(0f, self.CurrentVelocity.y, 0f),
                 self.Deceleration * deltaTime
             );
             

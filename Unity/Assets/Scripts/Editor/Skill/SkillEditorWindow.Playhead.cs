@@ -1,0 +1,256 @@
+﻿using UnityEditor;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+public partial class SkillEditorWindow : EditorWindow
+{
+    #region 播放进度条
+
+    // 当ScrollView滚动时更新playhead位置
+    private void OnTimelineScrollChanged(float value)
+    {
+        UpdatePlayheadPosition();
+    }
+
+     // 初始化播放进度条
+    private void InitPlayHead()
+    {
+        if (timelineContent == null) return;
+
+        // 创建播放进度条容器（只保留红色进度线，去掉箭头）
+        playheadElement = new VisualElement();
+        playheadElement.name = "Playhead";
+        playheadElement.AddToClassList("timeline-playhead");
+        playheadElement.style.position = Position.Absolute;
+        playheadElement.style.top = 0;
+        // 固定为线宽，确保不会出现负坐标/越界几何导致 ScrollView 误判需要横向滚动条
+        playheadElement.style.width = PLAYHEAD_WIDTH;
+        playheadElement.style.alignItems = Align.Center;
+        playheadElement.pickingMode = PickingMode.Position; // 允许接收鼠标事件
+
+        // 创建进度线（垂直红线）- 从顶部开始，连接到轨道底部
+        var playheadLine = new VisualElement();
+        playheadLine.name = "PlayheadLine";
+        playheadLine.AddToClassList("timeline-playhead-line");
+        playheadLine.style.position = Position.Absolute;
+        playheadLine.style.top = 0f;
+        playheadLine.style.left = 0f;
+        playheadLine.style.width = PLAYHEAD_LINE_WIDTH;
+        playheadLine.style.backgroundColor = new Color(1f, 0.3f, 0.3f, 1f);
+
+        // 将线添加到播放进度条容器
+        playheadElement.Add(playheadLine);
+
+        // 添加到内容容器，确保在最上层
+        timelineContent.Add(playheadElement);
+
+        // 设置初始位置
+        UpdatePlayheadPosition();
+
+        // 监听内容容器大小变化，更新播放进度条位置
+        timelineContent.RegisterCallback<GeometryChangedEvent>(evt => {
+            UpdatePlayheadPosition();
+        });
+
+        // 初始更新一次大小和位置
+        UpdatePlayheadSize();
+
+        // 设置拖动交互（点击/拖动进度线即可）
+        SetupPlayheadInteractions();
+    }
+
+    // 更新播放进度条的高度（从Ruler顶部到最后一个轨道底部）
+    private void UpdatePlayheadSize()
+    {
+        if (playheadElement == null || timelineContent == null) return;
+
+        // 计算高度：Ruler高度 + (轨道数量 * 轨道高度)
+        float height = RULER_HEIGHT;
+        
+        if (trackContainer != null && trackDataList != null && trackDataList.Count > 0)
+        {
+            // 使用trackContainer的实际高度，确保覆盖所有轨道
+            float trackContainerHeight = trackContainer.layout.height;
+            if (trackContainerHeight > 0)
+            {
+                height += trackContainerHeight;
+            }
+            else
+            {
+                // 如果layout还未计算，使用估算值
+                height += trackDataList.Count * TRACK_ITEM_HEIGHT;
+            }
+        }
+
+        playheadElement.style.height = height;
+        
+        // 更新进度线的高度（从顶部到轨道底部）
+        var playheadLine = playheadElement.Q<VisualElement>("PlayheadLine");
+        if (playheadLine != null)
+        {
+            playheadLine.style.height = height;
+            playheadLine.style.top = 0f;
+        }
+    }
+
+    // 更新播放进度条的位置
+    private void UpdatePlayheadPosition()
+    {
+        if (playheadElement == null) return;
+
+        // playhead在内容容器内的绝对位置（不需要减去滚动偏移）
+        float xPosition = currentPlaybackTime * pixelsPerSecond;
+        // 红线居中在时间位置，所以需要减去线宽的一半；同时 clamp 避免越界触发 ScrollView 横向滚动条。
+        float contentWidth = GetContentWidth();
+        float desiredLeft = xPosition - PLAYHEAD_HALF_WIDTH;
+        playheadElement.style.left = Mathf.Clamp(desiredLeft, 0f, Mathf.Max(0f, contentWidth - PLAYHEAD_WIDTH));
+        
+        // 更新时间显示
+        UpdateTimeLengthDisplay();
+    }
+    
+    // 更新时间长度显示
+    private void UpdateTimeLengthDisplay()
+    {
+        if (timeLengthLabel == null) return;
+        
+        // 获取clip的最大结束时间
+        float maxClipTime = GetMaxClipEndTime();
+        float displayMaxTime = maxClipTime > 0 ? maxClipTime : 0f;
+        
+        // 格式化显示：当前播放时间s / clip最大时间s
+        timeLengthLabel.text = $"{currentPlaybackTime:F2}s / {displayMaxTime:F2}s";
+    }
+
+    // 设置播放进度条的交互
+    private void SetupPlayheadInteractions()
+    {
+        if (playheadElement == null) return;
+
+        playheadElement.RegisterCallback<MouseDownEvent>(evt => {
+            // 点击播放条即可开始拖动
+            if (evt.button == 0)
+            {
+                isDraggingPlayhead = true;
+                playheadElement.CaptureMouse();
+                evt.StopPropagation();
+            }
+        });
+
+        // 鼠标移动 - 拖动过程
+        playheadElement.RegisterCallback<MouseMoveEvent>(evt => {
+            if (isDraggingPlayhead && playheadElement.HasMouseCapture())
+            {
+                // 获取相对于内容容器的鼠标位置
+                Vector2 localMousePos = timelineContent.WorldToLocal(evt.mousePosition);
+                float newX = localMousePos.x;
+
+                // 计算实际播放时间
+                currentPlaybackTime = newX / pixelsPerSecond;
+                // 限制在clip的最大时间范围内
+                float maxClipTime = GetMaxClipEndTime();
+                currentPlaybackTime = Mathf.Clamp(currentPlaybackTime, 0f, maxClipTime);
+
+                // 更新位置
+                UpdatePlayheadPosition();
+
+                // 更新动画预览
+                UpdateAnimationPreview();
+
+                evt.StopPropagation();
+            }
+        });
+
+        // 鼠标释放 - 结束拖动
+        playheadElement.RegisterCallback<MouseUpEvent>(evt => {
+            if (isDraggingPlayhead)
+            {
+                isDraggingPlayhead = false;
+                playheadElement.ReleaseMouse();
+                evt.StopPropagation();
+            }
+        });
+
+        // 在内容容器上也添加点击来移动播放进度条
+        if (timelineContent != null)
+        {
+            timelineContent.RegisterCallback<MouseDownEvent>(evt => {
+                // 如果点击的是轨道空白区域（不是clip），移动播放进度条
+                if (evt.button == 0 && !isDragging && !isDraggingPlayhead)
+                {
+                    Vector2 localMousePos = timelineContent.WorldToLocal(evt.mousePosition);
+                    float newX = localMousePos.x;
+                    
+                    // 检查是否点击在Ruler或轨道区域
+                    VisualElement target = evt.target as VisualElement;
+                    bool isOnRuler = target == timelineRuler;
+                    bool isOnTrack = false;
+                    
+                    // 检查是否在轨道区域内（通过向上查找父元素）
+                    if (target != null && trackContainer != null)
+                    {
+                        VisualElement parent = target.parent;
+                        while (parent != null && parent != timelineContent)
+                        {
+                            if (parent == trackContainer || parent.name == "track")
+                            {
+                                isOnTrack = true;
+                                break;
+                            }
+                            parent = parent.parent;
+                        }
+                    }
+                    
+                    if (isOnRuler || isOnTrack)
+                    {
+                        // 计算实际播放时间
+                        currentPlaybackTime = newX / pixelsPerSecond;
+                        // 限制在clip的最大时间范围内
+                        float maxClipTime = GetMaxClipEndTime();
+                        currentPlaybackTime = Mathf.Clamp(currentPlaybackTime, 0f, maxClipTime);
+
+                        UpdatePlayheadPosition();
+                        UpdateAnimationPreview();
+                    }
+                }
+            });
+        }
+    }
+    
+    // 更新动画预览（根据当前播放时间）
+    private void UpdateAnimationPreview()
+    {
+        if (animancer == null || config == null) return;
+
+        // 遍历所有segment，找到当前时间对应的segment和归一化时间
+        foreach (var segment in config.Segments)
+        {
+            float segmentStart = segment.StartTime;
+
+            // 获取动画片段长度作为segment持续时间
+            float animationLength = 2f; // 默认长度
+            if (segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
+            {
+                animationLength = segment.AnimationClipTrans.Clip.length;
+            }
+
+            float segmentEnd = segment.StartTime + (segment.Duration > 0f ? segment.Duration : animationLength);
+
+            if (currentPlaybackTime >= segmentStart && currentPlaybackTime <= segmentEnd)
+            {
+                // 计算在这个segment内的归一化时间 (0-1)
+                float normalizedTime = (currentPlaybackTime - segmentStart) / animationLength;
+                
+                // 这里可以更新Animancer的播放进度
+                // 示例：如果segment有对应的动画剪辑，可以设置时间
+                // animancer.Playable.SetTime(normalizedTime * clipLength);
+                
+                // 暂时只记录日志，你可以根据实际需求来实现动画预览
+                // Debug.Log($"Preview at time: {currentPlaybackTime:F3}s, segment: {segment.Name}, normalized: {normalizedTime:F3}");
+                break;
+            }
+        }
+    }
+
+    #endregion
+}

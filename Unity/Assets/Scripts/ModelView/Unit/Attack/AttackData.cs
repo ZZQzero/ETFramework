@@ -159,10 +159,10 @@ namespace ET
         public Vector3 Size = new Vector3(1f, 1f, 2f);
         
         /// <summary>判定开始时间（归一化 0-1）</summary>
-        public float StartTime = 0.2f;
-        
+        public float NormalizedStart = 0.2f;
+
         /// <summary>判定结束时间（归一化 0-1）</summary>
-        public float EndTime = 0.5f;
+        public float NormalizedEnd = 0.5f;
         
         /// <summary>击中效果（伤害、控制）</summary>
         public HitEffectData Effect = new HitEffectData();
@@ -193,10 +193,7 @@ namespace ET
         public GameObject Prefab;
         
         /// <summary>开始时间（归一化 0-1，相对于动画片段）</summary>
-        public float StartTime;
-        
-        /// <summary>结束时间（归一化 0-1，相对于动画片段）</summary>
-        public float EndTime;
+        public float NormalizedStart;
         
         /// <summary>相对角色的偏移量</summary>
         public Vector3 Offset;
@@ -221,10 +218,7 @@ namespace ET
         public AudioClip Clip;
         
         /// <summary>开始时间（归一化 0-1）</summary>
-        public float StartTime;
-        
-        /// <summary>结束时间（归一化 0-1，用于编辑器显示clip宽度）</summary>
-        public float EndTime;
+        public float NormalizedStart;
         
         /// <summary>音量（0-1）</summary>
         public float Volume = 1f;
@@ -243,10 +237,12 @@ namespace ET
         public float Distance = 0f;
         
         /// <summary>位移开始时间（归一化 0-1,相对于动画片段）</summary>
-        public float StartTime = 0f;
-        
+        [FormerlySerializedAs("StartTime")]
+        public float NormalizedStart = 0f;
+
         /// <summary>位移结束时间（归一化 0-1，相对于动画片段）</summary>
-        public float EndTime = 0.3f;
+        [FormerlySerializedAs("EndTime")]
+        public float NormalizedEnd = 0.3f;
         
         /// <summary>位移曲线</summary>
         public AnimationCurve MoveCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
@@ -280,6 +276,14 @@ namespace ET
 
         /// <summary>开始时间（秒，绝对时间）</summary>
         public float StartTime = 0f;
+        /// <summary>
+        /// 动画资源原始时长（秒，不受 Speed 影响）。用于在没有 AnimationClip 资源（例如服务端）时也能推导播放时长。
+        /// </summary>
+        public float ClipLength = 0f;
+        /// <summary>
+        /// 段持续时间（秒，绝对时间）。服务端/运行时用于把归一化子事件转换为绝对秒，不依赖 AnimationClip 资源。
+        /// </summary>
+        public float Duration = 0f;
 
         // === 时间窗口 ===
         /// <summary>时间窗口配置</summary>

@@ -617,8 +617,8 @@ namespace ET
                         if (hitBox == null)
                             continue;
 
-                        float start = Mathf.Clamp01(hitBox.StartTime);
-                        float end = Mathf.Clamp01(hitBox.EndTime);
+                        float start = Mathf.Clamp01(hitBox.NormalizedStart);
+                        float end = Mathf.Clamp01(hitBox.NormalizedEnd);
                         if (end <= start)
                             continue;
 
@@ -649,7 +649,7 @@ namespace ET
                         var vfx = segment.VisualEffects[i];
                         if (vfx == null)
                             continue;
-                        float t = Mathf.Clamp01(vfx.StartTime);
+                        float t = Mathf.Clamp01(vfx.NormalizedStart);
                         hint = events.Add(hint, t, () =>
                         {
                             if (self.CurrentAnimState != animState || self.CurrentSegment != segment || self.State != AttackState.Attacking)
@@ -668,7 +668,7 @@ namespace ET
                         var sfx = segment.SoundEffects[i];
                         if (sfx == null)
                             continue;
-                        float t = Mathf.Clamp01(sfx.StartTime);
+                        float t = Mathf.Clamp01(sfx.NormalizedStart);
                         hint = events.Add(hint, t, () =>
                         {
                             if (self.CurrentAnimState != animState || self.CurrentSegment != segment || self.State != AttackState.Attacking)
@@ -982,7 +982,7 @@ namespace ET
             float normalizedTime = self.CurrentNormalizedTime;
 
             // 检查是否在位移时间范围内
-            if (normalizedTime < movement.StartTime)
+            if (normalizedTime < movement.NormalizedStart)
             {
                 self.IsMovementActive = false;
                 if (self.CharacterController != null)
@@ -993,7 +993,7 @@ namespace ET
                 return;
             }
 
-            if (normalizedTime > movement.EndTime)
+            if (normalizedTime > movement.NormalizedEnd)
             {
                 self.IsMovementActive = false;
                 if (self.CharacterController != null)
@@ -1007,7 +1007,7 @@ namespace ET
             self.IsMovementActive = true;
 
             // 计算位移进度
-            float moveProgress = (normalizedTime - movement.StartTime) / (movement.EndTime - movement.StartTime);
+            float moveProgress = (normalizedTime - movement.NormalizedStart) / (movement.NormalizedEnd - movement.NormalizedStart);
             moveProgress = Mathf.Clamp01(moveProgress);
 
             // 应用曲线

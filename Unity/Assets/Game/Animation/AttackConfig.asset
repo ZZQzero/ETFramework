@@ -24,7 +24,7 @@ MonoBehaviour:
       Type: 0
       AnimationClipTrans:
         _FadeDuration: 0.25
-        _Speed: 0
+        _Speed: 1
         _Events:
           _NormalizedTimes: []
           _Callbacks: []
@@ -32,11 +32,10 @@ MonoBehaviour:
         _Clip: {fileID: 7400000, guid: 3aeb280aa07caa148891a47a136fcee4, type: 3}
         _NormalizedStartTime: NaN
       StartTime: 0
-      Duration: 0
       TimeWindow:
-        InputBufferStart: 0.5
-        CancelableTime: 0.4
-        AnimationEnd: 0.9
+        InputBufferStart: 0
+        CancelableTime: 0
+        AnimationEnd: 0.8
       HitBoxes:
       - Name: HitBox
         ShapeType: 0
@@ -57,14 +56,7 @@ MonoBehaviour:
           HitStopMs: 0
           TimeScale: 1
           TimeScaleDurationMs: 0
-      VisualEffects:
-      - Name: 
-        Prefab: {fileID: 5858237581049168134, guid: 4a8340ca2eb7b3d4e8a212d63df96324, type: 3}
-        StartTime: 0
-        EndTime: 0
-        Offset: {x: 0, y: 0, z: 0}
-        FollowTarget: 0
-        LifeTime: 2
+      VisualEffects: []
       SoundEffects:
       - Name: 
         Clip: {fileID: 0}
@@ -90,19 +82,18 @@ MonoBehaviour:
       Type: 0
       AnimationClipTrans:
         _FadeDuration: 0.25
-        _Speed: 0
+        _Speed: 1
         _Events:
           _NormalizedTimes: []
           _Callbacks: []
           _Names: []
         _Clip: {fileID: 7400000, guid: 506fbaf36141f7842ad5ad583349cc87, type: 3}
-        _NormalizedStartTime: 0
-      StartTime: 1.24
-      Duration: 0
+        _NormalizedStartTime: NaN
+      StartTime: 0.49673703
       TimeWindow:
-        InputBufferStart: 0.5
-        CancelableTime: 0.4
-        AnimationEnd: 0.9
+        InputBufferStart: 0
+        CancelableTime: 0
+        AnimationEnd: 0.8
       HitBoxes: []
       VisualEffects: []
       SoundEffects: []
@@ -132,12 +123,11 @@ MonoBehaviour:
           _Names: []
         _Clip: {fileID: 7400000, guid: d0d401bb3fc68574296f7ff69e81546c, type: 3}
         _NormalizedStartTime: NaN
-      StartTime: 2.54
-      Duration: 0
+      StartTime: 1.403282
       TimeWindow:
-        InputBufferStart: 0.5
-        CancelableTime: 0.4
-        AnimationEnd: 0.9
+        InputBufferStart: 0
+        CancelableTime: 0
+        AnimationEnd: 0.8
       HitBoxes: []
       VisualEffects: []
       SoundEffects: []
@@ -145,16 +135,16 @@ MonoBehaviour:
         EnableMovement: 0
         Distance: 0
         StartTime: 0
-        EndTime: 0.3
+        EndTime: 0
         MoveCurve:
           serializedVersion: 2
           m_Curve:
           - serializedVersion: 3
             time: 0
-            value: 0
+            value: 1
             inSlope: 0
             outSlope: 0
-            tangentMode: 0
+            tangentMode: 34
             weightedMode: 0
             inWeight: 0
             outWeight: 0
@@ -163,7 +153,7 @@ MonoBehaviour:
             value: 1
             inSlope: 0
             outSlope: 0
-            tangentMode: 0
+            tangentMode: 34
             weightedMode: 0
             inWeight: 0
             outWeight: 0
@@ -185,12 +175,11 @@ MonoBehaviour:
           _Names: []
         _Clip: {fileID: 7400000, guid: 6fd1fb8479e6a994f9e4cc7fb79d2ac2, type: 3}
         _NormalizedStartTime: NaN
-      StartTime: 3.98
-      Duration: 0
+      StartTime: 2.5954509
       TimeWindow:
-        InputBufferStart: 0.5
-        CancelableTime: 0.4
-        AnimationEnd: 0.9
+        InputBufferStart: 0
+        CancelableTime: 0
+        AnimationEnd: 0.8
       HitBoxes: []
       VisualEffects: []
       SoundEffects: []
@@ -198,7 +187,7 @@ MonoBehaviour:
         EnableMovement: 0
         Distance: 0
         StartTime: 0
-        EndTime: 0.3
+        EndTime: 0
         MoveCurve:
           serializedVersion: 2
           m_Curve:

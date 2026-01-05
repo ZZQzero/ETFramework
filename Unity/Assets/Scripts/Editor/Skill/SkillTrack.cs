@@ -27,7 +27,7 @@ namespace ET
         public string Name { get; set; }
         public TrackType Type { get; }
         public int Index { get; set; }
-        public float Length { get; set; }
+        public float Duration { get; set; }
         public float StartTime { get; set; }
         public int Frame  { get; set; } 
         public Color Color { get; set; }
@@ -36,7 +36,7 @@ namespace ET
     public class AnimationClipItem : IClipItem
     {
         public int Index { get; set; }
-        public float Length { get; set; }
+        public float Duration { get; set; }
         public float StartTime { get; set; }
         public int Frame { get; set; }
         public Color Color { get; set; }
@@ -58,7 +58,7 @@ namespace ET
     public class EffectClipItem : IClipItem
     {
         public int Index { get; set; }
-        public float Length { get; set; }
+        public float Duration { get; set; }
         public float StartTime { get; set; }
         public int Frame { get; set; }
         public Color Color { get; set; }
@@ -82,7 +82,7 @@ namespace ET
         public string Name { get; set; }
         public TrackType Type { get; } = TrackType.Sound;
         public int Index { get; set; }
-        public float Length { get; set; }
+        public float Duration { get; set; }
         public float StartTime { get; set; }
         public int Frame { get; set; }
         public Color Color { get; set; }
@@ -104,7 +104,7 @@ namespace ET
         public string Name { get; set; }
         public TrackType Type { get; } = TrackType.Hitbox;
         public int Index { get; set; }
-        public float Length { get; set; }
+        public float Duration { get; set; }
         public float StartTime { get; set; }
         public int Frame { get; set; }
         public Color Color { get; set; }

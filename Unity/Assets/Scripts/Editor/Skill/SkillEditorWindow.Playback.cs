@@ -12,6 +12,14 @@ public partial class SkillEditorWindow : EditorWindow
 {
     #region 播放控制按钮事件
 
+    private const string LOOPING_CLASS = "is-looping";
+
+    private void UpdateLoopButtonVisual()
+    {
+        var loopBtn = root?.Q<Button>("Loop");
+        loopBtn?.EnableInClassList(LOOPING_CLASS, isLooping);
+    }
+
     /// <summary>
     /// Play按钮点击事件
     /// </summary>
@@ -63,13 +71,7 @@ public partial class SkillEditorWindow : EditorWindow
         // 4. 如果使用 Animancer，设置 AnimancerState.IsLooping
         
         isLooping = !isLooping;
-        
-        // 更新按钮文字显示循环状态
-        var loopBtn = root.Q<Button>("Loop");
-        if (loopBtn != null)
-        {
-            loopBtn.text = isLooping ? "Loop: ON" : "Loop: OFF";
-        }
+        UpdateLoopButtonVisual();
         
         // 如果正在播放，更新动画循环设置
         if (isPlaying && animancer != null)

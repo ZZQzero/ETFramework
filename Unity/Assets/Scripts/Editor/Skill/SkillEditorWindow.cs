@@ -51,6 +51,9 @@ public partial class SkillEditorWindow : EditorWindow
     private FloatField speedField; // 播放速度字段
     private FloatField durationField; // 持续时间字段
     private FloatField fadeDurationField; // 过渡时间字段
+    private FloatField inputBufferStartField; // 输入缓冲开始（归一化 0-1）
+    private FloatField cancelableTimeField; // 可取消时间点（归一化 0-1）
+    private FloatField animationEndField; // 动画结束阈值（归一化 0-1）
     
     // Effect Clip字段
     private VisualElement effectFields; // Effect字段组
@@ -72,7 +75,10 @@ public partial class SkillEditorWindow : EditorWindow
     private FloatField hitBoxTriggerTimeField; // HitBox触发时间字段（只读，秒）
     private FloatField hitBoxNormalizedStartField; // HitBox归一化开始时间字段
     private FloatField hitBoxNormalizedEndField; // HitBox归一化结束时间字段
-    
+    private Vector3Field hitBoxOffsetField; // HitBox偏移（局部）
+    private Vector3Field hitBoxRotationField; // HitBox旋转（局部欧拉角）
+    private Vector3Field hitBoxSizeField; // HitBox尺寸
+
     // 操作按钮
     private Button addClipToTrackButton; // 添加Clip到轨道按钮
     private Button deleteClipButton; // 删除Clip按钮
@@ -210,6 +216,8 @@ public partial class SkillEditorWindow : EditorWindow
         {
             loopBtn.clicked += OnLoopButtonClicked;
         }
+        // 初始化 Loop 按钮颜色状态（不通过文字表达）
+        UpdateLoopButtonVisual();
         
         // 获取Left容器引用
         leftContainer = root.Q<VisualElement>("Left");
@@ -256,186 +264,6 @@ public partial class SkillEditorWindow : EditorWindow
         root.focusable = true;
     }
     
-    // 初始化Right面板UI元素
-    private void InitRightPanel()
-    {
-        // 先获取Right容器
-        var rightContainer = root.Q<VisualElement>("Right");
-        if (rightContainer == null)
-        {
-            Debug.LogWarning("Right容器未找到！");
-            return;
-        }
-        
-        // 获取轨道信息面板的UI元素
-        trackTypeLabel = rightContainer.Q<Label>("TrackTypeLabel");
-        clipCountLabel = rightContainer.Q<Label>("ClipCountLabel");
-        totalDurationLabel = rightContainer.Q<Label>("TotalDurationLabel");
-        
-        // 获取Clip属性面板的标题和字段组
-        clipPropertiesTitle = rightContainer.Q<Label>("ClipPropertiesTitle");
-        animationFields = rightContainer.Q<VisualElement>("AnimationFields");
-        effectFields = rightContainer.Q<VisualElement>("EffectFields");
-        soundFields = rightContainer.Q<VisualElement>("SoundFields");
-        hitBoxFields = rightContainer.Q<VisualElement>("HitBoxFields");
-        
-        // 获取通用字段
-        clipNameField = rightContainer.Q<TextField>("ClipNameField");
-        startTimeField = rightContainer.Q<FloatField>("StartTimeField");
-        frameField = rightContainer.Q<IntegerField>("FrameField");
-        clipLengthField = rightContainer.Q<FloatField>("ClipLengthField");
-        clipIndexLabel = rightContainer.Q<Label>("ClipIndexLabel");
-        
-        // 获取Animation Clip字段
-        animationActionButtons = rightContainer.Q<VisualElement>("AnimationActionButtons");
-        addEffectButton = rightContainer.Q<Button>("AddEffectButton");
-        addSoundButton = rightContainer.Q<Button>("AddSoundButton");
-        addHitboxButton = rightContainer.Q<Button>("AddHitboxButton");
-        animationClipField = rightContainer.Q<ObjectField>("AnimationClipField");
-        if (animationClipField != null)
-        {
-            animationClipField.objectType = typeof(UnityEngine.AnimationClip);
-        }
-        speedField = rightContainer.Q<FloatField>("SpeedField");
-        durationField = rightContainer.Q<FloatField>("DurationField");
-        fadeDurationField = rightContainer.Q<FloatField>("FadeDurationField");
-        
-        // 获取Effect Clip字段
-        effectPrefabField = rightContainer.Q<ObjectField>("EffectPrefabField");
-        if (effectPrefabField != null)
-        {
-            effectPrefabField.objectType = typeof(UnityEngine.GameObject);
-        }
-        effectTriggerTimeField = rightContainer.Q<FloatField>("EffectTriggerTimeField");
-        effectNormalizedStartField = rightContainer.Q<FloatField>("EffectNormalizedStartField");
-        followTargetField = rightContainer.Q<Toggle>("FollowTargetField");
-        
-        // 获取Sound Clip字段
-        audioClipField = rightContainer.Q<ObjectField>("AudioClipField");
-        if (audioClipField != null)
-        {
-            audioClipField.objectType = typeof(UnityEngine.AudioClip);
-        }
-        soundTriggerTimeField = rightContainer.Q<FloatField>("SoundTriggerTimeField");
-        soundNormalizedStartField = rightContainer.Q<FloatField>("SoundNormalizedStartField");
-        volumeField = rightContainer.Q<FloatField>("VolumeField");
-        
-        // 获取HitBox Clip字段
-        shapeTypeField = rightContainer.Q<EnumField>("ShapeTypeField");
-        if (shapeTypeField != null)
-        {
-            shapeTypeField.Init(HitShapeType.Box);
-        }
-        hitBoxTriggerTimeField = rightContainer.Q<FloatField>("HitBoxTriggerTimeField");
-        hitBoxNormalizedStartField = rightContainer.Q<FloatField>("HitBoxNormalizedStartField");
-        hitBoxNormalizedEndField = rightContainer.Q<FloatField>("HitBoxNormalizedEndField");
-        
-        // 获取操作按钮（使用root查找确保能找到嵌套的元素）
-        addClipToTrackButton = root.Q<Button>("AddClipToTrackButton");
-        deleteClipButton = root.Q<Button>("DeleteClipButton");
-        
-        // 注册操作按钮点击事件
-        if (addClipToTrackButton != null)
-        {
-            addClipToTrackButton.clicked += OnAddClipToTrackButtonClicked;
-        }
-        if (deleteClipButton != null)
-        {
-            deleteClipButton.clicked += OnDeleteClipButtonClicked;
-        }
-        
-        // 注册所有字段的值变化事件
-        if (clipNameField != null)
-        {
-            clipNameField.RegisterValueChangedCallback(OnClipNameChanged);
-        }
-        if (startTimeField != null)
-        {
-            startTimeField.RegisterValueChangedCallback(OnStartTimeChanged);
-        }
-        if (clipLengthField != null)
-        {
-            clipLengthField.RegisterValueChangedCallback(OnClipLengthChanged);
-        }
-        // Frame字段不注册回调，因为AnimationClip的帧数是只读的，由动画时长自动计算
-        if (addEffectButton != null)
-        {
-            addEffectButton.clicked += OnAddEffectButtonClicked;
-        }
-        if (addSoundButton != null)
-        {
-            addSoundButton.clicked += OnAddSoundButtonClicked;
-        }
-        if (addHitboxButton != null)
-        {
-            addHitboxButton.clicked += OnAddHitboxButtonClicked;
-        }
-        if (animationClipField != null)
-        {
-            animationClipField.RegisterValueChangedCallback(OnAnimationClipChanged);
-        }
-        if (speedField != null)
-        {
-            speedField.RegisterValueChangedCallback(OnSpeedChanged);
-        }
-        if (fadeDurationField != null)
-        {
-            fadeDurationField.RegisterValueChangedCallback(OnFadeDurationChanged);
-        }
-        if (effectPrefabField != null)
-        {
-            effectPrefabField.RegisterValueChangedCallback(OnEffectPrefabChanged);
-        }
-        if (effectTriggerTimeField != null)
-        {
-            // 触发时间只读显示
-            effectTriggerTimeField.SetEnabled(false);
-        }
-        if (effectNormalizedStartField != null)
-        {
-            effectNormalizedStartField.RegisterValueChangedCallback(OnEffectNormalizedStartChanged);
-        }
-        if (followTargetField != null)
-        {
-            followTargetField.RegisterValueChangedCallback(OnFollowTargetChanged);
-        }
-        if (audioClipField != null)
-        {
-            audioClipField.RegisterValueChangedCallback(OnAudioClipChanged);
-        }
-        if (soundTriggerTimeField != null)
-        {
-            // 触发时间只读显示
-            soundTriggerTimeField.SetEnabled(false);
-        }
-        if (soundNormalizedStartField != null)
-        {
-            soundNormalizedStartField.RegisterValueChangedCallback(OnSoundNormalizedStartChanged);
-        }
-        if (volumeField != null)
-        {
-            volumeField.RegisterValueChangedCallback(OnVolumeChanged);
-        }
-        if (shapeTypeField != null)
-        {
-            shapeTypeField.RegisterValueChangedCallback(OnShapeTypeChanged);
-        }
-        if (hitBoxNormalizedStartField != null)
-        {
-            hitBoxNormalizedStartField.RegisterValueChangedCallback(OnHitBoxNormalizedStartChanged);
-        }
-        if (hitBoxNormalizedEndField != null)
-        {
-            hitBoxNormalizedEndField.RegisterValueChangedCallback(OnHitBoxNormalizedEndChanged);
-        }
-        
-        // 初始状态：隐藏所有字段组
-        HideAllClipFields();
-        
-        // 初始状态：没有选中任何轨道或Clip
-        ClearSelection();
-    }
-
     private void OnObjectFieldChanged(ChangeEvent<Object> evt)
     {
         if (selectObj != null && selectObj.value != null &&

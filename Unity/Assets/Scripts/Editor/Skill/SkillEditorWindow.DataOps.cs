@@ -70,6 +70,10 @@ public partial class SkillEditorWindow : EditorWindow
         if (draggedClipItem is AnimationClipItem animationClipItem && animationClipItem.SegmentData != null)
         {
             animationClipItem.SegmentData.StartTime = draggedClipItem.StartTime;
+            // AnimationClip 移动时：子 clip 的归一化时间不变，因此需要重算它们的绝对时间
+            SyncOwnerChildClipsToOwner(animationClipItem);
+            // AnimationEnd：与下一段的重叠保持一致（拖拽/手填 StartTime 后同步重算）
+            RecomputeAnimationEndsAround(animationClipItem);
             dataChanged = true;
         }
         // Effect/Sound/HitBox：需要根据所在 Segment 计算归一化时间（依赖 config）
@@ -103,6 +107,9 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
+        // 同步清理 lane 映射（避免删除后出现空白行/高度不收缩）
+        laneIndexByClip.Remove(clipItem);
+
         bool dataChanged = false;
 
         if (clipItem is AnimationClipItem animClipItem)
@@ -124,6 +131,7 @@ public partial class SkillEditorWindow : EditorWindow
                     {
                         foreach (var effectClip in effectTrack.ClipList)
                         {
+                            laneIndexByClip.Remove(effectClip);
                             if (effectClip.EffectData != null)
                             {
                                 foreach (var segment in config.Segments)
@@ -141,6 +149,7 @@ public partial class SkillEditorWindow : EditorWindow
                     {
                         foreach (var soundClip in soundTrack.ClipList)
                         {
+                            laneIndexByClip.Remove(soundClip);
                             if (soundClip.SoundData != null)
                             {
                                 foreach (var segment in config.Segments)
@@ -158,6 +167,7 @@ public partial class SkillEditorWindow : EditorWindow
                     {
                         foreach (var hitBoxClip in hitBoxTrack.ClipList)
                         {
+                            laneIndexByClip.Remove(hitBoxClip);
                             if (hitBoxClip.HitBoxData != null)
                             {
                                 foreach (var segment in config.Segments)
@@ -451,5 +461,6 @@ public partial class SkillEditorWindow : EditorWindow
 
         return newTrack;
     }
+
 }
 

@@ -7,7 +7,295 @@ using UnityEngine.UIElements;
 
 public partial class SkillEditorWindow : EditorWindow
 {
-    // Timeline UI：构建轨道与 Clip 视图 + 交互（点击/拖拽/重叠提示）
+    private const float LANE_PADDING_Y = 2f;
+    private const float LANE_GAP_Y = 4f;
+    private const float LANE_ROW_HEIGHT = CLIP_ITEM_HEIGHT + LANE_GAP_Y;
+    
+    private readonly Dictionary<IClipItem, int> laneIndexByClip = new();
+    private int draggingLaneIndex = -1;
+
+    // AnimationClip 拖拽时：缓存其子 clip 的 UI 元素，便于实时同步位置
+    private AnimationClipItem draggingOwnerAnimationClipItem;
+    private List<(IClipItem item, VisualElement element)> draggingOwnerChildClips;
+
+    private static bool IsLaneTrack(ITrackItem track)
+    {
+        return track is EffectTrack || track is SoundTrack || track is HitBoxTrack;
+    }
+
+    private static float GetLaneTopPx(int laneIndex)
+    {
+        return Mathf.RoundToInt(LANE_PADDING_Y + laneIndex * LANE_ROW_HEIGHT);
+    }
+
+    private void BuildDraggingOwnerChildClipCache(AnimationClipItem owner)
+    {
+        draggingOwnerAnimationClipItem = owner;
+        draggingOwnerChildClips = null;
+
+        if (owner == null || trackContainer == null)
+        {
+            return;
+        }
+
+        if (!animationClipTrackMap.TryGetValue(owner, out var tracks) || tracks == null || tracks.Count == 0)
+        {
+            return;
+        }
+
+        // 建立 userData(IClipItem) -> element 的快速映射
+        var clipElements = trackContainer.Query<VisualElement>(className: "timeline-clip").ToList();
+        var elementByClip = new Dictionary<IClipItem, VisualElement>(clipElements.Count);
+        for (int i = 0; i < clipElements.Count; ++i)
+        {
+            var el = clipElements[i];
+            if (el?.userData is IClipItem clip)
+            {
+                elementByClip[clip] = el;
+            }
+        }
+
+        var list = new List<(IClipItem item, VisualElement element)>(32);
+        foreach (var t in tracks)
+        {
+            switch (t)
+            {
+                case EffectTrack et:
+                    foreach (var c in et.ClipList)
+                    {
+                        if (c != null && elementByClip.TryGetValue(c, out var el))
+                        {
+                            list.Add((c, el));
+                        }
+                    }
+                    break;
+                case SoundTrack st:
+                    foreach (var c in st.ClipList)
+                    {
+                        if (c != null && elementByClip.TryGetValue(c, out var el))
+                        {
+                            list.Add((c, el));
+                        }
+                    }
+                    break;
+                case HitBoxTrack ht:
+                    foreach (var c in ht.ClipList)
+                    {
+                        if (c != null && elementByClip.TryGetValue(c, out var el))
+                        {
+                            list.Add((c, el));
+                        }
+                    }
+                    break;
+            }
+        }
+
+        draggingOwnerChildClips = list;
+    }
+
+    private void ClearDraggingOwnerChildClipCache()
+    {
+        draggingOwnerAnimationClipItem = null;
+        draggingOwnerChildClips = null;
+    }
+
+    private void UpdateDraggingOwnerChildClipPositions(float ownerStartTimeSeconds)
+    {
+        var owner = draggingOwnerAnimationClipItem;
+        var list = draggingOwnerChildClips;
+        if (owner == null || list == null || list.Count == 0)
+        {
+            return;
+        }
+
+        float ownerDuration = Mathf.Max(0f, owner.Duration);
+        var touchedTracks = new System.Collections.Generic.HashSet<VisualElement>();
+
+        for (int i = 0; i < list.Count; ++i)
+        {
+            var (item, el) = list[i];
+            if (item == null || el == null)
+            {
+                continue;
+            }
+
+            if (el.parent != null)
+            {
+                touchedTracks.Add(el.parent);
+            }
+
+            float start = item.StartTime;
+            float duration = Mathf.Max(0f, item.Duration);
+
+            switch (item)
+            {
+                case EffectClipItem effectClip when effectClip.EffectData != null:
+                    start = ownerStartTimeSeconds + effectClip.EffectData.NormalizedStart * ownerDuration;
+                    duration = Mathf.Max(0f, effectClip.Duration);
+                    break;
+                case SoundClipItem soundClip when soundClip.SoundData != null:
+                    start = ownerStartTimeSeconds + soundClip.SoundData.NormalizedStart * ownerDuration;
+                    duration = Mathf.Max(0f, soundClip.Duration);
+                    break;
+                case HitBoxClipItem hitBoxClip when hitBoxClip.HitBoxData != null:
+                    start = ownerStartTimeSeconds + hitBoxClip.HitBoxData.NormalizedStart * ownerDuration;
+                    duration = Mathf.Max(0f, (hitBoxClip.HitBoxData.NormalizedEnd - hitBoxClip.HitBoxData.NormalizedStart) * ownerDuration);
+                    break;
+            }
+
+            el.style.left = start * pixelsPerSecond;
+            el.style.width = Mathf.Max(duration * pixelsPerSecond, 20f);
+        }
+
+        // 子 clip 的 UI 位置变了：刷新所在轨道的重叠高亮（使用 UI 的 left 计算当前区间）
+        foreach (var trackElement in touchedTracks)
+        {
+            var clipElements = trackElement.Query<VisualElement>().Where(x => x is Label && x.userData is IClipItem).ToList();
+            HighlightOverlappingClips(trackElement, clipElements);
+        }
+    }
+
+    private void SyncOwnerChildClipsToOwner(AnimationClipItem owner)
+    {
+        if (owner == null)
+        {
+            return;
+        }
+
+        if (!animationClipTrackMap.TryGetValue(owner, out var tracks) || tracks == null)
+        {
+            return;
+        }
+
+        float ownerStart = owner.StartTime;
+        float ownerDuration = Mathf.Max(0f, owner.Duration);
+
+        foreach (var t in tracks)
+        {
+            switch (t)
+            {
+                case EffectTrack et:
+                    foreach (var c in et.ClipList)
+                    {
+                        if (c?.EffectData == null) continue;
+                        c.StartTime = ownerStart + c.EffectData.NormalizedStart * ownerDuration;
+                        c.Frame = Mathf.RoundToInt(Mathf.Max(0f, c.Duration) * 60f);
+                    }
+                    break;
+                case SoundTrack st:
+                    foreach (var c in st.ClipList)
+                    {
+                        if (c?.SoundData == null) continue;
+                        c.StartTime = ownerStart + c.SoundData.NormalizedStart * ownerDuration;
+                        c.Frame = Mathf.RoundToInt(Mathf.Max(0f, c.Duration) * 60f);
+                    }
+                    break;
+                case HitBoxTrack ht:
+                    foreach (var c in ht.ClipList)
+                    {
+                        if (c?.HitBoxData == null) continue;
+                        c.StartTime = ownerStart + c.HitBoxData.NormalizedStart * ownerDuration;
+                        c.Duration = Mathf.Max(0f, (c.HitBoxData.NormalizedEnd - c.HitBoxData.NormalizedStart) * ownerDuration);
+                        c.Frame = Mathf.RoundToInt(Mathf.Max(0f, c.Duration) * 60f);
+                    }
+                    break;
+            }
+        }
+    }
+
+    private void ApplyLaneLayoutIfNeeded(VisualElement trackElement, ITrackItem trackData, List<VisualElement> clipElements)
+    {
+        if (!IsLaneTrack(trackData))
+        {
+            // 固定高度轨道：维持原来的垂直居中
+            trackElement.style.height = TRACK_ITEM_HEIGHT;
+            trackElement.style.minHeight = TRACK_ITEM_HEIGHT;
+            for (int i = 0; i < clipElements.Count; ++i)
+            {
+                clipElements[i].style.top = GetClipTopOffset();
+            }
+            return;
+        }
+
+        if (clipElements == null || clipElements.Count == 0)
+        {
+            trackElement.style.height = TRACK_ITEM_HEIGHT;
+            trackElement.style.minHeight = TRACK_ITEM_HEIGHT;
+            return;
+        }
+
+        // 规则：新增永远追加 lane；刷新时压缩空洞 lane；拖拽不改 lane（重叠用高亮提示）。
+        var infos = new List<(VisualElement element, IClipItem item)>(clipElements.Count);
+        for (int i = 0; i < clipElements.Count; ++i)
+        {
+            var el = clipElements[i];
+            if (el?.userData is IClipItem item)
+            {
+                infos.Add((el, item));
+            }
+        }
+
+        // 1) 压缩空洞：oldLane -> newLane(0..n-1)
+        var usedOldLanes = new System.Collections.Generic.SortedSet<int>();
+        for (int i = 0; i < infos.Count; ++i)
+        {
+            var item = infos[i].item;
+            if (laneIndexByClip.TryGetValue(item, out int oldLane))
+            {
+                usedOldLanes.Add(Mathf.Max(0, oldLane));
+            }
+        }
+
+        if (usedOldLanes.Count > 0)
+        {
+            var remap = new Dictionary<int, int>(usedOldLanes.Count);
+            int newLane = 0;
+            foreach (var oldLane in usedOldLanes)
+            {
+                remap[oldLane] = newLane++;
+            }
+
+            // 只写回本轨道 clip，避免影响其它轨道
+            for (int i = 0; i < infos.Count; ++i)
+            {
+                var item = infos[i].item;
+                if (laneIndexByClip.TryGetValue(item, out int oldLane) && remap.TryGetValue(Mathf.Max(0, oldLane), out int mapped))
+                {
+                    laneIndexByClip[item] = mapped;
+                }
+            }
+        }
+
+        // 2) 未分配则追加 lane：max + 1
+        int maxLaneIndex = -1;
+        for (int i = 0; i < infos.Count; ++i)
+        {
+            var item = infos[i].item;
+            if (laneIndexByClip.TryGetValue(item, out int laneIndex))
+            {
+                maxLaneIndex = Mathf.Max(maxLaneIndex, laneIndex);
+            }
+        }
+
+        for (int i = 0; i < infos.Count; ++i)
+        {
+            var (el, item) = infos[i];
+            if (!laneIndexByClip.TryGetValue(item, out int laneIndex))
+            {
+                laneIndex = maxLaneIndex + 1;
+                laneIndexByClip[item] = laneIndex;
+                maxLaneIndex = laneIndex;
+            }
+
+            el.style.top = GetLaneTopPx(laneIndex);
+        }
+
+        int laneCount = Mathf.Max(1, maxLaneIndex + 1);
+        float neededHeight = LANE_PADDING_Y * 2f + laneCount * LANE_ROW_HEIGHT - LANE_GAP_Y; // 最后一行不额外加 gap
+        float finalHeight = Mathf.Max(TRACK_ITEM_HEIGHT, neededHeight);
+        trackElement.style.height = finalHeight;
+        trackElement.style.minHeight = finalHeight;
+    }
 
     // 仅清理轨道 UI（用于重新初始化数据前）
     private void ClearTrackUI()
@@ -198,7 +486,12 @@ public partial class SkillEditorWindow : EditorWindow
         trackElement.name = "track";
         trackElement.AddToClassList("timeline-track");
         trackElement.style.position = Position.Relative;
+        // 默认高度（lane 轨道会在创建完 clip 后二次调整）
         trackElement.style.height = TRACK_ITEM_HEIGHT;
+        trackElement.style.minHeight = TRACK_ITEM_HEIGHT;
+        // 关键：TrackContainer 在 UXML 里是 column + flex-grow，子元素默认允许 shrink，会把动态高度压扁，造成“lane 挤在一起/高度不对”。
+        trackElement.style.flexShrink = 0;
+        trackElement.style.flexGrow = 0;
         trackElement.style.overflow = Overflow.Visible; // 允许clip超出显示（ScrollView会处理滚动）
         trackElement.userData = trackData;
         trackData.Index = index;
@@ -254,8 +547,14 @@ public partial class SkillEditorWindow : EditorWindow
             }
         }
 
-        // 检测并高亮显示重叠区域
-        HighlightOverlappingClips(trackElement, clipElements);
+        // Lane 轨道化：Effect/Sound/HitBox 固定 lane（不自动重排）
+        ApplyLaneLayoutIfNeeded(trackElement, trackData, clipElements);
+
+        // 重叠高亮：AnimationTrack + lane 轨道都需要（lane 允许重叠）
+        if (trackData is AnimationTrack || IsLaneTrack(trackData))
+        {
+            HighlightOverlappingClips(trackElement, clipElements);
+        }
 
         return trackElement;
     }
@@ -336,6 +635,123 @@ public partial class SkillEditorWindow : EditorWindow
     }
 
     // 检测并高亮显示重叠的clip - 只高亮重叠部分
+    private readonly struct ClipRange
+    {
+        public readonly float Start;
+        public readonly float End;
+
+        public ClipRange(float start, float end)
+        {
+            this.Start = start;
+            this.End = end;
+        }
+    }
+
+    /// <summary>
+    /// 获取一个 Clip 的“当前区间”（秒）。
+    /// 说明：拖拽过程中布局可能尚未重算，因此优先使用 style.left（如果有），否则回退到 layout.x。
+    /// </summary>
+    private ClipRange GetClipRangeSeconds(VisualElement clipElement, IClipItem clipItem, bool isDraggingClip, float draggingLeftPx, float pixelsPerSecond)
+    {
+        float startSeconds;
+
+        if (isDraggingClip)
+        {
+            startSeconds = Mathf.Max(0f, draggingLeftPx / pixelsPerSecond);
+        }
+        else
+        {
+            // 非拖拽 clip：优先使用 UI 的当前位置（style.left/layout.x），避免拖拽联动时数据未写回导致高亮不更新
+            float leftPx = clipElement.style.left.keyword == StyleKeyword.Auto
+                ? clipElement.layout.x
+                : clipElement.style.left.value.value;
+            startSeconds = Mathf.Max(0f, leftPx / pixelsPerSecond);
+        }
+
+        float endSeconds = startSeconds + Mathf.Max(0f, clipItem.Duration);
+        return new ClipRange(startSeconds, endSeconds);
+    }
+
+    private static bool TryGetOverlap(in ClipRange a, in ClipRange b, out float overlapStart, out float overlapEnd, out float overlapDuration)
+    {
+        overlapStart = Mathf.Max(a.Start, b.Start);
+        overlapEnd = Mathf.Min(a.End, b.End);
+        overlapDuration = overlapEnd - overlapStart;
+        return overlapDuration > 0f;
+    }
+
+    private static float CalcOverlapRatio(float overlapDuration, in ClipRange a, in ClipRange b)
+    {
+        float total = Mathf.Max(a.End, b.End) - Mathf.Min(a.Start, b.Start);
+        if (total <= 0f)
+        {
+            return 0f;
+        }
+        return Mathf.Clamp01(overlapDuration / total);
+    }
+
+    private VisualElement CreateOverlapHighlight(float overlapStartSeconds, float overlapDurationSeconds, bool isDraggingRelated, float overlapRatio, float highlightTopPx, float highlightHeightPx)
+    {
+        // 创建高亮覆盖层，只覆盖重叠部分
+        var highlightElement = new VisualElement();
+        highlightElement.AddToClassList("overlap-highlight");
+        highlightElement.style.position = Position.Absolute;
+
+        float highlightX = overlapStartSeconds * pixelsPerSecond;
+        float highlightWidth = overlapDurationSeconds * pixelsPerSecond;
+        float highlightY = highlightTopPx;
+        float highlightHeight = highlightHeightPx;
+
+        highlightElement.style.left = highlightX;
+        highlightElement.style.top = highlightY;
+        highlightElement.style.width = highlightWidth;
+        highlightElement.style.height = highlightHeight;
+
+        // 根据是否涉及被拖动 clip + 重叠程度调整颜色深度
+        if (isDraggingRelated)
+        {
+            // 被拖动clip的重叠 - 使用更明显的颜色（红色系）
+            highlightElement.style.backgroundColor = Color.Lerp(
+                new Color(1f, 1f, 0f, 0.5f),  // 浅黄色（轻微重叠）
+                new Color(1f, 0f, 0f, 0.8f),   // 红色（高度重叠）
+                overlapRatio
+            );
+            highlightElement.style.borderTopWidth = 3;
+            highlightElement.style.borderTopColor = new Color(1f, 0.2f, 0f, 1f);
+            highlightElement.style.borderBottomWidth = 3;
+            highlightElement.style.borderBottomColor = new Color(1f, 0.2f, 0f, 1f);
+        }
+        else
+        {
+            // 普通重叠 - 橙色系
+            highlightElement.style.backgroundColor = Color.Lerp(
+                new Color(1f, 1f, 0f, 0.3f),
+                new Color(1f, 0.4f, 0f, 0.7f),
+                overlapRatio
+            );
+            highlightElement.style.borderTopWidth = 2;
+            highlightElement.style.borderTopColor = new Color(1f, 0.6f, 0f, 0.9f);
+            highlightElement.style.borderBottomWidth = 2;
+            highlightElement.style.borderBottomColor = new Color(1f, 0.6f, 0f, 0.9f);
+        }
+
+        // 不接收鼠标事件，让下面的clip能正常交互
+        highlightElement.pickingMode = PickingMode.Ignore;
+        return highlightElement;
+    }
+
+    private VisualElement CreateOverlapHighlightForLane(float overlapStartSeconds, float overlapDurationSeconds, int laneIndex, bool isDraggingRelated, float overlapRatio)
+    {
+        return CreateOverlapHighlight(
+            overlapStartSeconds,
+            overlapDurationSeconds,
+            isDraggingRelated,
+            overlapRatio,
+            highlightTopPx: GetLaneTopPx(laneIndex),
+            highlightHeightPx: CLIP_ITEM_HEIGHT
+        );
+    }
+
     private void HighlightOverlappingClips(VisualElement trackElement, List<VisualElement> clipElements)
     {
         // 清除之前的所有高亮覆盖层
@@ -345,6 +761,10 @@ public partial class SkillEditorWindow : EditorWindow
             trackElement.Remove(highlight);
         }
 
+        bool isLaneTrack = trackElement.userData is ITrackItem t && IsLaneTrack(t);
+        float defaultTopPx = GetClipTopOffset();
+        float defaultHeightPx = CLIP_ITEM_HEIGHT;
+
         // 检测所有clip之间的重叠
         for (int i = 0; i < clipElements.Count; i++)
         {
@@ -352,8 +772,7 @@ public partial class SkillEditorWindow : EditorWindow
             var clipItem1 = clip1.userData as IClipItem;
             if (clipItem1 == null) continue;
 
-            float clip1Start = clipItem1.StartTime;
-            float clip1End = clipItem1.StartTime + clipItem1.Duration;
+            var r1 = GetClipRangeSeconds(clip1, clipItem1, isDraggingClip: false, draggingLeftPx: 0f, pixelsPerSecond);
 
             for (int j = i + 1; j < clipElements.Count; j++)
             {
@@ -361,55 +780,33 @@ public partial class SkillEditorWindow : EditorWindow
                 var clipItem2 = clip2.userData as IClipItem;
                 if (clipItem2 == null) continue;
 
-                float clip2Start = clipItem2.StartTime;
-                float clip2End = clipItem2.StartTime + clipItem2.Duration;
+                var r2 = GetClipRangeSeconds(clip2, clipItem2, isDraggingClip: false, draggingLeftPx: 0f, pixelsPerSecond);
 
                 // 检查是否重叠
-                if (clip1Start < clip2End && clip2Start < clip1End)
+                if (TryGetOverlap(in r1, in r2, out float overlapStart, out float overlapEnd, out float overlapDuration))
                 {
-                    // 计算重叠区域
-                    float overlapStart = Mathf.Max(clip1Start, clip2Start);
-                    float overlapEnd = Mathf.Min(clip1End, clip2End);
-                    float overlapDuration = overlapEnd - overlapStart;
+                    float overlapRatio = CalcOverlapRatio(overlapDuration, in r1, in r2);
 
-                    if (overlapDuration > 0)
+                    if (!isLaneTrack)
                     {
-                        // 计算重叠程度 (0-1)
-                        float totalDuration = Mathf.Max(clip1End, clip2End) - Mathf.Min(clip1Start, clip2Start);
-                        float overlapRatio = overlapDuration / totalDuration;
+                        trackElement.Add(CreateOverlapHighlight(overlapStart, overlapDuration, isDraggingRelated: false, overlapRatio, defaultTopPx, defaultHeightPx));
+                        continue;
+                    }
 
-                        // 创建高亮覆盖层，只覆盖重叠部分
-                        var highlightElement = new VisualElement();
-                        highlightElement.AddToClassList("overlap-highlight");
-                        highlightElement.style.position = Position.Absolute;
+                    // Lane 轨道：只画在发生重叠的 clip 所在 lane 高度上（不涂满整条轨道）
+                    if (!laneIndexByClip.TryGetValue(clipItem1, out int lane1))
+                    {
+                        lane1 = 0;
+                    }
+                    if (!laneIndexByClip.TryGetValue(clipItem2, out int lane2))
+                    {
+                        lane2 = 0;
+                    }
 
-                        float highlightX = overlapStart * pixelsPerSecond;
-                        float highlightWidth = overlapDuration * pixelsPerSecond;
-                        float highlightY = GetClipTopOffset();
-                        float highlightHeight = CLIP_ITEM_HEIGHT;
-
-                        highlightElement.style.left = highlightX;
-                        highlightElement.style.top = highlightY;
-                        highlightElement.style.width = highlightWidth;
-                        highlightElement.style.height = highlightHeight;
-
-                        // 根据重叠程度调整颜色深度
-                        Color highlightColor = Color.Lerp(
-                            new Color(1f, 1f, 0f, 0.3f),  // 浅黄色（轻微重叠）
-                            new Color(1f, 0.4f, 0f, 0.7f), // 深橙色（高度重叠）
-                            overlapRatio
-                        );
-
-                        highlightElement.style.backgroundColor = highlightColor;
-                        highlightElement.style.borderTopWidth = 2;
-                        highlightElement.style.borderTopColor = new Color(1f, 0.6f, 0f, 0.9f);
-                        highlightElement.style.borderBottomWidth = 2;
-                        highlightElement.style.borderBottomColor = new Color(1f, 0.6f, 0f, 0.9f);
-
-                        // 确保高亮层在clip之上但低于鼠标事件层级
-                        highlightElement.pickingMode = PickingMode.Ignore; // 不接收鼠标事件，让下面的clip能正常交互
-
-                        trackElement.Add(highlightElement);
+                    trackElement.Add(CreateOverlapHighlightForLane(overlapStart, overlapDuration, lane1, isDraggingRelated: false, overlapRatio));
+                    if (lane2 != lane1)
+                    {
+                        trackElement.Add(CreateOverlapHighlightForLane(overlapStart, overlapDuration, lane2, isDraggingRelated: false, overlapRatio));
                     }
                 }
             }
@@ -429,29 +826,23 @@ public partial class SkillEditorWindow : EditorWindow
         var draggingClipItem = draggingClip.userData as IClipItem;
         if (draggingClipItem == null) return;
 
-        // 计算拖拽clip的当前时间位置
-        float draggingClipStart = draggingClip.style.left.value.value / pixelsPerSecond;
-        float draggingClipEnd = draggingClipStart + draggingClipItem.Duration;
+        // 计算拖拽 clip 的当前像素位置（优先 style.left；如果未设置则回退到 layout.x）
+        float draggingLeftPx = draggingClip.style.left.keyword == StyleKeyword.Auto
+            ? draggingClip.layout.x
+            : draggingClip.style.left.value.value;
 
-        // 检测所有clip之间的重叠（包括被拖动clip与其他clip的重叠，以及其他clip之间的重叠）
+        bool isLaneTrack = trackElement.userData is ITrackItem t && IsLaneTrack(t);
+        float defaultTopPx = GetClipTopOffset();
+        float defaultHeightPx = CLIP_ITEM_HEIGHT;
+
+        // 检测所有clip之间的重叠（保持现有表现：包含“被拖动 clip 与其他 clip”的重叠，也包含“其他 clip 之间”的静态重叠）
         for (int i = 0; i < clipElements.Count; i++)
         {
             var clip1 = clipElements[i];
             var clipItem1 = clip1.userData as IClipItem;
             if (clipItem1 == null) continue;
 
-            // 对于被拖动的clip，使用当前位置；对于其他clip，使用存储的StartTime
-            float clip1Start, clip1End;
-            if (clip1 == draggingClip)
-            {
-                clip1Start = draggingClipStart;
-                clip1End = draggingClipEnd;
-            }
-            else
-            {
-                clip1Start = clipItem1.StartTime;
-                clip1End = clipItem1.StartTime + clipItem1.Duration;
-            }
+            var r1 = GetClipRangeSeconds(clip1, clipItem1, isDraggingClip: clip1 == draggingClip, draggingLeftPx, pixelsPerSecond);
 
             for (int j = i + 1; j < clipElements.Count; j++)
             {
@@ -459,136 +850,44 @@ public partial class SkillEditorWindow : EditorWindow
                 var clipItem2 = clip2.userData as IClipItem;
                 if (clipItem2 == null) continue;
 
-                // 对于被拖动的clip，使用当前位置；对于其他clip，使用存储的StartTime
-                float clip2Start, clip2End;
-                if (clip2 == draggingClip)
-                {
-                    clip2Start = draggingClipStart;
-                    clip2End = draggingClipEnd;
-                }
-                else
-                {
-                    clip2Start = clipItem2.StartTime;
-                    clip2End = clipItem2.StartTime + clipItem2.Duration;
-                }
+                var r2 = GetClipRangeSeconds(clip2, clipItem2, isDraggingClip: clip2 == draggingClip, draggingLeftPx, pixelsPerSecond);
 
                 // 检查是否重叠
-                if (clip1Start < clip2End && clip2Start < clip1End)
+                if (TryGetOverlap(in r1, in r2, out float overlapStart, out float overlapEnd, out float overlapDuration))
                 {
-                    // 计算重叠区域
-                    float overlapStart = Mathf.Max(clip1Start, clip2Start);
-                    float overlapEnd = Mathf.Min(clip1End, clip2End);
-                    float overlapDuration = overlapEnd - overlapStart;
+                    float overlapRatio = CalcOverlapRatio(overlapDuration, in r1, in r2);
+                    bool isDraggingRelated = (clip1 == draggingClip || clip2 == draggingClip);
 
-                    if (overlapDuration > 0)
+                    if (!isLaneTrack)
                     {
-                        // 计算重叠程度 (0-1)
-                        float totalDuration = Mathf.Max(clip1End, clip2End) - Mathf.Min(clip1Start, clip2Start);
-                        float overlapRatio = overlapDuration / totalDuration;
+                        trackElement.Add(CreateOverlapHighlight(overlapStart, overlapDuration, isDraggingRelated, overlapRatio, defaultTopPx, defaultHeightPx));
+                        continue;
+                    }
 
-                        // 判断是否涉及被拖动的clip，使用不同的颜色
-                        bool isDraggingRelated = (clip1 == draggingClip || clip2 == draggingClip);
+                    // Lane 轨道：只画在发生重叠的 clip 所在 lane 高度上
+                    int lane1 = clip1 == draggingClip
+                        ? Mathf.Max(0, draggingLaneIndex)
+                        : (laneIndexByClip.TryGetValue(clipItem1, out int l1) ? l1 : 0);
+                    int lane2 = clip2 == draggingClip
+                        ? Mathf.Max(0, draggingLaneIndex)
+                        : (laneIndexByClip.TryGetValue(clipItem2, out int l2) ? l2 : 0);
 
-                        // 创建高亮覆盖层，只覆盖重叠部分
-                        var highlightElement = new VisualElement();
-                        highlightElement.AddToClassList("overlap-highlight");
-                        highlightElement.style.position = Position.Absolute;
-
-                        float highlightX = overlapStart * pixelsPerSecond;
-                        float highlightWidth = overlapDuration * pixelsPerSecond;
-                        float highlightY = GetClipTopOffset();
-                        float highlightHeight = CLIP_ITEM_HEIGHT;
-
-                        highlightElement.style.left = highlightX;
-                        highlightElement.style.top = highlightY;
-                        highlightElement.style.width = highlightWidth;
-                        highlightElement.style.height = highlightHeight;
-
-                        // 根据是否涉及被拖动clip和重叠程度调整颜色深度
-                        Color highlightColor;
-                        if (isDraggingRelated)
-                        {
-                            // 被拖动clip的重叠 - 使用更明显的颜色（红色系）
-                            highlightColor = Color.Lerp(
-                                new Color(1f, 1f, 0f, 0.5f),  // 浅黄色（轻微重叠）
-                                new Color(1f, 0f, 0f, 0.8f),   // 红色（高度重叠）- 拖拽时更明显
-                                overlapRatio
-                            );
-                            highlightElement.style.borderTopWidth = 3;
-                            highlightElement.style.borderTopColor = new Color(1f, 0.2f, 0f, 1f);
-                            highlightElement.style.borderBottomWidth = 3;
-                            highlightElement.style.borderBottomColor = new Color(1f, 0.2f, 0f, 1f);
-                        }
-                        else
-                        {
-                            // 其他clip之间的重叠 - 使用普通颜色（橙色系）
-                            highlightColor = Color.Lerp(
-                                new Color(1f, 1f, 0f, 0.3f),  // 浅黄色（轻微重叠）
-                                new Color(1f, 0.4f, 0f, 0.7f), // 深橙色（高度重叠）
-                                overlapRatio
-                            );
-                            highlightElement.style.borderTopWidth = 2;
-                            highlightElement.style.borderTopColor = new Color(1f, 0.6f, 0f, 0.9f);
-                            highlightElement.style.borderBottomWidth = 2;
-                            highlightElement.style.borderBottomColor = new Color(1f, 0.6f, 0f, 0.9f);
-                        }
-
-                        highlightElement.style.backgroundColor = highlightColor;
-
-                        // 确保高亮层在clip之上但低于鼠标事件层级
-                        highlightElement.pickingMode = PickingMode.Ignore;
-
-                        trackElement.Add(highlightElement);
+                    trackElement.Add(CreateOverlapHighlightForLane(overlapStart, overlapDuration, lane1, isDraggingRelated, overlapRatio));
+                    if (lane2 != lane1)
+                    {
+                        trackElement.Add(CreateOverlapHighlightForLane(overlapStart, overlapDuration, lane2, isDraggingRelated, overlapRatio));
                     }
                 }
             }
         }
     }
 
-    // 拖拽结束后自动调整位置消除重叠
+    // 拖拽结束后的重叠处理：高亮刷新
     private void ResolveOverlapOnDragEnd(VisualElement trackElement, List<VisualElement> clipElements, VisualElement draggedClip)
     {
         var draggedClipItem = draggedClip.userData as IClipItem;
         if (draggedClipItem == null) return;
-
-        // 使用已经同步的StartTime
-        float draggedClipStart = draggedClipItem.StartTime;
-        float draggedClipEnd = draggedClipStart + draggedClipItem.Duration;
-
-        // 检测与其他clip的重叠
-        List<(VisualElement clip, float overlapStart, float overlapEnd)> overlappingClips = new List<(VisualElement, float, float)>();
-
-        foreach (var otherClip in clipElements)
-        {
-            if (otherClip == draggedClip) continue;
-
-            var otherClipItem = otherClip.userData as IClipItem;
-            if (otherClipItem == null) continue;
-
-            float otherClipStart = otherClipItem.StartTime;
-            float otherClipEnd = otherClipItem.StartTime + otherClipItem.Duration;
-
-            if (draggedClipStart < otherClipEnd && otherClipStart < draggedClipEnd)
-            {
-                float overlapStart = Mathf.Max(draggedClipStart, otherClipStart);
-                float overlapEnd = Mathf.Min(draggedClipEnd, otherClipEnd);
-                overlappingClips.Add((otherClip, overlapStart, overlapEnd));
-            }
-        }
-
-        // 拖拽结束，不自动调整位置，保持用户拖拽的确切位置；仅输出提示并重绘高亮
-        if (overlappingClips.Count > 0)
-        {
-            float totalOverlapDuration = 0f;
-            foreach (var (_, overlapStart, overlapEnd) in overlappingClips)
-            {
-                totalOverlapDuration += (overlapEnd - overlapStart);
-            }
-
-            float overlapRatio = totalOverlapDuration / draggedClipItem.Duration;
-            Debug.Log($"clip重叠检测 - 重叠占比: {overlapRatio:P1}, 位置保持不变");
-        }
-
+        
         HighlightOverlappingClips(trackElement, clipElements);
     }
 
@@ -640,6 +939,36 @@ public partial class SkillEditorWindow : EditorWindow
                 float currentLeft = clipElement.layout.x;
                 dragOffset = evt.mousePosition.x - currentLeft;
                 clipElement.AddToClassList("dragging"); // 添加拖拽样式类
+
+                // AnimationClip：缓存其子 clip 元素，用于拖拽时实时同步位置
+                if (clipElement.userData is AnimationClipItem animClipItem)
+                {
+                    BuildDraggingOwnerChildClipCache(animClipItem);
+                }
+                else
+                {
+                    ClearDraggingOwnerChildClipCache();
+                }
+
+                // Lane 轨道：记录 laneIndex，拖拽过程中保持垂直位置不跳动
+                draggingLaneIndex = -1;
+                var parentTrackElement = clipElement.parent;
+                if (parentTrackElement != null && parentTrackElement.userData is ITrackItem trackData && IsLaneTrack(trackData))
+                {
+                    if (clipElement.userData is IClipItem c && laneIndexByClip.TryGetValue(c, out int laneIdx))
+                    {
+                        draggingLaneIndex = laneIdx;
+                    }
+                    else
+                    {
+                        // 兜底：根据当前 top 反推 lane（避免 map 未命中的情况下跳动）
+                        float currentTopPx = clipElement.resolvedStyle.top;
+                        draggingLaneIndex = Mathf.Max(0, Mathf.RoundToInt((currentTopPx - LANE_PADDING_Y) / LANE_ROW_HEIGHT));
+                    }
+
+                    clipElement.style.top = GetLaneTopPx(draggingLaneIndex);
+                }
+
                 clipElement.CaptureMouse(); // 捕获鼠标，确保能接收鼠标移动事件
                 evt.StopPropagation(); // 阻止事件冒泡到轨道
             }
@@ -652,14 +981,60 @@ public partial class SkillEditorWindow : EditorWindow
             {
                 float newLeft = evt.mousePosition.x - dragOffset;
                 newLeft = Mathf.Max(0f, newLeft);
+
+                // 子 clip（Effect/Sound/HitBox）：StartTime 限制在所属 AnimationClip 的 0~1 区间内
+                if (clipElement.userData is IClipItem draggingItem && draggingItem is not AnimationClipItem)
+                {
+                    var owner = GetOwnerAnimationClipItem(draggingItem);
+                    if (owner != null)
+                    {
+                        float ownerStartPx = owner.StartTime * pixelsPerSecond;
+                        float ownerEndPx = (owner.StartTime + Mathf.Max(0f, owner.Duration)) * pixelsPerSecond;
+
+                        // HitBox：End 也必须落在 0~1 内，因此用 duration 反推最大可用 start
+                        if (draggingItem is HitBoxClipItem)
+                        {
+                            float durationPx = Mathf.Max(0f, draggingItem.Duration) * pixelsPerSecond;
+                            float ownerLenPx = Mathf.Max(0f, ownerEndPx - ownerStartPx);
+                            float maxStartPx = durationPx <= ownerLenPx ? (ownerEndPx - durationPx) : ownerStartPx;
+                            newLeft = Mathf.Clamp(newLeft, ownerStartPx, maxStartPx);
+                        }
+                        else
+                        {
+                            newLeft = Mathf.Clamp(newLeft, ownerStartPx, ownerEndPx);
+                        }
+                    }
+                }
                 clipElement.style.left = newLeft;
 
-                // 实时更新高亮区域
+                // AnimationClip：拖拽时实时同步更新其子 clip 的 UI 位置（保持归一化语义）
+                if (clipElement.userData is AnimationClipItem)
+                {
+                    float ownerStartTime = newLeft / pixelsPerSecond;
+                    ownerStartTime = Mathf.Max(0f, ownerStartTime);
+                    UpdateDraggingOwnerChildClipPositions(ownerStartTime);
+                }
+
                 var trackElement = clipElement.parent;
                 if (trackElement != null)
                 {
-                    var clipElements = trackElement.Query<VisualElement>().Where(x => x is Label && x.userData is IClipItem).ToList();
-                    HighlightDraggingClipOverlap(trackElement, clipElements, clipElement);
+                    // Lane 轨道：拖拽过程中固定 lane，不重排（避免上下跳动）；允许重叠并高亮提示
+                    if (trackElement.userData is ITrackItem trackData && IsLaneTrack(trackData))
+                    {
+                        if (draggingLaneIndex >= 0)
+                        {
+                            clipElement.style.top = GetLaneTopPx(draggingLaneIndex);
+                        }
+
+                        var clipElements = trackElement.Query<VisualElement>().Where(x => x is Label && x.userData is IClipItem).ToList();
+                        HighlightDraggingClipOverlap(trackElement, clipElements, clipElement);
+                    }
+                    else
+                    {
+                        // AnimationTrack：保持原来的拖拽重叠高亮提示
+                        var clipElements = trackElement.Query<VisualElement>().Where(x => x is Label && x.userData is IClipItem).ToList();
+                        HighlightDraggingClipOverlap(trackElement, clipElements, clipElement);
+                    }
                 }
 
                 evt.StopPropagation();
@@ -679,23 +1054,81 @@ public partial class SkillEditorWindow : EditorWindow
                 if (draggedClipItem != null)
                 {
                     isDragging = false;
-                    float currentStartTime = clipElement.style.left.value.value / pixelsPerSecond;
-                    draggedClipItem.StartTime = Mathf.Max(0f, currentStartTime);
+                    float currentLeftPx = clipElement.style.left.value.value;
+                    float currentStartTime = currentLeftPx / pixelsPerSecond;
+                    currentStartTime = Mathf.Max(0f, currentStartTime);
+
+                    // 子 clip（Effect/Sound/HitBox）：写回数据时同样做区间限制（只限制 StartTime，不限制 EndTime）
+                    if (draggedClipItem is not AnimationClipItem)
+                    {
+                        var owner = GetOwnerAnimationClipItem(draggedClipItem);
+                        if (owner != null)
+                        {
+                            float ownerStart = owner.StartTime;
+                            float ownerEnd = owner.StartTime + Mathf.Max(0f, owner.Duration);
+
+                            if (draggedClipItem is HitBoxClipItem hitBox)
+                            {
+                                // HitBox：Start/End 都必须在 owner 的 0~1 内；必要时压缩 duration
+                                float ownerLen = Mathf.Max(0f, ownerEnd - ownerStart);
+                                float duration = Mathf.Max(0f, hitBox.Duration);
+                                if (duration > ownerLen)
+                                {
+                                    duration = ownerLen;
+                                    hitBox.Duration = duration;
+                                    hitBox.Frame = Mathf.RoundToInt(duration * 60f);
+                                    clipElement.style.width = Mathf.Max(duration * pixelsPerSecond, 20f);
+                                }
+
+                                float maxStart = ownerEnd - duration;
+                                currentStartTime = Mathf.Clamp(currentStartTime, ownerStart, maxStart);
+                                clipElement.style.left = currentStartTime * pixelsPerSecond;
+                            }
+                            else
+                            {
+                                currentStartTime = Mathf.Clamp(currentStartTime, ownerStart, ownerEnd);
+                                clipElement.style.left = currentStartTime * pixelsPerSecond;
+                            }
+                        }
+                    }
+
+                    draggedClipItem.StartTime = currentStartTime;
 
                     // 写回Config/数据结构
                     SyncDraggedClipToConfig(draggedClipItem);
 
-                    clipElement.style.top = GetClipTopOffset();
                     UpdateClipProperties(draggedClipItem);
+
+                    // AnimationClip：拖拽结束后写回子 clip 的绝对时间，并更新其 UI 位置
+                    if (draggedClipItem is AnimationClipItem animClipItem)
+                    {
+                        SyncOwnerChildClipsToOwner(animClipItem);
+                        UpdateDraggingOwnerChildClipPositions(animClipItem.StartTime);
+                    }
                 }
 
-                // 重绘重叠高亮
                 var trackElement = clipElement.parent;
                 if (trackElement != null)
                 {
                     var clipElements = trackElement.Query<VisualElement>().Where(x => x is Label && x.userData is IClipItem).ToList();
-                    ResolveOverlapOnDragEnd(trackElement, clipElements, clipElement);
+
+                    // 拖拽结束后刷新布局：
+                    // - AnimationTrack：保留重叠提示逻辑
+                    // - Effect/Sound/HitBox：lane 轨道化重新分行（避免遮挡），不再做重叠高亮
+                    if (trackElement.userData is ITrackItem trackData && trackData is AnimationTrack)
+                    {
+                        ResolveOverlapOnDragEnd(trackElement, clipElements, clipElement);
+                    }
+                    else if (trackElement.userData is ITrackItem laneTrack && IsLaneTrack(laneTrack))
+                    {
+                        ApplyLaneLayoutIfNeeded(trackElement, laneTrack, clipElements);
+                        HighlightOverlappingClips(trackElement, clipElements);
+                    }
                 }
+
+                // 清理拖拽态
+                draggingLaneIndex = -1;
+                ClearDraggingOwnerChildClipCache();
 
                 UpdateTimelineContentWidth();
                 DrawTimelineRulerMarks();
@@ -744,7 +1177,183 @@ public partial class SkillEditorWindow : EditorWindow
             }
         });
 
+        // 支持从 Project 直接拖入 AnimationClip 到 AnimationTrack：自动创建对应的 Segment/Clip
+        // 只在 AnimationTrack 上启用，避免误把资源丢到子轨道（Effect/Sound/HitBox）导致不可预期的数据结构。
+        if (trackElement.userData is AnimationTrack)
+        {
+            trackElement.RegisterCallback<DragUpdatedEvent>(evt =>
+            {
+                if (config == null)
+                {
+                    return;
+                }
+
+                bool hasAnimationClip = false;
+                foreach (var obj in DragAndDrop.objectReferences)
+                {
+                    if (obj is AnimationClip)
+                    {
+                        hasAnimationClip = true;
+                        break;
+                    }
+                }
+
+                DragAndDrop.visualMode = hasAnimationClip ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Rejected;
+                if (hasAnimationClip)
+                {
+                    evt.StopPropagation();
+                }
+            });
+
+            trackElement.RegisterCallback<DragPerformEvent>(evt =>
+            {
+                if (config == null)
+                {
+                    return;
+                }
+
+                List<AnimationClip> clips = null;
+                foreach (var obj in DragAndDrop.objectReferences)
+                {
+                    if (obj is AnimationClip clip)
+                    {
+                        clips ??= new List<AnimationClip>();
+                        clips.Add(clip);
+                    }
+                }
+
+                if (clips == null || clips.Count == 0)
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                    return;
+                }
+
+                DragAndDrop.AcceptDrag();
+
+                // 计算落点时间（秒，绝对时间）
+                Vector2 localPos = trackElement.WorldToLocal(evt.mousePosition);
+                float x = Mathf.Max(0f, localPos.x);
+                float startTime = x / pixelsPerSecond;
+
+                AddAnimationClipsToAnimationTrack(clips, startTime);
+
+                evt.StopPropagation();
+            });
+        }
+
         trackElement.pickingMode = PickingMode.Position;
+    }
+
+    /// <summary>
+    /// AnimationClip 拖入 AnimationTrack 后：自动创建 SegmentData + AnimationClipItem 并刷新时间轴。
+    /// - 多选拖入时，按落点时间依次铺开，减少重叠
+    /// </summary>
+    private void AddAnimationClipsToAnimationTrack(List<AnimationClip> clips, float startTime)
+    {
+        if (clips == null || clips.Count == 0)
+        {
+            return;
+        }
+
+        if (config == null)
+        {
+            return;
+        }
+
+        // 确保全局 AnimationTrack 存在（InitData 里会创建；这里做兜底）
+        AnimationTrack animationTrack = null;
+        if (globalTrackDataList.Count > 0)
+        {
+            animationTrack = globalTrackDataList[0] as AnimationTrack;
+        }
+        if (animationTrack == null)
+        {
+            animationTrack = new AnimationTrack { Name = nameof(TrackType.Animation) };
+            globalTrackDataList.Insert(0, animationTrack);
+        }
+
+        float t = Mathf.Max(0f, startTime);
+        AnimationClipItem lastCreated = null;
+
+        foreach (var clip in clips)
+        {
+            if (clip == null)
+            {
+                continue;
+            }
+
+            // 1) 写入配置数据（Segment）
+            // 注意：Id 的语义由业务决定，这里沿用旧编辑器的默认策略：Id = Segments.Count
+            var segment = new AttackSegmentData
+            {
+                Id = config.Segments.Count,
+                Name = clip.name,
+                StartTime = t,
+                ClipLength = clip.length,
+            };
+
+            // 2) Animancer 过渡配置（用于客户端预览/编辑）
+            segment.AnimationClipTrans = new Animancer.ClipTransition
+            {
+                Clip = clip,
+                Speed = 1f,
+                FadeDuration = 0.25f,
+            };
+
+            // 3) 时间轴真实时长：Duration = ClipLength / Speed
+            float speed = Mathf.Max(0.01f, segment.AnimationClipTrans.Speed);
+            segment.Duration = segment.ClipLength / speed;
+
+            config.Segments.Add(segment);
+
+            // 4) 生成运行期 ClipItem（用于时间轴显示/选择）
+            var clipItem = new AnimationClipItem
+            {
+                SegmentData = segment,
+                Name = string.IsNullOrEmpty(segment.Name) ? clip.name : segment.Name,
+                StartTime = segment.StartTime,
+                Duration = segment.Duration,
+                Frame = Mathf.RoundToInt(segment.Duration * 60f),
+            };
+
+            // 5) 插入到 AnimationTrack（保持显示顺序接近时间顺序，但不影响 config.Segments）
+            int insertIndex = animationTrack.ClipList.Count;
+            for (int i = 0; i < animationTrack.ClipList.Count; ++i)
+            {
+                if (animationTrack.ClipList[i].StartTime > clipItem.StartTime)
+                {
+                    insertIndex = i;
+                    break;
+                }
+            }
+            animationTrack.ClipList.Insert(insertIndex, clipItem);
+
+            // 6) 同步编辑器侧的索引/映射
+            allAnimationClipItems.Insert(Mathf.Min(insertIndex, allAnimationClipItems.Count), clipItem);
+            animationClipTrackMap[clipItem] = new List<ITrackItem>();
+
+            lastCreated = clipItem;
+
+            // 多选拖入时默认依次铺开
+            t += clipItem.Duration;
+        }
+
+        if (lastCreated == null)
+        {
+            return;
+        }
+
+        // 选中：让局部视图能正确聚焦到新片段
+        selectedTrack = animationTrack;
+        selectedClip = lastCreated;
+
+        MarkAssetDirty();
+        ApplyViewModeAndRefresh();
+
+        // UI Toolkit 在部分拖拽回调里可能延迟重绘
+        trackContainer?.MarkDirtyRepaint();
+        root?.MarkDirtyRepaint();
+        Repaint();
     }
 
     // 更新所有clip的位置和宽度（用于缩放后统一刷新）
@@ -793,11 +1402,16 @@ public partial class SkillEditorWindow : EditorWindow
 
                         clipElement.style.left = xPosition;
                         clipElement.style.width = clipWidth;
-                        clipElement.style.top = GetClipTopOffset(); // 确保垂直居中（整数像素）
                     }
 
-                    // 重新检测并高亮显示重叠区域
-                    HighlightOverlappingClips(trackElement, clipElements);
+                    // Lane 轨道化：刷新 top 与轨道高度
+                    ApplyLaneLayoutIfNeeded(trackElement, trackData, clipElements);
+
+                    // 重叠高亮：AnimationTrack + lane 轨道都需要
+                    if (trackData is AnimationTrack || IsLaneTrack(trackData))
+                    {
+                        HighlightOverlappingClips(trackElement, clipElements);
+                    }
                 }
             }
         }

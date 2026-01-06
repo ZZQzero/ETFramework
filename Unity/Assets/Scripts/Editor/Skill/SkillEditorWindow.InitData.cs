@@ -1,4 +1,5 @@
-﻿using Animancer;
+﻿using System.Collections.Generic;
+using Animancer;
 using ET;
 using UnityEditor;
 using UnityEngine;
@@ -39,6 +40,8 @@ public partial class SkillEditorWindow : EditorWindow
         // 清空所有数据
         trackDataList.Clear();
         ClearTrackUI();
+        // 运行期 UI 状态：切换配置/重建时清空
+        laneIndexByClip.Clear();
         animationClipTrackMap.Clear();
         globalTrackDataList.Clear();
         allAnimationClipItems.Clear();
@@ -55,7 +58,7 @@ public partial class SkillEditorWindow : EditorWindow
                 AnimationClipItem clipItem = new AnimationClipItem();
 
                 // 初始化每个AnimationClipItem对应的子轨道映射
-                var localTrackList = new System.Collections.Generic.List<ITrackItem>();
+                var localTrackList = new List<ITrackItem>();
                 animationClipTrackMap[clipItem] = localTrackList;
 
                 // 添加到全局动画片段列表

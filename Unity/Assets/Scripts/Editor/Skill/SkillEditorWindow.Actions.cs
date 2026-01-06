@@ -127,9 +127,14 @@ public partial class SkillEditorWindow : EditorWindow
             // 获取或创建HitBox轨道
             var hitboxTrack = GetOrCreateTrackForAnimationClip<HitBoxTrack>(animClipItem, TrackType.Hitbox);
             hitboxTrack.ClipList.Add(hitboxClipItem);
+
+            // 选中新建 HitBox，方便立刻在 SceneView 里调整判定框
+            selectedTrack = hitboxTrack;
+            selectedClip = hitboxClipItem;
             
             MarkAssetDirty();
             ApplyViewModeAndRefresh();
+            SceneView.RepaintAll();
             
             Debug.Log($"已为AnimationClip {animClipItem.Name} 添加Hitbox");
         }

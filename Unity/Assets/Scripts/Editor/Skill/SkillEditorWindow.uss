@@ -51,6 +51,115 @@
 .timeline-clip.type-sound     { background-color: rgba(102, 204, 195, 0.5); border-color: rgba(71, 143, 71, 1.0); }
 .timeline-clip.type-hitbox    { background-color: rgba(149, 70, 214, 0.5);  border-color: rgba(160, 36, 36, 1.0); }
 
+/* 按钮按类型配色 */
+.action-button {
+    background-color: rgb(70, 70, 80);
+    border-width: 1px;
+    border-color: rgba(100, 100, 110, 0.8);
+    border-radius: 4px;
+    color: rgb(220, 220, 230);
+    font-size: 12px;
+    -unity-font-style: bold;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    margin-left: 2px;
+    margin-right: 2px;
+    margin-bottom: 4px;
+    min-width: 80px;
+    transition-duration: 0.15s;
+    transition-property: background-color, border-color, color;
+}
+
+.action-button:hover {
+    background-color: rgb(90, 90, 100);
+    border-color: rgba(130, 130, 140, 1.0);
+    color: rgb(255, 255, 255);
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.action-button:active {
+    background-color: rgb(50, 50, 60);
+    border-color: rgba(80, 80, 90, 0.9);
+}
+
+/* 特效按钮 - 绿色系 */
+.action-button.type-effect {
+    background-color: rgba(39, 223, 63, 0.6);
+    border-color: rgba(160, 71, 36, 0.8);
+}
+
+.action-button.type-effect:hover {
+    background-color: rgba(49, 233, 73, 0.7);
+    border-color: rgba(180, 81, 46, 1.0);
+    box-shadow: 0px 2px 6px rgba(39, 223, 63, 0.3);
+}
+
+/* 音效按钮 - 青色系 */
+.action-button.type-sound {
+    background-color: rgba(102, 204, 195, 0.6);
+    border-color: rgba(71, 143, 71, 0.8);
+}
+
+.action-button.type-sound:hover {
+    background-color: rgba(112, 214, 205, 0.7);
+    border-color: rgba(81, 153, 81, 1.0);
+    box-shadow: 0px 2px 6px rgba(102, 204, 195, 0.3);
+}
+
+/* 碰撞盒按钮 - 紫色系 */
+.action-button.type-hitbox {
+    background-color: rgba(149, 70, 214, 0.6);
+    border-color: rgba(160, 36, 36, 0.8);
+}
+
+.action-button.type-hitbox:hover {
+    background-color: rgba(159, 80, 224, 0.7);
+    border-color: rgba(180, 46, 46, 1.0);
+    box-shadow: 0px 2px 6px rgba(149, 70, 214, 0.3);
+}
+
+/* 添加动画片段按钮 - 蓝色系 */
+.action-button.type-animation {
+    background-color: rgba(51, 153, 229, 0.6);
+    border-color: rgba(36, 107, 160, 0.8);
+}
+
+.action-button.type-animation:hover {
+    background-color: rgba(61, 163, 239, 0.7);
+    border-color: rgba(46, 117, 170, 1.0);
+    box-shadow: 0px 2px 6px rgba(51, 153, 229, 0.3);
+}
+
+/* 轨道添加按钮特殊样式 - 更加突出 */
+.track-add-button {
+    background-color: rgba(51, 153, 229, 0.8);
+    border-width: 2px;
+    border-color: rgba(36, 107, 160, 1.0);
+    border-radius: 6px;
+    color: rgb(255, 255, 255);
+    font-size: 13px;
+    -unity-font-style: bold;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+    min-width: 120px;
+}
+
+.track-add-button:hover {
+    background-color: rgba(61, 163, 239, 0.9);
+    border-color: rgba(46, 117, 170, 1.0);
+}
+
+.track-add-button:active {
+    background-color: rgba(41, 143, 219, 0.8);
+    border-color: rgba(26, 97, 150, 1.0);
+}
+
 /* 选中高亮样式 */
 .timeline-track.is-selected {
     border-top-width: 1.2px;
@@ -172,15 +281,32 @@
     color: rgb(255, 255, 255);
 }
 
+.loop-button.is-looping {
+    background-color: rgb(60, 170, 60);
+    border-color: rgba(90, 220, 90, 1.0);
+    color: rgb(255, 255, 255);
+    box-shadow: 0px 2px 6px rgba(50, 150, 50, 0.25);
+}
+
 .loop-button:hover {
     background-color: rgb(60, 120, 200);
     border-color: rgba(90, 150, 240, 1.0);
     box-shadow: 0px 2px 4px rgba(50, 100, 180, 0.3);
 }
 
+.loop-button.is-looping:hover {
+    background-color: rgb(70, 190, 70);
+    border-color: rgba(110, 240, 110, 1.0);
+}
+
 .loop-button:active {
     background-color: rgb(40, 80, 160);
     border-color: rgba(60, 110, 200, 0.9);
+}
+
+.loop-button.is-looping:active {
+    background-color: rgb(50, 150, 50);
+    border-color: rgba(80, 210, 80, 0.9);
 }
 
 /* 播放时间显示样式 */

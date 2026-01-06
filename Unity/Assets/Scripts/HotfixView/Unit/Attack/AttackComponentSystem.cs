@@ -746,7 +746,7 @@ namespace ET
         {
             // 计算判定框世界坐标
             Vector3 worldPosition = self.Player.position + self.Player.rotation * hitBox.Offset;
-            Quaternion worldRotation = self.Player.rotation;
+            Quaternion worldRotation = self.Player.rotation * Quaternion.Euler(hitBox.RotationEuler);
 
             // 根据形状类型进行检测
             List<GameObject> hitTargets = null;
@@ -759,7 +759,7 @@ namespace ET
                     hitTargets = PhysicsHelper.OverlapSphere(worldPosition, hitBox.Size.x, LayerMask.GetMask("Enemy"));
                     break;
                 case HitShapeType.Fan:
-                    hitTargets = PhysicsHelper.OverlapFan(worldPosition, self.Player.forward, hitBox.Size.x, hitBox.Size.y, LayerMask.GetMask("Enemy"));
+                    hitTargets = PhysicsHelper.OverlapFan(worldPosition, worldRotation * Vector3.forward, hitBox.Size.x, hitBox.Size.y, LayerMask.GetMask("Enemy"));
                     break;
                 case HitShapeType.Capsule:
                     hitTargets = PhysicsHelper.OverlapCapsule(worldPosition, hitBox.Size.x, hitBox.Size.y, worldRotation, LayerMask.GetMask("Enemy"));

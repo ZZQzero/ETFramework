@@ -154,7 +154,11 @@ namespace ET
         
         /// <summary>相对角色的偏移</summary>
         public Vector3 Offset = new Vector3(0, 1f, 1f);
-        
+        /// <summary>
+        /// 判定旋转（欧拉角，局部空间，度）。
+        /// 说明：运行时会叠加到角色朝向上（worldRot = playerRot * Euler(RotationEuler)），用于更精细的挥砍/斜劈判定。
+        /// </summary>
+        public Vector3 RotationEuler = Vector3.zero;
         /// <summary>尺寸（Box: xyz, Sphere: x为半径, Fan: x为半径y为角度）</summary>
         public Vector3 Size = new Vector3(1f, 1f, 2f);
         

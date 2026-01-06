@@ -48,15 +48,19 @@
     <Analyzer Include="G:\Unity\Unity6.3\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.NormalizedTimeConversion.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\Helper\AssemblyTool.cs" />
     <Compile Include="Assets\Scripts\Editor\Proto\ProtoEditor.cs" />
+    <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.RightPanel.Refresh.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\InitEditor\DefineHelper.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\BuildEditor\BuildEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\Helper\ConfigJsonGenerator.cs" />
+    <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.SceneView.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\GlobalConfigEditor\GlobalConfigEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.Playhead.cs" />
     <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.Playback.cs" />
     <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.Ruler.cs" />
+    <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.RightPanel.Callbacks.cs" />
     <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.RightPanel.cs" />
     <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.Actions.cs" />
     <Compile Include="Assets\Scripts\Editor\ComponentViewEditor\ETSceneNodeGraph.cs" />
@@ -73,10 +77,12 @@
     <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.ViewMode.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\ServerCommandLineEditor\ServerCommandLineEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.InitData.cs" />
+    <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.AnimationOverlapSync.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\BuildEditor\BuildHelper.cs" />
     <Compile Include="Assets\Scripts\Editor\Skill\SkillTrack.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\Helper\EditorLogHelper.cs" />
     <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.Timeline.cs" />
+    <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.RightPanel.Renderers.cs" />
     <None Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.uxml" />
     <None Include="Assets\Scripts\Editor\ETClient.Editor.asmdef" />
     <None Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.uss" />

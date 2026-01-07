@@ -144,7 +144,7 @@ public partial class SkillEditorWindow : EditorWindow
             }
 
             el.style.left = start * pixelsPerSecond;
-            el.style.width = Mathf.Max(duration * pixelsPerSecond, 20f);
+            el.style.width = Mathf.Max(duration * pixelsPerSecond, MIN_CLIP_WIDTH_PX);
         }
 
         // 子 clip 的 UI 位置变了：刷新所在轨道的重叠高亮（使用 UI 的 left 计算当前区间）
@@ -618,7 +618,7 @@ public partial class SkillEditorWindow : EditorWindow
 
         // 根据开始时间和时长计算位置和宽度
         float xPosition = clipItem.StartTime * pixelsPerSecond;
-        float clipWidth = Mathf.Max(clipItem.Duration * pixelsPerSecond, 20f); // 最小宽度20像素
+        float clipWidth = Mathf.Max(clipItem.Duration * pixelsPerSecond, MIN_CLIP_WIDTH_PX); // 最小显示宽度
         clipElement.style.left = xPosition;
         clipElement.style.top = GetClipTopOffset(); // 垂直居中（整数像素）
         clipElement.style.height = CLIP_ITEM_HEIGHT;
@@ -1077,7 +1077,7 @@ public partial class SkillEditorWindow : EditorWindow
                                     duration = ownerLen;
                                     hitBox.Duration = duration;
                                     hitBox.Frame = Mathf.RoundToInt(duration * 60f);
-                                    clipElement.style.width = Mathf.Max(duration * pixelsPerSecond, 20f);
+                                    clipElement.style.width = Mathf.Max(duration * pixelsPerSecond, MIN_CLIP_WIDTH_PX);
                                 }
 
                                 float maxStart = ownerEnd - duration;

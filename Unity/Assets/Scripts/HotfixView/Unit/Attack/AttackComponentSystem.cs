@@ -109,6 +109,7 @@ namespace ET
             self.CurrentSegmentEnded = false;
             self.IsInputBufferWindowOpen = false;
             self.IsCancelWindowOpen = false;
+            self.AttackLayerFadeOutTimer = 0;
 
             // 退出时确保外部运动关闭，避免残留
             if (self.CharacterController != null)
@@ -177,7 +178,9 @@ namespace ET
                 // 已经进入后摇且本段自然结束：允许立刻从第一段重新起手（更丝滑）
                 if (self.State == AttackState.Recovery && self.CurrentSegmentEnded)
                 {
-                    self.ExitAttackState();
+                    // 方案A：重起手不应走完整 ExitAttackState（其中会淡出 AttackLayer 并触发退出语义）。
+                    // 这里做一次“软退出”，只清理必要状态，然后立刻起手第一段，保证手感丝滑且不会漏出 Idle。
+                    self.SoftExitForRestart();
                     return self.StartAttack(0, inputType);
                 }
                 return false;
@@ -283,7 +286,20 @@ namespace ET
             self.ResetSegmentState(segment);
 
             // 播放动画
-            var animState = self.AnimatorComponent.Animancer.Play(segment.AnimationClipTrans);
+            var attackLayer = self.AnimatorComponent.AttackLayer;
+            if (attackLayer == null)
+            {
+                // 兜底：某些初始化顺序下 AttackComponent 可能先于 AnimatorComponentSystem.Play 设置 AttackLayer
+                self.AnimatorComponent.Animancer.Layers.SetMinCount(2);
+                attackLayer = self.AnimatorComponent.Animancer.Layers[1];
+                attackLayer.Weight = 0f;
+                self.AnimatorComponent.AttackLayer = attackLayer;
+            }
+
+            // 若该层正处于淡出，先把目标拉回 1，避免“播放了攻击但层还在继续淡出”的情况
+            float fadeIn = Mathf.Max(0.05f, segment.AnimationClipTrans.FadeDuration);
+            attackLayer.StartFade(1f, fadeIn);
+            var animState = attackLayer.Play(segment.AnimationClipTrans);
             if (animState == null)
             {
                 Log.Error($"AttackComponent: Failed to play animation for segment {segmentIndex}");
@@ -297,6 +313,7 @@ namespace ET
             self.State = AttackState.Attacking;
             self.CurrentSegmentEnded = false;
             self.ClearBufferedInput();
+            self.CancelAttackLayerFadeOutTimer();
 
             // 锁定常规移动（避免攻击过程中输入移动与位移/硬直互相覆盖）
             if (self.CharacterController != null && !self.MovementLocked)
@@ -483,6 +500,10 @@ namespace ET
 
             // 没有后续攻击，进入后摇状态
             self.State = AttackState.Recovery;
+            self.ScheduleAttackLayerFadeOutTimer();
+            // 方案A：不在这里立刻淡出 AttackLayer。
+            // 原因：段结束到玩家点击下一次输入之间如果淡出，会短暂露出 Layer0 的 Move/Idle，造成“闪 idle”。
+            // AttackLayer 的淡出统一在 ExitAttackState（连击超时/取消/强制退出）里进行。
 
             // 后摇阶段不应继续外部位移
             if (self.CharacterController != null)
@@ -749,43 +770,53 @@ namespace ET
             Quaternion worldRotation = self.Player.rotation * Quaternion.Euler(hitBox.RotationEuler);
 
             // 根据形状类型进行检测
-            List<GameObject> hitTargets = null;
-            switch (hitBox.ShapeType)
+            var hitTargets = ListComponent<GameObject>.Create();
+            var layer = LayerMask.GetMask("Enemy");
+            try
             {
-                case HitShapeType.Box:
-                    hitTargets = PhysicsHelper.OverlapBox(worldPosition, hitBox.Size * 0.5f, worldRotation, LayerMask.GetMask("Enemy"));
-                    break;
-                case HitShapeType.Sphere:
-                    hitTargets = PhysicsHelper.OverlapSphere(worldPosition, hitBox.Size.x, LayerMask.GetMask("Enemy"));
-                    break;
-                case HitShapeType.Fan:
-                    hitTargets = PhysicsHelper.OverlapFan(worldPosition, worldRotation * Vector3.forward, hitBox.Size.x, hitBox.Size.y, LayerMask.GetMask("Enemy"));
-                    break;
-                case HitShapeType.Capsule:
-                    hitTargets = PhysicsHelper.OverlapCapsule(worldPosition, hitBox.Size.x, hitBox.Size.y, worldRotation, LayerMask.GetMask("Enemy"));
-                    break;
+                switch (hitBox.ShapeType)
+                {
+                    case HitShapeType.Box:
+                        PhysicsHelper.OverlapBox(worldPosition, hitBox.Size * 0.5f, worldRotation, hitTargets, layer);
+                        break;
+                    case HitShapeType.Sphere:
+                        PhysicsHelper.OverlapSphere(worldPosition, hitBox.Size.x, hitTargets, layer);
+                        break;
+                    case HitShapeType.Fan:
+                        PhysicsHelper.OverlapFan(worldPosition, worldRotation * Vector3.forward, hitBox.Size.x, hitBox.Size.y, hitTargets, layer, hitBox.Size.z);
+                        break;
+                    case HitShapeType.Capsule:
+                        PhysicsHelper.OverlapCapsule(worldPosition, hitBox.Size.x, hitBox.Size.y, worldRotation, hitTargets, layer);
+                        break;
+                }
+
+                if (hitTargets.Count == 0)
+                {
+                    return;
+                }
+
+                // 处理命中目标
+                foreach (var target in hitTargets)
+                {
+                    if (target == null)
+                        continue;
+
+                    // 检查是否已命中过该目标
+                    if (self.HitTargetsThisSegment.Contains(target))
+                        continue;
+
+                    // 记录命中
+                    self.HitTargetsThisSegment.Add(target);
+                    self.HasHitThisSegment = true;
+                    self.TotalHitCount++;
+
+                    // 处理命中效果（使用 HitBox 的独立效果配置）
+                    self.ProcessHit(target, hitBox);
+                }
             }
-
-            if (hitTargets == null || hitTargets.Count == 0)
-                return;
-
-            // 处理命中目标
-            foreach (var target in hitTargets)
+            finally
             {
-                if (target == null)
-                    continue;
-
-                // 检查是否已命中过该目标
-                if (self.HitTargetsThisSegment.Contains(target))
-                    continue;
-
-                // 记录命中
-                self.HitTargetsThisSegment.Add(target);
-                self.HasHitThisSegment = true;
-                self.TotalHitCount++;
-
-                // 处理命中效果（使用 HitBox 的独立效果配置）
-                self.ProcessHit(target, hitBox);
+                ObjectPool.Recycle(hitTargets);
             }
         }
 
@@ -1048,9 +1079,37 @@ namespace ET
             }
 
             // 创建新定时器
-            int timeoutMs = self.Config?.ComboTimeoutMs ?? 800;
+            int timeoutMs = self.GetCurrentSegmentComboTimeoutMs();
             long timeoutTime = TimeInfo.Instance.ServerFrameTime() + timeoutMs;
             self.ComboTimeoutTimer = timerComponent.NewOnceTimer(timeoutTime, TimerInvokeType.AttackComboTimeout, self);
+        }
+
+        /// <summary>
+        /// 获取当前段的连击超时（毫秒）。
+        /// 规则：段超时 = 段时长(ms) + 段偏移(ComboTimeoutOffsetMs)，用于避免全局超时小于动画时长导致提前退出。
+        /// </summary>
+        private static int GetCurrentSegmentComboTimeoutMs(this AttackComponent self)
+        {
+            // 默认兜底
+            int fallback = self.Config?.ComboTimeoutMs ?? 800;
+
+            var seg = self.CurrentSegment;
+            if (seg == null)
+            {
+                return Mathf.Max(0, fallback);
+            }
+
+            float durSec = Mathf.Max(0f, seg.Duration);
+            // Duration 若异常为 0，则回退使用兜底超时，避免一直被判定为立即超时
+            if (durSec <= 0f)
+            {
+                return Mathf.Max(0, fallback);
+            }
+
+            int durMs = Mathf.RoundToInt(durSec * 1000f); //转成毫秒
+            int offsetMs = Mathf.Max(0, seg.ComboTimeoutOffsetMs);
+            int total = durMs + offsetMs;
+            return Mathf.Max(0, total);
         }
 
         /// <summary>
@@ -1058,7 +1117,6 @@ namespace ET
         /// </summary>
         public static void OnComboTimeout(this AttackComponent self)
         {
-            Log.Debug("AttackComponent: Combo timeout");
             self.ExitAttackState();
         }
         
@@ -1105,6 +1163,14 @@ namespace ET
             if (self.State == AttackState.Idle)
                 return;
 
+            // 退出攻击状态时，淡出攻击层
+            var attackLayer = self.AnimatorComponent?.AttackLayer;
+            if (attackLayer != null)
+            {
+                attackLayer.StartFade(0f, 0.12f);
+            }
+            self.CancelAttackLayerFadeOutTimer();
+
             int lastIndex = self.CurrentSegmentIndex;
 
             // 清理定时器
@@ -1133,6 +1199,111 @@ namespace ET
 
             Log.Debug("AttackComponent: Exited attack state");
         }
+
+        /// <summary>
+        /// 软退出（用于“最后一段结束后立刻重起手”）。
+        /// 目标：不淡出 AttackLayer，不触发退出语义（例如 ComboReset），只清理必要状态，避免闪 Idle。
+        /// </summary>
+        private static void SoftExitForRestart(this AttackComponent self)
+        {
+            // 清理定时器：避免旧的连击超时在新起手过程中触发
+            self.CleanupTimers();
+            self.CancelAttackLayerFadeOutTimer();
+            // 若还在顿帧中，结束顿帧（恢复动画速度）；但不淡出攻击层
+            if (self.State == AttackState.HitStop)
+            {
+                self.EndHitStop();
+            }
+
+            // 软重置攻击运行时状态：保持结构与 ResetState 一致，但不做攻击层淡出、不触发事件
+            self.State = AttackState.Idle;
+            self.CurrentSegmentIndex = -1;
+            self.CurrentSegment = null;
+            self.HasBufferedInput = false;
+            self.BufferedInputType = ComboInputType.None;
+            self.BufferedInputTime = 0;
+            self.HasHitThisSegment = false;
+            self.HitTargetsThisSegment.Clear();
+            self.IsMovementActive = false;
+            self.TrackTarget = null;
+            self.HitStopEndTime = 0;
+            self.CurrentSegmentEnded = false;
+            self.IsInputBufferWindowOpen = false;
+            self.IsCancelWindowOpen = false;
+            self.AttackLayerFadeOutTimer = 0;
+
+            // 确保外部运动关闭，避免残留
+            if (self.CharacterController != null)
+            {
+                self.CharacterController.ExternalMotorActive = false;
+                self.CharacterController.ExternalMotorVelocity = Vector3.zero;
+
+                // 恢复移动锁（重起手会在 StartAttack 再次锁定）
+                if (self.MovementLocked)
+                {
+                    self.CharacterController.EnableMovement = self.PrevEnableMovement;
+                    self.MovementLocked = false;
+                }
+            }
+        }
+
+        #region 方案A：AttackLayer 延迟淡出（定时器）
+
+        private static void CancelAttackLayerFadeOutTimer(this AttackComponent self)
+        {
+            var timerComponent = self.Root().GetComponent<TimerComponent>();
+            if (timerComponent != null && self.AttackLayerFadeOutTimer != 0)
+            {
+                timerComponent.Remove(ref self.AttackLayerFadeOutTimer);
+            }
+        }
+
+        private static void ScheduleAttackLayerFadeOutTimer(this AttackComponent self)
+        {
+            // 进入 Recovery 时启动一次性定时器：hold 后淡出 AttackLayer 露出 Layer0
+            var timerComponent = self.Root().GetComponent<TimerComponent>();
+            if (timerComponent == null)
+            {
+                return;
+            }
+
+            self.CancelAttackLayerFadeOutTimer();
+
+            int holdMs = self.Config?.RecoveryHoldMs ?? 200;
+            if (holdMs <= 0)
+            {
+                // 立刻淡出（不额外占用 Timer）
+                var attackLayer = self.AnimatorComponent?.AttackLayer;
+                if (attackLayer != null)
+                {
+                    attackLayer.StartFade(0f, 0.12f);
+                }
+                return;
+            }
+
+            long triggerTime = TimeInfo.Instance.ServerFrameTime() + holdMs;
+            self.AttackLayerFadeOutTimer = timerComponent.NewOnceTimer(triggerTime, TimerInvokeType.AttackLayerFadeOut, self);
+        }
+
+        public static void OnAttackLayerFadeOutTimer(this AttackComponent self)
+        {
+            // Timer 已触发：清掉 id，避免重复 Remove
+            self.AttackLayerFadeOutTimer = 0;
+
+            // 只有仍在 Recovery 且没有重新进入攻击时才淡出
+            if (self.IsDisposed || self.State != AttackState.Recovery)
+            {
+                return;
+            }
+
+            var attackLayer = self.AnimatorComponent?.AttackLayer;
+            if (attackLayer != null)
+            {
+                attackLayer.StartFade(0f, 0.12f);
+            }
+        }
+
+        #endregion
         
         #endregion
 

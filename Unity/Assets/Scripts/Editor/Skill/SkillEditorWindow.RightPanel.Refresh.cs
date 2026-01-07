@@ -59,6 +59,7 @@ public partial class SkillEditorWindow : EditorWindow
             if (trackTypeLabel != null) trackTypeLabel.text = "-";
             if (clipCountLabel != null) clipCountLabel.text = "-";
             if (totalDurationLabel != null) totalDurationLabel.text = "-";
+            UpdateGlobalConfigFields();
             RefreshSelectionHighlight();
             return;
         }
@@ -123,7 +124,33 @@ public partial class SkillEditorWindow : EditorWindow
         // 根据轨道类型显示/隐藏"添加Clip"按钮
         UpdateAddClipButtonVisibility(track);
 
+        // 同步全局参数显示（与轨道选择无关）
+        UpdateGlobalConfigFields();
+
         RefreshSelectionHighlight();
+    }
+
+    private void UpdateGlobalConfigFields()
+    {
+        bool hasConfig = config != null;
+
+        if (inputBufferWindowMsField != null)
+        {
+            inputBufferWindowMsField.SetEnabled(hasConfig);
+            inputBufferWindowMsField.SetValueWithoutNotify(hasConfig ? Mathf.Max(0, config.InputBufferWindowMs) : 0);
+        }
+
+        if (defaultHitStopMsField != null)
+        {
+            defaultHitStopMsField.SetEnabled(hasConfig);
+            defaultHitStopMsField.SetValueWithoutNotify(hasConfig ? Mathf.Max(0, config.DefaultHitStopMs) : 0);
+        }
+
+        if (recoveryHoldMsField != null)
+        {
+            recoveryHoldMsField.SetEnabled(hasConfig);
+            recoveryHoldMsField.SetValueWithoutNotify(hasConfig ? Mathf.Max(0, config.RecoveryHoldMs) : 0);
+        }
     }
 
     // 更新"添加Clip"按钮的可见性
@@ -298,6 +325,12 @@ public partial class SkillEditorWindow : EditorWindow
         if (inputBufferStartField != null) inputBufferStartField.SetValueWithoutNotify(0.5f);
         if (cancelableTimeField != null) cancelableTimeField.SetValueWithoutNotify(0.4f);
         if (animationEndField != null) animationEndField.SetValueWithoutNotify(0.9f);
+        if (comboTimeoutOffsetMsField != null) comboTimeoutOffsetMsField.SetValueWithoutNotify(200);
+        if (segmentTimeoutMsPreviewField != null)
+        {
+            segmentTimeoutMsPreviewField.SetValueWithoutNotify(0);
+            segmentTimeoutMsPreviewField.SetEnabled(false);
+        }
 
         // Effect字段
         if (effectPrefabField != null) effectPrefabField.SetValueWithoutNotify(null);
@@ -331,6 +364,20 @@ public partial class SkillEditorWindow : EditorWindow
         if (hitBoxOffsetField != null) hitBoxOffsetField.SetValueWithoutNotify(Vector3.zero);
         if (hitBoxRotationField != null) hitBoxRotationField.SetValueWithoutNotify(Vector3.zero);
         if (hitBoxSizeField != null) hitBoxSizeField.SetValueWithoutNotify(Vector3.one);
+
+        // HitEffectData / HitFeedbackData
+        if (hitEffectDamageMultiplierField != null) hitEffectDamageMultiplierField.SetValueWithoutNotify(1f);
+        if (hitEffectReactionField != null) hitEffectReactionField.SetValueWithoutNotify(HitReactionType.Light);
+        if (hitEffectKnockbackForceField != null) hitEffectKnockbackForceField.SetValueWithoutNotify(0f);
+        if (hitEffectKnockupForceField != null) hitEffectKnockupForceField.SetValueWithoutNotify(0f);
+        if (hitEffectHitStunMsField != null) hitEffectHitStunMsField.SetValueWithoutNotify(200);
+        if (hitEffectTargetStateField != null) hitEffectTargetStateField.SetValueWithoutNotify(TargetStateType.Any);
+
+        if (hitFeedbackShakeIntensityField != null) hitFeedbackShakeIntensityField.SetValueWithoutNotify(0f);
+        if (hitFeedbackShakeDurationField != null) hitFeedbackShakeDurationField.SetValueWithoutNotify(0f);
+        if (hitFeedbackHitStopMsField != null) hitFeedbackHitStopMsField.SetValueWithoutNotify(0);
+        if (hitFeedbackTimeScaleField != null) hitFeedbackTimeScaleField.SetValueWithoutNotify(1f);
+        if (hitFeedbackTimeScaleDurationMsField != null) hitFeedbackTimeScaleDurationMsField.SetValueWithoutNotify(0);
     }
 
     #endregion

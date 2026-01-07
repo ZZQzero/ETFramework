@@ -220,36 +220,7 @@ public partial class SkillEditorWindow : EditorWindow
     // 更新动画预览（根据当前播放时间）
     private void UpdateAnimationPreview()
     {
-        if (animancer == null || config == null) return;
-
-        // 遍历所有segment，找到当前时间对应的segment和归一化时间
-        foreach (var segment in config.Segments)
-        {
-            float segmentStart = segment.StartTime;
-
-            // 获取动画片段长度作为segment持续时间
-            float animationLength = 2f; // 默认长度
-            if (segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
-            {
-                animationLength = segment.AnimationClipTrans.Clip.length;
-            }
-
-            float segmentEnd = segment.StartTime + (segment.Duration > 0f ? segment.Duration : animationLength);
-
-            if (currentPlaybackTime >= segmentStart && currentPlaybackTime <= segmentEnd)
-            {
-                // 计算在这个segment内的归一化时间 (0-1)
-                float normalizedTime = (currentPlaybackTime - segmentStart) / animationLength;
-                
-                // 这里可以更新Animancer的播放进度
-                // 示例：如果segment有对应的动画剪辑，可以设置时间
-                // animancer.Playable.SetTime(normalizedTime * clipLength);
-                
-                // 暂时只记录日志，你可以根据实际需求来实现动画预览
-                // Debug.Log($"Preview at time: {currentPlaybackTime:F3}s, segment: {segment.Name}, normalized: {normalizedTime:F3}");
-                break;
-            }
-        }
+        SamplePreviewAnimation(currentPlaybackTime);
     }
 
     #endregion

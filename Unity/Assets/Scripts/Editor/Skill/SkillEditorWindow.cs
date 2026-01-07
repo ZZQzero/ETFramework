@@ -10,12 +10,13 @@ using Object = UnityEngine.Object;
 
 public partial class SkillEditorWindow : EditorWindow
 {
+    // 右侧面板宽度（像素）。ScrollView 出现滚动条后会占用部分宽度，为避免按钮/字段被挤压可适当调大。
+    private const float RIGHT_PANEL_WIDTH_PX = 380f;
     [SerializeField]
     private VisualTreeAsset m_VisualTreeAsset = default;
     private ObjectField selectConfigAsset;
     private ObjectField selectObj;
     private VisualElement trackContainer;
-    private ListView listView;
     private VisualElement timelineRuler;
     private VisualElement root;
     private VisualElement playheadElement; // 播放进度条
@@ -33,6 +34,11 @@ public partial class SkillEditorWindow : EditorWindow
     private Label clipCountLabel; // 片段数标签
     private Label totalDurationLabel; // 总时长标签
     private Label clipPropertiesTitle; // Clip属性标题
+
+    // AttackConfig 全局参数（显示在 TrackInfoPanel 下方）
+    private IntegerField inputBufferWindowMsField; // 输入缓冲有效期（ms）
+    private IntegerField defaultHitStopMsField; // 默认顿帧（ms）
+    private IntegerField recoveryHoldMsField; // 后摇保持（ms）
     
     // 通用字段
     private TextField clipNameField; // Clip名称输入框
@@ -54,6 +60,8 @@ public partial class SkillEditorWindow : EditorWindow
     private FloatField inputBufferStartField; // 输入缓冲开始（归一化 0-1）
     private FloatField cancelableTimeField; // 可取消时间点（归一化 0-1）
     private FloatField animationEndField; // 动画结束阈值（归一化 0-1）
+    private IntegerField comboTimeoutOffsetMsField; // 段超时偏移（ms）
+    private IntegerField segmentTimeoutMsPreviewField; // 本段超时（ms，预览，只读）
     
     // Effect Clip字段
     private VisualElement effectFields; // Effect字段组
@@ -78,6 +86,21 @@ public partial class SkillEditorWindow : EditorWindow
     private Vector3Field hitBoxOffsetField; // HitBox偏移（局部）
     private Vector3Field hitBoxRotationField; // HitBox旋转（局部欧拉角）
     private Vector3Field hitBoxSizeField; // HitBox尺寸
+
+    // HitEffectData（命中效果）
+    private FloatField hitEffectDamageMultiplierField;
+    private EnumField hitEffectReactionField;
+    private FloatField hitEffectKnockbackForceField;
+    private FloatField hitEffectKnockupForceField;
+    private IntegerField hitEffectHitStunMsField;
+    private EnumField hitEffectTargetStateField;
+
+    // HitFeedbackData（命中反馈）
+    private FloatField hitFeedbackShakeIntensityField;
+    private FloatField hitFeedbackShakeDurationField;
+    private IntegerField hitFeedbackHitStopMsField;
+    private FloatField hitFeedbackTimeScaleField;
+    private IntegerField hitFeedbackTimeScaleDurationMsField;
 
     // 操作按钮
     private Button addClipToTrackButton; // 添加Clip到轨道按钮
@@ -109,6 +132,7 @@ public partial class SkillEditorWindow : EditorWindow
     private const float TRACK_ITEM_HEIGHT = 40f; // 轨道条目的高度
     private const float CLIP_ITEM_HEIGHT = 35f; // clip条目的高度
     private const float RULER_HEIGHT = 30f; // 时间轴标尺高度
+    private const float MIN_CLIP_WIDTH_PX = 10f; // Clip 最小显示宽度（像素），防止超短片段不可见/难选中
     private const float BASE_PIXELS_PER_SECOND = 50f; // 基础每秒像素数（缩放倍数为1时）
     private const float MIN_PIXELS_PER_SECOND = 50f; // 最小每秒像素数（对应缩放倍数1）
     private const float MAX_PIXELS_PER_SECOND = 500f; // 最大每秒像素数（对应缩放倍数10）
@@ -162,6 +186,13 @@ public partial class SkillEditorWindow : EditorWindow
         
         var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Scripts/Editor/Skill/SkillEditorWindow.uss");
         root.styleSheets.Add(styleSheet);
+        
+        var right = root.Q<VisualElement>("Right");
+        if (right != null)
+        {
+            right.style.width = RIGHT_PANEL_WIDTH_PX;
+        }
+
         InitData();
     }
     
@@ -187,7 +218,6 @@ public partial class SkillEditorWindow : EditorWindow
             trackContainer.RegisterCallback<GeometryChangedEvent>(evt => UpdatePlayheadSize());
         }
         
-        listView = root.Q<ListView>("InfoListView");
         var refresh = root.Q<Button>("Refresh");
         refresh.clicked += RefreshTrackContent;
 
@@ -277,6 +307,9 @@ public partial class SkillEditorWindow : EditorWindow
             DrawTimelineRulerMarks();
             // 初始化视图按钮文字
             UpdateViewModeButtonText();
+
+            // 同步右侧面板全局参数（不依赖选中）
+            UpdateTrackInfo(selectedTrack);
         }
     }
 }

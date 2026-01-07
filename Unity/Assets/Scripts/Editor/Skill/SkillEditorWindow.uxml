@@ -22,7 +22,7 @@
                 </ui:VisualElement>
             </ui:ScrollView>
         </ui:VisualElement>
-        <ui:VisualElement name="Right" style="flex-grow: 0; flex-shrink: 0; width: 300px; margin-top: 1px; margin-right: 1px; margin-bottom: 1px; margin-left: 1px; border-top-width: 1px; border-top-color: rgb(0, 0, 0); flex-direction: column;">
+        <ui:VisualElement name="Right" style="flex-grow: 0; flex-shrink: 0; width: 380px; margin-top: 1px; margin-right: 1px; margin-bottom: 1px; margin-left: 1px; border-top-width: 1px; border-top-color: rgb(0, 0, 0); flex-direction: column;">
             <ui:VisualElement name="TrackInfoPanel" style="flex-shrink: 0; padding: 8px; border-bottom-width: 1px; border-bottom-color: rgb(100, 100, 100); flex-direction: column;">
                 <ui:Label text="&#36712;&#36947;&#20449;&#24687;" style="font-size: 14px; font-weight: bold; margin-bottom: 8px;"/>
                 <ui:VisualElement style="flex-direction: column; gap: 4px;">
@@ -39,15 +39,37 @@
                         <ui:Label name="TotalDurationLabel" style="flex-grow: 1;"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:VisualElement name="GlobalConfigPanel" style="flex-direction: column; gap: 6px; margin-top: 10px; padding-top: 8px; border-top-width: 1px; border-top-color: rgb(100, 100, 100);">
+                    <ui:Label text="&#20840;&#23616;&#21442;&#25968;" style="font-size: 13px; font-weight: bold;"/>
+                    <ui:VisualElement style="flex-direction: row; align-items: center;">
+                        <ui:Label text="&#32531;&#20914;&#26377;&#25928;&#26399;(ms):" style="width: 120px;"/>
+                        <ui:IntegerField value="200" name="InputBufferWindowMsField" style="flex-grow: 1;"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement style="flex-direction: row; align-items: center;">
+                        <ui:Label text="&#40664;&#35748;&#39039;&#24103;(ms):" style="width: 120px;"/>
+                        <ui:IntegerField value="40" name="DefaultHitStopMsField" style="flex-grow: 1;"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement style="flex-direction: row; align-items: center;">
+                        <ui:Label text="&#21518;&#25671;&#20445;&#25345;(ms):" style="width: 120px;"/>
+                        <ui:IntegerField value="200" name="RecoveryHoldMsField" style="flex-grow: 1;"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
                 <ui:Button text="&#28155;&#21152;Clip" name="AddClipToTrackButton" style="margin-top: 8px; display: none;"/>
             </ui:VisualElement>
-            <ui:VisualElement name="ClipPropertiesPanel" style="flex-grow: 1; padding: 8px; flex-direction: column; overflow-y: auto;">
-                <ui:VisualElement style="flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <ui:VisualElement style="flex-direction: row; align-items: center;">
+            <ui:ScrollView name="ClipPropertiesPanel" mode="Vertical" vertical-scroller-visibility="Auto" horizontal-scroller-visibility="Hidden" style="flex-grow: 1; padding: 8px; flex-direction: column;">
+                <!--
+                  ScrollView 在部分 Unity 版本下 contentContainer 的宽度可能不会自动拉伸到视口宽度，
+                  导致内部行/按钮被测量成很窄，从而出现按钮文字显示不全的问题（尤其在出现滚动条后更明显）。
+                  这里额外包一层 Root 并显式设置 100% 宽度，确保内容按面板宽度布局。
+                -->
+                <ui:VisualElement name="ClipPropertiesRoot" style="flex-direction: column; width: 100%; min-width: 100%; align-self: stretch; align-items: stretch;">
+                <ui:VisualElement style="flex-direction: column; gap: 6px; margin-bottom: 8px;">
+                    <ui:VisualElement style="flex-direction: row; justify-content: space-between; align-items: center;">
                         <ui:Label text="&#29255;&#27573;&#23646;&#24615;" name="ClipPropertiesTitle" style="font-size: 14px; font-weight: bold;"/>
-                        <ui:Label name="ClipIndexLabel" style="font-size: 14px; font-weight: bold; color: rgb(255, 80, 80); margin-left: 8px;"/>
+                        <ui:Button text="&#21024;&#38500;" name="DeleteClipButton" style="display: none; background-color: rgb(180, 60, 60);"/>
                     </ui:VisualElement>
-                    <ui:Button text="&#21024;&#38500;" name="DeleteClipButton" style="display: none; background-color: rgb(180, 60, 60);"/>
+                    <!-- 动画顺序：单独一行显示 -->
+                    <ui:Label name="ClipIndexLabel" style="font-size: 13px; font-weight: bold; color: rgb(255, 80, 80);"/>
                 </ui:VisualElement>
                 <ui:VisualElement style="flex-direction: column; gap: 8px;">
                     <ui:VisualElement style="flex-direction: row; align-items: center;">
@@ -94,6 +116,14 @@
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
                             <ui:Label text="&#21160;&#30011;&#32467;&#26463;&#26102;&#38388;(0-1):" style="width: 120px;"/>
                             <ui:FloatField value="0.9" name="AnimationEndField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="&#36229;&#26102;&#20559;&#31227;(ms):" style="width: 120px;"/>
+                            <ui:IntegerField value="200" name="ComboTimeoutOffsetMsField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="&#26412;&#27573;&#36229;&#26102;(ms):" style="width: 120px;"/>
+                            <ui:IntegerField value="0" name="SegmentTimeoutMsPreviewField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
                         <ui:VisualElement name="AnimationActionButtons" style="flex-direction: row; gap: 4px; margin-top: 8px;">
                             <ui:Button text="&#28155;&#21152;&#29305;&#25928;" name="AddEffectButton" style="flex-grow: 1;"/>
@@ -166,10 +196,58 @@
                             <ui:Label text="&#35302;&#21457;&#26102;&#38388;(&#31186;):" style="width: 120px;"/>
                             <ui:FloatField value="0" name="HitBoxTriggerTimeField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
+
+                        <ui:Label text="&#21629;&#20013;&#25928;&#26524;(HitEffect)" style="font-size: 13px; font-weight: bold; margin-top: 10px;"/>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="DamageMultiplier:" style="width: 120px;"/>
+                            <ui:FloatField value="1" name="HitEffectDamageMultiplierField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="HitReaction:" style="width: 120px;"/>
+                            <ui:EnumField name="HitEffectReactionField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="KnockbackForce:" style="width: 120px;"/>
+                            <ui:FloatField value="0" name="HitEffectKnockbackForceField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="KnockupForce:" style="width: 120px;"/>
+                            <ui:FloatField value="0" name="HitEffectKnockupForceField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="HitStun(ms):" style="width: 120px;"/>
+                            <ui:IntegerField value="200" name="HitEffectHitStunMsField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="TargetState:" style="width: 120px;"/>
+                            <ui:EnumField name="HitEffectTargetStateField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+
+                        <ui:Label text="&#21629;&#20013;&#21453;&#39304;(HitFeedback)" style="font-size: 13px; font-weight: bold; margin-top: 10px;"/>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="ScreenShake(0-1):" style="width: 120px;"/>
+                            <ui:FloatField value="0" name="HitFeedbackShakeIntensityField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="ShakeDuration(s):" style="width: 120px;"/>
+                            <ui:FloatField value="0" name="HitFeedbackShakeDurationField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="HitStop(ms):" style="width: 120px;"/>
+                            <ui:IntegerField value="0" name="HitFeedbackHitStopMsField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="TimeScale:" style="width: 120px;"/>
+                            <ui:FloatField value="1" name="HitFeedbackTimeScaleField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="TimeScale(ms):" style="width: 120px;"/>
+                            <ui:IntegerField value="0" name="HitFeedbackTimeScaleDurationMsField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:ListView name="InfoListView" style="display: none; flex-grow: 0; margin-top: 1px; margin-right: 1px; margin-bottom: 1px; margin-left: 1px;"/>
+                </ui:VisualElement>
+            </ui:ScrollView>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

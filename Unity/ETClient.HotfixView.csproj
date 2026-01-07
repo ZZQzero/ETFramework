@@ -58,6 +58,7 @@
     <Compile Include="Assets\Scripts\HotfixView\YooAssets\ResourcesLoaderComponentSystem.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Unit\AfterUnitCreate_CreateUnitView.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Opera\OperaComponentSystem.cs" />
+    <Compile Include="Assets\Scripts\HotfixView\Unit\Attack\AttackLayerFadeOutInvoke.cs" />
     <Compile Include="Assets\Scripts\HotfixView\UI\UILogin\AppStartInitFinish_CreateLoginUI.cs" />
     <Compile Include="Assets\Scripts\HotfixView\GameUI\UIScriptsGenerate\UIHelpPanelComponent.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Unit\Attack\AttackComponentSystem.cs" />

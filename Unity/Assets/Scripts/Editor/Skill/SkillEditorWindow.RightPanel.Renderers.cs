@@ -88,6 +88,19 @@ public partial class SkillEditorWindow : EditorWindow
             animationEndField.SetValueWithoutNotify(tw.AnimationEnd);
         }
 
+        // 段超时偏移（ms）& 预览（ms）
+        if (comboTimeoutOffsetMsField != null)
+        {
+            comboTimeoutOffsetMsField.SetValueWithoutNotify(Mathf.Max(0, segmentData.ComboTimeoutOffsetMs));
+        }
+        if (segmentTimeoutMsPreviewField != null)
+        {
+            int durMs = Mathf.RoundToInt(Mathf.Max(0f, segmentData.Duration) * 1000f);
+            int total = durMs + Mathf.Max(0, segmentData.ComboTimeoutOffsetMs);
+            segmentTimeoutMsPreviewField.SetValueWithoutNotify(Mathf.Max(0, total));
+            segmentTimeoutMsPreviewField.SetEnabled(false);
+        }
+
         // 总帧数由通用字段统一计算（Length * 60）
 
         // 设置按钮颜色样式 - 清除之前的类型样式
@@ -286,6 +299,55 @@ public partial class SkillEditorWindow : EditorWindow
         if (hitBoxSizeField != null)
         {
             hitBoxSizeField.SetValueWithoutNotify(hitBoxData.Size);
+        }
+
+        // HitEffectData / HitFeedbackData（命中效果/反馈）
+        var effect = hitBoxData.Effect ??= new HitEffectData();
+        if (hitEffectDamageMultiplierField != null)
+        {
+            hitEffectDamageMultiplierField.SetValueWithoutNotify(effect.DamageMultiplier);
+        }
+        if (hitEffectReactionField != null)
+        {
+            hitEffectReactionField.SetValueWithoutNotify(effect.HitReaction);
+        }
+        if (hitEffectKnockbackForceField != null)
+        {
+            hitEffectKnockbackForceField.SetValueWithoutNotify(effect.KnockbackForce);
+        }
+        if (hitEffectKnockupForceField != null)
+        {
+            hitEffectKnockupForceField.SetValueWithoutNotify(effect.KnockupForce);
+        }
+        if (hitEffectHitStunMsField != null)
+        {
+            hitEffectHitStunMsField.SetValueWithoutNotify(effect.HitStunMs);
+        }
+        if (hitEffectTargetStateField != null)
+        {
+            hitEffectTargetStateField.SetValueWithoutNotify(effect.TargetState);
+        }
+
+        var feedback = hitBoxData.Feedback ??= new HitFeedbackData();
+        if (hitFeedbackShakeIntensityField != null)
+        {
+            hitFeedbackShakeIntensityField.SetValueWithoutNotify(feedback.ScreenShakeIntensity);
+        }
+        if (hitFeedbackShakeDurationField != null)
+        {
+            hitFeedbackShakeDurationField.SetValueWithoutNotify(feedback.ScreenShakeDuration);
+        }
+        if (hitFeedbackHitStopMsField != null)
+        {
+            hitFeedbackHitStopMsField.SetValueWithoutNotify(feedback.HitStopMs);
+        }
+        if (hitFeedbackTimeScaleField != null)
+        {
+            hitFeedbackTimeScaleField.SetValueWithoutNotify(feedback.TimeScale);
+        }
+        if (hitFeedbackTimeScaleDurationMsField != null)
+        {
+            hitFeedbackTimeScaleDurationMsField.SetValueWithoutNotify(feedback.TimeScaleDurationMs);
         }
     }
 

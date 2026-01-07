@@ -36,6 +36,11 @@ public partial class SkillEditorWindow : EditorWindow
         clipCountLabel = rightContainer.Q<Label>("ClipCountLabel");
         totalDurationLabel = rightContainer.Q<Label>("TotalDurationLabel");
 
+        // AttackConfig 全局参数（TrackInfoPanel 下方）
+        inputBufferWindowMsField = rightContainer.Q<IntegerField>("InputBufferWindowMsField");
+        defaultHitStopMsField = rightContainer.Q<IntegerField>("DefaultHitStopMsField");
+        recoveryHoldMsField = rightContainer.Q<IntegerField>("RecoveryHoldMsField");
+
         // 获取Clip属性面板的标题和字段组
         clipPropertiesTitle = rightContainer.Q<Label>("ClipPropertiesTitle");
         animationFields = rightContainer.Q<VisualElement>("AnimationFields");
@@ -66,6 +71,8 @@ public partial class SkillEditorWindow : EditorWindow
         inputBufferStartField = rightContainer.Q<FloatField>("InputBufferStartField");
         cancelableTimeField = rightContainer.Q<FloatField>("CancelableTimeField");
         animationEndField = rightContainer.Q<FloatField>("AnimationEndField");
+        comboTimeoutOffsetMsField = rightContainer.Q<IntegerField>("ComboTimeoutOffsetMsField");
+        segmentTimeoutMsPreviewField = rightContainer.Q<IntegerField>("SegmentTimeoutMsPreviewField");
 
         // 获取Effect Clip字段
         effectPrefabField = rightContainer.Q<ObjectField>("EffectPrefabField");
@@ -99,6 +106,28 @@ public partial class SkillEditorWindow : EditorWindow
         hitBoxOffsetField = rightContainer.Q<Vector3Field>("HitBoxOffsetField");
         hitBoxRotationField = rightContainer.Q<Vector3Field>("HitBoxRotationField");
         hitBoxSizeField = rightContainer.Q<Vector3Field>("HitBoxSizeField");
+
+        // HitEffectData / HitFeedbackData
+        hitEffectDamageMultiplierField = rightContainer.Q<FloatField>("HitEffectDamageMultiplierField");
+        hitEffectReactionField = rightContainer.Q<EnumField>("HitEffectReactionField");
+        if (hitEffectReactionField != null)
+        {
+            hitEffectReactionField.Init(HitReactionType.Light);
+        }
+        hitEffectKnockbackForceField = rightContainer.Q<FloatField>("HitEffectKnockbackForceField");
+        hitEffectKnockupForceField = rightContainer.Q<FloatField>("HitEffectKnockupForceField");
+        hitEffectHitStunMsField = rightContainer.Q<IntegerField>("HitEffectHitStunMsField");
+        hitEffectTargetStateField = rightContainer.Q<EnumField>("HitEffectTargetStateField");
+        if (hitEffectTargetStateField != null)
+        {
+            hitEffectTargetStateField.Init(TargetStateType.Any);
+        }
+
+        hitFeedbackShakeIntensityField = rightContainer.Q<FloatField>("HitFeedbackShakeIntensityField");
+        hitFeedbackShakeDurationField = rightContainer.Q<FloatField>("HitFeedbackShakeDurationField");
+        hitFeedbackHitStopMsField = rightContainer.Q<IntegerField>("HitFeedbackHitStopMsField");
+        hitFeedbackTimeScaleField = rightContainer.Q<FloatField>("HitFeedbackTimeScaleField");
+        hitFeedbackTimeScaleDurationMsField = rightContainer.Q<IntegerField>("HitFeedbackTimeScaleDurationMsField");
 
         // 右侧面板 Vector3 输入显示两位小数（避免小数位过多导致显示不下）
         SetVector3FieldTwoDecimals(hitBoxOffsetField);
@@ -170,6 +199,15 @@ public partial class SkillEditorWindow : EditorWindow
         {
             animationEndField.RegisterValueChangedCallback(OnAnimationEndChanged);
         }
+        if (comboTimeoutOffsetMsField != null)
+        {
+            comboTimeoutOffsetMsField.tooltip = "本段连击超时偏移(ms)：本段超时 = 本段时长(ms) + 偏移。用于避免动画未播完就因超时退出。";
+            comboTimeoutOffsetMsField.RegisterValueChangedCallback(OnComboTimeoutOffsetMsChanged);
+        }
+        if (segmentTimeoutMsPreviewField != null)
+        {
+            segmentTimeoutMsPreviewField.SetEnabled(false);
+        }
         if (effectPrefabField != null)
         {
             effectPrefabField.RegisterValueChangedCallback(OnEffectPrefabChanged);
@@ -227,6 +265,81 @@ public partial class SkillEditorWindow : EditorWindow
         if (hitBoxSizeField != null)
         {
             hitBoxSizeField.RegisterValueChangedCallback(OnHitBoxSizeChanged);
+        }
+
+        // AttackConfig 全局参数回调（不依赖 clip 选择）
+        if (inputBufferWindowMsField != null)
+        {
+            inputBufferWindowMsField.tooltip = "输入缓冲有效期(ms)：缓存输入在被消费前能保留多久；与动画窗口(0-1)的 InputBufferStart 不同。";
+            inputBufferWindowMsField.RegisterValueChangedCallback(OnInputBufferWindowMsChanged);
+        }
+        if (defaultHitStopMsField != null)
+        {
+            defaultHitStopMsField.tooltip = "默认顿帧(ms)：当 HitFeedback.HitStopMs <= 0 时回退使用该值。";
+            defaultHitStopMsField.RegisterValueChangedCallback(OnDefaultHitStopMsChanged);
+        }
+        if (recoveryHoldMsField != null)
+        {
+            recoveryHoldMsField.tooltip = "后摇保持(ms)：进入Recovery后保持AttackLayer的时间，超时后淡出回到Move/Idle。";
+            recoveryHoldMsField.RegisterValueChangedCallback(OnRecoveryHoldMsChanged);
+        }
+
+        // HitEffectData / HitFeedbackData 回调（跟随 HitBox clip）
+        if (hitEffectDamageMultiplierField != null)
+        {
+            hitEffectDamageMultiplierField.tooltip = "伤害倍率：最终伤害 = 基础伤害 × 倍率。";
+            hitEffectDamageMultiplierField.RegisterValueChangedCallback(OnHitEffectDamageMultiplierChanged);
+        }
+        if (hitEffectReactionField != null)
+        {
+            hitEffectReactionField.tooltip = "受击反应类型：决定目标播放哪种受击/击退/击飞。";
+            hitEffectReactionField.RegisterValueChangedCallback(OnHitEffectReactionChanged);
+        }
+        if (hitEffectKnockbackForceField != null)
+        {
+            hitEffectKnockbackForceField.tooltip = "击退力度：用于击退/击倒类反应。";
+            hitEffectKnockbackForceField.RegisterValueChangedCallback(OnHitEffectKnockbackForceChanged);
+        }
+        if (hitEffectKnockupForceField != null)
+        {
+            hitEffectKnockupForceField.tooltip = "击飞力度：用于击飞类反应。";
+            hitEffectKnockupForceField.RegisterValueChangedCallback(OnHitEffectKnockupForceChanged);
+        }
+        if (hitEffectHitStunMsField != null)
+        {
+            hitEffectHitStunMsField.tooltip = "硬直时间(ms)：目标受击后无法行动的持续时间。";
+            hitEffectHitStunMsField.RegisterValueChangedCallback(OnHitEffectHitStunMsChanged);
+        }
+        if (hitEffectTargetStateField != null)
+        {
+            hitEffectTargetStateField.tooltip = "目标状态过滤：用于限制该 HitBox 只命中某些状态目标。";
+            hitEffectTargetStateField.RegisterValueChangedCallback(OnHitEffectTargetStateChanged);
+        }
+
+        if (hitFeedbackShakeIntensityField != null)
+        {
+            hitFeedbackShakeIntensityField.tooltip = "震屏强度(0-1)。";
+            hitFeedbackShakeIntensityField.RegisterValueChangedCallback(OnHitFeedbackShakeIntensityChanged);
+        }
+        if (hitFeedbackShakeDurationField != null)
+        {
+            hitFeedbackShakeDurationField.tooltip = "震屏持续时间(秒)。";
+            hitFeedbackShakeDurationField.RegisterValueChangedCallback(OnHitFeedbackShakeDurationChanged);
+        }
+        if (hitFeedbackHitStopMsField != null)
+        {
+            hitFeedbackHitStopMsField.tooltip = "顿帧时长(ms)：<=0 表示不覆盖，回退使用 DefaultHitStopMs。";
+            hitFeedbackHitStopMsField.RegisterValueChangedCallback(OnHitFeedbackHitStopMsChanged);
+        }
+        if (hitFeedbackTimeScaleField != null)
+        {
+            hitFeedbackTimeScaleField.tooltip = "时间缩放：1 为正常，小于 1 为慢动作（配合持续时间使用）。";
+            hitFeedbackTimeScaleField.RegisterValueChangedCallback(OnHitFeedbackTimeScaleChanged);
+        }
+        if (hitFeedbackTimeScaleDurationMsField != null)
+        {
+            hitFeedbackTimeScaleDurationMsField.tooltip = "时间缩放持续时间(ms)。";
+            hitFeedbackTimeScaleDurationMsField.RegisterValueChangedCallback(OnHitFeedbackTimeScaleDurationMsChanged);
         }
 
         // 初始状态：隐藏所有字段组

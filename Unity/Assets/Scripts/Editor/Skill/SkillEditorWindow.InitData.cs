@@ -19,14 +19,8 @@ public partial class SkillEditorWindow : EditorWindow
             }
         }
 
-        if (animancer == null)
-        {
-            var obj = selectObj.value as GameObject;
-            if (obj != null)
-            {
-                animancer = obj.GetComponent<AnimancerComponent>();
-            }
-        }
+        // 预览对象：使用克隆体隔离业务脚本/AnimatorController 干扰
+        EnsurePreviewObject();
         InitTrackAndClipData();
     }
 

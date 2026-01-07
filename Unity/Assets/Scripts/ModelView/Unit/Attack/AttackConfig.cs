@@ -17,14 +17,35 @@ namespace ET
         /// <summary>配置名称</summary>
         public string ConfigName = string.Empty;
         
-        /// <summary>连击超时时间（毫秒）</summary>
+        /// <summary>
+        /// 连击超时兜底（毫秒，兼容/兜底用）。
+        /// 说明：
+        /// - 方案A（分层）下推荐按“每段”计算超时：<c>段超时 = 段时长(ms) + 段偏移(ComboTimeoutOffsetMs)</c>。
+        /// - 当段时长未知（例如配置缺失/异常）时，运行时会回退使用该值，防止卡死。
+        /// </summary>
         public int ComboTimeoutMs = 800;
         
-        /// <summary>输入缓冲窗口时间（毫秒）</summary>
+        /// <summary>
+        /// 输入缓冲有效期（毫秒）。
+        /// 说明：
+        /// - 控制“缓存输入”在被消费前能保留多久，超过该时长会被判定为过期并清理。
+        /// - 与 <see cref="TimeWindowData.InputBufferStart"/>（归一化时间点，窗口何时开启）是不同维度的参数：前者是毫秒有效期，后者是动画时间点。
+        /// </summary>
         public int InputBufferWindowMs = 200;
         
-        /// <summary>默认顿帧时间（毫秒）</summary>
+        /// <summary>
+        /// 默认顿帧时间（毫秒）。
+        /// 说明：当某个 <see cref="HitBoxData"/> 未配置 <see cref="HitFeedbackData.HitStopMs"/>（<=0）时，运行时使用该值作为兜底顿帧时长。
+        /// </summary>
         public int DefaultHitStopMs = 40;
+
+        /// <summary>
+        /// 攻击层（AttackLayer）在进入后摇(Recovery)后保持的时间（毫秒）。
+        /// - 段结束进入 Recovery 且没有立刻接段时，不应立刻淡出 AttackLayer，否则会“闪回 Idle/Move”；
+        ///   但也不能一直等到 <see cref="ComboTimeoutMs"/> 才淡出，否则玩家不输入时会长时间卡在攻击姿势/像没动画。
+        /// - 该值用于在 Recovery 初期短暂保持攻击姿势，超时后自动淡出 AttackLayer 露出 Layer0。
+        /// </summary>
+        public int RecoveryHoldMs = 200;
         
         /// <summary>攻击段列表</summary>
         public List<AttackSegmentData> Segments = new List<AttackSegmentData>();

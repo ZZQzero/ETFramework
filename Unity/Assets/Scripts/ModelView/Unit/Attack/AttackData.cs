@@ -83,13 +83,25 @@ namespace ET
     [Serializable]
     public class TimeWindowData
     {
-        /// <summary>输入缓冲开始时间</summary>
+        /// <summary>
+        /// 输入缓冲窗口开启点（归一化时间 0-1）。
+        /// 说明：
+        /// - 这是“何时开始允许缓冲/可衔接”的时间点，而不是“缓存能保留多久”。
+        /// - 缓存输入的有效期（毫秒）由 <see cref="AttackConfig.InputBufferWindowMs"/> 控制。
+        /// - 当前实现里会在该时间点把运行时标记 <c>IsInputBufferWindowOpen</c> 置为 true。
+        /// </summary>
         public float InputBufferStart = 0.5f;
         
-        /// <summary>可取消时间点</summary>
+        /// <summary>
+        /// 可取消窗口开启点（归一化时间 0-1）。
+        /// 说明：用于限制“攻击过程中能否被技能/其他动作打断”的时间点。
+        /// </summary>
         public float CancelableTime = 0.4f;
         
-        /// <summary>动画结束时间点（提前进入后摇）</summary>
+        /// <summary>
+        /// 动画结束阈值（归一化时间 0-1）。
+        /// 说明：用于提前判定“本段结束”，进入后摇/允许接段（不一定等到动画真正播放到 1.0）。
+        /// </summary>
         public float AnimationEnd = 0.9f;
     }
 
@@ -130,7 +142,10 @@ namespace ET
         /// <summary>屏幕震动时长（秒）</summary>
         public float ScreenShakeDuration = 0f;
         
-        /// <summary>顿帧时长（毫秒）</summary>
+        /// <summary>
+        /// 顿帧时长（毫秒）。
+        /// 说明：<= 0 表示不在该 HitBox 上强制顿帧，运行时会回退使用 <see cref="AttackConfig.DefaultHitStopMs"/>。
+        /// </summary>
         public int HitStopMs = 0;
         
         /// <summary>时间缩放（慢动作，1为正常）</summary>
@@ -154,12 +169,20 @@ namespace ET
         
         /// <summary>相对角色的偏移</summary>
         public Vector3 Offset = new Vector3(0, 1f, 1f);
+
         /// <summary>
         /// 判定旋转（欧拉角，局部空间，度）。
         /// 说明：运行时会叠加到角色朝向上（worldRot = playerRot * Euler(RotationEuler)），用于更精细的挥砍/斜劈判定。
         /// </summary>
         public Vector3 RotationEuler = Vector3.zero;
-        /// <summary>尺寸（Box: xyz, Sphere: x为半径, Fan: x为半径y为角度）</summary>
+        
+        /// <summary>
+        /// 尺寸：
+        /// - Box: xyz
+        /// - Sphere: x 为半径
+        /// - Fan: x 为半径、y 为角度、z 为高度/厚度（可选，<=0 表示不限制高度，兼容旧行为）
+        /// - Capsule: x 为半径、y 为高度（参见运行时 OverlapCapsule）
+        /// </summary>
         public Vector3 Size = new Vector3(1f, 1f, 2f);
         
         /// <summary>判定开始时间（归一化 0-1）</summary>
@@ -288,6 +311,13 @@ namespace ET
         /// 段持续时间（秒，绝对时间）。服务端/运行时用于把归一化子事件转换为绝对秒，不依赖 AnimationClip 资源。
         /// </summary>
         public float Duration = 0f;
+
+        /// <summary>
+        /// 连击超时偏移（毫秒）。
+        /// 说明：用于计算“本段攻击流程的超时”，避免全局超时小于动画时长导致攻击还没播完就被强制退出。
+        /// 计算公式：<c>SegmentTimeoutMs = max(0, Duration * 1000) + max(0, ComboTimeoutOffsetMs)</c>。
+        /// </summary>
+        public int ComboTimeoutOffsetMs = 200;
 
         // === 时间窗口 ===
         /// <summary>时间窗口配置</summary>

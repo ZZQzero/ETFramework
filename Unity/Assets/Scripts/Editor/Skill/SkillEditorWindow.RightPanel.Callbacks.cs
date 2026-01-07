@@ -212,6 +212,24 @@ public partial class SkillEditorWindow : EditorWindow
         }
     }
 
+    private void OnComboTimeoutOffsetMsChanged(ChangeEvent<int> evt)
+    {
+        if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null)
+        {
+            int v = Mathf.Max(0, evt.newValue);
+            animClipItem.SegmentData.ComboTimeoutOffsetMs = v;
+
+            // 更新预览：本段超时 = Duration(ms) + Offset(ms)
+            if (segmentTimeoutMsPreviewField != null)
+            {
+                int durMs = Mathf.RoundToInt(Mathf.Max(0f, animClipItem.SegmentData.Duration) * 1000f);
+                segmentTimeoutMsPreviewField.SetValueWithoutNotify(durMs + v);
+            }
+
+            MarkAssetDirty();
+        }
+    }
+
     #endregion
 
     #region RightPanel - 字段回调（EffectClip）
@@ -424,6 +442,204 @@ public partial class SkillEditorWindow : EditorWindow
             MarkAssetDirty();
             SceneView.RepaintAll();
         }
+    }
+
+    #endregion
+
+    #region RightPanel - 字段回调（HitEffectData / HitFeedbackData）
+
+    private void OnHitEffectDamageMultiplierChanged(ChangeEvent<float> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
+        hitBoxClipItem.HitBoxData.Effect.DamageMultiplier = Mathf.Max(0f, evt.newValue);
+        MarkAssetDirty();
+    }
+
+    private void OnHitEffectReactionChanged(ChangeEvent<Enum> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        if (evt.newValue == null)
+        {
+            return;
+        }
+
+        hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
+        hitBoxClipItem.HitBoxData.Effect.HitReaction = (HitReactionType)evt.newValue;
+        MarkAssetDirty();
+    }
+
+    private void OnHitEffectKnockbackForceChanged(ChangeEvent<float> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
+        hitBoxClipItem.HitBoxData.Effect.KnockbackForce = Mathf.Max(0f, evt.newValue);
+        MarkAssetDirty();
+    }
+
+    private void OnHitEffectKnockupForceChanged(ChangeEvent<float> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
+        hitBoxClipItem.HitBoxData.Effect.KnockupForce = Mathf.Max(0f, evt.newValue);
+        MarkAssetDirty();
+    }
+
+    private void OnHitEffectHitStunMsChanged(ChangeEvent<int> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
+        hitBoxClipItem.HitBoxData.Effect.HitStunMs = Mathf.Max(0, evt.newValue);
+        MarkAssetDirty();
+    }
+
+    private void OnHitEffectTargetStateChanged(ChangeEvent<Enum> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        if (evt.newValue == null)
+        {
+            return;
+        }
+
+        hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
+        hitBoxClipItem.HitBoxData.Effect.TargetState = (TargetStateType)evt.newValue;
+        MarkAssetDirty();
+    }
+
+    private void OnHitFeedbackShakeIntensityChanged(ChangeEvent<float> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
+        hitBoxClipItem.HitBoxData.Feedback.ScreenShakeIntensity = Mathf.Clamp01(evt.newValue);
+        MarkAssetDirty();
+    }
+
+    private void OnHitFeedbackShakeDurationChanged(ChangeEvent<float> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
+        hitBoxClipItem.HitBoxData.Feedback.ScreenShakeDuration = Mathf.Max(0f, evt.newValue);
+        MarkAssetDirty();
+    }
+
+    private void OnHitFeedbackHitStopMsChanged(ChangeEvent<int> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
+        hitBoxClipItem.HitBoxData.Feedback.HitStopMs = Mathf.Max(0, evt.newValue);
+        MarkAssetDirty();
+    }
+
+    private void OnHitFeedbackTimeScaleChanged(ChangeEvent<float> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
+        hitBoxClipItem.HitBoxData.Feedback.TimeScale = Mathf.Max(0f, evt.newValue);
+        MarkAssetDirty();
+    }
+
+    private void OnHitFeedbackTimeScaleDurationMsChanged(ChangeEvent<int> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
+        hitBoxClipItem.HitBoxData.Feedback.TimeScaleDurationMs = Mathf.Max(0, evt.newValue);
+        MarkAssetDirty();
+    }
+
+    #endregion
+
+    #region RightPanel - 字段回调（AttackConfig 全局参数）
+
+    private void OnInputBufferWindowMsChanged(ChangeEvent<int> evt)
+    {
+        if (config == null)
+        {
+            return;
+        }
+
+        int v = Mathf.Max(0, evt.newValue);
+        config.InputBufferWindowMs = v;
+        if (inputBufferWindowMsField != null && v != evt.newValue)
+        {
+            inputBufferWindowMsField.SetValueWithoutNotify(v);
+        }
+        MarkAssetDirty();
+    }
+
+    private void OnDefaultHitStopMsChanged(ChangeEvent<int> evt)
+    {
+        if (config == null)
+        {
+            return;
+        }
+
+        int v = Mathf.Max(0, evt.newValue);
+        config.DefaultHitStopMs = v;
+        if (defaultHitStopMsField != null && v != evt.newValue)
+        {
+            defaultHitStopMsField.SetValueWithoutNotify(v);
+        }
+        MarkAssetDirty();
+    }
+
+    private void OnRecoveryHoldMsChanged(ChangeEvent<int> evt)
+    {
+        if (config == null)
+        {
+            return;
+        }
+
+        int v = Mathf.Max(0, evt.newValue);
+        config.RecoveryHoldMs = v;
+        if (recoveryHoldMsField != null && v != evt.newValue)
+        {
+            recoveryHoldMsField.SetValueWithoutNotify(v);
+        }
+        MarkAssetDirty();
     }
 
     #endregion

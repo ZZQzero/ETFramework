@@ -47,6 +47,7 @@ public partial class SkillEditorWindow : EditorWindow
         effectFields = rightContainer.Q<VisualElement>("EffectFields");
         soundFields = rightContainer.Q<VisualElement>("SoundFields");
         hitBoxFields = rightContainer.Q<VisualElement>("HitBoxFields");
+        activeFields = rightContainer.Q<VisualElement>("ActiveFields");
 
         // 获取通用字段
         clipNameField = rightContainer.Q<TextField>("ClipNameField");
@@ -60,6 +61,7 @@ public partial class SkillEditorWindow : EditorWindow
         addEffectButton = rightContainer.Q<Button>("AddEffectButton");
         addSoundButton = rightContainer.Q<Button>("AddSoundButton");
         addHitboxButton = rightContainer.Q<Button>("AddHitboxButton");
+        addActiveButton = rightContainer.Q<Button>("AddActiveButton");
         animationClipField = rightContainer.Q<ObjectField>("AnimationClipField");
         if (animationClipField != null)
         {
@@ -83,6 +85,8 @@ public partial class SkillEditorWindow : EditorWindow
         effectTriggerTimeField = rightContainer.Q<FloatField>("EffectTriggerTimeField");
         effectNormalizedStartField = rightContainer.Q<FloatField>("EffectNormalizedStartField");
         followTargetField = rightContainer.Q<Toggle>("FollowTargetField");
+        effectOffsetField = rightContainer.Q<Vector3Field>("EffectOffsetField");
+        effectRotationField = rightContainer.Q<Vector3Field>("EffectRotationField");
 
         // 获取Sound Clip字段
         audioClipField = rightContainer.Q<ObjectField>("AudioClipField");
@@ -107,6 +111,19 @@ public partial class SkillEditorWindow : EditorWindow
         hitBoxRotationField = rightContainer.Q<Vector3Field>("HitBoxRotationField");
         hitBoxSizeField = rightContainer.Q<Vector3Field>("HitBoxSizeField");
 
+        // Active Clip字段
+        activeTargetObjectField = rightContainer.Q<ObjectField>("ActiveTargetObjectField");
+        if (activeTargetObjectField != null)
+        {
+            activeTargetObjectField.objectType = typeof(UnityEngine.GameObject);
+            activeTargetObjectField.tooltip = "选择 SelectObj 角色根节点下的子物体（用于生成/更新 RelativePath）。";
+        }
+        activeRelativePathField = rightContainer.Q<TextField>("ActiveRelativePathField");
+        if (activeRelativePathField != null)
+        {
+            activeRelativePathField.SetEnabled(false); // 只读（建议通过拖拽到 ActiveTrack 创建/更新路径）
+        }
+
         // HitEffectData / HitFeedbackData
         hitEffectDamageMultiplierField = rightContainer.Q<FloatField>("HitEffectDamageMultiplierField");
         hitEffectReactionField = rightContainer.Q<EnumField>("HitEffectReactionField");
@@ -130,6 +147,8 @@ public partial class SkillEditorWindow : EditorWindow
         hitFeedbackTimeScaleDurationMsField = rightContainer.Q<IntegerField>("HitFeedbackTimeScaleDurationMsField");
 
         // 右侧面板 Vector3 输入显示两位小数（避免小数位过多导致显示不下）
+        SetVector3FieldTwoDecimals(effectOffsetField);
+        SetVector3FieldTwoDecimals(effectRotationField);
         SetVector3FieldTwoDecimals(hitBoxOffsetField);
         SetVector3FieldTwoDecimals(hitBoxRotationField);
         SetVector3FieldTwoDecimals(hitBoxSizeField);
@@ -174,6 +193,10 @@ public partial class SkillEditorWindow : EditorWindow
         if (addHitboxButton != null)
         {
             addHitboxButton.clicked += OnAddHitboxButtonClicked;
+        }
+        if (addActiveButton != null)
+        {
+            addActiveButton.clicked += OnAddActiveButtonClicked;
         }
         if (animationClipField != null)
         {
@@ -223,7 +246,18 @@ public partial class SkillEditorWindow : EditorWindow
         }
         if (followTargetField != null)
         {
+            followTargetField.tooltip = "FollowTarget：\n- 开启：特效跟随角色/挂点（局部 Offset/Rotation 生效）。\n- 关闭：特效生成后定格在世界（不随角色移动/旋转）。";
             followTargetField.RegisterValueChangedCallback(OnFollowTargetChanged);
+        }
+        if (effectOffsetField != null)
+        {
+            effectOffsetField.tooltip = "特效相对角色的偏移（局部）。";
+            effectOffsetField.RegisterValueChangedCallback(OnEffectOffsetChanged);
+        }
+        if (effectRotationField != null)
+        {
+            effectRotationField.tooltip = "特效相对角色的旋转（局部欧拉角，度）。";
+            effectRotationField.RegisterValueChangedCallback(OnEffectRotationChanged);
         }
         if (audioClipField != null)
         {
@@ -241,6 +275,10 @@ public partial class SkillEditorWindow : EditorWindow
         if (volumeField != null)
         {
             volumeField.RegisterValueChangedCallback(OnVolumeChanged);
+        }
+        if (activeTargetObjectField != null)
+        {
+            activeTargetObjectField.RegisterValueChangedCallback(OnActiveTargetObjectChanged);
         }
         if (shapeTypeField != null)
         {

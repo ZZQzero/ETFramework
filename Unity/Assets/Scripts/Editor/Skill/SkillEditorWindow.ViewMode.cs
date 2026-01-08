@@ -121,6 +121,9 @@ public partial class SkillEditorWindow : EditorWindow
                 case HitBoxTrack ht when ht.ClipList.Count > 0:
                     list.Add(ht);
                     break;
+                case ActiveTrack at when at.ClipList.Count > 0:
+                    list.Add(at);
+                    break;
             }
         }
 
@@ -166,6 +169,17 @@ public partial class SkillEditorWindow : EditorWindow
             foreach (var animItem in allAnimationClipItems)
             {
                 if (animItem?.SegmentData != null && animItem.SegmentData.HitBoxes.Contains(hitBoxClipItem.HitBoxData))
+                {
+                    return animItem;
+                }
+            }
+        }
+
+        if (clip is ActiveClipItem activeClipItem && activeClipItem.ActiveData != null)
+        {
+            foreach (var animItem in allAnimationClipItems)
+            {
+                if (animItem?.SegmentData != null && animItem.SegmentData.AttachedActives.Contains(activeClipItem.ActiveData))
                 {
                     return animItem;
                 }

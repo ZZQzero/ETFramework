@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Animancer;
 using ET;
 using UnityEditor;
@@ -133,6 +134,17 @@ public partial class SkillEditorWindow : EditorWindow
             addHitboxButton.AddToClassList("action-button");
             addHitboxButton.AddToClassList("type-hitbox");
         }
+
+        if (addActiveButton != null)
+        {
+            addActiveButton.RemoveFromClassList("type-effect");
+            addActiveButton.RemoveFromClassList("type-sound");
+            addActiveButton.RemoveFromClassList("type-hitbox");
+            addActiveButton.RemoveFromClassList("type-animation");
+            addActiveButton.RemoveFromClassList("type-active");
+            addActiveButton.AddToClassList("action-button");
+            addActiveButton.AddToClassList("type-active");
+        }
     }
 
     // 更新Effect Clip属性
@@ -151,6 +163,26 @@ public partial class SkillEditorWindow : EditorWindow
         if (effectPrefabField != null)
         {
             effectPrefabField.SetValueWithoutNotify(effectData.Prefab);
+        }
+
+        // Best practice：选中时若 Prefab 自带 legacy Animation，则把 clip.length 写回到 config 的 Length（真源），并同步 UI clip 时长。
+        //（避免 Length 还停留在默认 2s 导致预览窗口/时间轴不匹配）
+        if (effectData.Prefab != null)
+        {
+            var anim = effectData.Prefab.GetComponentInChildren<Animation>(true);
+            var legacyClip = anim != null ? GetFirstLegacyAnimationClip(anim) : null;
+            if (legacyClip != null)
+            {
+                float len = Mathf.Max(0.01f, legacyClip.length);
+                if (Mathf.Abs(effectData.Length - len) > 0.0001f)
+                {
+                    effectData.Length = len;
+                    clipItem.Duration = len;
+                    clipItem.Frame = Mathf.RoundToInt(len * 60f);
+                    MarkAssetDirty();
+                    RefreshTrackContent();
+                }
+            }
         }
 
         // 更新触发时间（需要从归一化时间转换为绝对时间）
@@ -182,6 +214,16 @@ public partial class SkillEditorWindow : EditorWindow
         if (followTargetField != null)
         {
             followTargetField.SetValueWithoutNotify(effectData.FollowTarget);
+        }
+
+        // Offset（只读回显）
+        if (effectOffsetField != null)
+        {
+            effectOffsetField.SetValueWithoutNotify(effectData.Offset);
+        }
+        if (effectRotationField != null)
+        {
+            effectRotationField.SetValueWithoutNotify(effectData.RotationEuler);
         }
 
         // 更新归一化时间
@@ -349,6 +391,118 @@ public partial class SkillEditorWindow : EditorWindow
         {
             hitFeedbackTimeScaleDurationMsField.SetValueWithoutNotify(feedback.TimeScaleDurationMs);
         }
+    }
+
+    private void UpdateActiveClipProperties(ActiveClipItem clipItem)
+    {
+        if (activeFields != null) activeFields.style.display = DisplayStyle.Flex;
+
+        var data = clipItem.ActiveData;
+        if (data == null)
+        {
+            Debug.LogWarning("ActiveData为null，无法更新Active Clip属性");
+            return;
+        }
+
+        // 选中 Active 时：尽量根据当前层级刷新相对路径（Hierarchy 里可能被改名/改层级）。
+        // 约束：配置里只存 RelativePath，没有稳定 GUID/InstanceId，因此只能做 best-effort：
+        // - 优先用当前 RelativePath 在 root 下 Find
+        // - 找不到时尝试用 Name（通常等于目标 GameObject.name）做唯一匹配
+        // - 若能定位到目标，则重算路径并写回配置（MarkDirty）
+        string displayPath = data.RelativePath ?? string.Empty;
+        var rootGo = selectObj != null ? selectObj.value as GameObject : null;
+        Transform root = rootGo != null ? rootGo.transform : null;
+        if (root != null)
+        {
+            Transform target = null;
+            if (!string.IsNullOrEmpty(displayPath))
+            {
+                target = root.Find(displayPath);
+            }
+
+            if (target == null && !string.IsNullOrEmpty(data.Name))
+            {
+                target = FindUniqueChildByName(root, data.Name);
+            }
+
+            if (target != null)
+            {
+                string newPath = GetRelativePath(root, target);
+                if (!string.IsNullOrEmpty(newPath))
+                {
+                    displayPath = newPath;
+                    if (!string.Equals(data.RelativePath, newPath, StringComparison.Ordinal))
+                    {
+                        data.RelativePath = newPath;
+                        MarkAssetDirty();
+                    }
+                }
+            }
+
+            // 回显当前目标对象（便于在右侧下拉/挑选其他子物体）
+            if (activeTargetObjectField != null)
+            {
+                activeTargetObjectField.SetValueWithoutNotify(target != null ? target.gameObject : null);
+            }
+        }
+        else
+        {
+            // 没有 SelectObj 根：只能显示路径；对象字段置空
+            if (activeTargetObjectField != null)
+            {
+                activeTargetObjectField.SetValueWithoutNotify(null);
+            }
+        }
+
+        if (activeRelativePathField != null)
+        {
+            activeRelativePathField.SetValueWithoutNotify(displayPath);
+            activeRelativePathField.SetEnabled(false); // 只读
+        }
+    }
+
+    /// <summary>
+    /// 在 root 子树里按 name 查找唯一匹配；若 0 或 >1 个匹配，则返回 null（避免误绑）。
+    /// </summary>
+    private static Transform FindUniqueChildByName(Transform root, string name)
+    {
+        if (root == null || string.IsNullOrEmpty(name))
+        {
+            return null;
+        }
+
+        Transform found = null;
+        int count = 0;
+
+        var queue = new Queue<Transform>();
+        queue.Enqueue(root);
+
+        while (queue.Count > 0)
+        {
+            var t = queue.Dequeue();
+            if (t == null)
+            {
+                continue;
+            }
+
+            // 不把 root 自己算进来（避免 name 恰好等于 root）
+            if (!ReferenceEquals(t, root) && string.Equals(t.name, name, StringComparison.Ordinal))
+            {
+                found = t;
+                count++;
+                if (count > 1)
+                {
+                    return null;
+                }
+            }
+
+            for (int i = 0; i < t.childCount; ++i)
+            {
+                queue.Enqueue(t.GetChild(i));
+            }
+        }
+
+        return count == 1 ? found : null;
     }
 
     #endregion

@@ -20,7 +20,7 @@ public partial class SkillEditorWindow : EditorWindow
 
     private static bool IsLaneTrack(ITrackItem track)
     {
-        return track is EffectTrack || track is SoundTrack || track is HitBoxTrack;
+        return track is EffectTrack || track is SoundTrack || track is HitBoxTrack || track is ActiveTrack;
     }
 
     private static float GetLaneTopPx(int laneIndex)
@@ -87,6 +87,15 @@ public partial class SkillEditorWindow : EditorWindow
                         }
                     }
                     break;
+                case ActiveTrack at:
+                    foreach (var c in at.ClipList)
+                    {
+                        if (c != null && elementByClip.TryGetValue(c, out var el))
+                        {
+                            list.Add((c, el));
+                        }
+                    }
+                    break;
             }
         }
 
@@ -140,6 +149,10 @@ public partial class SkillEditorWindow : EditorWindow
                 case HitBoxClipItem hitBoxClip when hitBoxClip.HitBoxData != null:
                     start = ownerStartTimeSeconds + hitBoxClip.HitBoxData.NormalizedStart * ownerDuration;
                     duration = Mathf.Max(0f, (hitBoxClip.HitBoxData.NormalizedEnd - hitBoxClip.HitBoxData.NormalizedStart) * ownerDuration);
+                    break;
+                case ActiveClipItem activeClip when activeClip.ActiveData != null:
+                    start = ownerStartTimeSeconds + activeClip.ActiveData.NormalizedStart * ownerDuration;
+                    duration = Mathf.Max(0f, (activeClip.ActiveData.NormalizedEnd - activeClip.ActiveData.NormalizedStart) * ownerDuration);
                     break;
             }
 
@@ -196,6 +209,15 @@ public partial class SkillEditorWindow : EditorWindow
                         if (c?.HitBoxData == null) continue;
                         c.StartTime = ownerStart + c.HitBoxData.NormalizedStart * ownerDuration;
                         c.Duration = Mathf.Max(0f, (c.HitBoxData.NormalizedEnd - c.HitBoxData.NormalizedStart) * ownerDuration);
+                        c.Frame = Mathf.RoundToInt(Mathf.Max(0f, c.Duration) * 60f);
+                    }
+                    break;
+                case ActiveTrack at:
+                    foreach (var c in at.ClipList)
+                    {
+                        if (c?.ActiveData == null) continue;
+                        c.StartTime = ownerStart + c.ActiveData.NormalizedStart * ownerDuration;
+                        c.Duration = Mathf.Max(0f, (c.ActiveData.NormalizedEnd - c.ActiveData.NormalizedStart) * ownerDuration);
                         c.Frame = Mathf.RoundToInt(Mathf.Max(0f, c.Duration) * 60f);
                     }
                     break;
@@ -387,6 +409,14 @@ public partial class SkillEditorWindow : EditorWindow
                     if (endTime > maxEndTime) maxEndTime = endTime;
                 }
             }
+            else if (trackItem is ActiveTrack activeTrack)
+            {
+                foreach (var clip in activeTrack.ClipList)
+                {
+                    float endTime = clip.StartTime + clip.Duration;
+                    if (endTime > maxEndTime) maxEndTime = endTime;
+                }
+            }
         }
         return maxEndTime;
     }
@@ -541,6 +571,14 @@ public partial class SkillEditorWindow : EditorWindow
         else if (trackData is HitBoxTrack hitBoxTrack)
         {
             foreach (var clipItem in hitBoxTrack.ClipList)
+            {
+                var clipElement = SetClipItem(trackElement, clipItem);
+                clipElements.Add(clipElement);
+            }
+        }
+        else if (trackData is ActiveTrack activeTrack)
+        {
+            foreach (var clipItem in activeTrack.ClipList)
             {
                 var clipElement = SetClipItem(trackElement, clipItem);
                 clipElements.Add(clipElement);
@@ -991,8 +1029,8 @@ public partial class SkillEditorWindow : EditorWindow
                         float ownerStartPx = owner.StartTime * pixelsPerSecond;
                         float ownerEndPx = (owner.StartTime + Mathf.Max(0f, owner.Duration)) * pixelsPerSecond;
 
-                        // HitBox：End 也必须落在 0~1 内，因此用 duration 反推最大可用 start
-                        if (draggingItem is HitBoxClipItem)
+                    // HitBox / Active：End 也必须落在 0~1 内，因此用 duration 反推最大可用 start
+                    if (draggingItem is HitBoxClipItem || draggingItem is ActiveClipItem)
                         {
                             float durationPx = Mathf.Max(0f, draggingItem.Duration) * pixelsPerSecond;
                             float ownerLenPx = Mathf.Max(0f, ownerEndPx - ownerStartPx);
@@ -1077,6 +1115,23 @@ public partial class SkillEditorWindow : EditorWindow
                                     duration = ownerLen;
                                     hitBox.Duration = duration;
                                     hitBox.Frame = Mathf.RoundToInt(duration * 60f);
+                                    clipElement.style.width = Mathf.Max(duration * pixelsPerSecond, MIN_CLIP_WIDTH_PX);
+                                }
+
+                                float maxStart = ownerEnd - duration;
+                                currentStartTime = Mathf.Clamp(currentStartTime, ownerStart, maxStart);
+                                clipElement.style.left = currentStartTime * pixelsPerSecond;
+                            }
+                            else if (draggedClipItem is ActiveClipItem activeClip)
+                            {
+                                // Active：Start/End 必须在 owner 的 0~1 内；必要时压缩 duration
+                                float ownerLen = Mathf.Max(0f, ownerEnd - ownerStart);
+                                float duration = Mathf.Max(0f, activeClip.Duration);
+                                if (duration > ownerLen)
+                                {
+                                    duration = ownerLen;
+                                    activeClip.Duration = duration;
+                                    activeClip.Frame = Mathf.RoundToInt(duration * 60f);
                                     clipElement.style.width = Mathf.Max(duration * pixelsPerSecond, MIN_CLIP_WIDTH_PX);
                                 }
 
@@ -1240,8 +1295,517 @@ public partial class SkillEditorWindow : EditorWindow
                 evt.StopPropagation();
             });
         }
+        // 支持从 Project/Hierarchy 直接拖入 GameObject 到 EffectTrack：自动创建 VisualEffectData + EffectClipItem
+        else if (trackElement.userData is EffectTrack effectTrack)
+        {
+            trackElement.RegisterCallback<DragUpdatedEvent>(evt =>
+            {
+                if (config == null)
+                {
+                    return;
+                }
+
+                var owner = GetOwnerAnimationClipItem((ITrackItem)effectTrack);
+                if (owner?.SegmentData == null)
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                    return;
+                }
+
+                bool hasPrefab = false;
+                foreach (var obj in DragAndDrop.objectReferences)
+                {
+                    if (obj is GameObject go && UnityEditor.EditorUtility.IsPersistent(go))
+                    {
+                        hasPrefab = true;
+                        break;
+                    }
+                }
+
+                DragAndDrop.visualMode = hasPrefab ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Rejected;
+                if (hasPrefab)
+                {
+                    evt.StopPropagation();
+                }
+            });
+
+            trackElement.RegisterCallback<DragPerformEvent>(evt =>
+            {
+                if (config == null)
+                {
+                    return;
+                }
+
+                var owner = GetOwnerAnimationClipItem((ITrackItem)effectTrack);
+                if (owner?.SegmentData == null)
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                    return;
+                }
+
+                List<GameObject> prefabs = null;
+                foreach (var obj in DragAndDrop.objectReferences)
+                {
+                    if (obj is GameObject go && UnityEditor.EditorUtility.IsPersistent(go))
+                    {
+                        prefabs ??= new List<GameObject>();
+                        prefabs.Add(go);
+                    }
+                }
+
+                if (prefabs == null || prefabs.Count == 0)
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                    return;
+                }
+
+                DragAndDrop.AcceptDrag();
+
+                Vector2 localPos = trackElement.WorldToLocal(evt.mousePosition);
+                float x = Mathf.Max(0f, localPos.x);
+                float dropTime = x / pixelsPerSecond;
+
+                AddDraggedVisualEffects(effectTrack, owner, prefabs, dropTime);
+
+                evt.StopPropagation();
+            });
+        }
+        // 支持从 Project 直接拖入 AudioClip 到 SoundTrack：自动创建 SoundEffectData + SoundClipItem
+        else if (trackElement.userData is SoundTrack soundTrack)
+        {
+            trackElement.RegisterCallback<DragUpdatedEvent>(evt =>
+            {
+                if (config == null)
+                {
+                    return;
+                }
+
+                var owner = GetOwnerAnimationClipItem((ITrackItem)soundTrack);
+                if (owner?.SegmentData == null)
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                    return;
+                }
+
+                bool hasAudio = false;
+                foreach (var obj in DragAndDrop.objectReferences)
+                {
+                    if (obj is AudioClip)
+                    {
+                        hasAudio = true;
+                        break;
+                    }
+                }
+
+                DragAndDrop.visualMode = hasAudio ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Rejected;
+                if (hasAudio)
+                {
+                    evt.StopPropagation();
+                }
+            });
+
+            trackElement.RegisterCallback<DragPerformEvent>(evt =>
+            {
+                if (config == null)
+                {
+                    return;
+                }
+
+                var owner = GetOwnerAnimationClipItem((ITrackItem)soundTrack);
+                if (owner?.SegmentData == null)
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                    return;
+                }
+
+                List<AudioClip> clips = null;
+                foreach (var obj in DragAndDrop.objectReferences)
+                {
+                    if (obj is AudioClip clip)
+                    {
+                        clips ??= new List<AudioClip>();
+                        clips.Add(clip);
+                    }
+                }
+
+                if (clips == null || clips.Count == 0)
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                    return;
+                }
+
+                DragAndDrop.AcceptDrag();
+
+                Vector2 localPos = trackElement.WorldToLocal(evt.mousePosition);
+                float x = Mathf.Max(0f, localPos.x);
+                float dropTime = x / pixelsPerSecond;
+
+                AddDraggedSoundEffects(soundTrack, owner, clips, dropTime);
+
+                evt.StopPropagation();
+            });
+        }
+        // 支持从 Hierarchy 直接拖入“角色身上已有的子物体”到 ActiveTrack：生成 AttachedActiveData + ActiveClipItem
+        else if (trackElement.userData is ActiveTrack activeTrack)
+        {
+            trackElement.RegisterCallback<DragUpdatedEvent>(evt =>
+            {
+                if (config == null)
+                {
+                    return;
+                }
+
+                var owner = GetOwnerAnimationClipItem((ITrackItem)activeTrack);
+                if (owner?.SegmentData == null)
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                    return;
+                }
+
+                var rootGo = selectObj != null ? selectObj.value as GameObject : null;
+                var rootTf = rootGo != null ? rootGo.transform : null;
+                if (rootTf == null)
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                    return;
+                }
+
+                bool hasChild = false;
+                foreach (var obj in DragAndDrop.objectReferences)
+                {
+                    if (obj is GameObject go && go.transform != null && go.transform.IsChildOf(rootTf))
+                    {
+                        hasChild = true;
+                        break;
+                    }
+                }
+
+                DragAndDrop.visualMode = hasChild ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Rejected;
+                if (hasChild)
+                {
+                    evt.StopPropagation();
+                }
+            });
+
+            trackElement.RegisterCallback<DragPerformEvent>(evt =>
+            {
+                if (config == null)
+                {
+                    return;
+                }
+
+                var owner = GetOwnerAnimationClipItem((ITrackItem)activeTrack);
+                if (owner?.SegmentData == null)
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                    return;
+                }
+
+                var rootGo = selectObj != null ? selectObj.value as GameObject : null;
+                var rootTf = rootGo != null ? rootGo.transform : null;
+                if (rootTf == null)
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                    return;
+                }
+
+                List<GameObject> children = null;
+                foreach (var obj in DragAndDrop.objectReferences)
+                {
+                    if (obj is GameObject go && go.transform != null && go.transform.IsChildOf(rootTf))
+                    {
+                        children ??= new List<GameObject>();
+                        children.Add(go);
+                    }
+                }
+
+                if (children == null || children.Count == 0)
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                    return;
+                }
+
+                DragAndDrop.AcceptDrag();
+
+                Vector2 localPos = trackElement.WorldToLocal(evt.mousePosition);
+                float x = Mathf.Max(0f, localPos.x);
+                float dropTime = x / pixelsPerSecond;
+
+                AddDraggedAttachedActives(activeTrack, owner, rootTf, children, dropTime);
+
+                evt.StopPropagation();
+            });
+        }
 
         trackElement.pickingMode = PickingMode.Position;
+    }
+
+    private static string GetRelativePath(Transform root, Transform target)
+    {
+        if (root == null || target == null)
+        {
+            return string.Empty;
+        }
+
+        if (ReferenceEquals(root, target))
+        {
+            return string.Empty;
+        }
+
+        // target 必须在 root 下，否则无法生成稳定路径
+        if (!target.IsChildOf(root))
+        {
+            return string.Empty;
+        }
+
+        var stack = new System.Collections.Generic.Stack<string>();
+        Transform t = target;
+        while (t != null && !ReferenceEquals(t, root))
+        {
+            stack.Push(t.name);
+            t = t.parent;
+        }
+
+        return string.Join("/", stack);
+    }
+
+    private void AddDraggedAttachedActives(ActiveTrack activeTrack, AnimationClipItem owner, Transform rootTransform, List<GameObject> targets, float dropTimeSeconds)
+    {
+        if (config == null || activeTrack == null || owner?.SegmentData == null || rootTransform == null || targets == null || targets.Count == 0)
+        {
+            return;
+        }
+
+        var segment = owner.SegmentData;
+        float ownerDuration = Mathf.Max(0.0001f, owner.Duration);
+        float ownerStart = owner.StartTime;
+
+        ActiveClipItem lastClipItem = null;
+
+        for (int i = 0; i < targets.Count; ++i)
+        {
+            var go = targets[i];
+            if (go == null)
+            {
+                continue;
+            }
+
+            string path = GetRelativePath(rootTransform, go.transform);
+            if (path == null)
+            {
+                path = string.Empty;
+            }
+
+            float normalized = Mathf.Clamp01((dropTimeSeconds - ownerStart) / ownerDuration);
+
+            // 默认区间长度：
+            // - 若目标带 legacy Animation，则用 clip.length 推导
+            // - 否则回退 0.2
+            float normalizedEnd;
+            var anim = go.GetComponentInChildren<Animation>(true);
+            var clip = anim != null ? GetFirstLegacyAnimationClip(anim) : null;
+            if (clip != null)
+            {
+                normalizedEnd = Mathf.Clamp01(normalized + (clip.length / ownerDuration));
+            }
+            else
+            {
+                normalizedEnd = Mathf.Min(1f, normalized + 0.2f);
+            }
+            float absStart = ownerStart + normalized * ownerDuration;
+
+            var data = new AttachedActiveData
+            {
+                Name = go.name,
+                RelativePath = path,
+                NormalizedStart = normalized,
+                NormalizedEnd = Mathf.Max(normalized, normalizedEnd),
+            };
+
+            segment.AttachedActives.Add(data);
+
+            float dur = (data.NormalizedEnd - data.NormalizedStart) * ownerDuration;
+            var clipItem = new ActiveClipItem
+            {
+                ActiveData = data,
+                Name = string.IsNullOrEmpty(data.Name) ? "Active" : data.Name,
+                StartTime = absStart,
+                Duration = Mathf.Max(0f, dur),
+                Frame = Mathf.RoundToInt(Mathf.Max(0f, dur) * 60f),
+            };
+
+            activeTrack.ClipList.Add(clipItem);
+            lastClipItem = clipItem;
+        }
+
+        if (lastClipItem == null)
+        {
+            return;
+        }
+
+        SelectClip(lastClipItem, activeTrack);
+        MarkAssetDirty();
+        ApplyViewModeAndRefresh();
+    }
+
+    private AnimationClipItem GetOwnerAnimationClipItem(ITrackItem track)
+    {
+        if (track == null)
+        {
+            return null;
+        }
+
+        // AnimationTrack 是全局轨道，不属于某个 Segment
+        if (track is AnimationTrack)
+        {
+            return null;
+        }
+
+        foreach (var kvp in animationClipTrackMap)
+        {
+            var owner = kvp.Key;
+            var list = kvp.Value;
+            if (owner == null || list == null)
+            {
+                continue;
+            }
+
+            for (int i = 0; i < list.Count; ++i)
+            {
+                if (ReferenceEquals(list[i], track))
+                {
+                    return owner;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private void AddDraggedVisualEffects(EffectTrack effectTrack, AnimationClipItem owner, List<GameObject> prefabs, float dropTimeSeconds)
+    {
+        if (config == null || effectTrack == null || owner?.SegmentData == null || prefabs == null || prefabs.Count == 0)
+        {
+            return;
+        }
+
+        var segment = owner.SegmentData;
+        float ownerDuration = Mathf.Max(0.0001f, owner.Duration);
+        float ownerStart = owner.StartTime;
+
+        EffectClipItem lastClipItem = null;
+
+        for (int i = 0; i < prefabs.Count; ++i)
+        {
+            var prefab = prefabs[i];
+            if (prefab == null)
+            {
+                continue;
+            }
+
+            float normalized = Mathf.Clamp01((dropTimeSeconds - ownerStart) / ownerDuration);
+            float absStart = ownerStart + normalized * ownerDuration;
+
+            var vfx = new VisualEffectData
+            {
+                Name = prefab.name,
+                Prefab = prefab,
+                NormalizedStart = normalized,
+                Offset = Vector3.zero,
+                FollowTarget = false,
+                // Length：沿用数据默认值（由业务自行调整）
+            };
+
+            // Best practice：若 Prefab 自带 legacy Animation，则用 clip.length 作为 Length 真源（写回 config）。
+            var anim = prefab.GetComponentInChildren<Animation>(true);
+            var clip = anim != null ? GetFirstLegacyAnimationClip(anim) : null;
+            if (clip != null)
+            {
+                vfx.Length = Mathf.Max(0.01f, clip.length);
+            }
+
+            segment.VisualEffects.Add(vfx);
+
+            float duration = Mathf.Max(0f, vfx.Length);
+            var clipItem = new EffectClipItem
+            {
+                EffectData = vfx,
+                Name = string.IsNullOrEmpty(vfx.Name) ? "VFX" : vfx.Name,
+                StartTime = absStart,
+                Duration = duration,
+                Frame = Mathf.RoundToInt(duration * 60f),
+            };
+
+            effectTrack.ClipList.Add(clipItem);
+            lastClipItem = clipItem;
+        }
+
+        if (lastClipItem == null)
+        {
+            return;
+        }
+
+        SelectClip(lastClipItem, effectTrack);
+        MarkAssetDirty();
+        ApplyViewModeAndRefresh();
+    }
+
+    private void AddDraggedSoundEffects(SoundTrack soundTrack, AnimationClipItem owner, List<AudioClip> clips, float dropTimeSeconds)
+    {
+        if (config == null || soundTrack == null || owner?.SegmentData == null || clips == null || clips.Count == 0)
+        {
+            return;
+        }
+
+        var segment = owner.SegmentData;
+        float ownerDuration = Mathf.Max(0.0001f, owner.Duration);
+        float ownerStart = owner.StartTime;
+
+        SoundClipItem lastClipItem = null;
+
+        for (int i = 0; i < clips.Count; ++i)
+        {
+            var clip = clips[i];
+            if (clip == null)
+            {
+                continue;
+            }
+
+            float normalized = Mathf.Clamp01((dropTimeSeconds - ownerStart) / ownerDuration);
+            float absStart = ownerStart + normalized * ownerDuration;
+
+            var sfx = new SoundEffectData
+            {
+                Name = clip.name,
+                Clip = clip,
+                NormalizedStart = normalized,
+                Volume = 1f,
+            };
+
+            segment.SoundEffects.Add(sfx);
+
+            float duration = Mathf.Max(0.01f, clip.length);
+            var clipItem = new SoundClipItem
+            {
+                SoundData = sfx,
+                Name = string.IsNullOrEmpty(sfx.Name) ? "SFX" : sfx.Name,
+                StartTime = absStart,
+                Duration = duration,
+                Frame = Mathf.RoundToInt(duration * 60f),
+            };
+
+            soundTrack.ClipList.Add(clipItem);
+            lastClipItem = clipItem;
+        }
+
+        if (lastClipItem == null)
+        {
+            return;
+        }
+
+        SelectClip(lastClipItem, soundTrack);
+        MarkAssetDirty();
+        ApplyViewModeAndRefresh();
     }
 
     /// <summary>
@@ -1387,6 +1951,10 @@ public partial class SkillEditorWindow : EditorWindow
                 else if (trackData is HitBoxTrack hitBoxTrack)
                 {
                     clipList = hitBoxTrack.ClipList.ConvertAll(x => (IClipItem)x);
+                }
+                else if (trackData is ActiveTrack activeTrack)
+                {
+                    clipList = activeTrack.ClipList.ConvertAll(x => (IClipItem)x);
                 }
 
                 if (clipList != null)

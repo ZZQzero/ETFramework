@@ -28,6 +28,7 @@ public partial class SkillEditorWindow : EditorWindow
                 EffectTrack et => et.ClipList.Count == 0,
                 SoundTrack st => st.ClipList.Count == 0,
                 HitBoxTrack ht => ht.ClipList.Count == 0,
+                ActiveTrack at => at.ClipList.Count == 0,
                 _ => false
             };
 
@@ -90,6 +91,11 @@ public partial class SkillEditorWindow : EditorWindow
         else if (draggedClipItem is HitBoxClipItem hitBoxClipItem && hitBoxClipItem.HitBoxData != null && config != null)
         {
             UpdateHitBoxClipTimes(hitBoxClipItem, draggedClipItem.StartTime, draggedClipItem.Duration);
+            dataChanged = true;
+        }
+        else if (draggedClipItem is ActiveClipItem activeClipItem && activeClipItem.ActiveData != null && config != null)
+        {
+            UpdateActiveClipTimes(activeClipItem, draggedClipItem.StartTime, draggedClipItem.Duration);
             dataChanged = true;
         }
 
@@ -181,6 +187,24 @@ public partial class SkillEditorWindow : EditorWindow
                             }
                         }
                     }
+                    else if (childTrack is ActiveTrack activeTrack)
+                    {
+                        foreach (var activeClip in activeTrack.ClipList)
+                        {
+                            laneIndexByClip.Remove(activeClip);
+                            if (activeClip.ActiveData != null)
+                            {
+                                foreach (var segment in config.Segments)
+                                {
+                                    if (segment.AttachedActives.Contains(activeClip.ActiveData))
+                                    {
+                                        segment.AttachedActives.Remove(activeClip.ActiveData);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     // 从globalTrackDataList中移除子轨道
                     globalTrackDataList.Remove(childTrack);
@@ -262,6 +286,23 @@ public partial class SkillEditorWindow : EditorWindow
                 RemoveClipFromTracks<HitBoxTrack, HitBoxClipItem>(hitBoxClipItem);
             }
         }
+        else if (clipItem is ActiveClipItem activeClipItem)
+        {
+            if (activeClipItem.ActiveData != null)
+            {
+                foreach (var segment in config.Segments)
+                {
+                    if (segment.AttachedActives.Contains(activeClipItem.ActiveData))
+                    {
+                        segment.AttachedActives.Remove(activeClipItem.ActiveData);
+                        dataChanged = true;
+                        break;
+                    }
+                }
+
+                RemoveClipFromTracks<ActiveTrack, ActiveClipItem>(activeClipItem);
+            }
+        }
 
         if (dataChanged)
         {
@@ -326,6 +367,7 @@ public partial class SkillEditorWindow : EditorWindow
             EffectTrack et => et.ClipList as List<TClip>,
             SoundTrack st => st.ClipList as List<TClip>,
             HitBoxTrack ht => ht.ClipList as List<TClip>,
+            ActiveTrack at => at.ClipList as List<TClip>,
             AnimationTrack at => at.ClipList as List<TClip>,
             _ => null
         };
@@ -407,6 +449,38 @@ public partial class SkillEditorWindow : EditorWindow
                     if (hitBoxClipItem.HitBoxData.NormalizedEnd < hitBoxClipItem.HitBoxData.NormalizedStart)
                     {
                         hitBoxClipItem.HitBoxData.NormalizedEnd = hitBoxClipItem.HitBoxData.NormalizedStart;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    private void UpdateActiveClipTimes(ActiveClipItem activeClipItem, float absoluteStartTime, float absoluteDuration)
+    {
+        if (config == null || activeClipItem.ActiveData == null) return;
+
+        foreach (var segment in config.Segments)
+        {
+            if (segment.AttachedActives.Contains(activeClipItem.ActiveData))
+            {
+                float animationLength = segment.Duration > 0f ? segment.Duration : 2f;
+                if (animationLength <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
+                {
+                    animationLength = segment.AnimationClipTrans.Clip.length;
+                }
+
+                if (animationLength > 0f)
+                {
+                    float normalizedStartTime = (absoluteStartTime - segment.StartTime) / animationLength;
+                    float normalizedEndTime = normalizedStartTime + (absoluteDuration / animationLength);
+
+                    activeClipItem.ActiveData.NormalizedStart = Mathf.Clamp01(normalizedStartTime);
+                    activeClipItem.ActiveData.NormalizedEnd = Mathf.Clamp01(normalizedEndTime);
+
+                    if (activeClipItem.ActiveData.NormalizedEnd < activeClipItem.ActiveData.NormalizedStart)
+                    {
+                        activeClipItem.ActiveData.NormalizedEnd = activeClipItem.ActiveData.NormalizedStart;
                     }
                 }
                 break;

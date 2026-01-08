@@ -86,6 +86,11 @@ public partial class SkillEditorWindow : EditorWindow
             // HitBox 的 Length 为绝对秒数，需要反推到归一化 EndTime
             UpdateHitBoxClipTimes(hitBoxClipItem, hitBoxClipItem.StartTime, newLength);
         }
+        else if (selectedClip is ActiveClipItem activeClipItem && activeClipItem.ActiveData != null && config != null)
+        {
+            // Active 的 Length 为绝对秒数，需要反推到归一化 EndTime
+            UpdateActiveClipTimes(activeClipItem, activeClipItem.StartTime, newLength);
+        }
 
         MarkAssetDirty();
         RefreshTrackContent();
@@ -239,8 +244,36 @@ public partial class SkillEditorWindow : EditorWindow
     {
         if (selectedClip is EffectClipItem effectClipItem && effectClipItem.EffectData != null)
         {
-            effectClipItem.EffectData.Prefab = evt.newValue as UnityEngine.GameObject;
+            var prefab = evt.newValue as UnityEngine.GameObject;
+            effectClipItem.EffectData.Prefab = prefab;
+
+            // Best practice：若 Prefab 自带 legacy Animation，则以 clip.length 作为特效时长真源，写回 config。
+            // ParticleSystem 则不自动覆盖 Length（按配置手填）。
+            if (prefab != null)
+            {
+                var anim = prefab.GetComponentInChildren<Animation>(true);
+                var clip = anim != null ? GetFirstLegacyAnimationClip(anim) : null;
+                if (clip != null)
+                {
+                    float len = Mathf.Max(0.01f, clip.length);
+                    effectClipItem.EffectData.Length = len;
+                    effectClipItem.Duration = len;
+                    effectClipItem.Frame = Mathf.RoundToInt(len * 60f);
+
+                    if (clipLengthField != null)
+                    {
+                        clipLengthField.SetValueWithoutNotify(effectClipItem.Duration);
+                    }
+                    if (frameField != null)
+                    {
+                        frameField.SetValueWithoutNotify(effectClipItem.Frame);
+                    }
+                }
+            }
+
             MarkAssetDirty();
+            RefreshTrackContent();
+            RefreshSelectionHighlight();
         }
     }
 
@@ -267,6 +300,42 @@ public partial class SkillEditorWindow : EditorWindow
             RefreshTrackContent();
             // 刷新选择高亮
             RefreshSelectionHighlight();
+        }
+    }
+
+    private void OnEffectOffsetChanged(ChangeEvent<Vector3> evt)
+    {
+        if (selectedClip is not EffectClipItem effectClipItem || effectClipItem.EffectData == null)
+        {
+            return;
+        }
+
+        effectClipItem.EffectData.Offset = evt.newValue;
+        MarkAssetDirty();
+
+        // 非播放时：立即按当前时间点重建预览，便于实时调偏移。
+        if (!isPlaying)
+        {
+            EvaluatePreviewVfxAtTime(currentPlaybackTime);
+            SceneView.RepaintAll();
+        }
+    }
+
+    private void OnEffectRotationChanged(ChangeEvent<Vector3> evt)
+    {
+        if (selectedClip is not EffectClipItem effectClipItem || effectClipItem.EffectData == null)
+        {
+            return;
+        }
+
+        effectClipItem.EffectData.RotationEuler = evt.newValue;
+        MarkAssetDirty();
+
+        // 非播放时：立即按当前时间点重建预览，便于实时调旋转。
+        if (!isPlaying)
+        {
+            EvaluatePreviewVfxAtTime(currentPlaybackTime);
+            SceneView.RepaintAll();
         }
     }
 
@@ -317,6 +386,98 @@ public partial class SkillEditorWindow : EditorWindow
             soundClipItem.SoundData.Volume = Mathf.Clamp01(evt.newValue);
             MarkAssetDirty();
         }
+    }
+
+    private void OnActiveTargetObjectChanged(ChangeEvent<Object> evt)
+    {
+        if (selectedClip is not ActiveClipItem activeClipItem || activeClipItem.ActiveData == null)
+        {
+            return;
+        }
+
+        var rootGo = selectObj != null ? selectObj.value as GameObject : null;
+        var root = rootGo != null ? rootGo.transform : null;
+        if (root == null)
+        {
+            // 没有根对象时无法计算相对路径：直接回退显示
+            if (activeTargetObjectField != null)
+            {
+                activeTargetObjectField.SetValueWithoutNotify(null);
+            }
+            return;
+        }
+
+        var go = evt.newValue as GameObject;
+        if (go == null)
+        {
+            // 清空选择：不改数据（避免误删路径）；只回显为空
+            if (activeTargetObjectField != null)
+            {
+                activeTargetObjectField.SetValueWithoutNotify(null);
+            }
+            return;
+        }
+
+        if (go.transform == null || !go.transform.IsChildOf(root))
+        {
+            // 只能选角色根节点下的子物体：回退到旧值
+            if (activeTargetObjectField != null)
+            {
+                var oldPath = activeClipItem.ActiveData.RelativePath ?? string.Empty;
+                var oldTf = string.IsNullOrEmpty(oldPath) ? root : root.Find(oldPath);
+                activeTargetObjectField.SetValueWithoutNotify(oldTf != null ? oldTf.gameObject : null);
+            }
+            return;
+        }
+
+        // 计算相对路径并写回
+        string path = GetRelativePath(root, go.transform);
+        activeClipItem.ActiveData.Name = go.name;
+        activeClipItem.ActiveData.RelativePath = path;
+        activeClipItem.Name = go.name; // 时间轴显示名称同步
+
+        // 若目标带 legacy Animation，则用 clip.length 自动推导本段内的区间长度（更新 NormalizedEnd）
+        // 只在“已有 end<=start 或 end-start 约等于默认值0.2”时自动覆盖，避免破坏用户手工调的区间。
+        var owner = GetOwnerAnimationClipItem(activeClipItem);
+        float ownerDuration = owner != null ? Mathf.Max(0.0001f, owner.Duration) : 0f;
+        if (ownerDuration > 0f)
+        {
+            var anim = go.GetComponentInChildren<Animation>(true);
+            var clip = anim != null ? GetFirstLegacyAnimationClip(anim) : null;
+            if (clip != null)
+            {
+                float startN = Mathf.Clamp01(activeClipItem.ActiveData.NormalizedStart);
+                float endN = Mathf.Clamp01(activeClipItem.ActiveData.NormalizedEnd);
+                float delta = endN - startN;
+                bool shouldAuto = delta <= 0f || Mathf.Abs(delta - 0.2f) < 0.0001f;
+                if (shouldAuto)
+                {
+                    float clipN = Mathf.Clamp01(clip.length / ownerDuration);
+                    activeClipItem.ActiveData.NormalizedEnd = Mathf.Clamp01(startN + clipN);
+                }
+
+                // 同步 UI clip 的绝对时长
+                float dur = (Mathf.Clamp01(activeClipItem.ActiveData.NormalizedEnd) - startN) * ownerDuration;
+                activeClipItem.Duration = Mathf.Max(0f, dur);
+                activeClipItem.Frame = Mathf.RoundToInt(activeClipItem.Duration * 60f);
+                if (clipLengthField != null)
+                {
+                    clipLengthField.SetValueWithoutNotify(activeClipItem.Duration);
+                }
+                if (frameField != null)
+                {
+                    frameField.SetValueWithoutNotify(activeClipItem.Frame);
+                }
+            }
+        }
+
+        if (activeRelativePathField != null)
+        {
+            activeRelativePathField.SetValueWithoutNotify(path);
+        }
+
+        MarkAssetDirty();
+        ApplyViewModeAndRefresh();
     }
 
     private void OnSoundNormalizedStartChanged(ChangeEvent<float> evt)

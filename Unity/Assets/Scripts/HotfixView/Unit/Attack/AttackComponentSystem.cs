@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Animancer;
+using GameUI;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -297,14 +298,33 @@ namespace ET
             }
 
             // 若该层正处于淡出，先把目标拉回 1，避免“播放了攻击但层还在继续淡出”的情况
-            float fadeIn = Mathf.Max(0.05f, segment.AnimationClipTrans.FadeDuration);
-            attackLayer.StartFade(1f, fadeIn);
+            // 起手规则：
+            // - 第 0 段（起手段）无论当前处于什么状态（Idle/Recovery/连段回环等），都应“立即起手”，避免与 Idle 混合。
+            // - 其他段仍按 FadeDuration 淡入，保持连段手感与配置语义一致。
+            //
+            // 说明：如果起手段也走 StartFade，会让 Layer1 在淡入过程中与 Layer0 的 Idle/Move 混合，
+            // 视觉上就会出现“第一段前几帧像是没从 0 帧起手”的错觉（尤其在连击回环到第 0 段时更明显）。
+            if (segmentIndex == 0)
+            {
+                // 0 秒淡入等价于“立刻到 1”，同时也会取消之前的 FadeGroup。
+                attackLayer.StartFade(1f, 0f);
+                attackLayer.Weight = 1f;
+            }
+            else
+            {
+                float fadeIn = Mathf.Max(0.05f, segment.AnimationClipTrans.FadeDuration);
+                attackLayer.StartFade(1f, fadeIn);
+            }
             var animState = attackLayer.Play(segment.AnimationClipTrans);
             if (animState == null)
             {
                 Log.Error($"AttackComponent: Failed to play animation for segment {segmentIndex}");
                 return false;
             }
+
+            // 关键：Animancer 的 Play 会复用同一个 State（同 clip key）并保持 Time，
+            // 如果不重置会出现“起手不是从 0 帧开始”的问题（影响输入窗口/结束阈值等逻辑）。
+            animState.Time = 0;
 
             // 更新状态
             self.CurrentAnimState = animState;
@@ -710,35 +730,29 @@ namespace ET
             if (vfx == null || vfx.Prefab == null || self.Player == null)
                 return;
 
-            try
+            var instance = GameObjectPool.Instance.GetObjectSync(vfx.Prefab.name, PoolType.Effect);
+            if (instance == null)
+                return;
+
+            // FollowTarget 语义（与编辑器一致）：
+            // - FollowTarget = true：特效跟随角色（作为子物体），Offset/RotationEuler 表示相对角色的 local pose。
+            // - FollowTarget = false：特效生成后定格在世界（不再跟随角色），Offset/RotationEuler 仍然以“相对角色”描述，
+            //   但在生成时会被烘焙成 world pose：pos = player.TransformPoint(Offset)，rot = player.rotation * Euler(RotationEuler)。
+            if (vfx.FollowTarget)
             {
-                if (vfx.FollowTarget)
-                {
-                    // 商用项目建议替换为统一的特效系统/对象池（这里先用原生 Instantiate 作为最小可用实现）
-                    var instance = Object.Instantiate(vfx.Prefab, self.Player);
-                    instance.transform.localPosition = vfx.Offset;
-                    instance.transform.localRotation = Quaternion.identity;
-                    if (vfx.Length > 0)
-                    {
-                        Object.Destroy(instance, vfx.Length);
-                    }
-                }
-                else
-                {
-                    Vector3 pos = self.Player.position + self.Player.rotation * vfx.Offset;
-                    Quaternion rot = self.Player.rotation;
-                    // 商用项目建议替换为统一的特效系统/对象池（这里先用原生 Instantiate 作为最小可用实现）
-                    var instance = Object.Instantiate(vfx.Prefab, pos, rot);
-                    if (vfx.Length > 0)
-                    {
-                        Object.Destroy(instance, vfx.Length);
-                    }
-                }
+                instance.transform.SetParent(self.Player, worldPositionStays: false);
+                instance.transform.localPosition = vfx.Offset;
+                instance.transform.localRotation = Quaternion.Euler(vfx.RotationEuler);
             }
-            catch (Exception e)
+            else
             {
-                Log.Warning($"AttackComponent: PlayVisualEffect failed - {e.Message}");
+                // 不跟随：放在世界中（建议项目里统一挂到一个 EffectRoot，这里先用无父节点的 world）
+                instance.transform.SetParent(null, worldPositionStays: false);
+                instance.transform.position = self.Player.TransformPoint(vfx.Offset);
+                instance.transform.rotation = self.Player.rotation * Quaternion.Euler(vfx.RotationEuler);
             }
+
+            instance.transform.localScale = Vector3.one;
         }
 
         private static void PlaySoundEffect(this AttackComponent self, SoundEffectData sfx)

@@ -127,11 +127,19 @@ public partial class SkillEditorWindow : EditorWindow
     {
         if (playheadElement == null) return;
 
+        float prevScrubTime = 0f;
+
         playheadElement.RegisterCallback<MouseDownEvent>(evt => {
             // 点击播放条即可开始拖动
             if (evt.button == 0)
             {
+                // 点击时间轴/拖动 playhead 时自动暂停播放
+                if (isPlaying)
+                {
+                    PausePreviewPlayback();
+                }
                 isDraggingPlayhead = true;
+                prevScrubTime = currentPlaybackTime;
                 playheadElement.CaptureMouse();
                 evt.StopPropagation();
             }
@@ -157,6 +165,18 @@ public partial class SkillEditorWindow : EditorWindow
                 // 更新动画预览
                 UpdateAnimationPreview();
 
+                // 拖拽预览：VFX 需要“按时间点求值”，否则只会在 Play 时触发一次
+                EvaluatePreviewVfxAtTime(currentPlaybackTime);
+
+                // 拖拽预览：SFX（可选）——只在向前拖动时按跨越区间触发一次，避免来回拖动爆音
+                float from = prevScrubTime;
+                float to = currentPlaybackTime;
+                if (to > from)
+                {
+                    TryTriggerPreviewSfx(from, to, maxClipTime, wrapped: false);
+                }
+                prevScrubTime = currentPlaybackTime;
+
                 evt.StopPropagation();
             }
         });
@@ -178,6 +198,11 @@ public partial class SkillEditorWindow : EditorWindow
                 // 如果点击的是轨道空白区域（不是clip），移动播放进度条
                 if (evt.button == 0 && !isDragging && !isDraggingPlayhead)
                 {
+                    // 点击时间轴时自动暂停播放（保持当前帧/便于调参）
+                    if (isPlaying)
+                    {
+                        PausePreviewPlayback();
+                    }
                     Vector2 localMousePos = timelineContent.WorldToLocal(evt.mousePosition);
                     float newX = localMousePos.x;
                     
@@ -211,6 +236,18 @@ public partial class SkillEditorWindow : EditorWindow
 
                         UpdatePlayheadPosition();
                         UpdateAnimationPreview();
+
+                        // 拖拽预览：VFX 需要“按时间点求值”，否则只会在 Play 时触发一次
+                        EvaluatePreviewVfxAtTime(currentPlaybackTime);
+
+                        // 拖拽预览：SFX（可选）——只在向前拖动时按跨越区间触发一次，避免来回拖动爆音
+                        float from = prevScrubTime;
+                        float to = currentPlaybackTime;
+                        if (to > from)
+                        {
+                            TryTriggerPreviewSfx(from, to, maxClipTime, wrapped: false);
+                        }
+                        prevScrubTime = currentPlaybackTime;
                     }
                 }
             });
@@ -221,6 +258,8 @@ public partial class SkillEditorWindow : EditorWindow
     private void UpdateAnimationPreview()
     {
         SamplePreviewAnimation(currentPlaybackTime);
+        // Active 预览：拖拽 playhead 时也要即时更新显隐（否则会出现“到达区间前不隐藏”的错觉）
+        UpdatePreviewAttachedActives(currentPlaybackTime, wrapped: false);
     }
 
     #endregion

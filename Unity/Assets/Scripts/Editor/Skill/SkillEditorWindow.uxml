@@ -125,10 +125,15 @@
                             <ui:Label text="&#26412;&#27573;&#36229;&#26102;(ms):" style="width: 120px;"/>
                             <ui:IntegerField value="0" name="SegmentTimeoutMsPreviewField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
-                        <ui:VisualElement name="AnimationActionButtons" style="flex-direction: row; gap: 4px; margin-top: 8px;">
-                            <ui:Button text="&#28155;&#21152;&#29305;&#25928;" name="AddEffectButton" style="flex-grow: 1;"/>
-                            <ui:Button text="&#28155;&#21152;&#38899;&#25928;" name="AddSoundButton" style="flex-grow: 1;"/>
-                            <ui:Button text="&#28155;&#21152;&#30896;&#25758;&#30418;" name="AddHitboxButton" style="flex-grow: 1;"/>
+                        <ui:VisualElement name="AnimationActionButtons" style="flex-direction: column; gap: 4px; margin-top: 8px;">
+                            <ui:VisualElement style="flex-direction: row; gap: 4px;">
+                                <ui:Button text="&#28155;&#21152;&#29305;&#25928;" name="AddEffectButton" style="flex-grow: 1;"/>
+                                <ui:Button text="&#28155;&#21152;&#38899;&#25928;" name="AddSoundButton" style="flex-grow: 1;"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement style="flex-direction: row; gap: 4px;">
+                                <ui:Button text="&#28155;&#21152;&#30896;&#25758;&#30418;" name="AddHitboxButton" style="flex-grow: 1;"/>
+                                <ui:Button text="&#28155;&#21152;Active" name="AddActiveButton" style="flex-grow: 1;"/>
+                            </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement name="EffectFields" style="flex-direction: column; gap: 8px;">
@@ -137,16 +142,24 @@
                             <uie:ObjectField object-type="UnityEngine.GameObject" name="EffectPrefabField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
-                            <ui:Label text="&#35302;&#21457;&#26102;&#38388;(&#31186;):" style="width: 120px;"/>
-                            <ui:FloatField value="0" name="EffectTriggerTimeField" style="flex-grow: 1;"/>
+                            <ui:Label text="Offset:" style="width: 120px;"/>
+                            <ui:Vector3Field name="EffectOffsetField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="Rotation:" style="width: 120px;"/>
+                            <ui:Vector3Field name="EffectRotationField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="&#36319;&#38543;&#30446;&#26631;:" style="width: 120px;"/>
+                            <ui:Toggle name="FollowTargetField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
                             <ui:Label text="&#24402;&#19968;&#21270;&#26102;&#38388;(0-1):" style="width: 120px;"/>
                             <ui:FloatField value="0" name="EffectNormalizedStartField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
-                            <ui:Label text="&#36319;&#38543;&#30446;&#26631;:" style="width: 120px;"/>
-                            <ui:Toggle name="FollowTargetField" style="flex-grow: 1;"/>
+                            <ui:Label text="&#35302;&#21457;&#26102;&#38388;(&#31186;):" style="width: 120px;"/>
+                            <ui:FloatField value="0" name="EffectTriggerTimeField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement name="SoundFields" style="flex-direction: column; gap: 8px;">
@@ -243,6 +256,16 @@
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
                             <ui:Label text="TimeScale(ms):" style="width: 120px;"/>
                             <ui:IntegerField value="0" name="HitFeedbackTimeScaleDurationMsField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="ActiveFields" style="flex-direction: column; gap: 8px;">
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="&#23545;&#35937;(&#23376;&#29289;&#20307;):" style="width: 120px;"/>
+                            <uie:ObjectField object-type="UnityEngine.GameObject" name="ActiveTargetObjectField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="&#30456;&#23545;&#36335;&#24452;:" style="width: 120px;"/>
+                            <ui:TextField name="ActiveRelativePathField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>

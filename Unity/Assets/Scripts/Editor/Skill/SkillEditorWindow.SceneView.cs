@@ -33,15 +33,31 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        // 播放/预览模式：绘制当前时间点“激活窗口内”的所有 HitBox（只显示，不允许编辑）
-        if (isPlaying || isDraggingPlayhead)
+        // 播放模式：绘制当前时间点“激活窗口内”的所有 HitBox（只显示，不允许编辑）
+        if (isPlaying)
         {
             DrawPreviewHitBoxesAtCurrentTime();
             return;
         }
 
+        // 拖拽 playhead（scrub）时：仍然绘制 HitBox 预览；同时允许对“当前选中的特效实例”做 Offset/Rotation 调整并写回配置。
+        if (isDraggingPlayhead)
+        {
+            DrawPreviewHitBoxesAtCurrentTime();
+        }
+
+        // 预览特效编辑：在场景里选中预览特效实例并用 Unity 默认 gizmo 改 Transform 时，
+        // 检测变化并写回到 VisualEffectData（Offset/RotationEuler），同时回显右侧面板。
+        TrySyncSelectedPreviewVfxTransformFromSceneSelection(sceneView);
+
         // 编辑模式：仅在选中了 HitBoxClip 时显示/编辑
         if (selectedClip is not HitBoxClipItem hitBoxClip || hitBoxClip.HitBoxData == null)
+        {
+            return;
+        }
+
+        // HitBox 的编辑仍然只在“非 scrub”时开启（避免拖动时间轴时误操作）
+        if (isDraggingPlayhead)
         {
             return;
         }
@@ -297,6 +313,131 @@ public partial class SkillEditorWindow : EditorWindow
             MarkAssetDirty();
             sceneView.Repaint();
         }
+    }
+
+    private void TrySyncSelectedPreviewVfxTransformFromSceneSelection(SceneView sceneView)
+    {
+        if (previewVfxInstances == null || previewVfxInstances.Count == 0)
+        {
+            return;
+        }
+
+        // 以场景选择为准：允许用户直接点击 Hierarchy/Scene 里的预览实例（或其子节点）
+        var selectedTf = Selection.activeTransform;
+        if (selectedTf == null)
+        {
+            return;
+        }
+
+        PreviewVfxInstance inst = null;
+        Transform t = selectedTf;
+        while (t != null && inst == null)
+        {
+            for (int i = 0; i < previewVfxInstances.Count; ++i)
+            {
+                var it = previewVfxInstances[i];
+                if (it?.GameObject != null && ReferenceEquals(it.GameObject.transform, t))
+                {
+                    inst = it;
+                    break;
+                }
+            }
+
+            t = t.parent;
+        }
+
+        var go = inst?.GameObject;
+        if (go == null || inst.Data == null || animancer == null)
+        {
+            return;
+        }
+
+        Transform owner = animancer.transform;
+        if (owner == null)
+        {
+            return;
+        }
+
+        // FollowTarget 语义（与运行时/预览一致）：
+        // - FollowTarget=true：实例在角色/挂点下，用户改的是 local pose，直接写回 Offset/RotationEuler。
+        // - FollowTarget=false：实例定格在 world，用户改的是 world pose，需要反算回“相对角色”的 Offset/RotationEuler。
+        Vector3 currentPos;
+        Quaternion currentRot;
+        Vector3 offset;
+        Quaternion relRot;
+
+        if (inst.Data.FollowTarget)
+        {
+            currentPos = go.transform.localPosition;
+            currentRot = go.transform.localRotation;
+            offset = currentPos;
+            relRot = currentRot;
+        }
+        else
+        {
+            currentPos = go.transform.position;
+            currentRot = go.transform.rotation;
+            offset = owner.InverseTransformPoint(currentPos);
+            relRot = Quaternion.Inverse(owner.rotation) * currentRot;
+        }
+
+        // 检测是否真的发生变化（支持 Unity 默认 gizmo 直接改 Transform）
+        // 记录值的空间与预览创建时一致：FollowTarget=true 比较 local；FollowTarget=false 比较 world。
+        bool hasPrev = inst.HasSyncedPose;
+        bool moved = !hasPrev || (currentPos - inst.LastSyncedPosition).sqrMagnitude > 0.0000001f;
+        bool rotated = !hasPrev || Quaternion.Angle(currentRot, inst.LastSyncedRotation) > 0.01f;
+        if (!moved && !rotated)
+        {
+            return;
+        }
+
+        // Undo + 写回数据（Offset / RotationEuler）
+        if (selectConfigAsset != null && selectConfigAsset.value != null)
+        {
+            Undo.RecordObject(selectConfigAsset.value, "Edit VFX Transform");
+        }
+
+        Vector3 euler = relRot.eulerAngles;
+        euler.x = NormalizeAngle180(euler.x);
+        euler.y = NormalizeAngle180(euler.y);
+        euler.z = NormalizeAngle180(euler.z);
+
+        inst.Data.Offset = offset;
+        inst.Data.RotationEuler = euler;
+
+        // 把实例姿态也“归一化”到 [-180,180] 的欧拉（防止 0-360 来回跳导致 UI 读数不稳定）
+        if (inst.Data.FollowTarget)
+        {
+            go.transform.localPosition = offset;
+            go.transform.localRotation = Quaternion.Euler(euler);
+        }
+        else
+        {
+            go.transform.position = owner.TransformPoint(offset);
+            go.transform.rotation = owner.rotation * Quaternion.Euler(euler);
+        }
+        go.transform.localScale = Vector3.one;
+
+        inst.HasSyncedPose = true;
+        inst.LastSyncedPosition = inst.Data.FollowTarget ? go.transform.localPosition : go.transform.position;
+        inst.LastSyncedRotation = inst.Data.FollowTarget ? go.transform.localRotation : go.transform.rotation;
+
+        // 若当前右侧面板正在显示这一条 EffectClip，则回显数值（避免触发回调导致重建实例）
+        if (selectedClip is EffectClipItem effectClipItem && ReferenceEquals(effectClipItem.EffectData, inst.Data))
+        {
+            if (effectOffsetField != null)
+            {
+                effectOffsetField.SetValueWithoutNotify(offset);
+            }
+            if (effectRotationField != null)
+            {
+                effectRotationField.SetValueWithoutNotify(euler);
+            }
+        }
+
+        MarkAssetDirty();
+        sceneView.Repaint();
+        Repaint();
     }
 
     private static float NormalizeAngle180(float angle)

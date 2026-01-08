@@ -18,6 +18,7 @@ MonoBehaviour:
     ComboTimeoutMs: 5000
     InputBufferWindowMs: 2000
     DefaultHitStopMs: 40
+    RecoveryHoldMs: 200
     Segments:
     - Id: 0
       Name: 
@@ -34,18 +35,19 @@ MonoBehaviour:
       StartTime: 0
       ClipLength: 0.6000001
       Duration: 0.6000001
+      ComboTimeoutOffsetMs: 200
       TimeWindow:
         InputBufferStart: 0.5
         CancelableTime: 0.4
-        AnimationEnd: 0.7666666
+        AnimationEnd: 0.5605596
       HitBoxes:
       - Name: HitBox
-        ShapeType: 0
-        Offset: {x: 0, y: 1, z: 1}
-        RotationEuler: {x: 0, y: 0, z: 0}
+        ShapeType: 1
+        Offset: {x: 0, y: 1, z: 1.227207}
+        RotationEuler: {x: -0, y: 0, z: 0}
         Size: {x: 1, y: 1, z: 2}
-        NormalizedStart: 0
-        NormalizedEnd: 0.3
+        NormalizedStart: 0.310466
+        NormalizedEnd: 0.610466
         Effect:
           DamageMultiplier: 1
           HitReaction: 1
@@ -56,14 +58,15 @@ MonoBehaviour:
         Feedback:
           ScreenShakeIntensity: 0
           ScreenShakeDuration: 0
-          HitStopMs: 0
+          HitStopMs: 100
           TimeScale: 1
           TimeScaleDurationMs: 0
       VisualEffects:
       - Name: New Effect
-        Prefab: {fileID: 0}
+        Prefab: {fileID: 2102702950728354241, guid: c72d8a3d2c3ab5c48a1496d592f6b353, type: 3}
         NormalizedStart: 0
         Offset: {x: 0, y: 0, z: 0}
+        RotationEuler: {x: 0, y: 0, z: 0}
         FollowTarget: 0
         Length: 1
       SoundEffects:
@@ -71,6 +74,7 @@ MonoBehaviour:
         Clip: {fileID: 0}
         NormalizedStart: 0
         Volume: 1
+      AttachedActives: []
       Movement:
         EnableMovement: 0
         Distance: 0
@@ -115,21 +119,22 @@ MonoBehaviour:
           _Names: []
         _Clip: {fileID: 7400000, guid: 506fbaf36141f7842ad5ad583349cc87, type: 3}
         _NormalizedStartTime: NaN
-      StartTime: 0.46
+      StartTime: 0.33633578
       ClipLength: 0.8
       Duration: 0.8
+      ComboTimeoutOffsetMs: 200
       TimeWindow:
         InputBufferStart: 0.5
         CancelableTime: 0.4
-        AnimationEnd: 0.84999996
+        AnimationEnd: 0.6825638
       HitBoxes:
       - Name: HitBox
         ShapeType: 0
         Offset: {x: 0, y: 1, z: 1}
         RotationEuler: {x: 0, y: 0, z: 0}
         Size: {x: 1, y: 1, z: 2}
-        NormalizedStart: 0.0008264184
-        NormalizedEnd: 0.30082643
+        NormalizedStart: 0
+        NormalizedEnd: 0.3
         Effect:
           DamageMultiplier: 1
           HitReaction: 1
@@ -140,7 +145,7 @@ MonoBehaviour:
         Feedback:
           ScreenShakeIntensity: 0
           ScreenShakeDuration: 0
-          HitStopMs: 0
+          HitStopMs: 100
           TimeScale: 1
           TimeScaleDurationMs: 0
       VisualEffects:
@@ -148,6 +153,7 @@ MonoBehaviour:
         Prefab: {fileID: 0}
         NormalizedStart: 0
         Offset: {x: 0, y: 0, z: 0}
+        RotationEuler: {x: 0, y: 0, z: 0}
         FollowTarget: 0
         Length: 1
       SoundEffects:
@@ -155,6 +161,7 @@ MonoBehaviour:
         Clip: {fileID: 0}
         NormalizedStart: 0
         Volume: 1
+      AttachedActives: []
       Movement:
         EnableMovement: 0
         Distance: 0
@@ -199,19 +206,20 @@ MonoBehaviour:
           _Names: []
         _Clip: {fileID: 7400000, guid: d0d401bb3fc68574296f7ff69e81546c, type: 3}
         _NormalizedStartTime: NaN
-      StartTime: 1.14
+      StartTime: 0.8823868
       ClipLength: 1.0666667
       Duration: 1.0666667
+      ComboTimeoutOffsetMs: 200
       TimeWindow:
         InputBufferStart: 0.5
         CancelableTime: 0.4
-        AnimationEnd: 0.8624999
+        AnimationEnd: 0.7048212
       HitBoxes:
       - Name: HitBox
-        ShapeType: 0
-        Offset: {x: 0, y: 1, z: 1}
-        RotationEuler: {x: 0, y: 0, z: 0}
-        Size: {x: 1, y: 1, z: 2}
+        ShapeType: 3
+        Offset: {x: 0, y: 1.8319484, z: 0.99129105}
+        RotationEuler: {x: -0.59976196, y: 0, z: 0}
+        Size: {x: 0.4980985, y: 2.083067, z: 2}
         NormalizedStart: 0
         NormalizedEnd: 0.3
         Effect:
@@ -224,7 +232,7 @@ MonoBehaviour:
         Feedback:
           ScreenShakeIntensity: 0
           ScreenShakeDuration: 0
-          HitStopMs: 0
+          HitStopMs: 100
           TimeScale: 1
           TimeScaleDurationMs: 0
       VisualEffects:
@@ -232,6 +240,7 @@ MonoBehaviour:
         Prefab: {fileID: 0}
         NormalizedStart: 0
         Offset: {x: 0, y: 0, z: 0}
+        RotationEuler: {x: 0, y: 0, z: 0}
         FollowTarget: 0
         Length: 1
       SoundEffects:
@@ -239,6 +248,7 @@ MonoBehaviour:
         Clip: {fileID: 0}
         NormalizedStart: 0
         Volume: 1
+      AttachedActives: []
       Movement:
         EnableMovement: 0
         Distance: 0
@@ -283,22 +293,45 @@ MonoBehaviour:
           _Names: []
         _Clip: {fileID: 7400000, guid: 6fd1fb8479e6a994f9e4cc7fb79d2ac2, type: 3}
         _NormalizedStartTime: NaN
-      StartTime: 2.06
+      StartTime: 1.6341962
       ClipLength: 1.0500001
       Duration: 1.0500001
+      ComboTimeoutOffsetMs: 200
       TimeWindow:
         InputBufferStart: 0.5
         CancelableTime: 0.4
-        AnimationEnd: 0.9
-      HitBoxes: []
+        AnimationEnd: 0.8
+      HitBoxes:
+      - Name: HitBox
+        ShapeType: 2
+        Offset: {x: 0, y: 1, z: 0.39620805}
+        RotationEuler: {x: -0, y: 0, z: 0}
+        Size: {x: 0.8652337, y: 124.22709, z: 0.43428373}
+        NormalizedStart: 0
+        NormalizedEnd: 0.3
+        Effect:
+          DamageMultiplier: 1
+          HitReaction: 1
+          KnockbackForce: 0
+          KnockupForce: 0
+          HitStunMs: 200
+          TargetState: 0
+        Feedback:
+          ScreenShakeIntensity: 0
+          ScreenShakeDuration: 0
+          HitStopMs: 100
+          TimeScale: 1
+          TimeScaleDurationMs: 0
       VisualEffects:
       - Name: New Effect
         Prefab: {fileID: 0}
         NormalizedStart: 0.9999999
         Offset: {x: 0, y: 0, z: 0}
+        RotationEuler: {x: 0, y: 0, z: 0}
         FollowTarget: 0
         Length: 1
       SoundEffects: []
+      AttachedActives: []
       Movement:
         EnableMovement: 0
         Distance: 0

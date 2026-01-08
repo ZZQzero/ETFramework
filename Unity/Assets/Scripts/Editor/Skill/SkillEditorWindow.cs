@@ -53,6 +53,7 @@ public partial class SkillEditorWindow : EditorWindow
     private Button addEffectButton; // 添加特效按钮
     private Button addSoundButton; // 添加音效按钮
     private Button addHitboxButton; // 添加Hitbox按钮
+    private Button addActiveButton; // 添加Active按钮（显隐/启用）
     private ObjectField animationClipField; // 动画Clip引用字段
     private FloatField speedField; // 播放速度字段
     private FloatField durationField; // 持续时间字段
@@ -69,6 +70,8 @@ public partial class SkillEditorWindow : EditorWindow
     private FloatField effectTriggerTimeField; // 特效触发时间字段
     private FloatField effectNormalizedStartField; // 特效归一化时间字段
     private Toggle followTargetField; // 是否跟随目标字段
+    private Vector3Field effectOffsetField; // 特效偏移（局部）
+    private Vector3Field effectRotationField; // 特效旋转（局部欧拉角，度）
     
     // Sound Clip字段
     private VisualElement soundFields; // Sound字段组
@@ -79,6 +82,11 @@ public partial class SkillEditorWindow : EditorWindow
     
     // HitBox Clip字段
     private VisualElement hitBoxFields; // HitBox字段组
+
+    // Active Clip字段（只读显示相对路径）
+    private VisualElement activeFields; // Active字段组
+    private ObjectField activeTargetObjectField; // 选择角色子物体（用于生成/更新相对路径）
+    private TextField activeRelativePathField; // 相对路径（只读）
     private EnumField shapeTypeField; // 形状类型字段
     private FloatField hitBoxTriggerTimeField; // HitBox触发时间字段（只读，秒）
     private FloatField hitBoxNormalizedStartField; // HitBox归一化开始时间字段
@@ -145,7 +153,7 @@ public partial class SkillEditorWindow : EditorWindow
     private float currentPlaybackTime = 0f; // 当前播放时间（秒）
     private float playbackSpeed = 1f; // 播放速度（0-6）
     private bool isPlaying = false; // 是否正在播放
-    private bool isLooping = false; // 是否循环播放
+    private bool isLooping = true; // 是否循环播放（默认开启，便于编辑预览）
     
     private const float PLAYHEAD_LINE_WIDTH = 2f;
     private const float PLAYHEAD_WIDTH = PLAYHEAD_LINE_WIDTH;
@@ -157,6 +165,7 @@ public partial class SkillEditorWindow : EditorWindow
     private const string TYPE_EFFECT_CLASS = "type-effect";
     private const string TYPE_SOUND_CLASS = "type-sound";
     private const string TYPE_HITBOX_CLASS = "type-hitbox";
+    private const string TYPE_ACTIVE_CLASS = "type-active";
     
     private static string GetTypeClass(TrackType type)
     {
@@ -166,6 +175,7 @@ public partial class SkillEditorWindow : EditorWindow
             TrackType.Effect => TYPE_EFFECT_CLASS,
             TrackType.Sound => TYPE_SOUND_CLASS,
             TrackType.Hitbox => TYPE_HITBOX_CLASS,
+            TrackType.Active => TYPE_ACTIVE_CLASS,
             _ => string.Empty,
         };
     }

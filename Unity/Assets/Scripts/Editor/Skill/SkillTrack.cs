@@ -11,6 +11,7 @@ namespace ET
         Effect, //特效
         Sound, //音效
         Hitbox, //检测框
+        Active, //挂载对象显隐/启用（Activation）
     }
 
     public interface ITrackItem
@@ -65,6 +66,8 @@ namespace ET
         public string Name { get; set; }
         public TrackType Type { get; } = TrackType.Effect;
         public VisualEffectData EffectData { get; set; }
+
+        public AnimationClip Clip { get; set; }
     }
 
     public class EffectTrack : ITrackItem
@@ -119,6 +122,28 @@ namespace ET
         public string Name { get; set; }
         public TrackType Type { get; } = TrackType.Hitbox;
         public List<HitBoxClipItem> ClipList = new();
+    }
+
+    public class ActiveClipItem : IClipItem
+    {
+        public string Name { get; set; }
+        public TrackType Type { get; } = TrackType.Active;
+        public int Index { get; set; }
+        public float Duration { get; set; }
+        public float StartTime { get; set; }
+        public int Frame { get; set; }
+        public Color Color { get; set; }
+        public AttachedActiveData ActiveData { get; set; }
+    }
+
+    public class ActiveTrack : ITrackItem
+    {
+        public int Index { get; set; }
+        public float TotalDuration { get; set; }
+        public Color Color { get; set; }
+        public string Name { get; set; }
+        public TrackType Type { get; } = TrackType.Active;
+        public List<ActiveClipItem> ClipList = new();
     }
 
     #endregion

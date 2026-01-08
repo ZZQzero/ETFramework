@@ -222,11 +222,28 @@ namespace ET
         /// <summary>开始时间（归一化 0-1，相对于动画片段）</summary>
         public float NormalizedStart;
         
-        /// <summary>相对角色的偏移量</summary>
+        /// <summary>
+        /// 相对角色（Player Transform）的偏移量（局部空间）。
+        /// 语义：
+        /// - FollowTarget = true：特效作为 Player/挂点的子物体，直接使用 localPosition = Offset。
+        /// - FollowTarget = false：特效生成时用 Player.TransformPoint(Offset) 计算一次世界坐标并“定格”，后续不再跟随角色移动。
+        /// </summary>
         public Vector3 Offset;
-        
-        /// <summary>是否跟随目标移动</summary>
-        public bool FollowTarget;
+
+        /// <summary>
+        /// 相对角色（Player Transform）的旋转（局部欧拉角，度）。
+        /// 语义：
+        /// - FollowTarget = true：localRotation = Quaternion.Euler(RotationEuler)（随角色旋转一起转）。
+        /// - FollowTarget = false：rotation = player.rotation * Quaternion.Euler(RotationEuler)（生成时烘焙为世界旋转并定格）。
+        /// </summary>
+        public Vector3 RotationEuler;
+
+        /// <summary>
+        /// 是否跟随目标（角色）的位置/旋转。
+        /// - true：用于挥刀光效、身上常驻特效、武器 Trail 等（跟随角色/挂点）。
+        /// - false：用于落点/地面AOE/法阵等（生成后定格在世界中，不随角色移动/旋转）。
+        /// </summary>
+        public bool FollowTarget = true;
         
         /// <summary>特效时长</summary>
         public float Length = 2f;
@@ -250,6 +267,32 @@ namespace ET
         /// <summary>音量（0-1）</summary>
         public float Volume = 1f;
     }
+
+    /// <summary>
+    /// 挂载对象 Active 控制数据（类似 Unity Timeline Activation Track）。
+    /// 说明：
+    /// - 用于控制“角色身上已经存在的对象”（常驻特效、武器Trail、碰撞体等）的显示/隐藏。
+    /// - 不保存场景对象引用（避免 ScriptableObject 资产引用 SceneObject），只保存相对路径。
+    /// - 播放语义：在 [NormalizedStart, NormalizedEnd] 区间内把目标对象设置为 <see cref="Active"/>。
+    /// </summary>
+    [Serializable]
+    public class AttachedActiveData
+    {
+        /// <summary>显示名称（编辑器展示用）</summary>
+        public string Name = "Active Toggle";
+
+        /// <summary>
+        /// 相对角色根节点（Unit/预览对象根 Transform）的路径。
+        /// 例如："VFX/SlashTrail"。
+        /// </summary>
+        public string RelativePath = string.Empty;
+
+        /// <summary>开始时间（归一化 0-1，相对于动画片段）</summary>
+        public float NormalizedStart = 0f;
+
+        /// <summary>结束时间（归一化 0-1，相对于动画片段）</summary>
+        public float NormalizedEnd = 0.2f;
+    }
     
     /// <summary>
     /// 攻击移动数据
@@ -264,11 +307,9 @@ namespace ET
         public float Distance = 0f;
         
         /// <summary>位移开始时间（归一化 0-1,相对于动画片段）</summary>
-        [FormerlySerializedAs("StartTime")]
         public float NormalizedStart = 0f;
 
         /// <summary>位移结束时间（归一化 0-1，相对于动画片段）</summary>
-        [FormerlySerializedAs("EndTime")]
         public float NormalizedEnd = 0.3f;
         
         /// <summary>位移曲线</summary>
@@ -333,6 +374,12 @@ namespace ET
         
         /// <summary>音效列表</summary>
         public List<SoundEffectData> SoundEffects = new List<SoundEffectData>();
+
+        /// <summary>
+        /// 挂载对象 Active 控制列表（Activation Track）。
+        /// 用于控制角色身上已存在对象的显隐/启用状态（不实例化）。
+        /// </summary>
+        public List<AttachedActiveData> AttachedActives = new List<AttachedActiveData>();
         
         // === 位移 ===
         /// <summary>攻击位移</summary>

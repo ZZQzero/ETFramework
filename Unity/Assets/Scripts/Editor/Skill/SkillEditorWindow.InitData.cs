@@ -139,6 +139,29 @@ public partial class SkillEditorWindow : EditorWindow
                         hitBoxTrack.ClipList.Add(hitboxClipItem);
                     }
                 }
+
+                if (segment.AttachedActives.Count > 0)
+                {
+                    ActiveTrack activeTrack = new ActiveTrack();
+                    activeTrack.Name = nameof(TrackType.Active);
+                    globalTrackDataList.Add(activeTrack);
+                    localTrackList.Add(activeTrack);
+                    foreach (var a in segment.AttachedActives)
+                    {
+                        if (a == null)
+                        {
+                            continue;
+                        }
+                        ActiveClipItem activeClipItem = new ActiveClipItem();
+                        activeClipItem.ActiveData = a;
+                        activeClipItem.Name = string.IsNullOrEmpty(a.Name) ? "Active" : a.Name;
+                        activeClipItem.StartTime = segment.StartTime + (Mathf.Clamp01(a.NormalizedStart) * clipItem.Duration);
+                        float dur = (Mathf.Clamp01(a.NormalizedEnd) - Mathf.Clamp01(a.NormalizedStart)) * clipItem.Duration;
+                        activeClipItem.Duration = Mathf.Max(0f, dur);
+                        activeClipItem.Frame = Mathf.RoundToInt(activeClipItem.Duration * 60f);
+                        activeTrack.ClipList.Add(activeClipItem);
+                    }
+                }
             }
         }
 

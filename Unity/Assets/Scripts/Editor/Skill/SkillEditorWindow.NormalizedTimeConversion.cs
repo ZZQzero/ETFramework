@@ -46,6 +46,17 @@ public partial class SkillEditorWindow : EditorWindow
                 clipItem.StartTime = segment.StartTime + (soundClip.SoundData.NormalizedStart * animationLength);
                 break;
             }
+            else if (clipItem is ActiveClipItem activeClip && segment.AttachedActives.Contains(activeClip.ActiveData))
+            {
+                float animationLength = segment.Duration > 0f ? segment.Duration : 2f;
+                if (animationLength <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
+                {
+                    animationLength = segment.AnimationClipTrans.Clip.length;
+                }
+
+                clipItem.StartTime = segment.StartTime + (Mathf.Clamp01(activeClip.ActiveData.NormalizedStart) * animationLength);
+                break;
+            }
         }
     }
 
@@ -80,6 +91,32 @@ public partial class SkillEditorWindow : EditorWindow
                     clipItem.Duration = 0f;
                 }
                 // 更新帧数
+                clipItem.Frame = Mathf.RoundToInt(clipItem.Duration * 60f);
+                break;
+            }
+        }
+    }
+
+    private void UpdateActiveClipFromNormalizedTimes(ActiveClipItem clipItem)
+    {
+        if (clipItem == null || clipItem.ActiveData == null || config == null) return;
+
+        foreach (var segment in config.Segments)
+        {
+            if (segment.AttachedActives.Contains(clipItem.ActiveData))
+            {
+                float animationLength = segment.Duration > 0f ? segment.Duration : 2f;
+                if (animationLength <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
+                {
+                    animationLength = segment.AnimationClipTrans.Clip.length;
+                }
+
+                clipItem.StartTime = segment.StartTime + (Mathf.Clamp01(clipItem.ActiveData.NormalizedStart) * animationLength);
+                clipItem.Duration = (Mathf.Clamp01(clipItem.ActiveData.NormalizedEnd) - Mathf.Clamp01(clipItem.ActiveData.NormalizedStart)) * animationLength;
+                if (clipItem.Duration < 0f)
+                {
+                    clipItem.Duration = 0f;
+                }
                 clipItem.Frame = Mathf.RoundToInt(clipItem.Duration * 60f);
                 break;
             }

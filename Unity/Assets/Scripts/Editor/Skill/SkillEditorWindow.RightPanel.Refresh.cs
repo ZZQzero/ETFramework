@@ -17,6 +17,7 @@ public partial class SkillEditorWindow : EditorWindow
         if (effectFields != null) effectFields.style.display = DisplayStyle.None;
         if (soundFields != null) soundFields.style.display = DisplayStyle.None;
         if (hitBoxFields != null) hitBoxFields.style.display = DisplayStyle.None;
+        if (activeFields != null) activeFields.style.display = DisplayStyle.None;
         if (animationActionButtons != null) animationActionButtons.style.display = DisplayStyle.None;
 
         // 清除按钮的类型样式类
@@ -27,6 +28,7 @@ public partial class SkillEditorWindow : EditorWindow
             addEffectButton.RemoveFromClassList("type-sound");
             addEffectButton.RemoveFromClassList("type-hitbox");
             addEffectButton.RemoveFromClassList("type-animation");
+            addEffectButton.RemoveFromClassList("type-active");
         }
 
         if (addSoundButton != null)
@@ -36,6 +38,7 @@ public partial class SkillEditorWindow : EditorWindow
             addSoundButton.RemoveFromClassList("type-sound");
             addSoundButton.RemoveFromClassList("type-hitbox");
             addSoundButton.RemoveFromClassList("type-animation");
+            addSoundButton.RemoveFromClassList("type-active");
         }
 
         if (addHitboxButton != null)
@@ -45,6 +48,17 @@ public partial class SkillEditorWindow : EditorWindow
             addHitboxButton.RemoveFromClassList("type-sound");
             addHitboxButton.RemoveFromClassList("type-hitbox");
             addHitboxButton.RemoveFromClassList("type-animation");
+            addHitboxButton.RemoveFromClassList("type-active");
+        }
+
+        if (addActiveButton != null)
+        {
+            addActiveButton.RemoveFromClassList("action-button");
+            addActiveButton.RemoveFromClassList("type-effect");
+            addActiveButton.RemoveFromClassList("type-sound");
+            addActiveButton.RemoveFromClassList("type-hitbox");
+            addActiveButton.RemoveFromClassList("type-animation");
+            addActiveButton.RemoveFromClassList("type-active");
         }
 
         // 注意：addClipToTrackButton的track-add-button样式是永久的，不需要清除
@@ -106,6 +120,14 @@ public partial class SkillEditorWindow : EditorWindow
         {
             clipCount = hitBoxTrack.ClipList.Count;
             foreach (var clip in hitBoxTrack.ClipList)
+            {
+                totalDuration = Mathf.Max(totalDuration, clip.StartTime + clip.Duration);
+            }
+        }
+        else if (track is ActiveTrack activeTrack)
+        {
+            clipCount = activeTrack.ClipList.Count;
+            foreach (var clip in activeTrack.ClipList)
             {
                 totalDuration = Mathf.Max(totalDuration, clip.StartTime + clip.Duration);
             }
@@ -199,6 +221,11 @@ public partial class SkillEditorWindow : EditorWindow
                 index = hitBoxTrack.ClipList.IndexOf(hitBoxClip);
                 if (index >= 0) break;
             }
+            else if (clip is ActiveClipItem activeClip && track is ActiveTrack activeTrack)
+            {
+                index = activeTrack.ClipList.IndexOf(activeClip);
+                if (index >= 0) break;
+            }
         }
 
         // 显示数组下标索引
@@ -257,6 +284,7 @@ public partial class SkillEditorWindow : EditorWindow
                 TrackType.Effect => "特效片段属性",
                 TrackType.Sound => "音效片段属性",
                 TrackType.Hitbox => "碰撞盒属性",
+                TrackType.Active => "显隐片段属性",
                 _ => "片段属性"
             };
             clipPropertiesTitle.text = title;
@@ -288,6 +316,10 @@ public partial class SkillEditorWindow : EditorWindow
         else if (clip is HitBoxClipItem hitBoxClipItem)
         {
             UpdateHitBoxClipProperties(hitBoxClipItem);
+        }
+        else if (clip is ActiveClipItem activeClipItem)
+        {
+            UpdateActiveClipProperties(activeClipItem);
         }
 
         // 统一同步 Length/Frame 等派生信息
@@ -341,6 +373,14 @@ public partial class SkillEditorWindow : EditorWindow
         }
         if (effectNormalizedStartField != null) effectNormalizedStartField.SetValueWithoutNotify(0f);
         if (followTargetField != null) followTargetField.SetValueWithoutNotify(false);
+        if (effectOffsetField != null)
+        {
+            effectOffsetField.SetValueWithoutNotify(Vector3.zero);
+        }
+        if (effectRotationField != null)
+        {
+            effectRotationField.SetValueWithoutNotify(Vector3.zero);
+        }
 
         // Sound字段
         if (audioClipField != null) audioClipField.SetValueWithoutNotify(null);
@@ -364,6 +404,10 @@ public partial class SkillEditorWindow : EditorWindow
         if (hitBoxOffsetField != null) hitBoxOffsetField.SetValueWithoutNotify(Vector3.zero);
         if (hitBoxRotationField != null) hitBoxRotationField.SetValueWithoutNotify(Vector3.zero);
         if (hitBoxSizeField != null) hitBoxSizeField.SetValueWithoutNotify(Vector3.one);
+
+        // Active字段
+        if (activeTargetObjectField != null) activeTargetObjectField.SetValueWithoutNotify(null);
+        if (activeRelativePathField != null) activeRelativePathField.SetValueWithoutNotify(string.Empty);
 
         // HitEffectData / HitFeedbackData
         if (hitEffectDamageMultiplierField != null) hitEffectDamageMultiplierField.SetValueWithoutNotify(1f);

@@ -102,6 +102,45 @@ public partial class SkillEditorWindow : EditorWindow
             segmentTimeoutMsPreviewField.SetEnabled(false);
         }
 
+        // Movement 配置
+        var movement = segmentData.Movement ??= new AttackMovementData();
+        bool movementEnabled = movement.EnableMovement;
+        
+        if (movementEnableField != null)
+        {
+            movementEnableField.SetValueWithoutNotify(movementEnabled);
+        }
+        if (movementDistanceField != null)
+        {
+            movementDistanceField.SetValueWithoutNotify(movement.Distance);
+            movementDistanceField.SetEnabled(movementEnabled);
+        }
+        if (movementStartField != null)
+        {
+            movementStartField.SetValueWithoutNotify(movement.NormalizedStart);
+            movementStartField.SetEnabled(movementEnabled);
+        }
+        if (movementEndField != null)
+        {
+            movementEndField.SetValueWithoutNotify(movement.NormalizedEnd);
+            movementEndField.SetEnabled(movementEnabled);
+        }
+        if (movementCurveField != null)
+        {
+            movementCurveField.SetValueWithoutNotify(movement.MoveCurve);
+            movementCurveField.SetEnabled(movementEnabled);
+        }
+        if (movementTrackTargetField != null)
+        {
+            movementTrackTargetField.SetValueWithoutNotify(movement.TrackTarget);
+            movementTrackTargetField.SetEnabled(movementEnabled);
+        }
+        if (movementTrackRangeField != null)
+        {
+            movementTrackRangeField.SetValueWithoutNotify(movement.TrackRange);
+            movementTrackRangeField.SetEnabled(movementEnabled && movement.TrackTarget);
+        }
+
         // 总帧数由通用字段统一计算（Length * 60）
 
         // 设置按钮颜色样式 - 清除之前的类型样式
@@ -210,7 +249,6 @@ public partial class SkillEditorWindow : EditorWindow
             effectTriggerTimeField.SetEnabled(false);
         }
 
-        // 更新是否跟随目标
         if (followTargetField != null)
         {
             followTargetField.SetValueWithoutNotify(effectData.FollowTarget);
@@ -287,7 +325,7 @@ public partial class SkillEditorWindow : EditorWindow
         {
             soundNormalizedStartField.SetValueWithoutNotify(soundData.NormalizedStart);
         }
-        //TODO 需要添加时长显示面板
+        
         if (soundData.Clip != null)
         {
             clipItem.Duration = soundData.Clip.length;
@@ -439,7 +477,6 @@ public partial class SkillEditorWindow : EditorWindow
                 }
             }
 
-            // 回显当前目标对象（便于在右侧下拉/挑选其他子物体）
             if (activeTargetObjectField != null)
             {
                 activeTargetObjectField.SetValueWithoutNotify(target != null ? target.gameObject : null);

@@ -10,29 +10,22 @@ using Object = UnityEngine.Object;
 
 public partial class SkillEditorWindow : EditorWindow
 {
-    #region Animation Clip操作按钮
+    #region Clip操作 - 添加
     
-    /// <summary>
-    /// 添加特效按钮点击事件
-    /// </summary>
     private void OnAddEffectButtonClicked()
     {
         if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null && config != null)
         {
             var segment = animClipItem.SegmentData;
-            
-            // 创建新的特效数据
             var newEffect = new VisualEffectData
             {
                 Name = "New Effect",
-                NormalizedStart = 0f, // 相对于动画片段的归一化时间
+                NormalizedStart = 0f,
                 Length = 1.0f
             };
             
-            // 添加到Config数据
             segment.VisualEffects.Add(newEffect);
             
-            // 创建ClipItem
             var effectClipItem = new EffectClipItem
             {
                 EffectData = newEffect,
@@ -42,38 +35,28 @@ public partial class SkillEditorWindow : EditorWindow
                 Frame = Mathf.RoundToInt(newEffect.Length * 60f)
             };
             
-            // 获取或创建Effect轨道
             var effectTrack = GetOrCreateTrackForAnimationClip<EffectTrack>(animClipItem, TrackType.Effect);
             effectTrack.ClipList.Add(effectClipItem);
             
             MarkAssetDirty();
             ApplyViewModeAndRefresh();
-            
-            Debug.Log($"已为AnimationClip {animClipItem.Name} 添加特效");
         }
     }
     
-    /// <summary>
-    /// 添加音效按钮点击事件
-    /// </summary>
     private void OnAddSoundButtonClicked()
     {
         if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null && config != null)
         {
             var segment = animClipItem.SegmentData;
-            
-            // 创建新的音效数据
             var newSound = new SoundEffectData
             {
                 Name = "New Sound",
-                NormalizedStart = 0f, // 相对于动画片段的归一化时间
+                NormalizedStart = 0f,
                 Volume = 1f
             };
             
-            // 添加到Config数据
             segment.SoundEffects.Add(newSound);
             
-            // 创建ClipItem
             var soundClipItem = new SoundClipItem
             {
                 SoundData = newSound,
@@ -83,38 +66,28 @@ public partial class SkillEditorWindow : EditorWindow
                 Frame = Mathf.RoundToInt((newSound.Clip != null ? newSound.Clip.length : 1f) * 60f)
             };
             
-            // 获取或创建Sound轨道
             var soundTrack = GetOrCreateTrackForAnimationClip<SoundTrack>(animClipItem, TrackType.Sound);
             soundTrack.ClipList.Add(soundClipItem);
             
             MarkAssetDirty();
             ApplyViewModeAndRefresh();
-            
-            Debug.Log($"已为AnimationClip {animClipItem.Name} 添加音效");
         }
     }
     
-    /// <summary>
-    /// 添加Hitbox按钮点击事件
-    /// </summary>
     private void OnAddHitboxButtonClicked()
     {
         if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null && config != null)
         {
             var segment = animClipItem.SegmentData;
-            
-            // 创建新的Hitbox数据
             var newHitbox = new HitBoxData
             {
                 ShapeType = HitShapeType.Box,
-                NormalizedStart = 0f,   // 相对于动画片段的归一化时间
-                NormalizedEnd = 0.3f    // 默认持续30%的动画时长
+                NormalizedStart = 0f,
+                NormalizedEnd = 0.3f
             };
             
-            // 添加到Config数据
             segment.HitBoxes.Add(newHitbox);
             
-            // 创建ClipItem
             var hitboxClipItem = new HitBoxClipItem
             {
                 HitBoxData = newHitbox,
@@ -124,25 +97,18 @@ public partial class SkillEditorWindow : EditorWindow
                 Frame = Mathf.RoundToInt((newHitbox.NormalizedEnd - newHitbox.NormalizedStart) * animClipItem.Duration * 60f)
             };
             
-            // 获取或创建HitBox轨道
             var hitboxTrack = GetOrCreateTrackForAnimationClip<HitBoxTrack>(animClipItem, TrackType.Hitbox);
             hitboxTrack.ClipList.Add(hitboxClipItem);
 
-            // 选中新建 HitBox，方便立刻在 SceneView 里调整判定框
             selectedTrack = hitboxTrack;
             selectedClip = hitboxClipItem;
             
             MarkAssetDirty();
             ApplyViewModeAndRefresh();
             SceneView.RepaintAll();
-            
-            Debug.Log($"已为AnimationClip {animClipItem.Name} 添加Hitbox");
         }
     }
 
-    /// <summary>
-    /// 添加Active按钮点击事件（控制角色身上已有对象的 SetActive）
-    /// </summary>
     private void OnAddActiveButtonClicked()
     {
         if (selectedClip is not AnimationClipItem animClipItem || animClipItem.SegmentData == null || config == null)
@@ -151,8 +117,6 @@ public partial class SkillEditorWindow : EditorWindow
         }
 
         var segment = animClipItem.SegmentData;
-
-        // 创建新的Active数据（不引用场景对象，只记录相对路径；路径建议通过拖拽到 ActiveTrack 创建）
         var data = new AttachedActiveData
         {
             Name = "New Active",
@@ -179,24 +143,17 @@ public partial class SkillEditorWindow : EditorWindow
         var track = GetOrCreateTrackForAnimationClip<ActiveTrack>(animClipItem, TrackType.Active);
         track.ClipList.Add(clipItem);
 
-        // 选中新建 clip，便于立刻拖拽/调整
         selectedTrack = track;
         selectedClip = clipItem;
 
         MarkAssetDirty();
         ApplyViewModeAndRefresh();
-
-        Debug.Log($"已为AnimationClip {animClipItem.Name} 添加Active");
     }
     
-    /// <summary>
-    /// 添加Clip到轨道按钮点击事件
-    /// </summary>
     private void OnAddClipToTrackButtonClicked()
     {
         if (selectedTrack == null || config == null) return;
         
-        // 只有AnimationTrack才能添加Clip
         if (selectedTrack is AnimationTrack animTrack)
         {
             AnimationClipItem clipItem = new AnimationClipItem();
@@ -212,26 +169,21 @@ public partial class SkillEditorWindow : EditorWindow
             data.Duration = clipItem.Duration;
             animTrack.ClipList.Add(clipItem);
             
-            // 添加到allAnimationClipItems
             allAnimationClipItems.Add(clipItem);
-            
-            // 为新的AnimationClip创建空的轨道映射
             animationClipTrackMap[clipItem] = new List<ITrackItem>();
             
             MarkAssetDirty();
             ApplyViewModeAndRefresh();
-            
-            Debug.Log("已添加新的AnimationClip");
         }
     }
     
-    /// <summary>
-    /// 删除Clip按钮点击事件
-    /// </summary>
+    #endregion
+
+    #region Clip操作 - 删除
+    
     private void OnDeleteClipButtonClicked()
     {
         if (selectedClip == null) return;
-        
         DeleteClip(selectedClip);
     }
     

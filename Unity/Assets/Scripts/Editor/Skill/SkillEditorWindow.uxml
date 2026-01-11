@@ -125,6 +125,38 @@
                             <ui:Label text="&#26412;&#27573;&#36229;&#26102;(ms):" style="width: 120px;"/>
                             <ui:IntegerField value="0" name="SegmentTimeoutMsPreviewField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
+                        <!-- 位移配置 -->
+                        <ui:VisualElement style="flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top-width: 1px; border-top-color: rgb(100, 100, 100);">
+                            <ui:Label text="&#20301;&#31227;&#37197;&#32622;" style="font-size: 13px; font-weight: bold;"/>
+                            <ui:VisualElement style="flex-direction: row; align-items: center;">
+                                <ui:Label text="&#21551;&#29992;&#20301;&#31227;:" style="width: 120px;"/>
+                                <ui:Toggle name="MovementEnableField" style="flex-grow: 1;"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement style="flex-direction: row; align-items: center;">
+                                <ui:Label text="&#20301;&#31227;&#36317;&#31163;:" style="width: 120px;"/>
+                                <ui:FloatField value="0" name="MovementDistanceField" style="flex-grow: 1;"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement style="flex-direction: row; align-items: center;">
+                                <ui:Label text="&#24320;&#22987;&#26102;&#38388;(0-1):" style="width: 120px;"/>
+                                <ui:FloatField value="0" name="MovementStartField" style="flex-grow: 1;"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement style="flex-direction: row; align-items: center;">
+                                <ui:Label text="&#32467;&#26463;&#26102;&#38388;(0-1):" style="width: 120px;"/>
+                                <ui:FloatField value="0.3" name="MovementEndField" style="flex-grow: 1;"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement style="flex-direction: row; align-items: center;">
+                                <ui:Label text="&#20301;&#31227;&#26354;&#32447;:" style="width: 120px;"/>
+                                <uie:CurveField name="MovementCurveField" style="flex-grow: 1;"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement style="flex-direction: row; align-items: center;">
+                                <ui:Label text="&#36861;&#36394;&#30446;&#26631;:" style="width: 120px;"/>
+                                <ui:Toggle name="MovementTrackTargetField" style="flex-grow: 1;"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement style="flex-direction: row; align-items: center;">
+                                <ui:Label text="&#36861;&#36394;&#33539;&#22260;:" style="width: 120px;"/>
+                                <ui:FloatField value="5" name="MovementTrackRangeField" style="flex-grow: 1;"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
                         <ui:VisualElement name="AnimationActionButtons" style="flex-direction: column; gap: 4px; margin-top: 8px;">
                             <ui:VisualElement style="flex-direction: row; gap: 4px;">
                                 <ui:Button text="&#28155;&#21152;&#29305;&#25928;" name="AddEffectButton" style="flex-grow: 1;"/>

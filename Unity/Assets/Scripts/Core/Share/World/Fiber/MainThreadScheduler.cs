@@ -97,6 +97,34 @@ namespace ET
             }
             SynchronizationContext.SetSynchronizationContext(mainThreadSynchronizationContext);
         }
+        
+        public void OnAnimatorMove()
+        {
+            SynchronizationContext.SetSynchronizationContext(this.mainThreadSynchronizationContext);
+            mainThreadSynchronizationContext.Update();
+
+            int count = fiberQueue.Count;
+            while (count-- > 0)
+            {
+                if (!fiberQueue.TryDequeue(out var fiber))
+                {
+                    continue;
+                }
+
+                if (fiber == null)
+                {
+                    continue;
+                }
+                if (fiber.IsDisposed)
+                {
+                    continue;
+                }
+                SynchronizationContext.SetSynchronizationContext(fiber.ThreadSynchronizationContext);
+                fiber.OnAnimatorMove();
+                fiberQueue.Enqueue(fiber);
+            }
+            SynchronizationContext.SetSynchronizationContext(mainThreadSynchronizationContext);
+        }
 #endif
         public void LateUpdate()
         {

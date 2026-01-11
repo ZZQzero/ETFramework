@@ -16,7 +16,8 @@ namespace ET
         Update      = 1 << 1,  // 0x02 - 有UpdateSystem
         LateUpdate  = 1 << 2,  // 0x04 - 有LateUpdateSystem
         Destroy     = 1 << 3,  // 0x08 - 有DestroySystem
-        // 还可扩展4个位
+        OnAnimatorMove = 1 << 4,  // 0x10 - 有OnAnimatorMoveSystem
+        // 还可扩展3个位
     }
     
     /// <summary>

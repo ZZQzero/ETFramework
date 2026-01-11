@@ -29,6 +29,7 @@ namespace ET
         private static void Destroy(this AttackComponent self)
         {
             self.CleanupTimers();
+            self.CleanupNonFollowVfxTimers();
             self.ResetState();
             self.Config = null;
             self.CurrentAnimState = null;
@@ -138,6 +139,43 @@ namespace ET
                 timerComponent.Remove(ref self.ComboTimeoutTimer);
             }
         }
+
+        /// <summary>
+        /// 清理不跟随特效的定时器
+        /// </summary>
+        private static void CleanupNonFollowVfxTimers(this AttackComponent self)
+        {
+            if (self.NonFollowVfxTimers == null || self.NonFollowVfxTimers.Count == 0)
+            {
+                return;
+            }
+
+            var timerComponent = self.Root().GetComponent<TimerComponent>();
+            if (timerComponent == null)
+            {
+                return;
+            }
+
+            // 移除所有定时器并回收特效实例
+            foreach (var kvp in self.NonFollowVfxTimers)
+            {
+                long timerId = kvp.Key;
+                GameObject instance = kvp.Value;
+
+                if (timerId != 0)
+                {
+                    timerComponent.Remove(ref timerId);
+                }
+
+                // 回收特效实例到对象池
+                if (instance != null)
+                {
+                    GameObjectPool.Instance.ReleaseObject(instance, PoolType.Effect);
+                }
+            }
+
+            self.NonFollowVfxTimers.Clear();
+        }
         
         #endregion
 
@@ -179,7 +217,6 @@ namespace ET
                 // 已经进入后摇且本段自然结束：允许立刻从第一段重新起手（更丝滑）
                 if (self.State == AttackState.Recovery && self.CurrentSegmentEnded)
                 {
-                    // 方案A：重起手不应走完整 ExitAttackState（其中会淡出 AttackLayer 并触发退出语义）。
                     // 这里做一次“软退出”，只清理必要状态，然后立刻起手第一段，保证手感丝滑且不会漏出 Idle。
                     self.SoftExitForRestart();
                     return self.StartAttack(0, inputType);
@@ -348,7 +385,7 @@ namespace ET
             // 更新连击计数
             self.ComboCount++;
             self.OnComboCountChanged?.Invoke(self.ComboCount);
-
+            
             // 初始化位移
             self.InitializeMovement(segment);
 
@@ -376,6 +413,11 @@ namespace ET
             self.IsInputBufferWindowOpen = false;
             self.IsCancelWindowOpen = false;
 
+            if (self.CharacterController != null)
+            {
+                self.CharacterController.ExternalMotorActive = false;
+                self.CharacterController.ExternalMotorVelocity = Vector3.zero;
+            }
             // 重置判定框状态
             if (segment.HitBoxes != null)
             {
@@ -459,10 +501,7 @@ namespace ET
                 self.ExitAttackState();
                 return;
             }
-
-            // 混合方案：
-            // - AnimancerEvent.Sequence.OnEnd + NormalizedEndTime 驱动段结束（更贴合时间轴/可维护）
-            // - 轮询仅作为兜底（例如事件绑定失败、或未初始化事件系统时）
+            
             if (self.CurrentAnimState.HasEvents)
             {
                 return;
@@ -736,8 +775,10 @@ namespace ET
 
             // FollowTarget 语义（与编辑器一致）：
             // - FollowTarget = true：特效跟随角色（作为子物体），Offset/RotationEuler 表示相对角色的 local pose。
+            //   跟随特效的生命周期由 TimeEffect 组件或对象池策略管理，不需要手动回收。
             // - FollowTarget = false：特效生成后定格在世界（不再跟随角色），Offset/RotationEuler 仍然以“相对角色”描述，
             //   但在生成时会被烘焙成 world pose：pos = player.TransformPoint(Offset)，rot = player.rotation * Euler(RotationEuler)。
+            //   不跟随特效需要根据 Length 创建定时器，播放完成后自动回收到对象池。
             if (vfx.FollowTarget)
             {
                 instance.transform.SetParent(self.Player, worldPositionStays: false);
@@ -750,6 +791,40 @@ namespace ET
                 instance.transform.SetParent(null, worldPositionStays: false);
                 instance.transform.position = self.Player.TransformPoint(vfx.Offset);
                 instance.transform.rotation = self.Player.rotation * Quaternion.Euler(vfx.RotationEuler);
+
+                // 不跟随特效：根据 Length 创建定时器，播放完成后自动回收
+                float length = vfx.Length;
+                if (length <= 0f)
+                {
+                    Log.Error("AttackComponent: VisualEffect Length must be greater than 0 for non-follow effects");
+                    return;
+                }
+
+                // 创建定时器，在播放完成后回收
+                var timerComponent = self.Root().GetComponent<TimerComponent>();
+                if (timerComponent != null)
+                {
+                    long triggerTime = TimeInfo.Instance.ServerFrameTime() + Mathf.RoundToInt(length * 1000f);
+                    
+                    // 创建包含定时器ID和实例的数据结构（定时器ID在 NewOnceTimer 返回后设置）
+                    var recycleArgs = new AttackVfxRecycleArgs
+                    {
+                        Component = self,
+                        TimerId = 0, // 将在 NewOnceTimer 返回后设置
+                        Instance = instance
+                    };
+                    
+                    // 创建定时器，传递包含定时器ID和实例的数据结构
+                    long timerId = timerComponent.NewOnceTimer(triggerTime, TimerInvokeType.AttackVfxRecycle, recycleArgs);
+                    recycleArgs.TimerId = timerId;
+
+                    // 存储定时器ID和实例的映射（用于组件销毁时清理）
+                    if (self.NonFollowVfxTimers == null)
+                    {
+                        self.NonFollowVfxTimers = new Dictionary<long, GameObject>();
+                    }
+                    self.NonFollowVfxTimers[timerId] = instance;
+                }
             }
 
             instance.transform.localScale = Vector3.one;
@@ -1026,6 +1101,17 @@ namespace ET
             var movement = self.CurrentSegment.Movement;
             float normalizedTime = self.CurrentNormalizedTime;
 
+            if (movement.NormalizedEnd - movement.NormalizedStart <= 0)
+            {
+                self.IsMovementActive = false;
+                if (self.CharacterController != null)
+                {
+                    self.CharacterController.ExternalMotorActive = false;
+                    self.CharacterController.ExternalMotorVelocity = Vector3.zero;
+                }
+                return;
+            }
+            
             // 检查是否在位移时间范围内
             if (normalizedTime < movement.NormalizedStart)
             {
@@ -1038,7 +1124,7 @@ namespace ET
                 return;
             }
 
-            if (normalizedTime > movement.NormalizedEnd)
+            if (normalizedTime > movement.NormalizedEnd || movement.NormalizedEnd == 0)
             {
                 self.IsMovementActive = false;
                 if (self.CharacterController != null)
@@ -1066,10 +1152,25 @@ namespace ET
             {
                 Vector3 currentPos = self.CharacterController.Rigidbody.position;
                 Vector3 delta = targetPos - currentPos;
-                float dt = Mathf.Max(fixedDeltaTime, 0.0001f);
-                Vector3 externalVel = new Vector3(delta.x / dt, 0f, delta.z / dt);
-                self.CharacterController.ExternalMotorActive = true;
-                self.CharacterController.ExternalMotorVelocity = externalVel;
+    
+                // 检查是否已到达目标位置（考虑浮点精度误差）
+                float deltaMagnitude = new Vector3(delta.x, 0f, delta.z).magnitude;
+    
+                if (deltaMagnitude < 0.001f)
+                {
+                    // 已到达目标位置，直接设置位置
+                    self.Player.position = targetPos;
+                    self.CharacterController.Rigidbody.position = targetPos;
+                    self.CharacterController.ExternalMotorActive = true;
+                    self.CharacterController.ExternalMotorVelocity = Vector3.zero;
+                }
+                else
+                {
+                    float dt = Mathf.Max(fixedDeltaTime, 0.0001f);
+                    Vector3 externalVel = new Vector3(delta.x / dt, 0f, delta.z / dt);
+                    self.CharacterController.ExternalMotorActive = true;
+                    self.CharacterController.ExternalMotorVelocity = externalVel;
+                }
             }
         }
         

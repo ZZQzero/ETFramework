@@ -11,47 +11,34 @@ using Object = UnityEngine.Object;
 
 public partial class SkillEditorWindow : EditorWindow
 {
-    #region 播放预览：公共状态（按播放类型分类）
+    #region 播放预览：公共状态
 
     private const string LOOPING_CLASS = "is-looping";
 
-    #region 播放驱动（EditorApplication.update）
-    // Editor 下的播放驱动：用 EditorApplication.update 推进（不依赖 PlayMode）
+    #region 播放驱动
     private double lastEditorUpdateTime;
     private bool hasLastEditorUpdateTime;
     #endregion
 
-    // 预览状态缓存：减少重复 Play（尤其在拖拽/播放过程中）
-    // 注意：编辑器预览采用“确定性采样”，每次采样都会 Stop Graph 并重新应用当前时间点的姿态，
-    // 因此不依赖缓存状态来减少 Play（避免跨段残留权重/过渡混合导致变形）。
-
-    #region Animation 预览设置（Animator/Animancer）
-    // 预览期间关闭 RootMotion，避免编辑器场景中的对象被“推走”
+    #region Animation 预览设置
     private bool? cachedApplyRootMotion;
     private AnimatorCullingMode? cachedCullingMode;
     private bool? cachedFireEvents;
     private AnimatorUpdateMode? cachedUpdateMode;
-
-    // 预览融合：使用 Animancer 的 ManualMixerState（Pro-Only）实现确定性的两段权重混合。
-    // 这样拖拽时间轴/播放时看到的融合与运行时 FadeDuration 语义一致。
+    
+    private Vector3? previewMovementStartPosition;
+    private Vector3? previewMovementTargetPosition;
+    private AttackSegmentData previewMovementSegment;
     private ManualMixerState previewBlendMixer;
     #endregion
 
-    #region HitStop 预览（顿帧）
-    // === 预览：顿帧（HitStop）===
-    // 运行时：命中时把 CurrentAnimState.Speed 置 0，并在 durationMs 后恢复。
-    // 编辑器：用“冻结 currentPlaybackTime”的方式模拟（播放状态下才有时间流动，拖拽采样不需要模拟顿帧时间流）。
+    #region HitStop 预览
     private int previewHitStopRemainingMs;
     private float previewLastPlaybackTime;
     private bool hasPreviewLastPlaybackTime;
     #endregion
 
-    #region VFX 预览（特效）
-    // === 预览：VFX ===
-    // 说明：
-    // - 运行时 VFX 由 AttackComponentSystem.BindAnimancerEvents 驱动。
-    // - 编辑器预览不走运行时消息/组件，因此在 EditorApplication.update 中按时间区间触发。
-    // - 生命周期以“预览时间轴 globalTimeSeconds”为准，而不是 wall-clock，保证暂停/顿帧/倍速下确定性一致。
+    #region VFX 预览
     private readonly List<PreviewVfxInstance> previewVfxInstances = new List<PreviewVfxInstance>(32);
     private int previewVfxSpawnCounter;
 
@@ -59,27 +46,23 @@ public partial class SkillEditorWindow : EditorWindow
     {
         public GameObject GameObject;
         public VisualEffectData Data;
-        public float EndTime; // globalTimeSeconds；<=0 或 Infinity 表示不自动结束
-        public float StartTime; // globalTimeSeconds
-        public AnimationClip LegacyAnimationClip; // 若该特效对象带 Animation(legacy)，用于编辑器预览采样
+        public float EndTime;
+        public float StartTime;
+        public AnimationClip LegacyAnimationClip;
 
-        // SceneView 交互编辑：用于检测“用户直接用 Unity Transform Gizmo 改了实例 Transform”
         public bool HasSyncedPose;
         public Vector3 LastSyncedPosition;
         public Quaternion LastSyncedRotation;
     }
     #endregion
 
-    #region SFX 预览（音效）
-    // === 预览：SFX（Editor 预览播放）===
-    // Unity 在非 PlayMode 下不建议使用 AudioSource 播放，因此这里采用 UnityEditor 内部的 AudioUtil（反射调用）。
-    // 约束：AudioUtil API 在不同 Unity 版本/平台可能变化，因此要做兼容性兜底（找不到方法就静默跳过）。
+    #region SFX 预览
     private readonly List<PreviewSfxInstance> previewSfxInstances = new List<PreviewSfxInstance>(32);
 
     private sealed class PreviewSfxInstance
     {
         public AudioClip Clip;
-        public float EndTime; // globalTimeSeconds；主要用于未来做精细停止，这里先用于统计/兜底
+        public float EndTime;
     }
 
     private static Type audioUtilType;
@@ -89,20 +72,13 @@ public partial class SkillEditorWindow : EditorWindow
     private static bool audioUtilReflectionInited;
     #endregion
 
-    #region Active 预览（挂载对象显隐/启用）
-    // 说明：
-    // - 对齐 Unity Timeline 的 Activation Track 语义：在区间内把目标 SetActive(Active)。
-    // - 目标对象来自角色层级内的“相对路径”，不实例化。
-    // - 预览期间需要记录被修改对象的原始 activeSelf，并在 Stop/Loop/关闭窗口时恢复。
+    #region Active 预览
     private readonly Dictionary<GameObject, bool> previewOriginalActiveStates = new Dictionary<GameObject, bool>(32);
     #endregion
 
     #endregion
 
-    #region PreviewObject（最小：定位 Animancer + 绑定 Animator）
-
-    // 约束：场景实例上存在 AnimancerComponent（或其子节点上）。
-    // 目标：保持简单，只做“找到可用的 AnimancerComponent，并确保它的 Animator 绑定正确”。
+    #region PreviewObject
     private GameObject previewSource;
 
     private void EnsurePreviewObject()
@@ -114,7 +90,6 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        // 已绑定且目标未变：避免每帧重复 GetComponentInChildren
         if (ReferenceEquals(previewSource, src) && animancer != null)
         {
             EnsurePreviewAnimatorSettings();
@@ -122,15 +97,12 @@ public partial class SkillEditorWindow : EditorWindow
         }
 
         previewSource = src;
-
-        // 直接复用场景对象（或其子节点）上的 AnimancerComponent
         animancer = src.GetComponentInChildren<AnimancerComponent>(true);
         if (animancer == null)
         {
             return;
         }
 
-        // 确保 AnimancerComponent 绑定了正确的 Animator（常见：Animator 在子节点）
         if (animancer.Animator == null)
         {
             var animator = animancer.GetComponent<Animator>();
@@ -151,16 +123,16 @@ public partial class SkillEditorWindow : EditorWindow
         CleanupPreviewAttachedActives();
         previewSource = null;
         animancer = null;
+        previewMovementStartPosition = null;
+        previewMovementTargetPosition = null;
+        previewMovementSegment = null;
 
         RestorePreviewAnimatorSettingsIfNeeded();
     }
 
     #endregion
 
-    #region 播放预览：控制（按钮/AnimationMode/Animator设置）
-
-    // 编辑器预览应使用 AnimationMode 进行“可回滚采样”，避免任何姿态/scale 等属性残留到场景对象上。
-    // 注意：AnimationMode 是全局状态，必须只在本窗口拥有时停止。
+    #region 播放控制
     private bool ownsAnimationMode;
 
     private void EnsureAnimationMode()
@@ -230,23 +202,20 @@ public partial class SkillEditorWindow : EditorWindow
         isLooping = !isLooping;
         UpdateLoopButtonVisual();
         
-        // Loop 对预览的影响体现在“时间映射策略”（Repeat/Clamp），切换后立刻重采样一帧即可生效
         UpdateAnimationPreview();
     }
     #endregion
 
-    #region Editor Update 驱动（播放推进）
+    #region Editor Update 驱动
 
     private void OnEditorUpdate()
     {
-        // 非播放状态时不做任何事
         if (!isPlaying)
         {
             hasLastEditorUpdateTime = false;
             return;
         }
 
-        // 没有可预览对象/配置时，直接停止播放
         if (config == null || animancer == null)
         {
             StopPreviewPlayback(resetTime: false);
@@ -280,7 +249,6 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        // 顿帧：冻结时间推进（但仍保持预览刷新）
         if (previewHitStopRemainingMs > 0)
         {
             previewHitStopRemainingMs = Mathf.Max(0, previewHitStopRemainingMs - Mathf.RoundToInt(deltaTime * 1000f));
@@ -310,20 +278,15 @@ public partial class SkillEditorWindow : EditorWindow
             }
         }
 
-        // 仅在“播放”且时间确实前进时，模拟命中触发顿帧（对齐运行时：顿帧是时间效果，不在拖拽采样时触发）
         if (previewHitStopRemainingMs <= 0)
         {
             TryTriggerPreviewHitStop(prevTime, currentPlaybackTime, maxTime);
-            // VFX：同样只在播放推进时触发；拖拽采样不触发（避免生成大量临时对象）。
             TryTriggerPreviewVfx(prevTime, currentPlaybackTime, maxTime, wrapped);
-            // SFX：按轨道触发播放（编辑器预览）
             TryTriggerPreviewSfx(prevTime, currentPlaybackTime, maxTime, wrapped);
         }
 
         UpdatePlayheadPosition();
         UpdateAnimationPreview();
-
-        // Active 预览：在采样完角色姿态后再更新显隐（避免 AnimationMode 未开启时采样失败）
         UpdatePreviewAttachedActives(currentPlaybackTime, wrapped);
 
         // VFX：legacy Animation 帧动画采样（在本帧姿态确定后采样）
@@ -375,6 +338,7 @@ public partial class SkillEditorWindow : EditorWindow
         EnsurePreviewObject();
         if (animancer == null) return;
 
+        // 预览期间始终禁用 RootMotion
         EnsurePreviewRootMotionDisabled();
         EnsurePreviewAnimatorSettings();
 
@@ -439,13 +403,11 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        // 清空图，避免残留姿态影响 Rebind
         if (animancer.IsGraphInitialized)
         {
             animancer.Graph.Stop();
         }
 
-        // 回到默认姿态（绑定/默认值），对齐“停止后回到初始状态”的预期
         animancer.Animator.Rebind();
         animancer.Animator.Update(0f);
     }
@@ -474,10 +436,6 @@ public partial class SkillEditorWindow : EditorWindow
 
         var a = animancer.Animator;
 
-        // 对齐 Animancer.Editor.Previews.AnimancerPreviewObject 的预览 Animator 参数：
-        // - AlwaysAnimate：避免视锥/禁用导致不更新
-        // - fireEvents=false：避免 AnimationEvent 影响编辑器/游戏逻辑
-        // - updateMode=Normal：避免 Physics/Unscaled 等差异导致预览不一致
         if (!cachedCullingMode.HasValue) cachedCullingMode = a.cullingMode;
         if (!cachedFireEvents.HasValue) cachedFireEvents = a.fireEvents;
         if (!cachedUpdateMode.HasValue) cachedUpdateMode = a.updateMode;
@@ -489,7 +447,6 @@ public partial class SkillEditorWindow : EditorWindow
 
     private void RestorePreviewAnimatorSettingsIfNeeded()
     {
-        // animancer/Animator 可能在编辑器中被替换/销毁：这里做防御并清空缓存
         if (animancer == null || animancer.Animator == null)
         {
             cachedCullingMode = null;
@@ -533,6 +490,10 @@ public partial class SkillEditorWindow : EditorWindow
         CleanupPreviewVfx();
         CleanupPreviewSfx();
         CleanupPreviewAttachedActives();
+        // 清除程序化位移数据
+        previewMovementStartPosition = null;
+        previewMovementTargetPosition = null;
+        previewMovementSegment = null;
         RestorePreviewRootMotionIfNeeded();
         RestorePreviewAnimatorSettingsIfNeeded();
         StopAnimationModeIfOwned();
@@ -559,7 +520,7 @@ public partial class SkillEditorWindow : EditorWindow
         // 编辑器预览：进入 AnimationMode，确保采样对场景对象是可回滚的。
         EnsureAnimationMode();
 
-        // 拖拽 playhead 也需要禁用 RootMotion，避免编辑场景对象被挪动
+        // 预览期间始终禁用 RootMotion
         EnsurePreviewRootMotionDisabled();
         EnsurePreviewAnimatorSettings();
 
@@ -797,30 +758,24 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        // Loop wrap：为保持确定性，跨回环时先清理上一轮残留（尤其是 FollowTarget 的挂载特效）
         if (wrapped)
         {
             CleanupPreviewVfx();
             CleanupPreviewSfx();
         }
 
-        // 时间倒退（例如手动拖拽到更小时间、或 Stop 重置）时不触发
-        // 注意：循环回环时 currentTime 会小于 prevTime，但这不是“倒退”，需要允许触发（靠区间拆分处理）。
         if (!wrapped && currentTime < prevTime)
         {
             return;
         }
 
-        // wrapped 由调用方提供；这里仍按区间拆分保证不漏触发
         if (wrapped && maxTime > 0f)
         {
-            // includeStart=true：避免触发点刚好落在区间起点（例如 trigger==0）时被漏掉
             TryTriggerPreviewVfxInRange(prevTime, maxTime, includeStart: true, includeEnd: true);
             TryTriggerPreviewVfxInRange(0f, currentTime, includeStart: true, includeEnd: true);
         }
         else
         {
-            // includeStart=true：避免 trigger==prevTime 时漏触发（尤其是第一次从0开始播放）
             TryTriggerPreviewVfxInRange(prevTime, currentTime, includeStart: true, includeEnd: true);
         }
     }
@@ -832,9 +787,8 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        Transform owner = animancer.transform;
+        Transform owner = animancer != null ? animancer.transform : null;
 
-        // 遍历所有段：VFX 的 NormalizedStart 相对于段（0-1），触发点 = seg.StartTime + normalized * segDuration
         foreach (var seg in config.Segments)
         {
             if (seg?.VisualEffects == null || seg.VisualEffects.Count == 0)
@@ -884,7 +838,6 @@ public partial class SkillEditorWindow : EditorWindow
         {
             GameObject instance;
 
-            // Prefab 优先用 PrefabUtility.InstantiatePrefab（保持 Prefab 语义，且不污染场景保存）
             if (UnityEditor.EditorUtility.IsPersistent(vfx.Prefab))
             {
                 instance = PrefabUtility.InstantiatePrefab(vfx.Prefab) as GameObject;
@@ -899,22 +852,15 @@ public partial class SkillEditorWindow : EditorWindow
                 return;
             }
 
-            // 很多项目的特效 Prefab 根节点默认是 inactive（配合对象池/脚本 OnEnable 播放）。
-            // 预览必须强制激活，否则既看不到渲染，也不会触发 OnEnable（例如 TimeEffect）。
             if (!instance.activeSelf)
             {
                 instance.SetActive(true);
             }
 
-            // Debug：让用户在 Hierarchy 里可见，便于检查是否重复实例化。
-            // 注意：仍会在 Stop/回环/离开窗口时 DestroyImmediate 清理，避免污染场景。
             instance.hideFlags = HideFlags.None;
             previewVfxSpawnCounter++;
             instance.name = $"[PreviewVFX #{previewVfxSpawnCounter}] {(vfx.Prefab != null ? vfx.Prefab.name : instance.name)}";
 
-            // FollowTarget 语义（与运行时一致）：
-            // - true：特效跟随角色（作为子物体），Offset/RotationEuler 为 local pose。
-            // - false：特效生成后定格在世界，Offset/RotationEuler 仍以“相对角色”描述，但在生成时烘焙为 world pose。
             if (vfx.FollowTarget)
             {
                 instance.transform.SetParent(owner, worldPositionStays: false);
@@ -956,13 +902,10 @@ public partial class SkillEditorWindow : EditorWindow
                 StartTime = triggerTime,
                 LegacyAnimationClip = legacyClip,
                 HasSyncedPose = true,
-                // 注意：为兼容 FollowTarget=false（world 定格），这里记录“当前使用空间”的 pose：
-                // - FollowTarget=true 记录 local；FollowTarget=false 记录 world。
                 LastSyncedPosition = vfx.FollowTarget ? instance.transform.localPosition : instance.transform.position,
                 LastSyncedRotation = vfx.FollowTarget ? instance.transform.localRotation : instance.transform.rotation,
             });
 
-            // 立刻采样一次第 0 帧，避免"触发当帧看不到任何变化"的错觉
             if (legacyClip != null)
             {
                 EnsureAnimationMode();
@@ -977,11 +920,10 @@ public partial class SkillEditorWindow : EditorWindow
                 }
             }
 
-            // ParticleSystem：需要调用Play()方法才能开始播放（可以与legacy Animation共存）
             var ps = instance.GetComponentInChildren<ParticleSystem>(true);
             if (ps != null)
             {
-                ps.Play(true); // true表示包含子粒子系统
+                ps.Play(true); // true 表示包含子粒子系统
             }
         }
         catch (Exception e)
@@ -1002,7 +944,6 @@ public partial class SkillEditorWindow : EditorWindow
             return anim.clip;
         }
 
-        // 取第一个 state 的 clip（保持最小可用）
         foreach (AnimationState state in anim)
         {
             if (state?.clip != null)
@@ -1021,7 +962,12 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        // 采样需要 AnimationMode
+        Transform owner = animancer != null ? animancer.transform : null;
+        if (owner == null)
+        {
+            return;
+        }
+
         EnsureAnimationMode();
 
         AnimationMode.BeginSampling();
@@ -1031,8 +977,7 @@ public partial class SkillEditorWindow : EditorWindow
             {
                 var inst = previewVfxInstances[i];
                 var go = inst?.GameObject;
-                var clip = inst?.LegacyAnimationClip;
-                if (go == null || clip == null)
+                if (go == null)
                 {
                     continue;
                 }
@@ -1043,9 +988,30 @@ public partial class SkillEditorWindow : EditorWindow
                     continue;
                 }
 
-                // 默认不循环：超过长度就 clamp 到最后一帧（配合 EndTime 会很快销毁/隐藏）
-                float local = Mathf.Clamp(t, 0f, Mathf.Max(0.0001f, clip.length));
-                AnimationMode.SampleAnimationClip(go, clip, local);
+                // 跟随特效位置同步：每帧更新位置/旋转，确保跟随角色移动（处理攻击位移等情况）
+                // 说明：运行时跟随特效作为角色的子物体会自动跟随，但编辑器预览中需要手动同步
+                if (inst.Data != null && inst.Data.FollowTarget)
+                {
+                    go.transform.SetParent(owner, worldPositionStays: false);
+                    go.transform.localPosition = inst.Data.Offset;
+                    go.transform.localRotation = Quaternion.Euler(inst.Data.RotationEuler);
+                    go.transform.localScale = Vector3.one;
+                }
+
+                var clip = inst?.LegacyAnimationClip;
+                if (clip != null)
+                {
+                    float local = Mathf.Clamp(t, 0f, Mathf.Max(0.0001f, clip.length));
+                    AnimationMode.SampleAnimationClip(go, clip, local);
+                }
+
+                var ps = go.GetComponentInChildren<ParticleSystem>(true);
+                if (ps != null)
+                {
+                    float localT = Mathf.Max(0f, t);
+                    ps.Simulate(0f, true, true, true);
+                    ps.Simulate(localT, true, false, true);
+                }
             }
         }
         finally
@@ -1054,12 +1020,6 @@ public partial class SkillEditorWindow : EditorWindow
         }
     }
 
-    /// <summary>
-    /// 拖拽预览（scrub）用：按“当前时间点”重建应该可见的 VFX 实例，并采样到对应帧。
-    /// - 目标：拖动 playhead 时也能看到特效（而不是只在 Play 时触发一次）。
-    /// - 策略：为确定性，直接清理旧实例，然后对所有 VFX 计算窗口 [trigger, trigger+Length]，
-    ///   若当前时间落在窗口内则实例化并采样（legacy Animation/ParticleSystem）。
-    /// </summary>
     private void EvaluatePreviewVfxAtTime(float globalTimeSeconds)
     {
         if (config == null || animancer == null)
@@ -1067,7 +1027,6 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        // 重建：先清理旧实例，避免拖动过程中重复堆叠
         CleanupPreviewVfx();
 
         if (config.Segments == null || config.Segments.Count == 0)
@@ -1085,7 +1044,7 @@ public partial class SkillEditorWindow : EditorWindow
         EnsurePreviewRootMotionDisabled();
         EnsurePreviewAnimatorSettings();
 
-        Transform owner = animancer.transform;
+        Transform owner = animancer != null ? animancer.transform : null;
 
         for (int s = 0; s < config.Segments.Count; ++s)
         {
@@ -1116,9 +1075,6 @@ public partial class SkillEditorWindow : EditorWindow
                 float len = Mathf.Max(0f, vfx.Length);
                 if (len <= 0f)
                 {
-                    // 若配置里 Length 还未写回，scrub 预览兜底用 Prefab 自身推导长度：
-                    // - legacy Animation：clip.length
-                    // - ParticleSystem：main.duration
                     var anim = vfx.Prefab.GetComponentInChildren<Animation>(true);
                     var legacy = anim != null ? GetFirstLegacyAnimationClip(anim) : null;
                     if (legacy != null)
@@ -1127,10 +1083,10 @@ public partial class SkillEditorWindow : EditorWindow
                     }
                     else
                     {
-                        var ps = vfx.Prefab.GetComponentInChildren<ParticleSystem>(true);
-                        if (ps != null)
+                        var prefabPs = vfx.Prefab.GetComponentInChildren<ParticleSystem>(true);
+                        if (prefabPs != null)
                         {
-                            len = Mathf.Max(0.01f, ps.main.duration);
+                            len = Mathf.Max(0.01f, prefabPs.main.duration);
                         }
                     }
                 }
@@ -1141,10 +1097,8 @@ public partial class SkillEditorWindow : EditorWindow
                     continue;
                 }
 
-                // 复用已有的实例化逻辑（会记录 StartTime/LegacyAnimationClip 等）
                 PlayPreviewVisualEffect(owner, vfx, trigger);
 
-                // 采样到当前帧（对刚创建的最后一个实例）
                 if (previewVfxInstances.Count == 0)
                 {
                     continue;
@@ -1159,7 +1113,6 @@ public partial class SkillEditorWindow : EditorWindow
 
                 float localT = Mathf.Max(0f, globalTimeSeconds - trigger);
 
-                // legacy Animation：确定性采样
                 if (inst.LegacyAnimationClip != null)
                 {
                     AnimationMode.BeginSampling();
@@ -1173,16 +1126,12 @@ public partial class SkillEditorWindow : EditorWindow
                         AnimationMode.EndSampling();
                     }
                 }
-                else
+
+                var instancePs = go.GetComponentInChildren<ParticleSystem>(true);
+                if (instancePs != null)
                 {
-                    // ParticleSystem：确定性模拟（若存在）
-                    var ps = go.GetComponentInChildren<ParticleSystem>(true);
-                    if (ps != null)
-                    {
-                        // 确定性：从 0 模拟到 localT
-                        ps.Simulate(0f, true, true, true);
-                        ps.Simulate(localT, true, false, true);
-                    }
+                    instancePs.Simulate(0f, true, true, true);  // 重置到初始状态
+                    instancePs.Simulate(localT, true, false, true);  // 模拟到当前时间点
                 }
             }
         }
@@ -1195,7 +1144,6 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        // wrapped 时已清理过，这里只做兜底
         if (wrapped)
         {
             return;
@@ -1262,7 +1210,6 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        // wrapped 时调用方已经 Cleanup 过，这里按区间拆分确保不漏触发
         if (wrapped && maxTime > 0f)
         {
             TryTriggerPreviewSfxInRange(prevTime, maxTime, includeStart: true, includeEnd: true);
@@ -1329,14 +1276,12 @@ public partial class SkillEditorWindow : EditorWindow
         audioUtilReflectionInited = true;
         try
         {
-            // AudioUtil 位于 UnityEditor 程序集内部类型
             audioUtilType = typeof(Editor).Assembly.GetType("UnityEditor.AudioUtil");
             if (audioUtilType == null)
             {
                 return;
             }
 
-            // 常见签名：PlayPreviewClip(AudioClip clip, int startSample, bool loop)
             audioUtilPlayPreviewClip = audioUtilType.GetMethod(
                 "PlayPreviewClip",
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static,
@@ -1344,7 +1289,6 @@ public partial class SkillEditorWindow : EditorWindow
                 new[] { typeof(AudioClip), typeof(int), typeof(bool) },
                 null);
 
-            // StopAllPreviewClips()
             audioUtilStopAllPreviewClips = audioUtilType.GetMethod(
                 "StopAllPreviewClips",
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static,
@@ -1352,7 +1296,6 @@ public partial class SkillEditorWindow : EditorWindow
                 Type.EmptyTypes,
                 null);
 
-            // SetPreviewVolume(float volume)（部分版本存在）
             audioUtilSetPreviewVolume = audioUtilType.GetMethod(
                 "SetPreviewVolume",
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static,
@@ -1362,7 +1305,6 @@ public partial class SkillEditorWindow : EditorWindow
         }
         catch
         {
-            // 反射失败则保持 null，后续静默跳过
             audioUtilType = null;
             audioUtilPlayPreviewClip = null;
             audioUtilStopAllPreviewClips = null;
@@ -1380,14 +1322,11 @@ public partial class SkillEditorWindow : EditorWindow
         EnsureAudioUtilReflection();
         if (audioUtilPlayPreviewClip == null)
         {
-            // 找不到 AudioUtil：静默跳过（避免在编辑器刷屏报错）
             return;
         }
 
         try
         {
-            // 注意：SetPreviewVolume 是全局的；这里只做最小可用实现，设置一次后可能影响其他预览播放。
-            // 若未来需要“每条SFX独立音量”，建议接入项目统一音频预览系统。
             if (audioUtilSetPreviewVolume != null)
             {
                 float volume = Mathf.Clamp01(sfx.Volume);
@@ -1404,7 +1343,6 @@ public partial class SkillEditorWindow : EditorWindow
         }
         catch
         {
-            // 静默：避免版本差异导致预览报错干扰工作流
         }
     }
 
@@ -1436,7 +1374,6 @@ public partial class SkillEditorWindow : EditorWindow
     {
         if (wrapped)
         {
-            // 回环时先恢复上一轮对对象的修改，避免“永久隐藏/永久显示”的残留
             CleanupPreviewAttachedActives();
         }
 
@@ -1446,7 +1383,6 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        // 路径解析根：优先使用选中对象（更符合“角色根”语义），否则退回 animancer 节点
         var rootGo = selectObj != null ? selectObj.value as GameObject : null;
         Transform root = rootGo != null ? rootGo.transform : animancer != null ? animancer.transform : null;
         if (root == null)
@@ -1455,21 +1391,13 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        // 语义（满足你的“第四段进入后，0.5s 前也要隐藏”的预期）：
-        // - 只由“当前所在段（当前动画段）”的 AttachedActives 控制，不跨段影响。
-        // - 若当前段里引用了某个对象，则该对象在本段内默认隐藏（false），
-        //   只有落在某条 ActiveClip 区间内才显示（true）。
-        // - 离开该段后恢复原始 activeSelf（不影响其他段）。
-
         AttackSegmentData segNow = FindSegmentAtTime(currentTime);
         if (segNow == null || segNow.AttachedActives == null || segNow.AttachedActives.Count == 0)
         {
-            // 当前不在任何“带 Active 控制”的段：恢复所有被我们改过的对象
             CleanupPreviewAttachedActives();
             return;
         }
 
-        // 段时长：与 Active 的归一化时间一致（使用 segNow.Duration；若缺失则从 Clip 推导）
         float segDuration = segNow.Duration;
         if (segDuration <= 0f && segNow.AnimationClipTrans != null && segNow.AnimationClipTrans.Clip != null)
         {
@@ -1731,16 +1659,110 @@ public partial class SkillEditorWindow : EditorWindow
 
     #endregion
 
-    #region 播放预览：UI（速度控制）
+    #region 程序化位移预览
 
-    // 初始化播放速度控制（Top Bar）
+    /// <summary>
+    /// 更新编辑器预览中的程序化位移
+    /// </summary>
+    private void UpdatePreviewMovement(float globalTimeSeconds)
+    {
+        if (animancer == null || animancer.transform == null || config == null)
+        {
+            return;
+        }
+
+        AttackSegmentData seg = FindSegmentAtTime(globalTimeSeconds);
+        
+        if (seg != null && seg.Movement != null && seg.Movement.EnableMovement)
+        {
+            if (previewMovementSegment != seg || !previewMovementStartPosition.HasValue)
+            {
+                InitializePreviewMovement(seg, seg.StartTime);
+            }
+        }
+        else
+        {
+            previewMovementSegment = null;
+            previewMovementStartPosition = null;
+            previewMovementTargetPosition = null;
+            return;
+        }
+
+        float segmentLocalTime = globalTimeSeconds - seg.StartTime;
+        float segmentDuration = seg.Duration > 0f ? seg.Duration : 
+            (seg.AnimationClipTrans?.Clip != null ? seg.AnimationClipTrans.Clip.length / Mathf.Max(0.01f, seg.AnimationClipTrans.Speed) : 0f);
+        
+        if (segmentDuration <= 0f)
+        {
+            return;
+        }
+
+        float normalizedTime = segmentLocalTime / segmentDuration;
+        normalizedTime = Mathf.Clamp01(normalizedTime);
+
+        var movement = seg.Movement;
+        
+        if (normalizedTime < movement.NormalizedStart || normalizedTime > movement.NormalizedEnd)
+        {
+            return;
+        }
+
+        float moveProgress = (normalizedTime - movement.NormalizedStart) / (movement.NormalizedEnd - movement.NormalizedStart);
+        moveProgress = Mathf.Clamp01(moveProgress);
+        float curveValue = movement.MoveCurve.Evaluate(moveProgress);
+
+        if (previewMovementStartPosition.HasValue && previewMovementTargetPosition.HasValue)
+        {
+            Vector3 targetPos = Vector3.Lerp(previewMovementStartPosition.Value, previewMovementTargetPosition.Value, curveValue);
+            
+            AnimationMode.BeginSampling();
+            try
+            {
+                Vector3 currentPos = animancer.transform.position;
+                animancer.transform.position = new Vector3(targetPos.x, currentPos.y, targetPos.z);
+            }
+            finally
+            {
+                AnimationMode.EndSampling();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 初始化编辑器预览中的程序化位移
+    /// </summary>
+    private void InitializePreviewMovement(AttackSegmentData seg, float globalTimeSeconds)
+    {
+        if (animancer == null || animancer.transform == null || seg?.Movement == null)
+        {
+            return;
+        }
+
+        previewMovementSegment = seg;
+        var movement = seg.Movement;
+        previewMovementStartPosition = animancer.transform.position;
+
+        Vector3 direction = animancer.transform.forward;
+        if (movement.TrackTarget)
+        {
+            direction = animancer.transform.forward;
+        }
+
+        direction.y = 0;
+        direction.Normalize();
+        
+        previewMovementTargetPosition = previewMovementStartPosition.Value + direction * movement.Distance;
+    }
+
+    #endregion
+
+    #region 播放预览：UI
+
     private void InitPlaybackSpeedControl()
     {
-        // 找到Speed标签后面的Slider（在Top容器中查找）
         var topContainer = root.Q<VisualElement>("Top");
         if (topContainer != null)
         {
-            // 查找Slider（在Speed标签后面）
             var speedLabel = root.Q<Label>("Speed");
             if (speedLabel != null)
             {
@@ -1813,7 +1835,7 @@ public partial class SkillEditorWindow : EditorWindow
                 }
             });
         }
-        
+
         // 初始化显示
         UpdateSpeedDisplay();
     }

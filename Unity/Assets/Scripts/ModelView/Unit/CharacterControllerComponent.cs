@@ -6,7 +6,7 @@ namespace ET
     /// 角色移动控制组件
     /// </summary>
     [ComponentOf(typeof(Unit))]
-    public class CharacterControllerComponent: Entity, IAwake<GameObject>, IUpdate,IFixedUpdate,IDestroy
+    public class CharacterControllerComponent: Entity, IAwake<GameObject>, IUpdate,IFixedUpdate,IOnAnimatorMove,IDestroy
     {
         /// <summary>
         /// Unity Rigidbody组件引用

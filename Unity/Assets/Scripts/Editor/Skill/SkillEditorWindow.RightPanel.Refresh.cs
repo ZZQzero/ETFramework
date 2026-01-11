@@ -60,8 +60,6 @@ public partial class SkillEditorWindow : EditorWindow
             addActiveButton.RemoveFromClassList("type-animation");
             addActiveButton.RemoveFromClassList("type-active");
         }
-
-        // 注意：addClipToTrackButton的track-add-button样式是永久的，不需要清除
     }
 
     // 更新轨道信息显示
@@ -363,6 +361,15 @@ public partial class SkillEditorWindow : EditorWindow
             segmentTimeoutMsPreviewField.SetValueWithoutNotify(0);
             segmentTimeoutMsPreviewField.SetEnabled(false);
         }
+
+        // Movement字段
+        if (movementEnableField != null) movementEnableField.SetValueWithoutNotify(false);
+        if (movementDistanceField != null) movementDistanceField.SetValueWithoutNotify(0f);
+        if (movementStartField != null) movementStartField.SetValueWithoutNotify(0f);
+        if (movementEndField != null) movementEndField.SetValueWithoutNotify(0.3f);
+        if (movementCurveField != null) movementCurveField.SetValueWithoutNotify(AnimationCurve.EaseInOut(0, 0, 1, 1));
+        if (movementTrackTargetField != null) movementTrackTargetField.SetValueWithoutNotify(false);
+        if (movementTrackRangeField != null) movementTrackRangeField.SetValueWithoutNotify(5f);
 
         // Effect字段
         if (effectPrefabField != null) effectPrefabField.SetValueWithoutNotify(null);

@@ -81,6 +81,8 @@
     <Compile Include="Assets\Scripts\HotfixView\EntryEvent3_InitClient.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Unit\ChangeRotation_SyncGameObjectRotation.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Unit\Attack\AttackComboTimeoutInvoke.cs" />
+    <Compile Include="Assets\Scripts\HotfixView\Unit\AnimatorMoveBridge.cs" />
+    <Compile Include="Assets\Scripts\HotfixView\Unit\Attack\AttackVfxRecycleInvoke.cs" />
     <Compile Include="Assets\Scripts\HotfixView\UI\UILobby\LoginFinish_CreateLobbyUI.cs" />
     <Compile Include="Assets\Scripts\HotfixView\GameUI\UIScript\UIHelpPanel.cs" />
     <None Include="Assets\Scripts\HotfixView\ETClient.HotfixView.asmdef" />

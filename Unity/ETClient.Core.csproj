@@ -149,6 +149,7 @@
     <Compile Include="Assets\Scripts\Core\Share\Entity\EntitySystemAttribute.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\ETTaskPool.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Entity\EntitySceneFactory.cs" />
+    <Compile Include="Assets\Scripts\Core\Share\Entity\IOnAnimatorMoveSystem.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\ETCancellationToken.cs" />
     <Compile Include="Assets\Scripts\Core\Share\Helper\ProcessHelper.cs" />
     <Compile Include="Assets\Scripts\Core\Share\ETTask\AsyncETVoidMethodBuilder.cs" />

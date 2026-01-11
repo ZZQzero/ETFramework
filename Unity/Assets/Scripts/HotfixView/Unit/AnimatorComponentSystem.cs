@@ -19,10 +19,18 @@ namespace ET
 				return;
 			}
 
+			// === Animancer Layer 设计（方案A）===
+			// Layer0：Move/Jump（基础移动）
+			// Layer1：Attack（攻击覆盖），默认权重为 0，播放攻击时由 Layer.Play 自动拉起
+			self.Animancer.Layers.SetMinCount(2);
+			self.AttackLayer = self.Animancer.Layers[1];
+			self.AttackLayer.Weight = 0f;
+
 			if (obj.GetComponent<AttackEventReceiver>() == null)
 			{
 				obj.AddComponent<AttackEventReceiver>();
 			}
+			
 			self.Input = unit.GetComponent<InputComponent>();
 			self.Attack = unit.GetComponent<AttackComponent>();
 			self.CharacterController = unit.GetComponent<CharacterControllerComponent>();
@@ -94,12 +102,6 @@ namespace ET
 			if (self.Attack != null && self.Input != null && self.Input.HasAttackRequest())
 			{
 				self.Attack.HandleAttackInput();
-			}
-			// 仅在“真正攻击播放中/顿帧中”时阻止移动/跳跃动画切换。
-			// Recovery 阶段允许恢复移动/待机动画，否则攻击段播完后会出现“没有动画”的空窗。
-			if (self.Attack != null && self.Attack.IsAttacking)
-			{
-				return;
 			}
 			
 			AnimancerLayer layer = self.Animancer; // 隐式转换到 Layer 0

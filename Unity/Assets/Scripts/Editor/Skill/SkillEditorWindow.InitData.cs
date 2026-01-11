@@ -2,12 +2,111 @@
 using Animancer;
 using ET;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public partial class SkillEditorWindow : EditorWindow
 {
-    // InitData：从选择的 Config / GameObject 初始化运行期数据结构（trackDataList、globalTrackDataList、animationClipTrackMap 等）
+    #region 初始化 - UI元素
+    
+    private void InitData()
+    {
+        selectConfigAsset = root.Q<ObjectField>("SelectConfig");
+        selectConfigAsset.objectType = typeof(AttackConfigAsset);
+        selectObj = root.Q<ObjectField>("SelectObj");
+        selectObj.objectType = typeof(GameObject);
 
+        selectConfigAsset.RegisterValueChangedCallback(OnObjectFieldChanged);
+        selectObj.RegisterValueChangedCallback(OnObjectFieldChanged);
+
+        timelineScrollView = root.Q<ScrollView>("TimelineScrollView");
+        timelineContent = root.Q<VisualElement>("TimelineContent");
+        trackContainer = root.Q<VisualElement>("TrackContainer");
+        
+        if (trackContainer != null)
+        {
+            trackContainer.RegisterCallback<GeometryChangedEvent>(evt => UpdatePlayheadSize());
+        }
+        
+        var refresh = root.Q<Button>("Refresh");
+        refresh.clicked += RefreshTrackContent;
+
+        toggleViewModeButton = root.Q<Button>("ToggleViewMode");
+        if (toggleViewModeButton != null)
+        {
+            toggleViewModeButton.clicked += OnToggleViewModeClicked;
+            UpdateViewModeButtonText();
+        }
+        
+        var playBtn = root.Q<Button>("Play");
+        if (playBtn != null)
+        {
+            playBtn.clicked += OnPlayButtonClicked;
+        }
+        
+        var stopBtn = root.Q<Button>("Stop");
+        if (stopBtn != null)
+        {
+            stopBtn.clicked += OnStopButtonClicked;
+        }
+        
+        var loopBtn = root.Q<Button>("Loop");
+        if (loopBtn != null)
+        {
+            loopBtn.clicked += OnLoopButtonClicked;
+        }
+        UpdateLoopButtonVisual();
+        
+        leftContainer = root.Q<VisualElement>("Left");
+        
+        if (timelineScrollView != null)
+        {
+            timelineScrollView.horizontalScroller.valueChanged += OnTimelineScrollChanged;
+            timelineScrollView.RegisterCallback<GeometryChangedEvent>(evt => {
+                UpdateTimelineContentWidth();
+                DrawTimelineRulerMarks();
+            });
+        }
+        
+        timeLengthLabel = root.Q<Label>("TimeLength");
+        UpdateTimeLengthDisplay();
+        InitPlaybackSpeedControl();
+        InitConfigHint();
+        InitRightPanel();
+        
+        root.RegisterCallback<KeyDownEvent>(evt =>
+        {
+            if (evt.keyCode == KeyCode.Delete && selectedClip != null)
+            {
+                DeleteClip(selectedClip);
+                evt.StopPropagation();
+            }
+        });
+        
+        root.focusable = true;
+    }
+    
+    private void OnObjectFieldChanged(ChangeEvent<Object> evt)
+    {
+        if (selectObj != null && selectObj.value != null &&
+            selectConfigAsset != null && selectConfigAsset.value != null)
+        {
+            InitTrackData();
+            InitTimelineRuler();
+            InitPlayHead();
+            CreateTrack();
+            UpdateConfigHint();
+            DrawTimelineRulerMarks();
+            UpdateViewModeButtonText();
+            UpdateTrackInfo(selectedTrack);
+        }
+    }
+    
+    #endregion
+
+    #region 初始化 - 数据
+    
     private void InitTrackData()
     {
         if (config == null)
@@ -19,7 +118,6 @@ public partial class SkillEditorWindow : EditorWindow
             }
         }
 
-        // 预览对象：使用克隆体隔离业务脚本/AnimatorController 干扰
         EnsurePreviewObject();
         InitTrackAndClipData();
     }
@@ -31,16 +129,13 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        // 清空所有数据
         trackDataList.Clear();
         ClearTrackUI();
-        // 运行期 UI 状态：切换配置/重建时清空
         laneIndexByClip.Clear();
         animationClipTrackMap.Clear();
         globalTrackDataList.Clear();
         allAnimationClipItems.Clear();
 
-        // 创建全局动画轨道
         AnimationTrack animationTrack = new AnimationTrack();
         animationTrack.Name = nameof(TrackType.Animation);
         globalTrackDataList.Add(animationTrack);
@@ -51,11 +146,8 @@ public partial class SkillEditorWindow : EditorWindow
             {
                 AnimationClipItem clipItem = new AnimationClipItem();
 
-                // 初始化每个AnimationClipItem对应的子轨道映射
                 var localTrackList = new List<ITrackItem>();
                 animationClipTrackMap[clipItem] = localTrackList;
-
-                // 添加到全局动画片段列表
                 allAnimationClipItems.Add(clipItem);
 
                 clipItem.SegmentData = segment;
@@ -65,7 +157,6 @@ public partial class SkillEditorWindow : EditorWindow
                 {
                     if (clipItem.SegmentData.AnimationClipTrans.Clip != null)
                     {
-                        // 以时间轴真实时长为准：Duration = Clip.length / Speed
                         float speed = Mathf.Max(0.01f, clipItem.SegmentData.AnimationClipTrans.Speed);
                         segment.ClipLength = clipItem.SegmentData.AnimationClipTrans.Clip.length;
                         segment.Duration = segment.ClipLength / speed;
@@ -85,7 +176,6 @@ public partial class SkillEditorWindow : EditorWindow
                 clipItem.StartTime = segment.StartTime;
                 animationTrack.ClipList.Add(clipItem);
 
-                // 创建该动画片段的子轨道（Effect、Sound、HitBox）
                 if (segment.VisualEffects.Count > 0)
                 {
                     EffectTrack effectTrack = new EffectTrack();
@@ -165,8 +255,9 @@ public partial class SkillEditorWindow : EditorWindow
             }
         }
 
-        // 根据当前视图模式设置 trackDataList
         ApplyViewMode();
     }
+    
+    #endregion
 }
 

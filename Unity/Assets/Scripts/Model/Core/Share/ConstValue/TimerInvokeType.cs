@@ -15,5 +15,6 @@
         
         public const int AttackComboTimeout = PackageType.Unit * ConstValue.Seed + 1;
         public const int AttackLayerFadeOut = PackageType.Unit * ConstValue.Seed + 2;
+        public const int AttackVfxRecycle = PackageType.Unit * ConstValue.Seed + 3;
     }
 }

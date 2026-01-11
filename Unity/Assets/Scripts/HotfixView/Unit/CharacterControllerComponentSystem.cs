@@ -66,19 +66,11 @@ namespace ET
         }
 
         [EntitySystem]
-        private static void FixedUpdate(this CharacterControllerComponent self)
+        private static void OnAnimatorMove(this CharacterControllerComponent self)
         {
-            float deltaTime = Time.fixedDeltaTime;
-            self.Ground.Detect();
-            if (self.JumpRequested)
-            {
-                self.Jump();
-                self.JumpRequested = false;
-            }
-            // 应用自定义重力
-            self.ApplyGravity(deltaTime);
-
-            // 应用移动和旋转
+            float deltaTime = Time.deltaTime;
+            
+            // 应用移动和旋转（与动画完全同步）
             if (self.ExternalMotorActive)
             {
                 // 外部运动驱动（攻击位移等）：由外部提供XZ速度，Y保持自定义重力计算结果
@@ -86,7 +78,6 @@ namespace ET
                 v.x = self.ExternalMotorVelocity.x;
                 v.z = self.ExternalMotorVelocity.z;
                 self.CurrentVelocity = v;
-                self.Rigidbody.linearVelocity = self.CurrentVelocity;
             }
             else if (!self.EnableMovement)
             {
@@ -101,8 +92,32 @@ namespace ET
 
             // 应用旋转
             self.ApplyRotation(deltaTime);
+            
             // 计算动画速度参数
             self.CalculateAnimationSpeeds();
+            
+            // 最后统一应用速度到 Rigidbody（与动画同步）
+            self.Rigidbody.linearVelocity = self.CurrentVelocity;
+        }
+
+        [EntitySystem]
+        private static void FixedUpdate(this CharacterControllerComponent self)
+        {
+            // 物理相关：使用固定时间步
+            float deltaTime = Time.fixedDeltaTime;
+            
+            // 物理相关：地面检测（依赖物理系统）
+            self.Ground.Detect();
+            
+            // 物理相关：跳跃处理
+            if (self.JumpRequested)
+            {
+                self.Jump();
+                self.JumpRequested = false;
+            }
+            
+            // 物理相关：应用自定义重力（固定时间步，保证物理一致性）
+            self.ApplyGravity(deltaTime);
         }
         
         [EntitySystem]
@@ -143,7 +158,7 @@ namespace ET
                     self.Deceleration * deltaTime
                 );
             }
-            self.Rigidbody.linearVelocity = self.CurrentVelocity;
+            // 注意：不再在这里设置 Rigidbody.linearVelocity，统一在 OnAnimatorMove 最后设置
         }
         
         /// <summary>
@@ -190,11 +205,7 @@ namespace ET
                 new Vector3(0f, self.CurrentVelocity.y, 0f),
                 self.Deceleration * deltaTime
             );
-            
-            Vector3 velocity = self.Rigidbody.linearVelocity;
-            velocity.x = self.CurrentVelocity.x;
-            velocity.z = self.CurrentVelocity.z;
-            self.Rigidbody.linearVelocity = velocity;
+            // 注意：不再在这里设置 Rigidbody.linearVelocity，统一在 OnAnimatorMove 最后设置
         }
         
         

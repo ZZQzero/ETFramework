@@ -522,19 +522,16 @@ public partial class SkillEditorWindow : EditorWindow
         // 关键：TrackContainer 在 UXML 里是 column + flex-grow，子元素默认允许 shrink，会把动态高度压扁，造成“lane 挤在一起/高度不对”。
         trackElement.style.flexShrink = 0;
         trackElement.style.flexGrow = 0;
-        trackElement.style.overflow = Overflow.Visible; // 允许clip超出显示（ScrollView会处理滚动）
+        trackElement.style.overflow = Overflow.Visible;
         trackElement.userData = trackData;
         trackData.Index = index;
 
-        // 设置轨道宽度
         float trackWidth = GetContentWidth();
         trackElement.style.width = trackWidth;
         trackElement.style.minWidth = trackWidth;
 
-        // 给轨道容器添加点击事件
         SetupTrackInteractions(trackElement);
 
-        // 创建轨道中的clip
         List<VisualElement> clipElements = new List<VisualElement>();
 
         if (trackData is AnimationTrack animationTrack)
@@ -699,7 +696,6 @@ public partial class SkillEditorWindow : EditorWindow
         }
         else
         {
-            // 非拖拽 clip：优先使用 UI 的当前位置（style.left/layout.x），避免拖拽联动时数据未写回导致高亮不更新
             float leftPx = clipElement.style.left.keyword == StyleKeyword.Auto
                 ? clipElement.layout.x
                 : clipElement.style.left.value.value;
@@ -1846,8 +1842,6 @@ public partial class SkillEditorWindow : EditorWindow
                 continue;
             }
 
-            // 1) 写入配置数据（Segment）
-            // 注意：Id 的语义由业务决定，这里沿用旧编辑器的默认策略：Id = Segments.Count
             var segment = new AttackSegmentData
             {
                 Id = config.Segments.Count,
@@ -1856,7 +1850,6 @@ public partial class SkillEditorWindow : EditorWindow
                 ClipLength = clip.length,
             };
 
-            // 2) Animancer 过渡配置（用于客户端预览/编辑）
             segment.AnimationClipTrans = new Animancer.ClipTransition
             {
                 Clip = clip,

@@ -49,6 +49,12 @@ namespace ET
         /// 若接段/重起手/退出攻击，会取消该定时器。
         /// </summary>
         public long AttackLayerFadeOutTimer;
+
+        /// <summary>
+        /// 不跟随特效的定时器映射（key: 定时器ID, value: 特效实例 GameObject）。
+        /// 用于 FollowTarget=false 的特效：播放完成后自动回收到对象池。
+        /// </summary>
+        public Dictionary<long, GameObject> NonFollowVfxTimers { get; set; } = new Dictionary<long, GameObject>();
         
         /// <summary>顿帧结束时间</summary>
         public long HitStopEndTime { get; set; }

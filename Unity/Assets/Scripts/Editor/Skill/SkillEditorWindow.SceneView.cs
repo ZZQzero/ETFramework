@@ -33,10 +33,22 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
+        // animancer.transform 就是 player 的 Transform
+        Transform player = animancer.transform;
+        if (player == null)
+        {
+            return;
+        }
+
+        // 绘制位移轨迹（在所有其他绘制之前，作为背景显示）
+        // 编辑模式：只显示当前选中段的位移轨迹；播放模式：显示当前播放段的位移轨迹
+        DrawMovementTrajectoryForCurrentContext(player);
+
         // 播放模式：绘制当前时间点“激活窗口内”的所有 HitBox（只显示，不允许编辑）
         if (isPlaying)
         {
             DrawPreviewHitBoxesAtCurrentTime();
+            DrawPreviewMovementProgress(player);
             return;
         }
 
@@ -44,6 +56,7 @@ public partial class SkillEditorWindow : EditorWindow
         if (isDraggingPlayhead)
         {
             DrawPreviewHitBoxesAtCurrentTime();
+            DrawPreviewMovementProgress(player);
         }
 
         // 预览特效编辑：在场景里选中预览特效实例并用 Unity 默认 gizmo 改 Transform 时，
@@ -64,7 +77,7 @@ public partial class SkillEditorWindow : EditorWindow
 
         var hitBox = hitBoxClip.HitBoxData;
 
-        Transform player = animancer.transform;
+        // 使用统一的角色 Transform（已在方法开头获取）
 
         // world pose
         Vector3 worldCenter = player.TransformPoint(hitBox.Offset);
@@ -636,5 +649,170 @@ public partial class SkillEditorWindow : EditorWindow
             }
         }
     }
+
+    #region 位移轨迹可视化
+
+    /// <summary>
+    /// 根据当前上下文绘制位移轨迹（编辑模式：选中段；播放模式：当前播放段）
+    /// </summary>
+    private void DrawMovementTrajectoryForCurrentContext(Transform player)
+    {
+        if (config == null || config.Segments == null || player == null)
+        {
+            return;
+        }
+
+        AttackSegmentData targetSegment = null;
+
+        // 播放模式：显示当前播放段的位移轨迹
+        if (isPlaying || isDraggingPlayhead)
+        {
+            targetSegment = FindSegmentAtTime(currentPlaybackTime);
+        }
+        // 编辑模式：显示当前选中段的位移轨迹
+        else if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null)
+        {
+            targetSegment = animClipItem.SegmentData;
+        }
+
+        // 绘制目标段的位移轨迹
+        if (targetSegment != null && targetSegment.Movement != null && targetSegment.Movement.EnableMovement)
+        {
+            DrawMovementTrajectory(targetSegment, player, isPreview: isPlaying || isDraggingPlayhead);
+        }
+    }
+
+    /// <summary>
+    /// 绘制预览位移进度（播放/拖拽时：显示当前位移状态）
+    /// </summary>
+    private void DrawPreviewMovementProgress(Transform player)
+    {
+        if (config == null || player == null)
+        {
+            return;
+        }
+
+        // 获取当前时间对应的段
+        var segment = FindSegmentAtTime(currentPlaybackTime);
+        if (segment?.Movement == null || !segment.Movement.EnableMovement)
+        {
+            return;
+        }
+
+        // 计算段的归一化时间
+        float segmentDuration = segment.Duration;
+        if (segmentDuration <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
+        {
+            float speed = Mathf.Max(0.01f, segment.AnimationClipTrans.Speed);
+            segmentDuration = segment.AnimationClipTrans.Clip.length / speed;
+        }
+        if (segmentDuration <= 0f)
+        {
+            return;
+        }
+
+        float normalizedTime = Mathf.Clamp01((currentPlaybackTime - segment.StartTime) / segmentDuration);
+        var movement = segment.Movement;
+
+        // 检查是否在位移窗口内
+        if (normalizedTime < movement.NormalizedStart || normalizedTime > movement.NormalizedEnd)
+        {
+            return;
+        }
+
+        // 计算当前位移进度
+        float moveProgress = (normalizedTime - movement.NormalizedStart) / (movement.NormalizedEnd - movement.NormalizedStart);
+        moveProgress = Mathf.Clamp01(moveProgress);
+        float curveValue = movement.MoveCurve.Evaluate(moveProgress);
+
+        Vector3 startPos = player.position;
+        Vector3 direction = player.forward;
+        Vector3 currentPos = startPos + direction * movement.Distance * curveValue;
+
+        // 绘制当前位置标记
+        Handles.color = Color.yellow;
+        Handles.SphereHandleCap(0, currentPos, Quaternion.identity, 0.15f, EventType.Repaint);
+
+        // 绘制从起点到当前位置的线
+        Handles.color = Color.cyan;
+        Handles.DrawLine(startPos, currentPos, 2f);
+
+        // 绘制标签
+        Handles.Label(currentPos + Vector3.up * 0.3f, $"位移进度: {moveProgress:P0}");
+    }
+
+    /// <summary>
+    /// 绘制单个段的位移轨迹
+    /// </summary>
+    private void DrawMovementTrajectory(AttackSegmentData segment, Transform player, bool isPreview)
+    {
+        if (segment?.Movement == null || !segment.Movement.EnableMovement || player == null)
+        {
+            return;
+        }
+
+        var movement = segment.Movement;
+
+        // 计算起始和结束位置
+        Vector3 startPos = player.position;
+        Vector3 direction = player.forward;
+        Vector3 endPos = startPos + direction * movement.Distance;
+
+        // 绘制位移轨迹主线（橙色，粗线）
+        Handles.color = new Color(1f, 0.5f, 0f, 0.8f);
+        Handles.DrawLine(startPos, endPos, 3f);
+
+        // 绘制起点标记（绿色球）
+        Handles.color = Color.green;
+        float handleSize = HandleUtility.GetHandleSize(startPos);
+        Handles.SphereHandleCap(0, startPos, Quaternion.identity, handleSize * 0.1f, EventType.Repaint);
+        Handles.Label(startPos + Vector3.up * (handleSize * 0.2f), "起点");
+
+        // 绘制终点标记（红色球）
+        Handles.color = Color.red;
+        Handles.SphereHandleCap(0, endPos, Quaternion.identity, handleSize * 0.1f, EventType.Repaint);
+        Handles.Label(endPos + Vector3.up * (handleSize * 0.2f), $"终点 ({movement.Distance:F2}m)");
+
+        // 绘制位移曲线预览（根据 MoveCurve 生成路径点）
+        Vector3[] curvePoints = new Vector3[20];
+        for (int i = 0; i <= 19; i++)
+        {
+            float t = i / 19f;
+            float curveValue = movement.MoveCurve.Evaluate(t);
+            curvePoints[i] = Vector3.Lerp(startPos, endPos, curveValue);
+        }
+        Handles.color = new Color(1f, 0.8f, 0f, 0.6f);
+        Handles.DrawPolyLine(curvePoints);
+
+        // 绘制位移窗口标签
+        Handles.color = Color.white;
+        float midProgress = (movement.NormalizedStart + movement.NormalizedEnd) * 0.5f;
+        Vector3 midPos = Vector3.Lerp(startPos, endPos, midProgress);
+        Handles.Label(midPos + Vector3.up * (handleSize * 0.3f), 
+            $"位移窗口: {movement.NormalizedStart:F2} - {movement.NormalizedEnd:F2}");
+
+        // 如果不在预览模式，可以添加可拖拽的终点 Handle（用于调整距离）
+        if (!isPreview)
+        {
+            EditorGUI.BeginChangeCheck();
+            Vector3 newEndPos = Handles.PositionHandle(endPos, player.rotation);
+            if (EditorGUI.EndChangeCheck())
+            {
+                // 计算新的距离并更新配置
+                float newDistance = Vector3.Distance(startPos, newEndPos);
+                // 检查方向是否与角色 forward 一致（允许小角度偏差）
+                Vector3 newDirection = (newEndPos - startPos).normalized;
+                float angle = Vector3.Angle(player.forward, newDirection);
+                if (angle < 45f) // 允许45度内的偏差
+                {
+                    movement.Distance = newDistance;
+                    MarkAssetDirty();
+                    SceneView.RepaintAll();
+                }
+            }
+        }
+    }
+
+    #endregion
 }
 

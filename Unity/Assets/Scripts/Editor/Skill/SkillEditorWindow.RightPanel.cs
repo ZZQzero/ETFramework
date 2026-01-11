@@ -76,6 +76,15 @@ public partial class SkillEditorWindow : EditorWindow
         comboTimeoutOffsetMsField = rightContainer.Q<IntegerField>("ComboTimeoutOffsetMsField");
         segmentTimeoutMsPreviewField = rightContainer.Q<IntegerField>("SegmentTimeoutMsPreviewField");
 
+        // 获取 Movement 字段
+        movementEnableField = rightContainer.Q<Toggle>("MovementEnableField");
+        movementDistanceField = rightContainer.Q<FloatField>("MovementDistanceField");
+        movementStartField = rightContainer.Q<FloatField>("MovementStartField");
+        movementEndField = rightContainer.Q<FloatField>("MovementEndField");
+        movementCurveField = rightContainer.Q<CurveField>("MovementCurveField");
+        movementTrackTargetField = rightContainer.Q<Toggle>("MovementTrackTargetField");
+        movementTrackRangeField = rightContainer.Q<FloatField>("MovementTrackRangeField");
+
         // 获取Effect Clip字段
         effectPrefabField = rightContainer.Q<ObjectField>("EffectPrefabField");
         if (effectPrefabField != null)
@@ -231,6 +240,44 @@ public partial class SkillEditorWindow : EditorWindow
         {
             segmentTimeoutMsPreviewField.SetEnabled(false);
         }
+
+        // 注册 Movement 字段回调
+        if (movementEnableField != null)
+        {
+            movementEnableField.tooltip = "启用位移：开启后使用程序化位移，禁用 RootMotion；关闭时使用动画的 RootMotion";
+            movementEnableField.RegisterValueChangedCallback(OnMovementEnableChanged);
+        }
+        if (movementDistanceField != null)
+        {
+            movementDistanceField.tooltip = "位移距离（米）：角色 forward 方向的位移距离";
+            movementDistanceField.RegisterValueChangedCallback(OnMovementDistanceChanged);
+        }
+        if (movementStartField != null)
+        {
+            movementStartField.tooltip = "位移开始时间（归一化 0-1）：相对于动画片段的归一化时间";
+            movementStartField.RegisterValueChangedCallback(OnMovementStartChanged);
+        }
+        if (movementEndField != null)
+        {
+            movementEndField.tooltip = "位移结束时间（归一化 0-1）：相对于动画片段的归一化时间";
+            movementEndField.RegisterValueChangedCallback(OnMovementEndChanged);
+        }
+        if (movementCurveField != null)
+        {
+            movementCurveField.tooltip = "位移曲线：控制位移的加速/减速曲线（0-1 对应 0-Distance）";
+            movementCurveField.RegisterValueChangedCallback(OnMovementCurveChanged);
+        }
+        if (movementTrackTargetField != null)
+        {
+            movementTrackTargetField.tooltip = "追踪目标：开启后位移方向会朝向最近的目标";
+            movementTrackTargetField.RegisterValueChangedCallback(OnMovementTrackTargetChanged);
+        }
+        if (movementTrackRangeField != null)
+        {
+            movementTrackRangeField.tooltip = "追踪范围（米）：搜索目标的距离范围";
+            movementTrackRangeField.RegisterValueChangedCallback(OnMovementTrackRangeChanged);
+        }
+
         if (effectPrefabField != null)
         {
             effectPrefabField.RegisterValueChangedCallback(OnEffectPrefabChanged);

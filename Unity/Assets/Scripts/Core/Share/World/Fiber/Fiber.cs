@@ -77,6 +77,18 @@ namespace ET
                 Log.Error(e);
             }
         }
+        
+        internal void OnAnimatorMove()
+        {
+            try
+            {
+                this.EntitySystem.Publish(new OnAnimatorMoveEvent());
+            }
+            catch (Exception e)
+            {
+                Log.Error(e);
+            }
+        }
 #endif
         public async ETTask WaitFrameFinish()
         {

@@ -54,6 +54,11 @@ namespace ET
             {
                 oneTypeSystems.Capabilities |= SystemFlags.LateUpdate;
             }
+            
+            if (obj is AClassEventSystem<OnAnimatorMoveEvent>)
+            {
+                oneTypeSystems.Capabilities |= SystemFlags.OnAnimatorMove;
+            }
         }
 
         public void Awake(Entity component)

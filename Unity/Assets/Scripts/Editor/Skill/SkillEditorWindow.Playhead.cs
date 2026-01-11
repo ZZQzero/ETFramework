@@ -165,7 +165,7 @@ public partial class SkillEditorWindow : EditorWindow
                 // 更新动画预览
                 UpdateAnimationPreview();
 
-                // 拖拽预览：VFX 需要“按时间点求值”，否则只会在 Play 时触发一次
+                // 拖拽预览：VFX 需要"按时间点求值"，否则只会在 Play 时触发一次
                 EvaluatePreviewVfxAtTime(currentPlaybackTime);
 
                 // 拖拽预览：SFX（可选）——只在向前拖动时按跨越区间触发一次，避免来回拖动爆音
@@ -237,7 +237,7 @@ public partial class SkillEditorWindow : EditorWindow
                         UpdatePlayheadPosition();
                         UpdateAnimationPreview();
 
-                        // 拖拽预览：VFX 需要“按时间点求值”，否则只会在 Play 时触发一次
+                        // 拖拽预览：VFX 需要"按时间点求值"，否则只会在 Play 时触发一次
                         EvaluatePreviewVfxAtTime(currentPlaybackTime);
 
                         // 拖拽预览：SFX（可选）——只在向前拖动时按跨越区间触发一次，避免来回拖动爆音
@@ -258,7 +258,9 @@ public partial class SkillEditorWindow : EditorWindow
     private void UpdateAnimationPreview()
     {
         SamplePreviewAnimation(currentPlaybackTime);
-        // Active 预览：拖拽 playhead 时也要即时更新显隐（否则会出现“到达区间前不隐藏”的错觉）
+        // 程序化位移预览：拖拽 playhead 时也要即时更新位移
+        UpdatePreviewMovement(currentPlaybackTime);
+        // Active 预览：拖拽 playhead 时也要即时更新显隐（否则会出现"到达区间前不隐藏"的错觉）
         UpdatePreviewAttachedActives(currentPlaybackTime, wrapped: false);
     }
 

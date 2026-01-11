@@ -13,14 +13,12 @@ public partial class SkillEditorWindow : EditorWindow
 
     #region RightPanel - 字段回调（通用：Name/StartTime/Length）
 
-    // Clip属性字段值变化回调
     private void OnClipNameChanged(ChangeEvent<string> evt)
     {
         if (selectedClip == null) return;
 
         selectedClip.Name = evt.newValue;
 
-        // 根据不同类型更新对应的数据
         if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null)
         {
             animClipItem.SegmentData.Name = evt.newValue;
@@ -44,7 +42,6 @@ public partial class SkillEditorWindow : EditorWindow
 
         selectedClip.StartTime = Mathf.Max(0f, evt.newValue);
 
-        // 根据不同类型更新对应的数据
         if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null)
         {
             animClipItem.SegmentData.StartTime = selectedClip.StartTime;
@@ -64,7 +61,6 @@ public partial class SkillEditorWindow : EditorWindow
 
         float newLength = Mathf.Max(0f, evt.newValue);
 
-        // Animation/Sound：只读，不应进入这里；做一层保护
         if (selectedClip.Type == TrackType.Animation || selectedClip.Type == TrackType.Sound)
         {
             if (clipLengthField != null)
@@ -76,19 +72,16 @@ public partial class SkillEditorWindow : EditorWindow
 
         selectedClip.Duration = newLength;
 
-        // 同步到数据源
         if (selectedClip is EffectClipItem effectClipItem && effectClipItem.EffectData != null)
         {
             effectClipItem.EffectData.Length = newLength;
         }
         else if (selectedClip is HitBoxClipItem hitBoxClipItem && hitBoxClipItem.HitBoxData != null && config != null)
         {
-            // HitBox 的 Length 为绝对秒数，需要反推到归一化 EndTime
             UpdateHitBoxClipTimes(hitBoxClipItem, hitBoxClipItem.StartTime, newLength);
         }
         else if (selectedClip is ActiveClipItem activeClipItem && activeClipItem.ActiveData != null && config != null)
         {
-            // Active 的 Length 为绝对秒数，需要反推到归一化 EndTime
             UpdateActiveClipTimes(activeClipItem, activeClipItem.StartTime, newLength);
         }
 
@@ -231,6 +224,104 @@ public partial class SkillEditorWindow : EditorWindow
                 segmentTimeoutMsPreviewField.SetValueWithoutNotify(durMs + v);
             }
 
+            MarkAssetDirty();
+        }
+    }
+
+    #endregion
+
+    #region RightPanel - 字段回调（Movement）
+
+    // Movement 回调
+    private void OnMovementEnableChanged(ChangeEvent<bool> evt)
+    {
+        if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null)
+        {
+            var movement = animClipItem.SegmentData.Movement ??= new AttackMovementData();
+            movement.EnableMovement = evt.newValue;
+            
+            // 更新其他字段的启用状态
+            bool enabled = evt.newValue;
+            if (movementDistanceField != null) movementDistanceField.SetEnabled(enabled);
+            if (movementStartField != null) movementStartField.SetEnabled(enabled);
+            if (movementEndField != null) movementEndField.SetEnabled(enabled);
+            if (movementCurveField != null) movementCurveField.SetEnabled(enabled);
+            if (movementTrackTargetField != null) movementTrackTargetField.SetEnabled(enabled);
+            if (movementTrackRangeField != null) movementTrackRangeField.SetEnabled(enabled && movement.TrackTarget);
+            
+            MarkAssetDirty();
+            // 刷新 SceneView 以更新位移轨迹显示
+            SceneView.RepaintAll();
+        }
+    }
+
+    private void OnMovementDistanceChanged(ChangeEvent<float> evt)
+    {
+        if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null)
+        {
+            var movement = animClipItem.SegmentData.Movement ??= new AttackMovementData();
+            movement.Distance = Mathf.Max(0f, evt.newValue);
+            MarkAssetDirty();
+            SceneView.RepaintAll();
+        }
+    }
+
+    private void OnMovementStartChanged(ChangeEvent<float> evt)
+    {
+        if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null)
+        {
+            var movement = animClipItem.SegmentData.Movement ??= new AttackMovementData();
+            movement.NormalizedStart = Mathf.Clamp01(evt.newValue);
+            MarkAssetDirty();
+            SceneView.RepaintAll();
+        }
+    }
+
+    private void OnMovementEndChanged(ChangeEvent<float> evt)
+    {
+        if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null)
+        {
+            var movement = animClipItem.SegmentData.Movement ??= new AttackMovementData();
+            movement.NormalizedEnd = Mathf.Clamp01(evt.newValue);
+            MarkAssetDirty();
+            SceneView.RepaintAll();
+        }
+    }
+
+    private void OnMovementCurveChanged(ChangeEvent<AnimationCurve> evt)
+    {
+        if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null)
+        {
+            var movement = animClipItem.SegmentData.Movement ??= new AttackMovementData();
+            movement.MoveCurve = evt.newValue ?? AnimationCurve.EaseInOut(0, 0, 1, 1);
+            MarkAssetDirty();
+            SceneView.RepaintAll();
+        }
+    }
+
+    private void OnMovementTrackTargetChanged(ChangeEvent<bool> evt)
+    {
+        if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null)
+        {
+            var movement = animClipItem.SegmentData.Movement ??= new AttackMovementData();
+            movement.TrackTarget = evt.newValue;
+            
+            // 更新 TrackRange 字段的启用状态
+            if (movementTrackRangeField != null)
+            {
+                movementTrackRangeField.SetEnabled(movement.EnableMovement && evt.newValue);
+            }
+            
+            MarkAssetDirty();
+        }
+    }
+
+    private void OnMovementTrackRangeChanged(ChangeEvent<float> evt)
+    {
+        if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null)
+        {
+            var movement = animClipItem.SegmentData.Movement ??= new AttackMovementData();
+            movement.TrackRange = Mathf.Max(0f, evt.newValue);
             MarkAssetDirty();
         }
     }

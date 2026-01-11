@@ -52,6 +52,13 @@ namespace ET
             this.mainThreadScheduler.LateUpdate();
         }
 
+#if UNITY
+        public void OnAnimatorMove()
+        {
+            this.mainThreadScheduler.OnAnimatorMove();
+        }
+#endif
+
         protected override void Destroy()
         {
             foreach (IScheduler scheduler in this.schedulers)

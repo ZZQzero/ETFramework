@@ -12,7 +12,7 @@ namespace ET
     public class AttackComponent : Entity, IAwake<string>, IDestroy, IUpdate, IFixedUpdate
     {
         public AnimatorComponent AnimatorComponent { get; set; }
-        public CharacterControllerComponent CharacterController { get; set; }
+        //public CharacterControllerComponent CharacterController { get; set; }
         #region 配置数据
         
         /// <summary>攻击配置资源路径</summary>
@@ -70,12 +70,6 @@ namespace ET
 
         /// <summary>取消窗口是否已打开（由 AnimancerEvent 或轮询兜底驱动）</summary>
         public bool IsCancelWindowOpen { get; set; }
-
-        /// <summary>攻击期间是否锁定了角色移动</summary>
-        public bool MovementLocked { get; set; }
-
-        /// <summary>锁定移动前的 EnableMovement 状态</summary>
-        public bool PrevEnableMovement { get; set; }
         
         #endregion
 
@@ -142,10 +136,9 @@ namespace ET
             get
             {
                 if (CurrentAnimState == null || CurrentSegment == null)
+                {
                     return false;
-                // 混合方案：
-                // - 若 Animancer Events 已绑定，则以事件驱动的窗口标志为准（单一真相来源）
-                // - 否则回退到 NormalizedTime 轮询兜底
+                }
                 return CurrentAnimState.HasEvents
                     ? IsInputBufferWindowOpen
                     : CurrentAnimState.NormalizedTime >= CurrentSegment.TimeWindow.InputBufferStart;
@@ -158,10 +151,9 @@ namespace ET
             get
             {
                 if (CurrentAnimState == null || CurrentSegment == null)
+                {
                     return false;
-                // 混合方案：
-                // - 若 Animancer Events 已绑定，则以事件驱动的窗口标志为准（单一真相来源）
-                // - 否则回退到 NormalizedTime 轮询兜底
+                }
                 return CurrentAnimState.HasEvents
                     ? IsCancelWindowOpen
                     : CurrentAnimState.NormalizedTime >= CurrentSegment.TimeWindow.CancelableTime;
@@ -174,7 +166,9 @@ namespace ET
             get
             {
                 if (CurrentAnimState == null)
+                {
                     return 0f;
+                }
                 return CurrentAnimState.NormalizedTime;
             }
         }

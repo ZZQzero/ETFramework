@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace ET
 {
@@ -16,6 +16,9 @@ namespace ET
         public CheckGroundedComponent  Ground { get; set; }
         public InputComponent Input { get; set; }
         public Unit PlayerUnit { get; set; }
+        public Animator Animator { get; set; }
+        
+        public AttackComponent Attack { get; set; }
 
         /// <summary>
         /// 移动速度（米/秒）
@@ -41,17 +44,6 @@ namespace ET
         /// 是否启用移动（可以通过设置这个来禁用移动）
         /// </summary>
         public bool EnableMovement { get; set; } = true;
-
-        /// <summary>
-        /// 外部运动驱动（例如攻击位移/冲刺），用于与常规移动解耦，避免在FixedUpdate里互相覆盖。
-        /// </summary>
-        public bool ExternalMotorActive { get; set; }
-
-        /// <summary>
-        /// 外部运动速度（世界空间），仅使用XZ分量（Y由重力/跳跃系统控制）。
-        /// </summary>
-        public Vector3 ExternalMotorVelocity { get; set; }
-        
         // ===== 跳跃相关属性 =====
         //重力
         public float Gravity { get; set; } = 9.81f;

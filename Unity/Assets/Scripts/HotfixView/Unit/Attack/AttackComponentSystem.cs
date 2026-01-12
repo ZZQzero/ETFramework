@@ -20,7 +20,6 @@ namespace ET
             self.ResetState();
             Unit unit = self.GetParent<Unit>();
             self.AnimatorComponent = unit.GetComponent<AnimatorComponent>();
-            self.CharacterController = unit.GetComponent<CharacterControllerComponent>();
             self.Player = unit.GetComponent<GameObjectComponent>().Transform;
             self.LoadConfigAsync().NoContext();
         }
@@ -56,9 +55,6 @@ namespace ET
         {
             if (!self.IsInAttack)
                 return;
-
-            // 物理相关（位移/命中检测）放在 FixedUpdate，避免与 Rigidbody/地面检测打架
-            self.UpdateMovement(Time.fixedDeltaTime);
             self.UpdateHitDetection();
         }
         
@@ -112,20 +108,6 @@ namespace ET
             self.IsInputBufferWindowOpen = false;
             self.IsCancelWindowOpen = false;
             self.AttackLayerFadeOutTimer = 0;
-
-            // 退出时确保外部运动关闭，避免残留
-            if (self.CharacterController != null)
-            {
-                self.CharacterController.ExternalMotorActive = false;
-                self.CharacterController.ExternalMotorVelocity = Vector3.zero;
-            }
-
-            // 恢复移动锁
-            if (self.CharacterController != null && self.MovementLocked)
-            {
-                self.CharacterController.EnableMovement = self.PrevEnableMovement;
-            }
-            self.MovementLocked = false;
         }
 
         /// <summary>
@@ -319,7 +301,7 @@ namespace ET
             {
                 self.AnimatorComponent = self.GetParent<Unit>().GetComponent<AnimatorComponent>();
             }
-
+            
             // 重置攻击段状态
             self.ResetSegmentState(segment);
 
@@ -333,14 +315,7 @@ namespace ET
                 attackLayer.Weight = 0f;
                 self.AnimatorComponent.AttackLayer = attackLayer;
             }
-
-            // 若该层正处于淡出，先把目标拉回 1，避免“播放了攻击但层还在继续淡出”的情况
-            // 起手规则：
-            // - 第 0 段（起手段）无论当前处于什么状态（Idle/Recovery/连段回环等），都应“立即起手”，避免与 Idle 混合。
-            // - 其他段仍按 FadeDuration 淡入，保持连段手感与配置语义一致。
-            //
-            // 说明：如果起手段也走 StartFade，会让 Layer1 在淡入过程中与 Layer0 的 Idle/Move 混合，
-            // 视觉上就会出现“第一段前几帧像是没从 0 帧起手”的错觉（尤其在连击回环到第 0 段时更明显）。
+            
             if (segmentIndex == 0)
             {
                 // 0 秒淡入等价于“立刻到 1”，同时也会取消之前的 FadeGroup。
@@ -369,16 +344,9 @@ namespace ET
             self.CurrentSegment = segment;
             self.State = AttackState.Attacking;
             self.CurrentSegmentEnded = false;
+            self.IsMovementActive = self.CurrentSegment.Movement.EnableMovement;
             self.ClearBufferedInput();
             self.CancelAttackLayerFadeOutTimer();
-
-            // 锁定常规移动（避免攻击过程中输入移动与位移/硬直互相覆盖）
-            if (self.CharacterController != null && !self.MovementLocked)
-            {
-                self.PrevEnableMovement = self.CharacterController.EnableMovement;
-                self.CharacterController.EnableMovement = false;
-                self.MovementLocked = true;
-            }
             
             self.BindAnimancerEvents(animState, segment);
 
@@ -412,12 +380,6 @@ namespace ET
             self.IsMovementActive = false;
             self.IsInputBufferWindowOpen = false;
             self.IsCancelWindowOpen = false;
-
-            if (self.CharacterController != null)
-            {
-                self.CharacterController.ExternalMotorActive = false;
-                self.CharacterController.ExternalMotorVelocity = Vector3.zero;
-            }
             // 重置判定框状态
             if (segment.HitBoxes != null)
             {
@@ -436,11 +398,7 @@ namespace ET
         {
             if (segment.Movement == null || !segment.Movement.EnableMovement)
                 return;
-
-            Vector3 startPos = self.CharacterController?.Rigidbody != null
-                ? self.CharacterController.Rigidbody.position
-                : self.Player.position;
-            self.MovementStartPosition = startPos;
+            self.MovementStartPosition = self.Player.position;
 
             // 如果启用追踪，寻找最近目标
             if (segment.Movement.TrackTarget)
@@ -560,26 +518,7 @@ namespace ET
             // 没有后续攻击，进入后摇状态
             self.State = AttackState.Recovery;
             self.ScheduleAttackLayerFadeOutTimer();
-            // 方案A：不在这里立刻淡出 AttackLayer。
-            // 原因：段结束到玩家点击下一次输入之间如果淡出，会短暂露出 Layer0 的 Move/Idle，造成“闪 idle”。
-            // AttackLayer 的淡出统一在 ExitAttackState（连击超时/取消/强制退出）里进行。
-
-            // 后摇阶段不应继续外部位移
-            if (self.CharacterController != null)
-            {
-                self.CharacterController.ExternalMotorActive = false;
-                self.CharacterController.ExternalMotorVelocity = Vector3.zero;
-
-                // 后摇阶段允许恢复常规移动（避免“打完一段还锁死 800ms”带来的粘滞感）
-                if (self.MovementLocked)
-                {
-                    self.CharacterController.EnableMovement = self.PrevEnableMovement;
-                    self.MovementLocked = false;
-                }
-            }
             
-            // 等待超时后退出攻击状态
-            // 超时由定时器处理
         }
         
         #endregion
@@ -1077,105 +1016,6 @@ namespace ET
         
         #endregion
 
-        #region 位移系统
-        
-        /// <summary>
-        /// 更新攻击位移
-        /// </summary>
-        private static void UpdateMovement(this AttackComponent self, float fixedDeltaTime)
-        {
-            if (self.State != AttackState.Attacking)
-                return;
-
-            if (self.CurrentSegment?.Movement == null || !self.CurrentSegment.Movement.EnableMovement)
-            {
-                // 无攻击位移时，关闭外部运动驱动
-                if (self.CharacterController != null)
-                {
-                    self.CharacterController.ExternalMotorActive = false;
-                    self.CharacterController.ExternalMotorVelocity = Vector3.zero;
-                }
-                return;
-            }
-
-            var movement = self.CurrentSegment.Movement;
-            float normalizedTime = self.CurrentNormalizedTime;
-
-            if (movement.NormalizedEnd - movement.NormalizedStart <= 0)
-            {
-                self.IsMovementActive = false;
-                if (self.CharacterController != null)
-                {
-                    self.CharacterController.ExternalMotorActive = false;
-                    self.CharacterController.ExternalMotorVelocity = Vector3.zero;
-                }
-                return;
-            }
-            
-            // 检查是否在位移时间范围内
-            if (normalizedTime < movement.NormalizedStart)
-            {
-                self.IsMovementActive = false;
-                if (self.CharacterController != null)
-                {
-                    self.CharacterController.ExternalMotorActive = false;
-                    self.CharacterController.ExternalMotorVelocity = Vector3.zero;
-                }
-                return;
-            }
-
-            if (normalizedTime > movement.NormalizedEnd || movement.NormalizedEnd == 0)
-            {
-                self.IsMovementActive = false;
-                if (self.CharacterController != null)
-                {
-                    self.CharacterController.ExternalMotorActive = false;
-                    self.CharacterController.ExternalMotorVelocity = Vector3.zero;
-                }
-                return;
-            }
-
-            self.IsMovementActive = true;
-
-            // 计算位移进度
-            float moveProgress = (normalizedTime - movement.NormalizedStart) / (movement.NormalizedEnd - movement.NormalizedStart);
-            moveProgress = Mathf.Clamp01(moveProgress);
-
-            // 应用曲线
-            float curveValue = movement.MoveCurve.Evaluate(moveProgress);
-
-            // 计算目标位置
-            Vector3 targetPos = Vector3.Lerp(self.MovementStartPosition, self.MovementTargetPosition, curveValue);
-
-            // 通过 CharacterController 外部运动驱动提供 XZ 速度，避免与常规移动覆盖
-            if (self.CharacterController?.Rigidbody != null)
-            {
-                Vector3 currentPos = self.CharacterController.Rigidbody.position;
-                Vector3 delta = targetPos - currentPos;
-    
-                // 检查是否已到达目标位置（考虑浮点精度误差）
-                float deltaMagnitude = new Vector3(delta.x, 0f, delta.z).magnitude;
-    
-                if (deltaMagnitude < 0.001f)
-                {
-                    // 已到达目标位置，直接设置位置
-                    self.Player.position = targetPos;
-                    self.CharacterController.Rigidbody.position = targetPos;
-                    self.CharacterController.ExternalMotorActive = true;
-                    self.CharacterController.ExternalMotorVelocity = Vector3.zero;
-                }
-                else
-                {
-                    float dt = Mathf.Max(fixedDeltaTime, 0.0001f);
-                    Vector3 externalVel = new Vector3(delta.x / dt, 0f, delta.z / dt);
-                    self.CharacterController.ExternalMotorActive = true;
-                    self.CharacterController.ExternalMotorVelocity = externalVel;
-                }
-            }
-        }
-        
-        #endregion
-
         #region 连击超时
         
         /// <summary>
@@ -1346,20 +1186,6 @@ namespace ET
             self.IsInputBufferWindowOpen = false;
             self.IsCancelWindowOpen = false;
             self.AttackLayerFadeOutTimer = 0;
-
-            // 确保外部运动关闭，避免残留
-            if (self.CharacterController != null)
-            {
-                self.CharacterController.ExternalMotorActive = false;
-                self.CharacterController.ExternalMotorVelocity = Vector3.zero;
-
-                // 恢复移动锁（重起手会在 StartAttack 再次锁定）
-                if (self.MovementLocked)
-                {
-                    self.CharacterController.EnableMovement = self.PrevEnableMovement;
-                    self.MovementLocked = false;
-                }
-            }
         }
 
         #region 方案A：AttackLayer 延迟淡出（定时器）

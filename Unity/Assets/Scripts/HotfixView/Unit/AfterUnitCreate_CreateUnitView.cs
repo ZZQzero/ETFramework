@@ -17,8 +17,8 @@ namespace ET
             unit.AddComponent<GameObjectComponent>().GameObject = go;
             unit.AddComponent<InputComponent>();
             unit.AddComponent<CheckGroundedComponent,GameObject>(go);
-            unit.AddComponent<CharacterControllerComponent,GameObject>(go);
             unit.AddComponent<AttackComponent,string>("AttackConfig");
+            unit.AddComponent<CharacterControllerComponent,GameObject>(go);
             //unit.AddComponent<HitReactionComponent,Transform>(go.transform);
             unit.AddComponent<AnimatorComponent>();
             await ETTask.CompletedTask;

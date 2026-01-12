@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Unity.Mathematics;
 
 namespace ET
@@ -29,7 +29,7 @@ namespace ET
             self.PlayerUnit = self.GetParent<Unit>();
             self.Ground = self.PlayerUnit.GetComponent<CheckGroundedComponent>();
             self.Input = self.PlayerUnit.GetComponent<InputComponent>();
-            
+            self.Attack = self.PlayerUnit.GetComponent<AttackComponent>();
             self.CapsuleCollider = player.GetComponent<CapsuleCollider>();
             if (self.CapsuleCollider == null)
             {
@@ -70,34 +70,42 @@ namespace ET
         {
             float deltaTime = Time.deltaTime;
             
-            // 应用移动和旋转（与动画完全同步）
-            if (self.ExternalMotorActive)
+            // 优先级1：攻击位移（使用MovePosition直接移动，商业级做法）
+            if (self.Attack.IsMovementActive)
             {
-                // 外部运动驱动（攻击位移等）：由外部提供XZ速度，Y保持自定义重力计算结果
-                Vector3 v = self.CurrentVelocity;
-                v.x = self.ExternalMotorVelocity.x;
-                v.z = self.ExternalMotorVelocity.z;
-                self.CurrentVelocity = v;
+                self.UpdateAttackMovement();
+                // 但需要保持Y轴的重力速度，用于物理交互
+                Vector3 velocity = Vector3.zero;
+                velocity.y = self.CurrentVelocity.y; // 保持重力速度
+                self.Rigidbody.linearVelocity = velocity;
             }
             else if (!self.EnableMovement)
             {
-                // 如果禁用移动，逐渐减速
+                // 优先级2：如果禁用移动，逐渐减速（只影响XZ，Y轴由FixedUpdate的重力控制）
                 self.ApplyDeceleration(deltaTime);
+                self.Rigidbody.linearVelocity = self.CurrentVelocity;
             }
             else
             {
-                // 应用移动
+                // 优先级3：常规移动（只影响XZ，Y轴由FixedUpdate的重力控制）
                 self.ApplyMovement(deltaTime);
+                self.Rigidbody.linearVelocity = self.CurrentVelocity;
             }
 
-            // 应用旋转
+            // 应用旋转（使用可变时间步，响应输入）
             self.ApplyRotation(deltaTime);
             
             // 计算动画速度参数
             self.CalculateAnimationSpeeds();
             
-            // 最后统一应用速度到 Rigidbody（与动画同步）
-            self.Rigidbody.linearVelocity = self.CurrentVelocity;
+            // 处理Root Motion（作为补充，用于动画自带的微小位移）
+            if (!self.Attack.IsMovementActive && self.CurrentVelocity.magnitude <= 0.0001f && 
+                self.Animator != null && self.Animator.deltaPosition.magnitude > 0.0001f)
+            {
+                Log.Error("Root Motion用于后撤步等小位移");
+                // Root Motion用于后撤步等小位移
+                self.Rigidbody.MovePosition(self.Rigidbody.position + self.Animator.deltaPosition);
+            }
         }
 
         [EntitySystem]
@@ -127,11 +135,70 @@ namespace ET
             self.Rigidbody = null;
             self.CapsuleCollider = null;
         }
-        
-        
+
+
+        /// <summary>
+        /// 更新攻击位移（商业级实现）
+        /// </summary>
+        private static void UpdateAttackMovement(this CharacterControllerComponent self)
+        {
+            if (self.Attack.State != AttackState.Attacking)
+            {
+                return;
+            }
+
+            if (self.Attack.CurrentSegment?.Movement == null || !self.Attack.CurrentSegment.Movement.EnableMovement)
+            {
+                return;
+            }
+            
+            var movement = self.Attack.CurrentSegment.Movement;
+            float normalizedTime = self.Attack.CurrentNormalizedTime;
+            
+            // 检查时间范围有效性
+            if (movement.NormalizedEnd - movement.NormalizedStart <= 0)
+            {
+                return;
+            }
+            
+            // 检查是否在位移时间范围内
+            if (normalizedTime < movement.NormalizedStart)
+            {
+                return;
+            }
+            
+            if (normalizedTime > movement.NormalizedEnd || movement.NormalizedEnd == 0)
+            {
+                return;
+            }
+            
+            // 1. 计算位移进度
+            float moveProgress = (normalizedTime - movement.NormalizedStart) / (movement.NormalizedEnd - movement.NormalizedStart);
+            moveProgress = Mathf.Clamp01(moveProgress);
+
+            // 2. 应用速度曲线
+            float curveValue = movement.MoveCurve.Evaluate(moveProgress);
+
+            // 3. 计算目标位置
+            Vector3 targetPos = Vector3.Lerp(
+                self.Attack.MovementStartPosition, 
+                self.Attack.MovementTargetPosition, 
+                curveValue
+            );
+            
+            // 4. 直接移动到目标位置（商业级做法：避免速度计算导致的累积误差）
+            if (self.Rigidbody != null)
+            {
+                Vector3 currentPos = self.Rigidbody.position;
+                // 保持Y轴不变（由FixedUpdate中的重力系统控制），只移动XZ
+                Vector3 newPos = new Vector3(targetPos.x, currentPos.y, targetPos.z);
+                self.Rigidbody.MovePosition(newPos);
+            }
+        }
         
         /// <summary>
-        /// 应用移动
+        /// 应用移动（OnAnimatorMove中调用，使用Time.deltaTime）
+        /// 只影响XZ轴速度，Y轴由FixedUpdate中的重力计算控制
         /// </summary>
         private static void ApplyMovement(this CharacterControllerComponent self, float deltaTime)
         {
@@ -140,9 +207,9 @@ namespace ET
             // 在地面时才能应用移动（包括稳定斜坡、边缘等状态）
             if (inputDirection.magnitude > 0.01f)
             {
-                // 计算目标速度
+                // 计算目标速度（保持Y轴不变，只修改XZ）
                 var targetVelocity = inputDirection * self.MoveSpeed + new Vector3(0, self.CurrentVelocity.y, 0);
-                // 加速
+                // 加速（使用可变时间步，响应输入）
                 self.CurrentVelocity = Vector3.MoveTowards(
                     self.CurrentVelocity,
                     targetVelocity,
@@ -151,18 +218,18 @@ namespace ET
             }
             else
             {
-                // 减速
+                // 减速（使用可变时间步，响应输入）
                 self.CurrentVelocity = Vector3.MoveTowards(
                     self.CurrentVelocity,
                     new Vector3(0, self.CurrentVelocity.y, 0),
                     self.Deceleration * deltaTime
                 );
             }
-            // 注意：不再在这里设置 Rigidbody.linearVelocity，统一在 OnAnimatorMove 最后设置
         }
         
         /// <summary>
-        /// 应用旋转
+        /// 应用旋转（OnAnimatorMove中调用，使用Time.deltaTime）
+        /// 使用可变时间步，响应输入
         /// </summary>
         private static void ApplyRotation(this CharacterControllerComponent self, float deltaTime)
         {
@@ -196,34 +263,38 @@ namespace ET
         }
         
         /// <summary>
-        /// 应用减速度（当禁用移动时）
+        /// 应用减速度（当禁用移动时，OnAnimatorMove中调用，使用Time.deltaTime）
+        /// 只影响XZ轴速度，Y轴由FixedUpdate中的重力计算控制
         /// </summary>
         private static void ApplyDeceleration(this CharacterControllerComponent self, float deltaTime)
         {
+            // 减速（使用可变时间步，响应输入）
             self.CurrentVelocity = Vector3.MoveTowards(
                 self.CurrentVelocity,
                 new Vector3(0f, self.CurrentVelocity.y, 0f),
                 self.Deceleration * deltaTime
             );
-            // 注意：不再在这里设置 Rigidbody.linearVelocity，统一在 OnAnimatorMove 最后设置
         }
         
         
         
         /// <summary>
-        /// 立即停止移动
+        /// 立即停止移动（特殊情况使用，如被击飞、强制停止等）
+        /// 同时更新CurrentVelocity和Rigidbody.linearVelocity，确保一致性
         /// </summary>
         public static void StopMovement(this CharacterControllerComponent self)
         {
             if (self.Input != null)
             {
-                self.Input.MoveDirection =  Vector3.zero;
+                self.Input.MoveDirection = Vector3.zero;
             }
-            self.CurrentVelocity = Vector3.zero;
-            Vector3 velocity = self.Rigidbody.linearVelocity;
+            // 只停止水平移动，保持垂直速度（重力/跳跃）
+            Vector3 velocity = self.CurrentVelocity;
             velocity.x = 0f;
             velocity.z = 0f;
-            self.Rigidbody.linearVelocity = velocity;
+            self.CurrentVelocity = velocity;
+            // 同步到Rigidbody（特殊情况需要立即生效）
+            self.Rigidbody.linearVelocity = self.CurrentVelocity;
         }
 
         // ===== 跳跃相关方法 =====
@@ -239,6 +310,7 @@ namespace ET
         /// <summary>
         /// 执行跳跃（保持当前的水平速度，实现移动跳跃距离更远）
         /// 水平速度越快，跳得越远；水平速度为0，原地起跳
+        /// FixedUpdate中调用，只更新CurrentVelocity，不设置Rigidbody.linearVelocity
         /// </summary>
         private static void Jump(this CharacterControllerComponent self)
         {
@@ -247,21 +319,21 @@ namespace ET
                 return;
             }
             self.Ground.Jump();
-            Vector3 currentVelocity = self.Rigidbody.linearVelocity;
+            // 保持当前水平速度，只修改垂直速度
+            Vector3 currentVelocity = self.CurrentVelocity;
             currentVelocity.y = self.JumpForce;
-            self.Rigidbody.linearVelocity = currentVelocity;
             self.CurrentVelocity = currentVelocity;
         }
 
         /// <summary>
         /// 应用重力和处理落地（只在空中时应用重力）
+        /// FixedUpdate中调用，只更新CurrentVelocity，不设置Rigidbody.linearVelocity
         /// </summary>
         private static void ApplyGravity(this CharacterControllerComponent self, float deltaTime)
         {
             // 只在空中时应用重力
             if (self.Ground.IsAirborne(self.Ground.State))
             {
-                self.Rigidbody.linearVelocity = self.CurrentVelocity;
                 Vector3 velocity = self.CurrentVelocity;
                 float gravityAcceleration = self.Gravity * self.GravityMultiplier;
                 velocity.y -= gravityAcceleration * deltaTime;
@@ -269,12 +341,12 @@ namespace ET
             }
             else
             {
+                // 落地时，将垂直速度归零
                 Vector3 velocity = self.CurrentVelocity;
                 if (velocity.y < 0f)
                 {
                     velocity.y = 0f;
                     self.CurrentVelocity = velocity;
-                    self.Rigidbody.linearVelocity = self.CurrentVelocity;
                 }
             }
         }

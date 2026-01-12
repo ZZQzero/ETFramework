@@ -25,6 +25,13 @@ namespace ET
 			self.Animancer.Layers.SetMinCount(2);
 			self.AttackLayer = self.Animancer.Layers[1];
 			self.AttackLayer.Weight = 0f;
+			self.AttackLayer.Mask = self.CreateAttackBodyMask();
+
+			// 禁用RootMotion，由CharacterControllerComponent手动控制移动
+			if (self.Animancer.Animator != null)
+			{
+				self.Animancer.Animator.applyRootMotion = false;
+			}
 
 			if (obj.GetComponent<AttackEventReceiver>() == null)
 			{
@@ -34,8 +41,37 @@ namespace ET
 			self.Input = unit.GetComponent<InputComponent>();
 			self.Attack = unit.GetComponent<AttackComponent>();
 			self.CharacterController = unit.GetComponent<CharacterControllerComponent>();
+			self.CharacterController.Animator = self.Animancer.Animator;
 			self.Ground = self.CharacterController.Ground;
 			self.LoadAnimation().NoContext();
+		}
+		
+		private static AvatarMask CreateAttackBodyMask(this AnimatorComponent self)
+		{
+			var mask = new AvatarMask();
+			
+			mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.Root, true);
+			mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.Body, true);
+
+			// —— 下半身全打开 ——
+			mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.LeftLeg, true);
+			mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.RightLeg, true);
+			mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.LeftFootIK, true);
+			mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.RightFootIK, true);
+
+			// —— 上半身打开 ——
+			mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.Head, true);
+
+			mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.LeftArm, true);
+			mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.RightArm, true);
+			mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.LeftFingers, true);
+			mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.RightFingers, true);
+
+			// —— IK（可选，建议先关） ——
+			mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.LeftHandIK, false);
+			mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.RightHandIK, false);
+
+			return mask;
 		}
 
 		private static async ETTask LoadAnimation(this AnimatorComponent self)

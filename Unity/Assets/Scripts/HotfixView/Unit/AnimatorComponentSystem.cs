@@ -18,10 +18,9 @@ namespace ET
 				Log.Error("AnimancerComponent未找到");
 				return;
 			}
-
-			// === Animancer Layer 设计（方案A）===
+			
 			// Layer0：Move/Jump（基础移动）
-			// Layer1：Attack（攻击覆盖），默认权重为 0，播放攻击时由 Layer.Play 自动拉起
+			// Layer1：Attack（攻击覆盖），默认权重为 0
 			self.Animancer.Layers.SetMinCount(2);
 			self.AttackLayer = self.Animancer.Layers[1];
 			self.AttackLayer.Weight = 0f;
@@ -137,7 +136,7 @@ namespace ET
 			// 检测攻击输入，交给AttackComponent处理
 			if (self.Attack != null && self.Input != null && self.Input.HasAttackRequest())
 			{
-				self.Attack.HandleAttackInput();
+				self.Attack.HandleAttackInput(self);
 			}
 			
 			AnimancerLayer layer = self.Animancer; // 隐式转换到 Layer 0

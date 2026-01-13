@@ -168,7 +168,7 @@ namespace ET
         /// </summary>
         /// <param name="inputType">输入类型</param>
         /// <returns>是否成功处理输入</returns>
-        public static bool HandleAttackInput(this AttackComponent self, ComboInputType inputType = ComboInputType.Normal)
+        public static bool HandleAttackInput(this AttackComponent self,AnimatorComponent animatorComponent,ComboInputType inputType = ComboInputType.Normal)
         {
             if (self.Config == null || self.Config.Segments.Count == 0)
             {
@@ -176,6 +176,10 @@ namespace ET
                 return false;
             }
 
+            if (self.AnimatorComponent == null)
+            {
+                self.AnimatorComponent = animatorComponent;
+            }
             // 记录输入时间
             self.LastInputTime = TimeInfo.Instance.ClientFrameTime();
 
@@ -196,10 +200,9 @@ namespace ET
             int nextIndexCandidate = self.GetNextSegmentIndex(inputType);
             if (nextIndexCandidate < 0)
             {
-                // 已经进入后摇且本段自然结束：允许立刻从第一段重新起手（更丝滑）
                 if (self.State == AttackState.Recovery && self.CurrentSegmentEnded)
                 {
-                    // 这里做一次“软退出”，只清理必要状态，然后立刻起手第一段，保证手感丝滑且不会漏出 Idle。
+                    // 这里做一次“软退出”，只清理必要状态，然后立刻起手第一段
                     self.SoftExitForRestart();
                     return self.StartAttack(0, inputType);
                 }
@@ -208,7 +211,7 @@ namespace ET
 
             // 处于后摇阶段时，Layer0 可能已经恢复到 Move/Jump 等基础动画（不再推进攻击 clip）。
             // 这时不能依赖“攻击动画是否结束”的判定来切段，否则输入会被缓存但永远等不到消费。
-            // 约定：进入 Recovery 且已标记本段自然结束（CurrentSegmentEnded），视为可立即衔接。
+            // 进入 Recovery 且已标记本段自然结束（CurrentSegmentEnded），视为可立即衔接。
             if (self.State == AttackState.Recovery && self.CurrentSegmentEnded)
             {
                 return self.StartAttack(nextIndexCandidate, inputType);
@@ -221,7 +224,7 @@ namespace ET
             }
 
             // 无论是否已到输入窗口，都缓存输入；真正消费发生在动画结束时
-            // 配合 InputBufferWindowMs 做过期控制，解决“太早按键被吞”的不流畅问题
+            // 配合 InputBufferWindowMs 做过期控制
             self.BufferInput(inputType);
             self.ResetComboTimeout();
             return true;
@@ -296,20 +299,21 @@ namespace ET
                 Log.Warning($"AttackComponent: Segment {segmentIndex} not loaded");
                 return false;
             }
-
-            if (self.AnimatorComponent == null)
-            {
-                self.AnimatorComponent = self.GetParent<Unit>().GetComponent<AnimatorComponent>();
-            }
             
             // 重置攻击段状态
             self.ResetSegmentState(segment);
 
+            var layer0State = self.AnimatorComponent.MoveMixer.State;
+            if (layer0State != null)
+            {
+                layer0State.Speed = 0f;
+                self.AnimatorComponent.MoveMixer.State.Parameter = 0;
+                layer0State.NormalizedTime = 0f;
+            }
             // 播放动画
             var attackLayer = self.AnimatorComponent.AttackLayer;
             if (attackLayer == null)
             {
-                // 兜底：某些初始化顺序下 AttackComponent 可能先于 AnimatorComponentSystem.Play 设置 AttackLayer
                 self.AnimatorComponent.Animancer.Layers.SetMinCount(2);
                 attackLayer = self.AnimatorComponent.Animancer.Layers[1];
                 attackLayer.Weight = 0f;
@@ -333,9 +337,6 @@ namespace ET
                 Log.Error($"AttackComponent: Failed to play animation for segment {segmentIndex}");
                 return false;
             }
-
-            // 关键：Animancer 的 Play 会复用同一个 State（同 clip key）并保持 Time，
-            // 如果不重置会出现“起手不是从 0 帧开始”的问题（影响输入窗口/结束阈值等逻辑）。
             animState.Time = 0;
 
             // 更新状态
@@ -365,8 +366,6 @@ namespace ET
 
             // 触发攻击开始事件
             self.OnAttackStart?.Invoke(segmentIndex);
-
-            Log.Debug($"AttackComponent: Started attack segment {segmentIndex} ({segment.Name})");
             return true;
         }
 
@@ -479,10 +478,13 @@ namespace ET
         {
             if (self.CurrentAnimState == null || self.CurrentSegment == null)
                 return true;
+            
             // 统一以配置的 TimeWindow.AnimationEnd（NormalizedTime）为准；未配置则默认 1.0
             float endTime = self.CurrentSegment.TimeWindow.AnimationEnd;
             if (endTime <= 0f)
+            {
                 endTime = 1f;
+            }
             endTime = Mathf.Clamp01(endTime);
             return self.CurrentAnimState.NormalizedTime >= endTime;
         }
@@ -1122,7 +1124,7 @@ namespace ET
             var attackLayer = self.AnimatorComponent?.AttackLayer;
             if (attackLayer != null)
             {
-                attackLayer.StartFade(0f, 0.12f);
+                attackLayer.StartFade(0f, 0.25f);
             }
             self.CancelAttackLayerFadeOutTimer();
 
@@ -1213,11 +1215,18 @@ namespace ET
             int holdMs = self.Config?.RecoveryHoldMs ?? 200;
             if (holdMs <= 0)
             {
+                var layer0State = self.AnimatorComponent.MoveMixer.State;
+                if (layer0State != null)
+                {
+                    layer0State.Speed = 1f;
+                    self.AnimatorComponent.MoveMixer.State.Parameter = 0;
+                    layer0State.NormalizedTime = 0f;
+                }
                 // 立刻淡出（不额外占用 Timer）
                 var attackLayer = self.AnimatorComponent?.AttackLayer;
                 if (attackLayer != null)
                 {
-                    attackLayer.StartFade(0f, 0.12f);
+                    attackLayer.StartFade(0f, 0.25f);
                 }
                 return;
             }
@@ -1237,10 +1246,18 @@ namespace ET
                 return;
             }
 
+            var layer0State = self.AnimatorComponent.MoveMixer.State;
+            if (layer0State != null)
+            {
+                layer0State.Speed = 1f;
+                self.AnimatorComponent.MoveMixer.State.Parameter = 0;
+                layer0State.NormalizedTime = 0f;
+            }
+
             var attackLayer = self.AnimatorComponent?.AttackLayer;
             if (attackLayer != null)
             {
-                attackLayer.StartFade(0f, 0.12f);
+                attackLayer.StartFade(0f, 0.25f);
             }
         }
 

@@ -66,8 +66,6 @@ namespace ET
         public string Name { get; set; }
         public TrackType Type { get; } = TrackType.Effect;
         public VisualEffectData EffectData { get; set; }
-
-        public AnimationClip Clip { get; set; }
     }
 
     public class EffectTrack : ITrackItem
@@ -147,5 +145,4 @@ namespace ET
     }
 
     #endregion
-
 }

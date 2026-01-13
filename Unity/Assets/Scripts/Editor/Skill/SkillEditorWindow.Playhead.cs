@@ -17,6 +17,20 @@ public partial class SkillEditorWindow : EditorWindow
     {
         if (timelineContent == null) return;
 
+        // 如果已经存在播放进度条，先移除（避免重复创建）
+        if (playheadElement != null)
+        {
+            playheadElement.RemoveFromHierarchy();
+            playheadElement = null;
+        }
+        
+        // 检查 timelineContent 中是否已经有 Playhead 元素（通过名称查找）
+        var existingPlayhead = timelineContent.Q<VisualElement>("Playhead");
+        if (existingPlayhead != null)
+        {
+            existingPlayhead.RemoveFromHierarchy();
+        }
+
         // 创建播放进度条容器（只保留红色进度线，去掉箭头）
         playheadElement = new VisualElement();
         playheadElement.name = "Playhead";
@@ -262,6 +276,14 @@ public partial class SkillEditorWindow : EditorWindow
         UpdatePreviewMovement(currentPlaybackTime);
         // Active 预览：拖拽 playhead 时也要即时更新显隐（否则会出现"到达区间前不隐藏"的错觉）
         UpdatePreviewAttachedActives(currentPlaybackTime, wrapped: false);
+        // 命中检测预览：拖拽 playhead 时也要即时更新命中检测
+        if (isDraggingPlayhead || isPlaying)
+        {
+            float maxTime = GetMaxPlaybackTime();
+            float prevTime = Mathf.Max(0f, currentPlaybackTime - 0.016f); // 假设约一帧时间
+            TryTriggerPreviewHitDetection(prevTime, currentPlaybackTime, maxTime, wrapped: false);
+        }
+        // 注意：TimeScale 只在自动播放时生效，拖拽时不需要（因为拖拽是手动控制时间，不依赖播放速度）
     }
 
     #endregion

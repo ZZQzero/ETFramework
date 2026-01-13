@@ -70,24 +70,19 @@ namespace ET
         {
             float deltaTime = Time.deltaTime;
             
-            // 优先级1：攻击位移（使用MovePosition直接移动，商业级做法）
             if (self.Attack.IsMovementActive)
             {
                 self.UpdateAttackMovement();
-                // 但需要保持Y轴的重力速度，用于物理交互
-                Vector3 velocity = Vector3.zero;
-                velocity.y = self.CurrentVelocity.y; // 保持重力速度
-                self.Rigidbody.linearVelocity = velocity;
+                self.CurrentVelocity = Vector3.up * self.CurrentVelocity.y;
+                self.Rigidbody.linearVelocity = self.CurrentVelocity;
             }
-            else if (!self.EnableMovement)
+            else if (!self.EnableMovement || self.Attack.IsInAttack)
             {
-                // 优先级2：如果禁用移动，逐渐减速（只影响XZ，Y轴由FixedUpdate的重力控制）
                 self.ApplyDeceleration(deltaTime);
                 self.Rigidbody.linearVelocity = self.CurrentVelocity;
             }
             else
             {
-                // 优先级3：常规移动（只影响XZ，Y轴由FixedUpdate的重力控制）
                 self.ApplyMovement(deltaTime);
                 self.Rigidbody.linearVelocity = self.CurrentVelocity;
             }
@@ -98,12 +93,10 @@ namespace ET
             // 计算动画速度参数
             self.CalculateAnimationSpeeds();
             
-            // 处理Root Motion（作为补充，用于动画自带的微小位移）
+            // 处理Root Motion
             if (!self.Attack.IsMovementActive && self.CurrentVelocity.magnitude <= 0.0001f && 
                 self.Animator != null && self.Animator.deltaPosition.magnitude > 0.0001f)
             {
-                Log.Error("Root Motion用于后撤步等小位移");
-                // Root Motion用于后撤步等小位移
                 self.Rigidbody.MovePosition(self.Rigidbody.position + self.Animator.deltaPosition);
             }
         }
@@ -111,20 +104,16 @@ namespace ET
         [EntitySystem]
         private static void FixedUpdate(this CharacterControllerComponent self)
         {
-            // 物理相关：使用固定时间步
             float deltaTime = Time.fixedDeltaTime;
             
-            // 物理相关：地面检测（依赖物理系统）
             self.Ground.Detect();
             
-            // 物理相关：跳跃处理
             if (self.JumpRequested)
             {
                 self.Jump();
                 self.JumpRequested = false;
             }
-            
-            // 物理相关：应用自定义重力（固定时间步，保证物理一致性）
+
             self.ApplyGravity(deltaTime);
         }
         
@@ -138,7 +127,7 @@ namespace ET
 
 
         /// <summary>
-        /// 更新攻击位移（商业级实现）
+        /// 更新攻击位移
         /// </summary>
         private static void UpdateAttackMovement(this CharacterControllerComponent self)
         {
@@ -172,21 +161,17 @@ namespace ET
                 return;
             }
             
-            // 1. 计算位移进度
             float moveProgress = (normalizedTime - movement.NormalizedStart) / (movement.NormalizedEnd - movement.NormalizedStart);
             moveProgress = Mathf.Clamp01(moveProgress);
-
-            // 2. 应用速度曲线
+            
             float curveValue = movement.MoveCurve.Evaluate(moveProgress);
 
-            // 3. 计算目标位置
             Vector3 targetPos = Vector3.Lerp(
                 self.Attack.MovementStartPosition, 
                 self.Attack.MovementTargetPosition, 
                 curveValue
             );
             
-            // 4. 直接移动到目标位置（商业级做法：避免速度计算导致的累积误差）
             if (self.Rigidbody != null)
             {
                 Vector3 currentPos = self.Rigidbody.position;
@@ -275,8 +260,6 @@ namespace ET
                 self.Deceleration * deltaTime
             );
         }
-        
-        
         
         /// <summary>
         /// 立即停止移动（特殊情况使用，如被击飞、强制停止等）

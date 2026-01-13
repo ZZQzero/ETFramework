@@ -234,11 +234,7 @@ public partial class SkillEditorWindow : EditorWindow
                 if (segment.VisualEffects.Contains(effectData))
                 {
                     // 获取动画片段长度
-                    float animationLength = segment.Duration > 0f ? segment.Duration : 2f; // 默认长度
-                    if (animationLength <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
-                    {
-                        animationLength = segment.AnimationClipTrans.Clip.length;
-                    }
+                    float animationLength = GetSegmentAnimationLength(segment);
 
                     // 计算绝对触发时间：segment开始时间 + (归一化时间 × 动画长度)
                     absoluteTriggerTime = segment.StartTime + (effectData.NormalizedStart * animationLength);
@@ -299,11 +295,7 @@ public partial class SkillEditorWindow : EditorWindow
                 if (segment.SoundEffects.Contains(soundData))
                 {
                     // 获取动画片段长度
-                    float animationLength = segment.Duration > 0f ? segment.Duration : 2f; // 默认长度
-                    if (animationLength <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
-                    {
-                        animationLength = segment.AnimationClipTrans.Clip.length;
-                    }
+                    float animationLength = GetSegmentAnimationLength(segment);
 
                     // 计算绝对触发时间：segment开始时间 + (归一化时间 × 动画长度)
                     absoluteTriggerTime = segment.StartTime + (soundData.NormalizedStart * animationLength);

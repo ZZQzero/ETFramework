@@ -32,21 +32,21 @@ MonoBehaviour:
           _Names: []
         _Clip: {fileID: 7400000, guid: 3aeb280aa07caa148891a47a136fcee4, type: 3}
         _NormalizedStartTime: NaN
-      StartTime: 0.007710865
+      StartTime: 0.007710864
       ClipLength: 0.6000001
       Duration: 0.6000001
       ComboTimeoutOffsetMs: 200
       TimeWindow:
         InputBufferStart: 0.5
         CancelableTime: 0.4
-        AnimationEnd: 0.5477081
+        AnimationEnd: 0.5526119
       HitBoxes:
       - Name: HitBox
         ShapeType: 1
         Offset: {x: 0, y: 1, z: 1.227207}
         RotationEuler: {x: -0, y: 0, z: 0}
         Size: {x: 1, y: 1, z: 2}
-        NormalizedStart: 0.310466
+        NormalizedStart: 0.31046596
         NormalizedEnd: 0.610466
         Effect:
           DamageMultiplier: 1
@@ -58,13 +58,13 @@ MonoBehaviour:
         Feedback:
           ScreenShakeIntensity: 0
           ScreenShakeDuration: 0
-          HitStopMs: 100
+          HitStopMs: 200
           TimeScale: 1
           TimeScaleDurationMs: 0
       VisualEffects:
       - Name: New Effect
         Prefab: {fileID: 2102702950728354241, guid: c72d8a3d2c3ab5c48a1496d592f6b353, type: 3}
-        NormalizedStart: 7.76102e-10
+        NormalizedStart: 0
         Offset: {x: 0, y: 0, z: 0}
         RotationEuler: {x: 0, y: 0, z: 0}
         FollowTarget: 0
@@ -77,9 +77,9 @@ MonoBehaviour:
       AttachedActives: []
       Movement:
         EnableMovement: 1
-        Distance: 3
+        Distance: 4
         NormalizedStart: 0
-        NormalizedEnd: 0.3
+        NormalizedEnd: 1
         MoveCurve:
           serializedVersion: 2
           m_Curve:
@@ -119,22 +119,22 @@ MonoBehaviour:
           _Names: []
         _Clip: {fileID: 7400000, guid: 506fbaf36141f7842ad5ad583349cc87, type: 3}
         _NormalizedStartTime: NaN
-      StartTime: 0.33633578
+      StartTime: 0.33927804
       ClipLength: 0.8
       Duration: 0.8
       ComboTimeoutOffsetMs: 200
       TimeWindow:
         InputBufferStart: 0.5
         CancelableTime: 0.4
-        AnimationEnd: 0.6825638
+        AnimationEnd: 0.678886
       HitBoxes:
       - Name: HitBox
         ShapeType: 0
         Offset: {x: 0, y: 1, z: 1}
         RotationEuler: {x: 0, y: 0, z: 0}
         Size: {x: 1, y: 1, z: 2}
-        NormalizedStart: 0
-        NormalizedEnd: 0.3
+        NormalizedStart: 0.21788679
+        NormalizedEnd: 0.5178868
         Effect:
           DamageMultiplier: 1
           HitReaction: 1
@@ -145,7 +145,7 @@ MonoBehaviour:
         Feedback:
           ScreenShakeIntensity: 0
           ScreenShakeDuration: 0
-          HitStopMs: 100
+          HitStopMs: 200
           TimeScale: 1
           TimeScaleDurationMs: 0
       VisualEffects:
@@ -206,22 +206,22 @@ MonoBehaviour:
           _Names: []
         _Clip: {fileID: 7400000, guid: d0d401bb3fc68574296f7ff69e81546c, type: 3}
         _NormalizedStartTime: NaN
-      StartTime: 0.8823868
+      StartTime: 0.88238686
       ClipLength: 1.0666667
       Duration: 1.0666667
       ComboTimeoutOffsetMs: 200
       TimeWindow:
         InputBufferStart: 0.5
         CancelableTime: 0.4
-        AnimationEnd: 0.7048212
+        AnimationEnd: 0.7048213
       HitBoxes:
       - Name: HitBox
         ShapeType: 3
         Offset: {x: 0, y: 1.8319484, z: 0.99129105}
         RotationEuler: {x: -0.59976196, y: 0, z: 0}
         Size: {x: 0.4980985, y: 2.083067, z: 2}
-        NormalizedStart: 0
-        NormalizedEnd: 0.3
+        NormalizedStart: 0.3075295
+        NormalizedEnd: 0.6075295
         Effect:
           DamageMultiplier: 1
           HitReaction: 1
@@ -232,7 +232,7 @@ MonoBehaviour:
         Feedback:
           ScreenShakeIntensity: 0
           ScreenShakeDuration: 0
-          HitStopMs: 100
+          HitStopMs: 200
           TimeScale: 1
           TimeScaleDurationMs: 0
       VisualEffects:
@@ -293,7 +293,7 @@ MonoBehaviour:
           _Names: []
         _Clip: {fileID: 7400000, guid: 6fd1fb8479e6a994f9e4cc7fb79d2ac2, type: 3}
         _NormalizedStartTime: NaN
-      StartTime: 1.6341962
+      StartTime: 1.6341963
       ClipLength: 1.0500001
       Duration: 1.0500001
       ComboTimeoutOffsetMs: 200
@@ -307,8 +307,8 @@ MonoBehaviour:
         Offset: {x: 0, y: 1, z: 0.39620805}
         RotationEuler: {x: -0, y: 0, z: 0}
         Size: {x: 0.8652337, y: 124.22709, z: 0.43428373}
-        NormalizedStart: 0
-        NormalizedEnd: 0.3
+        NormalizedStart: 0.121196106
+        NormalizedEnd: 0.42119607
         Effect:
           DamageMultiplier: 1
           HitReaction: 1
@@ -319,7 +319,27 @@ MonoBehaviour:
         Feedback:
           ScreenShakeIntensity: 0
           ScreenShakeDuration: 0
-          HitStopMs: 100
+          HitStopMs: 200
+          TimeScale: 0.3
+          TimeScaleDurationMs: 100
+      - Name: HitBox
+        ShapeType: 0
+        Offset: {x: 0, y: 1, z: 1}
+        RotationEuler: {x: 0, y: 0, z: 0}
+        Size: {x: 1, y: 1, z: 2}
+        NormalizedStart: 0.5377746
+        NormalizedEnd: 0.83777463
+        Effect:
+          DamageMultiplier: 1
+          HitReaction: 1
+          KnockbackForce: 0
+          KnockupForce: 0
+          HitStunMs: 200
+          TargetState: 0
+        Feedback:
+          ScreenShakeIntensity: 0
+          ScreenShakeDuration: 0
+          HitStopMs: 500
           TimeScale: 1
           TimeScaleDurationMs: 0
       VisualEffects:

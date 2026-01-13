@@ -34,8 +34,30 @@ public partial class SkillEditorWindow : EditorWindow
 
     #region HitStop 预览
     private int previewHitStopRemainingMs;
+    private float previewHitStopStartTime; // HitStop 开始时的播放时间
+    private float previewHitStopEndTime; // HitStop 结束时的播放时间
     private float previewLastPlaybackTime;
     private bool hasPreviewLastPlaybackTime;
+    #endregion
+
+    #region TimeScale 预览
+    private float previewTimeScale = 1f;
+    private int previewTimeScaleRemainingMs;
+    // 待应用的 TimeScale（HitStop 期间触发的 TimeScale，等待 HitStop 结束后应用）
+    private float pendingTimeScale = 1f;
+    private int pendingTimeScaleDurationMs = 0;
+    #endregion
+
+    #region 命中检测预览
+    /// <summary>
+    /// 预览命中目标（按段分组，key: SegmentIndex, value: 命中的目标列表）
+    /// </summary>
+    private readonly Dictionary<int, HashSet<GameObject>> previewHitTargets = new Dictionary<int, HashSet<GameObject>>();
+    
+    /// <summary>
+    /// 当前激活的 HitBox 及其命中的目标（用于可视化）
+    /// </summary>
+    private readonly Dictionary<HitBoxData, List<GameObject>> previewActiveHitBoxes = new Dictionary<HitBoxData, List<GameObject>>();
     #endregion
 
     #region VFX 预览
@@ -249,12 +271,70 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
+        #region 处理 HitStop 和 TimeScale 状态更新
+
+        // 记录 HitStop 之前的状态，用于检测 HitStop 是否刚结束
+        bool wasInHitStop = previewHitStopRemainingMs > 0;
+
+        // 更新 HitStop 倒计时
         if (previewHitStopRemainingMs > 0)
         {
             previewHitStopRemainingMs = Mathf.Max(0, previewHitStopRemainingMs - Mathf.RoundToInt(deltaTime * 1000f));
         }
 
+        // 处理 HitStop 刚结束时的逻辑
+        if (wasInHitStop && previewHitStopRemainingMs <= 0)
+        {
+            // 1. 应用 HitStop 期间积累的 TimeScale
+            if (pendingTimeScaleDurationMs > 0)
+            {
+                previewTimeScale = Mathf.Max(0.01f, pendingTimeScale);
+                previewTimeScaleRemainingMs = pendingTimeScaleDurationMs;
+                pendingTimeScale = 1f;
+                pendingTimeScaleDurationMs = 0;
+            }
+
+            // 2. 检查 HitStop 期间跳过的事件（解决第二个 HitBox 触发问题）
+            // HitStop 期间时间停止，导致后续事件被跳过，这里需要追触发
+            TryTriggerPreviewHitStopInRange(previewHitStopStartTime, previewHitStopEndTime, includeStart: false, includeEnd: true);
+            TryTriggerPreviewTimeScaleInRange(previewHitStopStartTime, previewHitStopEndTime, includeStart: false, includeEnd: true);
+            TryTriggerPreviewVfxInRange(previewHitStopStartTime, previewHitStopEndTime, includeStart: false, includeEnd: true);
+            TryTriggerPreviewSfxInRange(previewHitStopStartTime, previewHitStopEndTime, includeStart: false, includeEnd: true);
+            TryTriggerPreviewHitDetectionInRange(previewHitStopStartTime, previewHitStopEndTime, includeStart: false, includeEnd: true);
+        }
+
+        #endregion
+
+        #region 处理 TimeScale 状态更新
+
+        // 更新 TimeScale 剩余时间
+        // 优先级规则：HitStop > TimeScale
+        // - HitStop 期间，TimeScale 倒计时暂停
+        // - HitStop 结束后，TimeScale 倒计时继续
+        // - TimeScale 持续时间基于"游戏时间"（受 TimeScale 影响的时间）
+        if (previewTimeScaleRemainingMs > 0)
+        {
+            // 只有在 HitStop 不活跃时才更新 TimeScale 倒计时
+            if (previewHitStopRemainingMs <= 0)
+            {
+                // 用游戏时间（缩放后的时间）来减少剩余时间
+                // 例如：TimeScale=0.5，1000ms游戏时间需要2000ms真实时间
+                float gameTimeDelta = deltaTime * previewTimeScale;
+                previewTimeScaleRemainingMs = Mathf.Max(0, previewTimeScaleRemainingMs - Mathf.RoundToInt(gameTimeDelta * 1000f));
+
+                if (previewTimeScaleRemainingMs <= 0)
+                {
+                    previewTimeScale = 1f; // 恢复正常速度
+                }
+            }
+        }
+
+        #endregion
+
         float speed = Mathf.Max(0f, playbackSpeed);
+        // 应用 TimeScale 到播放速度
+        speed *= previewTimeScale;
+        
         float prevTime = currentPlaybackTime;
         if (previewHitStopRemainingMs <= 0)
         {
@@ -281,8 +361,10 @@ public partial class SkillEditorWindow : EditorWindow
         if (previewHitStopRemainingMs <= 0)
         {
             TryTriggerPreviewHitStop(prevTime, currentPlaybackTime, maxTime);
+            TryTriggerPreviewTimeScale(prevTime, currentPlaybackTime, maxTime, wrapped);
             TryTriggerPreviewVfx(prevTime, currentPlaybackTime, maxTime, wrapped);
             TryTriggerPreviewSfx(prevTime, currentPlaybackTime, maxTime, wrapped);
+            TryTriggerPreviewHitDetection(prevTime, currentPlaybackTime, maxTime, wrapped);
         }
 
         UpdatePlayheadPosition();
@@ -370,9 +452,14 @@ public partial class SkillEditorWindow : EditorWindow
 
         previewHitStopRemainingMs = 0;
         hasPreviewLastPlaybackTime = false;
+        previewTimeScale = 1f;
+        previewTimeScaleRemainingMs = 0;
+        pendingTimeScale = 1f;
+        pendingTimeScaleDurationMs = 0;
         CleanupPreviewVfx();
         CleanupPreviewSfx();
         CleanupPreviewAttachedActives();
+        CleanupPreviewHitDetection();
 
         if (resetTime)
         {
@@ -731,20 +818,461 @@ public partial class SkillEditorWindow : EditorWindow
                     continue;
                 }
 
+                // 获取 HitStop 持续时间
                 int ms = hb.Feedback != null ? hb.Feedback.HitStopMs : 0;
                 if (ms <= 0)
                 {
                     ms = config.DefaultHitStopMs;
                 }
                 ms = Mathf.Max(0, ms);
-                bestMs = Mathf.Max(bestMs, ms);
+
+                // 记录最长的 HitStop 及其精确时间范围
+                // 用于在 HitStop 结束后检查跳过的事件
+                if (ms > bestMs)
+                {
+                    bestMs = ms;
+                    previewHitStopStartTime = triggerTime;  // 实际触发时间
+                    previewHitStopEndTime = triggerTime + (float)ms / 1000f;  // 结束时间
+                }
             }
         }
 
         if (bestMs > 0)
         {
             previewHitStopRemainingMs = bestMs;
+            // HitStop 开始和结束时间已经在上面找到最长 HitStop 时设置好了
         }
+    }
+
+    #endregion
+
+    #region 播放预览：TimeScale（时间缩放）
+
+    /// <summary>
+    /// 尝试触发 TimeScale 预览
+    /// </summary>
+    private void TryTriggerPreviewTimeScale(float prevTime, float currentTime, float maxTime, bool wrapped)
+    {
+        // 时间倒退（例如手动拖拽到更小时间、或 Stop 重置）时重置
+        // 注意：循环播放时 wrapped = true，不应该重置 TimeScale
+        if (currentTime < prevTime && !wrapped)
+        {
+            previewTimeScale = 1f;
+            previewTimeScaleRemainingMs = 0;
+            pendingTimeScale = 1f;
+            pendingTimeScaleDurationMs = 0;
+            return;
+        }
+
+        if (config == null || config.Segments == null || config.Segments.Count == 0)
+        {
+            return;
+        }
+
+        // Loop wrap：把区间拆成两段检查
+        if (wrapped)
+        {
+            // [prevTime, maxTime]
+            TryTriggerPreviewTimeScaleInRange(prevTime, maxTime, includeStart: false, includeEnd: true);
+            // [0, currentTime]
+            TryTriggerPreviewTimeScaleInRange(0f, currentTime, includeStart: false, includeEnd: true);
+        }
+        else
+        {
+            TryTriggerPreviewTimeScaleInRange(prevTime, currentTime, includeStart: false, includeEnd: true);
+        }
+    }
+
+    /// <summary>
+    /// 在指定时间范围内尝试触发 TimeScale
+    /// </summary>
+    private void TryTriggerPreviewTimeScaleInRange(float fromTime, float toTime, bool includeStart, bool includeEnd)
+    {
+        if (config == null || config.Segments == null)
+        {
+            return;
+        }
+
+        float bestTimeScale = 1f;
+        int bestDurationMs = 0;
+
+        foreach (var seg in config.Segments)
+        {
+            if (seg?.HitBoxes == null || seg.HitBoxes.Count == 0)
+            {
+                continue;
+            }
+
+            // 段时长：使用 segment.Duration
+            float duration = Mathf.Max(0f, seg.Duration);
+            if (duration <= 0f && seg.AnimationClipTrans != null && seg.AnimationClipTrans.Clip != null)
+            {
+                float s = Mathf.Max(0.01f, seg.AnimationClipTrans.Speed);
+                duration = seg.AnimationClipTrans.Clip.length / s;
+            }
+
+            if (duration <= 0f)
+            {
+                continue;
+            }
+
+            // 段提前结束阈值
+            float endNorm = seg.TimeWindow != null ? seg.TimeWindow.AnimationEnd : 1f;
+            if (endNorm <= 0f) endNorm = 1f;
+            endNorm = Mathf.Clamp01(endNorm);
+
+            foreach (var hb in seg.HitBoxes)
+            {
+                if (hb == null || hb.Feedback == null)
+                {
+                    continue;
+                }
+
+                // 使用 NormalizedStart 作为触发点
+                float n = Mathf.Clamp01(hb.NormalizedStart);
+                if (n > endNorm)
+                {
+                    continue;
+                }
+
+                float triggerTime = seg.StartTime + duration * n;
+                bool inRange =
+                    (includeStart ? triggerTime >= fromTime : triggerTime > fromTime) &&
+                    (includeEnd ? triggerTime <= toTime : triggerTime < toTime);
+
+                if (!inRange)
+                {
+                    continue;
+                }
+
+                // 获取 TimeScale 配置
+                float timeScale = hb.Feedback.TimeScale;
+                int durationMs = hb.Feedback.TimeScaleDurationMs;
+
+                // 处理有效的 TimeScale 配置
+                // 要求：TimeScale ≠ 1、有持续时间、范围在 0.01-10 之间
+                if (timeScale != 1f && durationMs > 0 && timeScale >= 0.01f && timeScale <= 10f)
+                {
+                    // 选择最慢的 TimeScale（最小值）
+                    // 如果 TimeScale 相同，选择持续时间最长的
+                    // 这样可以处理多个 TimeScale 同时触发的情况
+                    if (timeScale < bestTimeScale ||
+                        (Mathf.Approximately(timeScale, bestTimeScale) && durationMs > bestDurationMs))
+                    {
+                        bestTimeScale = timeScale;
+                        bestDurationMs = durationMs;
+                    }
+                }
+            }
+        }
+
+        // 应用 TimeScale（处理优先级和状态）
+        if (bestTimeScale != 1f && bestDurationMs > 0)
+        {
+            if (previewHitStopRemainingMs > 0)
+            {
+                // HitStop 期间：保存 TimeScale 到 pending 状态，等待 HitStop 结束后应用
+                // 选择最慢的 TimeScale（最小值）
+                if (pendingTimeScaleDurationMs <= 0 ||
+                    bestTimeScale < pendingTimeScale ||
+                    (Mathf.Approximately(bestTimeScale, pendingTimeScale) && bestDurationMs > pendingTimeScaleDurationMs))
+                {
+                    pendingTimeScale = Mathf.Max(0.01f, bestTimeScale);
+                    pendingTimeScaleDurationMs = bestDurationMs;
+                }
+            }
+            else
+            {
+                // 非 HitStop 期间：立即应用 TimeScale
+                // 如果当前已有 TimeScale，且新 TimeScale 更慢，则更新为更慢的
+                if (previewTimeScale >= 1f || bestTimeScale < previewTimeScale)
+                {
+                    previewTimeScale = Mathf.Max(0.01f, bestTimeScale);
+                    previewTimeScaleRemainingMs = bestDurationMs;
+                }
+                // 如果新的 TimeScale 更快但当前 TimeScale 未结束，则保持当前慢动作
+            }
+        }
+    }
+
+    #endregion
+
+    #region 播放预览：命中检测
+
+    private void TryTriggerPreviewHitDetection(float prevTime, float currentTime, float maxTime, bool wrapped)
+    {
+        if (config == null || animancer == null || animancer.transform == null)
+        {
+            return;
+        }
+
+        if (wrapped)
+        {
+            CleanupPreviewHitDetection();
+        }
+
+        // 时间倒退时清理命中检测缓存
+        if (!wrapped && currentTime < prevTime)
+        {
+            CleanupPreviewHitDetection();
+            return;
+        }
+
+        if (wrapped && maxTime > 0f)
+        {
+            TryTriggerPreviewHitDetectionInRange(prevTime, maxTime, includeStart: true, includeEnd: true);
+            TryTriggerPreviewHitDetectionInRange(0f, currentTime, includeStart: true, includeEnd: true);
+        }
+        else
+        {
+            TryTriggerPreviewHitDetectionInRange(prevTime, currentTime, includeStart: true, includeEnd: true);
+        }
+    }
+
+    private void TryTriggerPreviewHitDetectionInRange(float fromTime, float toTime, bool includeStart, bool includeEnd)
+    {
+        if (config == null || config.Segments == null || config.Segments.Count == 0 || animancer == null || animancer.transform == null)
+        {
+            return;
+        }
+
+        Transform player = animancer.transform;
+        int layerMask = LayerMask.GetMask("Enemy");
+
+        foreach (var seg in config.Segments)
+        {
+            if (seg?.HitBoxes == null || seg.HitBoxes.Count == 0)
+            {
+                continue;
+            }
+
+            float segDuration = seg.Duration;
+            if (segDuration <= 0f && seg.AnimationClipTrans != null && seg.AnimationClipTrans.Clip != null)
+            {
+                float s = Mathf.Max(0.01f, seg.AnimationClipTrans.Speed);
+                segDuration = seg.AnimationClipTrans.Clip.length / s;
+            }
+            segDuration = Mathf.Max(0f, segDuration);
+
+            if (segDuration <= 0f)
+            {
+                continue;
+            }
+
+            // 段提前结束阈值：运行时超过 AnimationEnd 就会结束，不会再触发后续 hitbox
+            float endNorm = seg.TimeWindow != null ? seg.TimeWindow.AnimationEnd : 1f;
+            if (endNorm <= 0f) endNorm = 1f;
+            endNorm = Mathf.Clamp01(endNorm);
+
+            // 检查当前时间是否在当前段内
+            float segmentStartTime = seg.StartTime;
+            float segmentEffectiveEndTime = seg.StartTime + segDuration * endNorm;
+            
+            // 如果时间不在当前段内，清理该段的命中目标（段切换时）
+            if (toTime < segmentStartTime || toTime > segmentEffectiveEndTime)
+            {
+                if (previewHitTargets.ContainsKey(seg.Id))
+                {
+                    previewHitTargets[seg.Id].Clear();
+                }
+                continue;
+            }
+
+            // 获取或创建当前段的命中目标集合
+            if (!previewHitTargets.TryGetValue(seg.Id, out var hitTargets))
+            {
+                hitTargets = new HashSet<GameObject>();
+                previewHitTargets[seg.Id] = hitTargets;
+            }
+
+            // 清空当前激活的 HitBox 列表（用于可视化）
+            previewActiveHitBoxes.Clear();
+
+            foreach (var hb in seg.HitBoxes)
+            {
+                if (hb == null)
+                {
+                    continue;
+                }
+
+                float start = Mathf.Clamp01(hb.NormalizedStart);
+                float end = Mathf.Clamp01(hb.NormalizedEnd);
+                
+                if (end <= start)
+                {
+                    continue;
+                }
+
+                // 检查 HitBox 是否在当前时间范围内激活
+                float startTime = seg.StartTime + segDuration * start;
+                float endTime = seg.StartTime + segDuration * end;
+
+                // 检查时间范围是否有重叠（HitBox 激活窗口与检测时间范围有交集）
+                // 只有当 toTime（当前时间）在 HitBox 激活窗口内时才检测
+                bool isActive = toTime >= startTime && toTime <= endTime;
+                
+                if (!isActive)
+                {
+                    continue;
+                }
+
+                // 检查是否超过段的结束阈值（使用外层已计算的 segmentEffectiveEndTime）
+                if (toTime > segmentEffectiveEndTime)
+                {
+                    continue;
+                }
+
+                // 如果 HitBox 在当前时间激活，进行检测
+                PerformPreviewHitDetection(player, seg, hb, hitTargets, layerMask);
+            }
+        }
+    }
+
+    private void PerformPreviewHitDetection(Transform player, AttackSegmentData seg, HitBoxData hitBox, HashSet<GameObject> hitTargets, int layerMask)
+    {
+        if (player == null || hitBox == null)
+        {
+            return;
+        }
+
+        // 计算判定框世界坐标（与运行时一致）
+        Vector3 worldPosition = player.position + player.rotation * hitBox.Offset;
+        Quaternion worldRotation = player.rotation * Quaternion.Euler(hitBox.RotationEuler);
+
+        // 根据形状类型进行检测
+        List<GameObject> detectedTargets = new List<GameObject>();
+
+        try
+        {
+            // 使用 Unity 的 Physics API 直接检测（编辑器不需要使用 ListComponent）
+            Collider[] colliders = new Collider[64];
+            int count = 0;
+            
+            switch (hitBox.ShapeType)
+            {
+                case HitShapeType.Box:
+                    count = Physics.OverlapBoxNonAlloc(worldPosition, hitBox.Size * 0.5f, colliders, worldRotation, layerMask);
+                    break;
+                case HitShapeType.Sphere:
+                    count = Physics.OverlapSphereNonAlloc(worldPosition, hitBox.Size.x, colliders, layerMask);
+                    break;
+                case HitShapeType.Fan:
+                    // 扇形检测：先用球体检测，再过滤角度和高度（与 PhysicsHelper.OverlapFan 逻辑完全一致）
+                    int sphereCount = Physics.OverlapSphereNonAlloc(worldPosition, hitBox.Size.x, colliders, layerMask);
+                    Vector3 forward = worldRotation * Vector3.forward;
+                    float halfAngle = hitBox.Size.y * 0.5f;
+                    float halfHeight = hitBox.Size.z > 0f ? hitBox.Size.z * 0.5f : 0f;
+                    count = 0;
+                    
+                    for (int i = 0; i < sphereCount; i++)
+                    {
+                        var collider = colliders[i];
+                        if (collider == null)
+                            continue;
+                        
+                        // 高度过滤：检查目标的 Collider 边界是否与扇形高度范围有重叠
+                        if (halfHeight > 0f)
+                        {
+                            float fanBottom = worldPosition.y - halfHeight;
+                            float fanTop = worldPosition.y + halfHeight;
+                            Bounds colliderBounds = collider.bounds;
+                            
+                            // 检查是否有重叠：目标的底部在扇形顶部之上，或目标的顶部在扇形底部之下，则无重叠
+                            if (colliderBounds.min.y > fanTop || colliderBounds.max.y < fanBottom)
+                            {
+                                continue;
+                            }
+                        }
+                        
+                        // 角度过滤（水平扇形检测）
+                        Vector3 directionToTarget = collider.transform.position - worldPosition;
+                        directionToTarget.y = 0;
+                        
+                        // 如果水平距离为 0（目标在正上方或正下方），跳过
+                        if (directionToTarget.sqrMagnitude < 1e-6f)
+                        {
+                            continue;
+                        }
+                        directionToTarget.Normalize();
+                        
+                        // forward 的水平方向向量
+                        Vector3 forwardFlat = forward;
+                        forwardFlat.y = 0;
+                        
+                        // 如果 forward 的水平分量为 0（forward 垂直向上或向下），跳过
+                        if (forwardFlat.sqrMagnitude < 1e-6f)
+                        {
+                            continue;
+                        }
+                        forwardFlat.Normalize();
+
+                        // 计算角度并判断
+                        float angleToTarget = Vector3.Angle(forwardFlat, directionToTarget);
+                        if (angleToTarget <= halfAngle)
+                        {
+                            colliders[count] = collider;
+                            count++;
+                        }
+                    }
+                    break;
+                case HitShapeType.Capsule:
+                    // 计算胶囊体两端点
+                    float capsuleHalfHeight = Mathf.Max(0, (hitBox.Size.y - hitBox.Size.x * 2) * 0.5f);
+                    Vector3 up = worldRotation * Vector3.up;
+                    Vector3 point0 = worldPosition - up * capsuleHalfHeight;
+                    Vector3 point1 = worldPosition + up * capsuleHalfHeight;
+                    count = Physics.OverlapCapsuleNonAlloc(point0, point1, hitBox.Size.x, colliders, layerMask);
+                    break;
+            }
+            
+            // 转换为 GameObject 列表
+            for (int i = 0; i < count; i++)
+            {
+                if (colliders[i] != null && colliders[i].gameObject != null)
+                {
+                    detectedTargets.Add(colliders[i].gameObject);
+                }
+            }
+
+            // 处理命中目标
+            List<GameObject> newHits = new List<GameObject>();
+            List<GameObject> allActiveHits = new List<GameObject>(); // 当前激活的所有命中目标（包括之前命中的）
+            
+            foreach (var target in detectedTargets)
+            {
+                if (target == null)
+                    continue;
+
+                // 检查是否已命中过该目标（同一段中只能命中一次）
+                bool isNewHit = !hitTargets.Contains(target);
+                if (isNewHit)
+                {
+                    // 记录新命中
+                    hitTargets.Add(target);
+                    newHits.Add(target);
+                }
+                
+                // 无论新旧，只要当前检测到，就添加到可视化列表（HitBox 激活时显示所有命中的目标）
+                allActiveHits.Add(target);
+            }
+
+            // 保存当前激活的 HitBox 及其命中的目标（用于可视化）
+            // 注意：即使没有新命中，只要 HitBox 激活且之前命中过目标，也应该显示
+            if (allActiveHits.Count > 0)
+            {
+                previewActiveHitBoxes[hitBox] = allActiveHits;
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"SkillEditor: Hit detection failed - {e.Message}");
+        }
+    }
+
+    private void CleanupPreviewHitDetection()
+    {
+        previewHitTargets.Clear();
+        previewActiveHitBoxes.Clear();
     }
 
     #endregion

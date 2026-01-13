@@ -12,7 +12,6 @@ namespace ET
     public class AttackComponent : Entity, IAwake<string>, IDestroy, IUpdate, IFixedUpdate
     {
         public AnimatorComponent AnimatorComponent { get; set; }
-        //public CharacterControllerComponent CharacterController { get; set; }
         #region 配置数据
         
         /// <summary>攻击配置资源路径</summary>

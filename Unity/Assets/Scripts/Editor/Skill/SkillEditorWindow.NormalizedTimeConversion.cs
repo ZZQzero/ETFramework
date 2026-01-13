@@ -23,11 +23,7 @@ public partial class SkillEditorWindow : EditorWindow
             if (clipItem is EffectClipItem effectClip && segment.VisualEffects.Contains(effectClip.EffectData))
             {
                 // 获取动画片段长度
-                float animationLength = segment.Duration > 0f ? segment.Duration : 2f;
-                if (animationLength <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
-                {
-                    animationLength = segment.AnimationClipTrans.Clip.length;
-                }
+                float animationLength = GetSegmentAnimationLength(segment);
 
                 // 计算绝对开始时间：segment开始时间 + (归一化时间 × 动画长度)
                 clipItem.StartTime = segment.StartTime + (effectClip.EffectData.NormalizedStart * animationLength);
@@ -36,11 +32,7 @@ public partial class SkillEditorWindow : EditorWindow
             else if (clipItem is SoundClipItem soundClip && segment.SoundEffects.Contains(soundClip.SoundData))
             {
                 // 获取动画片段长度
-                float animationLength = segment.Duration > 0f ? segment.Duration : 2f;
-                if (animationLength <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
-                {
-                    animationLength = segment.AnimationClipTrans.Clip.length;
-                }
+                float animationLength = GetSegmentAnimationLength(segment);
 
                 // 计算绝对开始时间：segment开始时间 + (归一化时间 × 动画长度)
                 clipItem.StartTime = segment.StartTime + (soundClip.SoundData.NormalizedStart * animationLength);
@@ -48,11 +40,7 @@ public partial class SkillEditorWindow : EditorWindow
             }
             else if (clipItem is ActiveClipItem activeClip && segment.AttachedActives.Contains(activeClip.ActiveData))
             {
-                float animationLength = segment.Duration > 0f ? segment.Duration : 2f;
-                if (animationLength <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
-                {
-                    animationLength = segment.AnimationClipTrans.Clip.length;
-                }
+                float animationLength = GetSegmentAnimationLength(segment);
 
                 clipItem.StartTime = segment.StartTime + (Mathf.Clamp01(activeClip.ActiveData.NormalizedStart) * animationLength);
                 break;
@@ -73,11 +61,7 @@ public partial class SkillEditorWindow : EditorWindow
             if (segment.HitBoxes.Contains(clipItem.HitBoxData))
             {
                 // 获取动画片段长度
-                float animationLength = segment.Duration > 0f ? segment.Duration : 2f;
-                if (animationLength <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
-                {
-                    animationLength = segment.AnimationClipTrans.Clip.length;
-                }
+                float animationLength = GetSegmentAnimationLength(segment);
 
                 // 计算绝对开始时间：segment开始时间 + (归一化开始时间 × 动画长度)
                 clipItem.StartTime = segment.StartTime + (clipItem.HitBoxData.NormalizedStart * animationLength);
@@ -91,7 +75,7 @@ public partial class SkillEditorWindow : EditorWindow
                     clipItem.Duration = 0f;
                 }
                 // 更新帧数
-                clipItem.Frame = Mathf.RoundToInt(clipItem.Duration * 60f);
+                clipItem.Frame = Mathf.RoundToInt(clipItem.Duration * FRAMES_PER_SECOND);
                 break;
             }
         }
@@ -105,11 +89,7 @@ public partial class SkillEditorWindow : EditorWindow
         {
             if (segment.AttachedActives.Contains(clipItem.ActiveData))
             {
-                float animationLength = segment.Duration > 0f ? segment.Duration : 2f;
-                if (animationLength <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
-                {
-                    animationLength = segment.AnimationClipTrans.Clip.length;
-                }
+                float animationLength = GetSegmentAnimationLength(segment);
 
                 clipItem.StartTime = segment.StartTime + (Mathf.Clamp01(clipItem.ActiveData.NormalizedStart) * animationLength);
                 clipItem.Duration = (Mathf.Clamp01(clipItem.ActiveData.NormalizedEnd) - Mathf.Clamp01(clipItem.ActiveData.NormalizedStart)) * animationLength;
@@ -117,7 +97,7 @@ public partial class SkillEditorWindow : EditorWindow
                 {
                     clipItem.Duration = 0f;
                 }
-                clipItem.Frame = Mathf.RoundToInt(clipItem.Duration * 60f);
+                clipItem.Frame = Mathf.RoundToInt(clipItem.Duration * FRAMES_PER_SECOND);
                 break;
             }
         }

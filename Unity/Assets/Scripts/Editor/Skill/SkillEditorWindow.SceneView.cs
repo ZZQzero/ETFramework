@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using ET;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
@@ -24,6 +25,46 @@ public partial class SkillEditorWindow : EditorWindow
         // 窗口关闭/失活时：停止预览，避免残留姿态/RootMotion 状态
         StopPreviewPlayback(resetTime: false, sampleAfterStop: false);
         this.DestroyPreviewObject();
+        
+        // 窗口关闭时：自动保存已修改的资源
+        SaveDirtyAssets();
+    }
+    
+    /// <summary>
+    /// 保存已标记为脏的资源
+    /// </summary>
+    private void SaveDirtyAssets()
+    {
+        if (selectConfigAsset != null && selectConfigAsset.value != null)
+        {
+            var asset = selectConfigAsset.value as AttackConfigAsset;
+            if (asset != null)
+            {
+                // 检查资源是否被标记为脏
+                // 注意：AssetDatabase.SaveAssets() 只会保存被标记为脏的资源，不会保存所有资源
+                if (EditorUtility.IsDirty(asset))
+                {
+                    // 保存所有被标记为脏的资源（包括当前asset）
+                    AssetDatabase.SaveAssets();
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 手动保存当前配置（可在UI中添加保存按钮调用此方法）
+    /// </summary>
+    public void SaveConfigAsset()
+    {
+        if (selectConfigAsset != null && selectConfigAsset.value != null)
+        {
+            var asset = selectConfigAsset.value as AttackConfigAsset;
+            if (asset != null)
+            {
+                EditorUtility.SetDirty(asset);
+                AssetDatabase.SaveAssets();
+            }
+        }
     }
 
     private void OnSceneGUI(SceneView sceneView)
@@ -518,7 +559,65 @@ public partial class SkillEditorWindow : EditorWindow
             }
 
             DrawHitBoxWire(player, hb, isActive);
+            
+            // 如果 HitBox 激活且命中了目标，绘制命中目标
+            if (isActive && previewActiveHitBoxes != null && previewActiveHitBoxes.TryGetValue(hb, out var hitTargets))
+            {
+                DrawHitTargets(hitTargets);
+            }
         }
+    }
+    
+    /// <summary>
+    /// 绘制命中的目标
+    /// </summary>
+    private void DrawHitTargets(List<GameObject> targets)
+    {
+        if (targets == null || targets.Count == 0)
+        {
+            return;
+        }
+
+        Handles.color = new Color(1f, 0.2f, 0.2f, 0.8f); // 红色表示命中
+
+        // 创建明显的标签样式：红色文字，白色背景，加粗
+        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+        labelStyle.normal.textColor = Color.red; // 纯红色文字
+        labelStyle.fontStyle = FontStyle.Bold; // 加粗
+        labelStyle.fontSize = 14; // 稍大一点的字体
+        labelStyle.normal.background = Texture2D.whiteTexture; // 白色背景
+        labelStyle.padding = new RectOffset(4, 4, 2, 2); // 内边距
+        labelStyle.alignment = TextAnchor.MiddleCenter; // 居中对齐
+
+        // 保存原始 GUI 颜色
+        Color originalGUIColor = GUI.color;
+        
+        // 设置背景颜色为白色（半透明）
+        GUI.color = new Color(1f, 1f, 1f, 0.9f);
+
+        foreach (var target in targets)
+        {
+            if (target == null)
+                continue;
+
+            // 绘制目标位置标记
+            Vector3 targetPos = target.transform.position;
+            
+            // 绘制球体标记
+            Handles.SphereHandleCap(0, targetPos, Quaternion.identity, 0.3f, EventType.Repaint);
+            
+            // 绘制连线（从角色到目标）
+            if (animancer != null && animancer.transform != null)
+            {
+                Handles.DrawLine(animancer.transform.position, targetPos, 2f);
+            }
+            
+            // 绘制标签（使用明显的样式）
+            Handles.Label(targetPos + Vector3.up * 0.5f, "命中", labelStyle);
+        }
+        
+        // 恢复原始 GUI 颜色
+        GUI.color = originalGUIColor;
     }
 
     private static void DrawHitBoxWire(Transform player, HitBoxData hitBox, bool active)

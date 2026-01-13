@@ -382,11 +382,7 @@ public partial class SkillEditorWindow : EditorWindow
         {
             if (segment.VisualEffects.Contains(effectClipItem.EffectData))
             {
-                float animationLength = segment.Duration > 0f ? segment.Duration : 2f;
-                if (animationLength <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
-                {
-                    animationLength = segment.AnimationClipTrans.Clip.length;
-                }
+                float animationLength = GetSegmentAnimationLength(segment);
 
                 if (animationLength > 0)
                 {
@@ -407,11 +403,7 @@ public partial class SkillEditorWindow : EditorWindow
         {
             if (segment.SoundEffects.Contains(soundClipItem.SoundData))
             {
-                float animationLength = segment.Duration > 0f ? segment.Duration : 2f;
-                if (animationLength <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
-                {
-                    animationLength = segment.AnimationClipTrans.Clip.length;
-                }
+                float animationLength = GetSegmentAnimationLength(segment);
 
                 if (animationLength > 0)
                 {
@@ -432,11 +424,7 @@ public partial class SkillEditorWindow : EditorWindow
         {
             if (segment.HitBoxes.Contains(hitBoxClipItem.HitBoxData))
             {
-                float animationLength = segment.Duration > 0f ? segment.Duration : 2f;
-                if (animationLength <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
-                {
-                    animationLength = segment.AnimationClipTrans.Clip.length;
-                }
+                float animationLength = GetSegmentAnimationLength(segment);
 
                 if (animationLength > 0)
                 {
@@ -464,11 +452,7 @@ public partial class SkillEditorWindow : EditorWindow
         {
             if (segment.AttachedActives.Contains(activeClipItem.ActiveData))
             {
-                float animationLength = segment.Duration > 0f ? segment.Duration : 2f;
-                if (animationLength <= 0f && segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
-                {
-                    animationLength = segment.AnimationClipTrans.Clip.length;
-                }
+                float animationLength = GetSegmentAnimationLength(segment);
 
                 if (animationLength > 0f)
                 {

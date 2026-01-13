@@ -37,6 +37,10 @@ public partial class SkillEditorWindow : EditorWindow
     private const string TYPE_HITBOX_CLASS = "type-hitbox"; // 判定框轨道样式类
     private const string TYPE_ACTIVE_CLASS = "type-active"; // Active轨道样式类
     
+    // 动画相关常量
+    private const float DEFAULT_ANIMATION_LENGTH = 2f; // 默认动画长度（秒）
+    private const float FRAMES_PER_SECOND = 60f; // 帧率（帧/秒）
+    
     #endregion
 
     #region UI元素 - 主窗口
@@ -242,6 +246,29 @@ public partial class SkillEditorWindow : EditorWindow
             TrackType.Active => TYPE_ACTIVE_CLASS,
             _ => string.Empty,
         };
+    }
+    
+    /// <summary>
+    /// 获取 Segment 的动画长度（优先使用 Duration，其次使用 Clip.length，最后使用默认值）
+    /// </summary>
+    private static float GetSegmentAnimationLength(AttackSegmentData segment)
+    {
+        if (segment == null)
+        {
+            return DEFAULT_ANIMATION_LENGTH;
+        }
+        
+        if (segment.Duration > 0f)
+        {
+            return segment.Duration;
+        }
+        
+        if (segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
+        {
+            return segment.AnimationClipTrans.Clip.length;
+        }
+        
+        return DEFAULT_ANIMATION_LENGTH;
     }
     
     #endregion

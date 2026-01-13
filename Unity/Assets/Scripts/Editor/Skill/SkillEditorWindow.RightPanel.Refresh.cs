@@ -21,44 +21,16 @@ public partial class SkillEditorWindow : EditorWindow
         if (animationActionButtons != null) animationActionButtons.style.display = DisplayStyle.None;
 
         // 清除按钮的类型样式类
-        if (addEffectButton != null)
+        var buttons = new[] { addEffectButton, addSoundButton, addHitboxButton, addActiveButton };
+        var classesToRemove = new[] { "action-button", "type-effect", "type-sound", "type-hitbox", "type-animation", "type-active" };
+        
+        foreach (var button in buttons)
         {
-            addEffectButton.RemoveFromClassList("action-button");
-            addEffectButton.RemoveFromClassList("type-effect");
-            addEffectButton.RemoveFromClassList("type-sound");
-            addEffectButton.RemoveFromClassList("type-hitbox");
-            addEffectButton.RemoveFromClassList("type-animation");
-            addEffectButton.RemoveFromClassList("type-active");
-        }
-
-        if (addSoundButton != null)
-        {
-            addSoundButton.RemoveFromClassList("action-button");
-            addSoundButton.RemoveFromClassList("type-effect");
-            addSoundButton.RemoveFromClassList("type-sound");
-            addSoundButton.RemoveFromClassList("type-hitbox");
-            addSoundButton.RemoveFromClassList("type-animation");
-            addSoundButton.RemoveFromClassList("type-active");
-        }
-
-        if (addHitboxButton != null)
-        {
-            addHitboxButton.RemoveFromClassList("action-button");
-            addHitboxButton.RemoveFromClassList("type-effect");
-            addHitboxButton.RemoveFromClassList("type-sound");
-            addHitboxButton.RemoveFromClassList("type-hitbox");
-            addHitboxButton.RemoveFromClassList("type-animation");
-            addHitboxButton.RemoveFromClassList("type-active");
-        }
-
-        if (addActiveButton != null)
-        {
-            addActiveButton.RemoveFromClassList("action-button");
-            addActiveButton.RemoveFromClassList("type-effect");
-            addActiveButton.RemoveFromClassList("type-sound");
-            addActiveButton.RemoveFromClassList("type-hitbox");
-            addActiveButton.RemoveFromClassList("type-animation");
-            addActiveButton.RemoveFromClassList("type-active");
+            if (button == null) continue;
+            foreach (var className in classesToRemove)
+            {
+                button.RemoveFromClassList(className);
+            }
         }
     }
 
@@ -199,31 +171,16 @@ public partial class SkillEditorWindow : EditorWindow
         // 根据Clip类型在对应的轨道中查找索引
         foreach (var track in trackDataList)
         {
-            if (clip is AnimationClipItem animClip && track is AnimationTrack animTrack)
+            index = (clip, track) switch
             {
-                index = animTrack.ClipList.IndexOf(animClip);
-                if (index >= 0) break;
-            }
-            else if (clip is EffectClipItem effectClip && track is EffectTrack effectTrack)
-            {
-                index = effectTrack.ClipList.IndexOf(effectClip);
-                if (index >= 0) break;
-            }
-            else if (clip is SoundClipItem soundClip && track is SoundTrack soundTrack)
-            {
-                index = soundTrack.ClipList.IndexOf(soundClip);
-                if (index >= 0) break;
-            }
-            else if (clip is HitBoxClipItem hitBoxClip && track is HitBoxTrack hitBoxTrack)
-            {
-                index = hitBoxTrack.ClipList.IndexOf(hitBoxClip);
-                if (index >= 0) break;
-            }
-            else if (clip is ActiveClipItem activeClip && track is ActiveTrack activeTrack)
-            {
-                index = activeTrack.ClipList.IndexOf(activeClip);
-                if (index >= 0) break;
-            }
+                (AnimationClipItem a, AnimationTrack at) => at.ClipList.IndexOf(a),
+                (EffectClipItem e, EffectTrack et) => et.ClipList.IndexOf(e),
+                (SoundClipItem s, SoundTrack st) => st.ClipList.IndexOf(s),
+                (HitBoxClipItem h, HitBoxTrack ht) => ht.ClipList.IndexOf(h),
+                (ActiveClipItem ac, ActiveTrack act) => act.ClipList.IndexOf(ac),
+                _ => -1
+            };
+            if (index >= 0) break;
         }
 
         // 显示数组下标索引

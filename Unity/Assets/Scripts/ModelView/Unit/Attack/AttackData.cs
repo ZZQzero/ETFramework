@@ -180,7 +180,7 @@ namespace ET
         /// 尺寸：
         /// - Box: xyz
         /// - Sphere: x 为半径
-        /// - Fan: x 为半径、y 为角度、z 为高度/厚度（可选，<=0 表示不限制高度，兼容旧行为）
+        /// - Fan: x 为半径、y 为角度、z 为高度/厚度（可选，<=0 表示不限制高度）
         /// - Capsule: x 为半径、y 为高度（参见运行时 OverlapCapsule）
         /// </summary>
         public Vector3 Size = new Vector3(1f, 1f, 2f);

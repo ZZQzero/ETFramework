@@ -53,31 +53,17 @@ namespace ET
 
             list.AddRange(UnitBuffer);
         }
-
-        /// <summary>
-        /// 球体检测
-        /// </summary>
-        public static List<GameObject> OverlapSphere(Vector3 center, float radius, int layerMask)
-        {
-            UnitBuffer.Clear();
-
-            int count = Physics.OverlapSphereNonAlloc(center, radius, ColliderBuffer, layerMask);
-            
-            for (int i = 0; i < count; i++)
-            {
-                var unit = GetUnitFromCollider(ColliderBuffer[i]);
-                if (unit != null && !UnitBuffer.Contains(unit))
-                {
-                    UnitBuffer.Add(unit);
-                }
-            }
-            
-            return new List<GameObject>(UnitBuffer);
-        }
-
+        
         /// <summary>
         /// 扇形检测
         /// </summary>
+        /// <param name="center">扇形中心点</param>
+        /// <param name="forward">扇形方向（世界空间）</param>
+        /// <param name="radius">扇形半径</param>
+        /// <param name="angle">扇形总角度（度）</param>
+        /// <param name="list">输出列表</param>
+        /// <param name="layerMask">层级遮罩</param>
+        /// <param name="height">扇形高度（0 表示无高度限制）</param>
         public static void OverlapFan(Vector3 center, Vector3 forward, float radius, float angle, ListComponent<GameObject> list, int layerMask, float height = 0f)
         {
             UnitBuffer.Clear();
@@ -94,83 +80,29 @@ namespace ET
                 if (collider == null)
                     continue;
 
-                // 可选高度限制（沿 world up）
-                if (halfHeight > 0f)
+                // 高度过滤：检查目标的 Collider 边界是否与扇形高度范围有重叠
+                if (halfHeight > 0f && !CheckHeightOverlap(center.y, halfHeight, collider))
                 {
-                    float dy = Mathf.Abs(collider.transform.position.y - center.y);
-                    if (dy > halfHeight)
-                    {
-                        continue;
-                    }
+                    continue;
                 }
 
-                // 检查是否在扇形角度内（水平扇形）
-                Vector3 directionToTarget = (collider.transform.position - center).normalized;
-                directionToTarget.y = 0;
-                forward.y = 0;
-
-                float angleToTarget = Vector3.Angle(forward.normalized, directionToTarget);
-                if (angleToTarget <= halfAngle)
+                // 角度过滤：检查目标是否在扇形角度范围内（水平扇形）
+                if (!CheckAngleInFan(center, forward, collider.transform.position, halfAngle))
                 {
-                    var unit = GetUnitFromCollider(collider);
-                    if (unit != null && !UnitBuffer.Contains(unit))
-                    {
-                        UnitBuffer.Add(unit);
-                    }
+                    continue;
+                }
+
+                // 添加到结果列表
+                var unit = GetUnitFromCollider(collider);
+                if (unit != null && !UnitBuffer.Contains(unit))
+                {
+                    UnitBuffer.Add(unit);
                 }
             }
 
             list.AddRange(UnitBuffer);
         }
-
-        public static List<GameObject> OverlapFan(Vector3 center, Vector3 forward, float radius, float angle, int layerMask, float height = 0f)
-        {
-            UnitBuffer.Clear();
-
-            // 先用球体检测获取范围内的目标
-            int count = Physics.OverlapSphereNonAlloc(center, radius, ColliderBuffer, layerMask);
-            
-            float halfAngle = angle * 0.5f;
-            float halfHeight = height > 0f ? height * 0.5f : 0f;
-            
-            for (int i = 0; i < count; i++)
-            {
-                var collider = ColliderBuffer[i];
-                if (collider == null)
-                    continue;
-
-                // 可选高度限制（沿 world up）：
-                // - 俯视角游戏但存在跳跃/浮空：需要限制扇形对空/对地的有效高度范围。
-                // - 兼容旧数据：height <= 0 表示不启用高度限制（旧行为）。
-                // 注意：OverlapFan 的角度判断是“水平扇形”（会把 y 归零），因此高度也按 world y 计算。
-                if (halfHeight > 0f)
-                {
-                    float dy = Mathf.Abs(collider.transform.position.y - center.y);
-                    if (dy > halfHeight)
-                    {
-                        continue;
-                    }
-                }
-
-                // 检查是否在扇形角度内
-                Vector3 directionToTarget = (collider.transform.position - center).normalized;
-                directionToTarget.y = 0;
-                forward.y = 0;
-                
-                float angleToTarget = Vector3.Angle(forward.normalized, directionToTarget);
-                if (angleToTarget <= halfAngle)
-                {
-                    var unit = GetUnitFromCollider(collider);
-                    if (unit != null && !UnitBuffer.Contains(unit))
-                    {
-                        UnitBuffer.Add(unit);
-                    }
-                }
-            }
-
-            return new List<GameObject>(UnitBuffer);
-        }
-
+        
         /// <summary>
         /// 胶囊体检测
         /// </summary>
@@ -198,29 +130,62 @@ namespace ET
 
             list.AddRange(UnitBuffer);
         }
-
-        public static List<GameObject> OverlapCapsule(Vector3 center, float radius, float height, Quaternion orientation, int layerMask)
+        
+        /// <summary>
+        /// 检查目标的 Collider 边界是否与扇形高度范围有重叠
+        /// </summary>
+        /// <param name="centerY">扇形中心点的 Y 坐标</param>
+        /// <param name="halfHeight">扇形半高</param>
+        /// <param name="collider">目标的 Collider</param>
+        /// <returns>如果有重叠返回 true，否则返回 false</returns>
+        private static bool CheckHeightOverlap(float centerY, float halfHeight, Collider collider)
         {
-            UnitBuffer.Clear();
-
-            // 计算胶囊体两端点
-            float halfHeight = Mathf.Max(0, (height - radius * 2) * 0.5f);
-            Vector3 up = orientation * Vector3.up;
-            Vector3 point0 = center - up * halfHeight;
-            Vector3 point1 = center + up * halfHeight;
-
-            int count = Physics.OverlapCapsuleNonAlloc(point0, point1, radius, ColliderBuffer, layerMask);
+            float fanBottom = centerY - halfHeight;
+            float fanTop = centerY + halfHeight;
             
-            for (int i = 0; i < count; i++)
-            {
-                var unit = GetUnitFromCollider(ColliderBuffer[i]);
-                if (unit != null && !UnitBuffer.Contains(unit))
-                {
-                    UnitBuffer.Add(unit);
-                }
-            }
+            Bounds colliderBounds = collider.bounds;
+            float targetBottom = colliderBounds.min.y;
+            float targetTop = colliderBounds.max.y;
+            
+            // 检查是否有重叠：目标的底部在扇形顶部之上，或目标的顶部在扇形底部之下，则无重叠
+            return !(targetBottom > fanTop || targetTop < fanBottom);
+        }
 
-            return new List<GameObject>(UnitBuffer);
+        /// <summary>
+        /// 检查目标是否在扇形角度范围内（水平扇形）
+        /// </summary>
+        /// <param name="center">扇形中心点</param>
+        /// <param name="forward">扇形方向</param>
+        /// <param name="targetPos">目标位置</param>
+        /// <param name="halfAngle">扇形半角（度）</param>
+        /// <returns>如果在角度范围内返回 true，否则返回 false</returns>
+        private static bool CheckAngleInFan(Vector3 center, Vector3 forward, Vector3 targetPos, float halfAngle)
+        {
+            // 计算水平方向向量：先计算方向，y 置 0，然后归一化
+            Vector3 directionToTarget = targetPos - center;
+            directionToTarget.y = 0;
+            
+            // 如果水平距离为 0（目标在正上方或正下方），跳过
+            if (directionToTarget.sqrMagnitude < 1e-6f)
+            {
+                return false;
+            }
+            directionToTarget.Normalize();
+            
+            // forward 的水平方向向量
+            Vector3 forwardFlat = forward;
+            forwardFlat.y = 0;
+            
+            // 如果 forward 的水平分量为 0（forward 垂直向上或向下），跳过
+            if (forwardFlat.sqrMagnitude < 1e-6f)
+            {
+                return false;
+            }
+            forwardFlat.Normalize();
+
+            // 计算角度并判断
+            float angleToTarget = Vector3.Angle(forwardFlat, directionToTarget);
+            return angleToTarget <= halfAngle;
         }
 
         /// <summary>

@@ -201,10 +201,6 @@ namespace ET
         /// <summary>是否已激活判定</summary>
         [NonSerialized]
         public bool IsActive;
-        
-        /// <summary>是否已完成判定</summary>
-        [NonSerialized]
-        public bool IsCompleted;
     }
 
     /// <summary>

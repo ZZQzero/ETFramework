@@ -12,6 +12,8 @@ namespace ET
     public class AttackComponent : Entity, IAwake<string>, IDestroy, IUpdate, IFixedUpdate
     {
         public AnimatorComponent AnimatorComponent { get; set; }
+        
+        public CameraFollowComponent CameraFollow { get; set; }
         #region 配置数据
         
         /// <summary>攻击配置资源路径</summary>
@@ -99,6 +101,23 @@ namespace ET
         /// <summary>连击期间累计命中数</summary>
         public int TotalHitCount { get; set; }
         
+        #endregion
+
+        #region AttachedActives（运行时显隐控制）
+
+        /// <summary>
+        /// Active 轨道：记录被本次攻击流程“接管过”的对象初始 activeSelf，用于退出攻击/切段时恢复。
+        /// </summary>
+        public Dictionary<GameObject, bool> AttachedActiveOriginalStates { get; set; } = new Dictionary<GameObject, bool>();
+
+        /// <summary>
+        /// Active 轨道：引用计数（支持同一对象多个区间重叠）。
+        /// - Start：+1
+        /// - End：-1
+        /// - Count>0：在区间内显示；Count==0：区间外隐藏（但退出攻击会恢复到 OriginalStates）
+        /// </summary>
+        public Dictionary<GameObject, int> AttachedActiveRefCounts { get; set; } = new Dictionary<GameObject, int>();
+
         #endregion
 
         #region 位移控制

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using PrimeTween;
+using UnityEngine;
 using Unity.Mathematics;
 using Unity.Cinemachine;
 
@@ -19,7 +20,6 @@ namespace ET
                 return;
             }
             self.EnableFollow = true;
-            // 初始化相机配置
             self.InitializeCamera();
         }
         
@@ -28,23 +28,21 @@ namespace ET
         /// </summary>
         private static void InitializeCamera(this CameraFollowComponent self)
         {
-            if (self.VirtualCamera == null)
-            {
-                return;
-            }
+            self.CameraFollowProxy = new GameObject("CameraFollowProxy");
+            self.CameraFollowProxy.AddComponent<CameraFollowProxy>();
             self.Follow = self.VirtualCamera.GetComponent<CinemachineFollow>();
-            self.RotationComposer = self.VirtualCamera.GetComponent<CinemachineRotationComposer>();
             if (self.Follow != null)
             {
                 self.Follow.FollowOffset = new Vector3(0,self.FollowOffsetY,self.FollowOffsetZ);
+                self.Follow.TrackerSettings.PositionDamping = new Vector3(0.6f, 1.0f, 0.6f);
             }
-            if (self.RotationComposer != null)
+            self.CameraOffset = self.VirtualCamera.GetComponent<CinemachineCameraOffset>();
+            if(self.CameraOffset != null)
             {
-                self.RotationComposer.Damping = Vector2.one * 0.2f;
-                self.RotationComposer.Composition.DeadZone.Size = Vector2.one * 0.2f;
-                self.RotationComposer.Composition.DeadZone.Enabled = false;
-                self.RotationComposer.Composition.HardLimits.Enabled = false;
+                self.CameraOffset.Offset = Vector3.zero;
             }
+
+            self.BaseFov = self.VirtualCamera.Lens.FieldOfView;
         }
         
         [EntitySystem]
@@ -54,53 +52,18 @@ namespace ET
             {
                 return;
             }
-            
-            if(self.FollowTarget == null)
-            {
-                GameObjectComponent gameObjectComponent = self.FollowUnit.GetComponent<GameObjectComponent>();
-                if (gameObjectComponent == null || gameObjectComponent.Transform == null)
-                {
-                    return;
-                }
-                self.FollowTarget = gameObjectComponent.Transform;
-                if(self.FollowTarget == null)
-                {
-                    return;
-                }
 
-                self.VirtualCamera.Target.LookAtTarget = self.FollowTarget;
+            if (self.FollowTarget == null)
+            {
+                var goc = self.FollowUnit.GetComponent<GameObjectComponent>();
+                if (goc == null) return;
+                
+                var proxy = self.CameraFollowProxy.GetComponent<CameraFollowProxy>();
+                proxy.target = goc.Transform.Find("Target");
+                proxy.fixedY = 0f;
+
+                self.FollowTarget = proxy.transform;
                 self.VirtualCamera.Target.TrackingTarget = self.FollowTarget;
-            }
-
-            if (self.CharacterController != null)
-            {
-                // 检查是否有输入或正在移动（更精确的移动检测）
-                bool isActive = (self.CharacterController.Input != null && self.CharacterController.Input.HasMoveInput()) || 
-                                self.CharacterController.GetNormalizedAnimationSpeed() > 0.01f || 
-                                self.CharacterController.GetVerticalAnimationSpeed() > 0.01f;
-
-                if (isActive)
-                {
-                    self.Follow.TrackerSettings.PositionDamping = Vector3.one * 2.5f;
-                    self.RotationComposer.Composition.DeadZone.Enabled = true;
-                    self.RotationComposer.Composition.HardLimits.Enabled = true;
-                }
-                else
-                {
-                    // 角色停止时：降低阻尼，禁用Lookahead以确保正确归位
-                    if (self.Follow.TrackerSettings.PositionDamping.x > 0.5f)
-                    {
-                        self.Follow.TrackerSettings.PositionDamping -= Vector3.one * (Time.deltaTime * self.DampingSmoothness);
-                    }
-                    if(self.Follow.TrackerSettings.PositionDamping.x < 0.5f)
-                    {
-                        self.Follow.TrackerSettings.PositionDamping = Vector3.one * 0.5f;
-                    }
-                }
-            }
-            else
-            {
-                self.CharacterController = self.FollowUnit.GetComponent<CharacterControllerComponent>();
             }
         }
         
@@ -111,9 +74,29 @@ namespace ET
             if (self.FollowTarget != null)
             {
                 Object.Destroy(self.FollowTarget.gameObject);
-                self.FollowTarget = null;
             }
+            if (self.CameraFollowProxy != null)
+            {
+                Object.Destroy(self.CameraFollowProxy);
+                self.CameraFollowProxy = null;
+            }
+
+            self.FollowTarget = null;
             self.VirtualCamera = null;
+        }
+        
+        public static void SetCameraOffest(this CameraFollowComponent self,Vector3 offset)
+        {
+            self.CameraOffset.Offset = offset;
+            Tween.Custom(self.CameraOffset.Offset, Vector3.zero, 0.25f, 
+                value => self.CameraOffset.Offset = value);
+        }
+
+        public static void SetCameraFov(this CameraFollowComponent self, float fov)
+        {
+            self.VirtualCamera.Lens.FieldOfView = self.BaseFov + fov;
+            Tween.Custom(self.VirtualCamera.Lens.FieldOfView,self.BaseFov, 0.25f,
+                value => self.VirtualCamera.Lens.FieldOfView = value);
         }
     }
 }

@@ -45,6 +45,11 @@
     box-shadow: 0px 3px 8px rgba(65, 105, 225, 0.5);
 }
 
+/* 右侧拖拽缩放（水平双向箭头） */
+.timeline-clip.cursor-resize-h {
+    cursor: resize-horizontal;
+}
+
 /* Clip 按类型配色 */
 .timeline-clip.type-animation { background-color: rgba(51, 153, 229, 0.50); border-color: rgba(36, 107, 160, 1.0); }
 .timeline-clip.type-effect    { background-color: rgba(39, 223, 63, 0.5); border-color: rgba(160, 71, 36, 1.0); }

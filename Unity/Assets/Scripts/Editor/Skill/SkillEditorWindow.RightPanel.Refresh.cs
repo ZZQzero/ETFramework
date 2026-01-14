@@ -363,6 +363,11 @@ public partial class SkillEditorWindow : EditorWindow
             hitBoxTriggerTimeField.SetValueWithoutNotify(0f);
             hitBoxTriggerTimeField.SetEnabled(false);
         }
+        if (hitBoxTriggerFrameField != null)
+        {
+            hitBoxTriggerFrameField.SetValueWithoutNotify(0);
+            hitBoxTriggerFrameField.SetEnabled(false);
+        }
         if (hitBoxNormalizedStartField != null) hitBoxNormalizedStartField.SetValueWithoutNotify(0f);
         if (hitBoxNormalizedEndField != null) hitBoxNormalizedEndField.SetValueWithoutNotify(1f);
         if (hitBoxOffsetField != null) hitBoxOffsetField.SetValueWithoutNotify(Vector3.zero);

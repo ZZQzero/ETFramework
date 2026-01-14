@@ -4,7 +4,6 @@ using System.Reflection;
 using Animancer;
 using ET;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
@@ -34,18 +33,6 @@ public partial class SkillEditorWindow : EditorWindow
 
     #region HitStop 预览
     private int previewHitStopRemainingMs;
-    private float previewHitStopStartTime; // HitStop 开始时的播放时间
-    private float previewHitStopEndTime; // HitStop 结束时的播放时间
-    private float previewLastPlaybackTime;
-    private bool hasPreviewLastPlaybackTime;
-    #endregion
-
-    #region TimeScale 预览
-    private float previewTimeScale = 1f;
-    private int previewTimeScaleRemainingMs;
-    // 待应用的 TimeScale（HitStop 期间触发的 TimeScale，等待 HitStop 结束后应用）
-    private float pendingTimeScale = 1f;
-    private int pendingTimeScaleDurationMs = 0;
     #endregion
 
     #region 命中检测预览
@@ -58,6 +45,17 @@ public partial class SkillEditorWindow : EditorWindow
     /// 当前激活的 HitBox 及其命中的目标（用于可视化）
     /// </summary>
     private readonly Dictionary<HitBoxData, List<GameObject>> previewActiveHitBoxes = new Dictionary<HitBoxData, List<GameObject>>();
+
+    /// <summary>
+    /// 关键帧 HitBox（NormalizedStart==NormalizedEnd）在编辑器预览中的触发去重：
+    /// - key: seg.Id
+    /// - value: 本段已触发过的关键帧 HitBox 集合
+    /// 说明：拖拽 playhead 时会频繁调用命中检测预览，必须去重避免重复触发。
+    /// </summary>
+    private readonly Dictionary<int, HashSet<HitBoxData>> previewTriggeredKeyFrameHitBoxes = new Dictionary<int, HashSet<HitBoxData>>();
+
+    private float previewLastHitDetectionTime;
+    private bool hasPreviewLastHitDetectionTime;
     #endregion
 
     #region VFX 预览
@@ -271,70 +269,12 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        #region 处理 HitStop 和 TimeScale 状态更新
-
-        // 记录 HitStop 之前的状态，用于检测 HitStop 是否刚结束
-        bool wasInHitStop = previewHitStopRemainingMs > 0;
-
-        // 更新 HitStop 倒计时
         if (previewHitStopRemainingMs > 0)
         {
             previewHitStopRemainingMs = Mathf.Max(0, previewHitStopRemainingMs - Mathf.RoundToInt(deltaTime * 1000f));
         }
 
-        // 处理 HitStop 刚结束时的逻辑
-        if (wasInHitStop && previewHitStopRemainingMs <= 0)
-        {
-            // 1. 应用 HitStop 期间积累的 TimeScale
-            if (pendingTimeScaleDurationMs > 0)
-            {
-                previewTimeScale = Mathf.Max(0.01f, pendingTimeScale);
-                previewTimeScaleRemainingMs = pendingTimeScaleDurationMs;
-                pendingTimeScale = 1f;
-                pendingTimeScaleDurationMs = 0;
-            }
-
-            // 2. 检查 HitStop 期间跳过的事件（解决第二个 HitBox 触发问题）
-            // HitStop 期间时间停止，导致后续事件被跳过，这里需要追触发
-            TryTriggerPreviewHitStopInRange(previewHitStopStartTime, previewHitStopEndTime, includeStart: false, includeEnd: true);
-            TryTriggerPreviewTimeScaleInRange(previewHitStopStartTime, previewHitStopEndTime, includeStart: false, includeEnd: true);
-            TryTriggerPreviewVfxInRange(previewHitStopStartTime, previewHitStopEndTime, includeStart: false, includeEnd: true);
-            TryTriggerPreviewSfxInRange(previewHitStopStartTime, previewHitStopEndTime, includeStart: false, includeEnd: true);
-            TryTriggerPreviewHitDetectionInRange(previewHitStopStartTime, previewHitStopEndTime, includeStart: false, includeEnd: true);
-        }
-
-        #endregion
-
-        #region 处理 TimeScale 状态更新
-
-        // 更新 TimeScale 剩余时间
-        // 优先级规则：HitStop > TimeScale
-        // - HitStop 期间，TimeScale 倒计时暂停
-        // - HitStop 结束后，TimeScale 倒计时继续
-        // - TimeScale 持续时间基于"游戏时间"（受 TimeScale 影响的时间）
-        if (previewTimeScaleRemainingMs > 0)
-        {
-            // 只有在 HitStop 不活跃时才更新 TimeScale 倒计时
-            if (previewHitStopRemainingMs <= 0)
-            {
-                // 用游戏时间（缩放后的时间）来减少剩余时间
-                // 例如：TimeScale=0.5，1000ms游戏时间需要2000ms真实时间
-                float gameTimeDelta = deltaTime * previewTimeScale;
-                previewTimeScaleRemainingMs = Mathf.Max(0, previewTimeScaleRemainingMs - Mathf.RoundToInt(gameTimeDelta * 1000f));
-
-                if (previewTimeScaleRemainingMs <= 0)
-                {
-                    previewTimeScale = 1f; // 恢复正常速度
-                }
-            }
-        }
-
-        #endregion
-
         float speed = Mathf.Max(0f, playbackSpeed);
-        // 应用 TimeScale 到播放速度
-        speed *= previewTimeScale;
-        
         float prevTime = currentPlaybackTime;
         if (previewHitStopRemainingMs <= 0)
         {
@@ -361,7 +301,6 @@ public partial class SkillEditorWindow : EditorWindow
         if (previewHitStopRemainingMs <= 0)
         {
             TryTriggerPreviewHitStop(prevTime, currentPlaybackTime, maxTime);
-            TryTriggerPreviewTimeScale(prevTime, currentPlaybackTime, maxTime, wrapped);
             TryTriggerPreviewVfx(prevTime, currentPlaybackTime, maxTime, wrapped);
             TryTriggerPreviewSfx(prevTime, currentPlaybackTime, maxTime, wrapped);
             TryTriggerPreviewHitDetection(prevTime, currentPlaybackTime, maxTime, wrapped);
@@ -384,30 +323,8 @@ public partial class SkillEditorWindow : EditorWindow
 
     private float GetMaxPlaybackTime()
     {
-        // 使用 config 作为“真实时间轴”的来源（避免 viewMode 切换导致 trackDataList 缺失）
-        if (config == null || config.Segments == null || config.Segments.Count == 0)
-        {
-            return 0f;
-        }
-
-        float max = 0f;
-        foreach (var seg in config.Segments)
-        {
-            if (seg == null)
-            {
-                continue;
-            }
-
-            float duration = seg.Duration;
-            if (duration <= 0f && seg.AnimationClipTrans != null && seg.AnimationClipTrans.Clip != null)
-            {
-                float s = Mathf.Max(0.01f, seg.AnimationClipTrans.Speed);
-                duration = seg.AnimationClipTrans.Clip.length / s;
-            }
-
-            max = Mathf.Max(max, seg.StartTime + Mathf.Max(0f, duration));
-        }
-        return max;
+        // 播放预览的最大范围：取“轨道内容最大结束时间”（动画段 + VFX/SFX/HitBox/Active 等）
+        return GetMaxClipEndTime();
     }
 
     private void StartPreviewPlayback()
@@ -425,7 +342,6 @@ public partial class SkillEditorWindow : EditorWindow
         EnsurePreviewAnimatorSettings();
 
         previewHitStopRemainingMs = 0;
-        hasPreviewLastPlaybackTime = false;
 
         isPlaying = true;
         hasLastEditorUpdateTime = false; // 让下一帧重新取时间基准
@@ -451,11 +367,6 @@ public partial class SkillEditorWindow : EditorWindow
         UpdatePlayButtonText();
 
         previewHitStopRemainingMs = 0;
-        hasPreviewLastPlaybackTime = false;
-        previewTimeScale = 1f;
-        previewTimeScaleRemainingMs = 0;
-        pendingTimeScale = 1f;
-        pendingTimeScaleDurationMs = 0;
         CleanupPreviewVfx();
         CleanupPreviewSfx();
         CleanupPreviewAttachedActives();
@@ -732,13 +643,8 @@ public partial class SkillEditorWindow : EditorWindow
         // 时间倒退（例如手动拖拽到更小时间、或 Stop 重置）时不触发
         if (currentTime < prevTime)
         {
-            hasPreviewLastPlaybackTime = false;
             return;
         }
-
-        // 记录上一次播放时间（用于未来更精细的跨帧检测扩展）
-        previewLastPlaybackTime = currentTime;
-        hasPreviewLastPlaybackTime = true;
 
         if (config == null || config.Segments == null || config.Segments.Count == 0)
         {
@@ -790,9 +696,7 @@ public partial class SkillEditorWindow : EditorWindow
             }
 
             // 段提前结束阈值：运行时超过 AnimationEnd 就会结束，不会再触发后续 hitbox
-            float endNorm = seg.TimeWindow != null ? seg.TimeWindow.AnimationEnd : 1f;
-            if (endNorm <= 0f) endNorm = 1f;
-            endNorm = Mathf.Clamp01(endNorm);
+            float endNorm = GetSegmentAnimationEndNorm(seg);
 
             foreach (var hb in seg.HitBoxes)
             {
@@ -818,180 +722,19 @@ public partial class SkillEditorWindow : EditorWindow
                     continue;
                 }
 
-                // 获取 HitStop 持续时间
                 int ms = hb.Feedback != null ? hb.Feedback.HitStopMs : 0;
                 if (ms <= 0)
                 {
                     ms = config.DefaultHitStopMs;
                 }
                 ms = Mathf.Max(0, ms);
-
-                // 记录最长的 HitStop 及其精确时间范围
-                // 用于在 HitStop 结束后检查跳过的事件
-                if (ms > bestMs)
-                {
-                    bestMs = ms;
-                    previewHitStopStartTime = triggerTime;  // 实际触发时间
-                    previewHitStopEndTime = triggerTime + (float)ms / 1000f;  // 结束时间
-                }
+                bestMs = Mathf.Max(bestMs, ms);
             }
         }
 
         if (bestMs > 0)
         {
             previewHitStopRemainingMs = bestMs;
-            // HitStop 开始和结束时间已经在上面找到最长 HitStop 时设置好了
-        }
-    }
-
-    #endregion
-
-    #region 播放预览：TimeScale（时间缩放）
-
-    /// <summary>
-    /// 尝试触发 TimeScale 预览
-    /// </summary>
-    private void TryTriggerPreviewTimeScale(float prevTime, float currentTime, float maxTime, bool wrapped)
-    {
-        // 时间倒退（例如手动拖拽到更小时间、或 Stop 重置）时重置
-        // 注意：循环播放时 wrapped = true，不应该重置 TimeScale
-        if (currentTime < prevTime && !wrapped)
-        {
-            previewTimeScale = 1f;
-            previewTimeScaleRemainingMs = 0;
-            pendingTimeScale = 1f;
-            pendingTimeScaleDurationMs = 0;
-            return;
-        }
-
-        if (config == null || config.Segments == null || config.Segments.Count == 0)
-        {
-            return;
-        }
-
-        // Loop wrap：把区间拆成两段检查
-        if (wrapped)
-        {
-            // [prevTime, maxTime]
-            TryTriggerPreviewTimeScaleInRange(prevTime, maxTime, includeStart: false, includeEnd: true);
-            // [0, currentTime]
-            TryTriggerPreviewTimeScaleInRange(0f, currentTime, includeStart: false, includeEnd: true);
-        }
-        else
-        {
-            TryTriggerPreviewTimeScaleInRange(prevTime, currentTime, includeStart: false, includeEnd: true);
-        }
-    }
-
-    /// <summary>
-    /// 在指定时间范围内尝试触发 TimeScale
-    /// </summary>
-    private void TryTriggerPreviewTimeScaleInRange(float fromTime, float toTime, bool includeStart, bool includeEnd)
-    {
-        if (config == null || config.Segments == null)
-        {
-            return;
-        }
-
-        float bestTimeScale = 1f;
-        int bestDurationMs = 0;
-
-        foreach (var seg in config.Segments)
-        {
-            if (seg?.HitBoxes == null || seg.HitBoxes.Count == 0)
-            {
-                continue;
-            }
-
-            // 段时长：使用 segment.Duration
-            float duration = Mathf.Max(0f, seg.Duration);
-            if (duration <= 0f && seg.AnimationClipTrans != null && seg.AnimationClipTrans.Clip != null)
-            {
-                float s = Mathf.Max(0.01f, seg.AnimationClipTrans.Speed);
-                duration = seg.AnimationClipTrans.Clip.length / s;
-            }
-
-            if (duration <= 0f)
-            {
-                continue;
-            }
-
-            // 段提前结束阈值
-            float endNorm = seg.TimeWindow != null ? seg.TimeWindow.AnimationEnd : 1f;
-            if (endNorm <= 0f) endNorm = 1f;
-            endNorm = Mathf.Clamp01(endNorm);
-
-            foreach (var hb in seg.HitBoxes)
-            {
-                if (hb == null || hb.Feedback == null)
-                {
-                    continue;
-                }
-
-                // 使用 NormalizedStart 作为触发点
-                float n = Mathf.Clamp01(hb.NormalizedStart);
-                if (n > endNorm)
-                {
-                    continue;
-                }
-
-                float triggerTime = seg.StartTime + duration * n;
-                bool inRange =
-                    (includeStart ? triggerTime >= fromTime : triggerTime > fromTime) &&
-                    (includeEnd ? triggerTime <= toTime : triggerTime < toTime);
-
-                if (!inRange)
-                {
-                    continue;
-                }
-
-                // 获取 TimeScale 配置
-                float timeScale = hb.Feedback.TimeScale;
-                int durationMs = hb.Feedback.TimeScaleDurationMs;
-
-                // 处理有效的 TimeScale 配置
-                // 要求：TimeScale ≠ 1、有持续时间、范围在 0.01-10 之间
-                if (timeScale != 1f && durationMs > 0 && timeScale >= 0.01f && timeScale <= 10f)
-                {
-                    // 选择最慢的 TimeScale（最小值）
-                    // 如果 TimeScale 相同，选择持续时间最长的
-                    // 这样可以处理多个 TimeScale 同时触发的情况
-                    if (timeScale < bestTimeScale ||
-                        (Mathf.Approximately(timeScale, bestTimeScale) && durationMs > bestDurationMs))
-                    {
-                        bestTimeScale = timeScale;
-                        bestDurationMs = durationMs;
-                    }
-                }
-            }
-        }
-
-        // 应用 TimeScale（处理优先级和状态）
-        if (bestTimeScale != 1f && bestDurationMs > 0)
-        {
-            if (previewHitStopRemainingMs > 0)
-            {
-                // HitStop 期间：保存 TimeScale 到 pending 状态，等待 HitStop 结束后应用
-                // 选择最慢的 TimeScale（最小值）
-                if (pendingTimeScaleDurationMs <= 0 ||
-                    bestTimeScale < pendingTimeScale ||
-                    (Mathf.Approximately(bestTimeScale, pendingTimeScale) && bestDurationMs > pendingTimeScaleDurationMs))
-                {
-                    pendingTimeScale = Mathf.Max(0.01f, bestTimeScale);
-                    pendingTimeScaleDurationMs = bestDurationMs;
-                }
-            }
-            else
-            {
-                // 非 HitStop 期间：立即应用 TimeScale
-                // 如果当前已有 TimeScale，且新 TimeScale 更慢，则更新为更慢的
-                if (previewTimeScale >= 1f || bestTimeScale < previewTimeScale)
-                {
-                    previewTimeScale = Mathf.Max(0.01f, bestTimeScale);
-                    previewTimeScaleRemainingMs = bestDurationMs;
-                }
-                // 如果新的 TimeScale 更快但当前 TimeScale 未结束，则保持当前慢动作
-            }
         }
     }
 
@@ -1005,6 +748,14 @@ public partial class SkillEditorWindow : EditorWindow
         {
             return;
         }
+
+        // 内部时间倒退检测（用于 playhead 拖拽：调用方传入的 prevTime 可能是“伪上一帧”）
+        if (hasPreviewLastHitDetectionTime && !wrapped && currentTime + 1e-6f < previewLastHitDetectionTime)
+        {
+            CleanupPreviewHitDetection();
+        }
+        previewLastHitDetectionTime = currentTime;
+        hasPreviewLastHitDetectionTime = true;
 
         if (wrapped)
         {
@@ -1037,7 +788,7 @@ public partial class SkillEditorWindow : EditorWindow
         }
 
         Transform player = animancer.transform;
-        int layerMask = LayerMask.GetMask("Enemy");
+        int layerMask = previewHitTargetLayerMask.value;
 
         foreach (var seg in config.Segments)
         {
@@ -1060,20 +811,26 @@ public partial class SkillEditorWindow : EditorWindow
             }
 
             // 段提前结束阈值：运行时超过 AnimationEnd 就会结束，不会再触发后续 hitbox
-            float endNorm = seg.TimeWindow != null ? seg.TimeWindow.AnimationEnd : 1f;
-            if (endNorm <= 0f) endNorm = 1f;
-            endNorm = Mathf.Clamp01(endNorm);
+            float endNorm = GetSegmentAnimationEndNorm(seg);
 
             // 检查当前时间是否在当前段内
             float segmentStartTime = seg.StartTime;
             float segmentEffectiveEndTime = seg.StartTime + segDuration * endNorm;
             
-            // 如果时间不在当前段内，清理该段的命中目标（段切换时）
-            if (toTime < segmentStartTime || toTime > segmentEffectiveEndTime)
+            // 如果区间与该段没有交集，清理该段的命中目标（段切换时）
+            // 注意：这里必须用“区间交集”判断，而不是仅用 toTime。
+            // 否则当 currentTime 因浮点误差略微超过 segmentEffectiveEndTime 时，会把 AnimationEnd 那一帧的关键帧 HitBox 也跳过。
+            float evalFromTime = Mathf.Max(fromTime, segmentStartTime);
+            float evalToTime = Mathf.Min(toTime, segmentEffectiveEndTime);
+            if (evalToTime < evalFromTime)
             {
                 if (previewHitTargets.ContainsKey(seg.Id))
                 {
                     previewHitTargets[seg.Id].Clear();
+                }
+                if (previewTriggeredKeyFrameHitBoxes.ContainsKey(seg.Id))
+                {
+                    previewTriggeredKeyFrameHitBoxes[seg.Id].Clear();
                 }
                 continue;
             }
@@ -1095,29 +852,52 @@ public partial class SkillEditorWindow : EditorWindow
                     continue;
                 }
 
-                float start = Mathf.Clamp01(hb.NormalizedStart);
-                float end = Mathf.Clamp01(hb.NormalizedEnd);
-                
+                float start = Mathf.Min(Mathf.Clamp01(hb.NormalizedStart), endNorm);
+                float end = Mathf.Min(Mathf.Clamp01(hb.NormalizedEnd), endNorm);
+
+                // 关键帧 HitBox：NormalizedStart == NormalizedEnd，跨越触发点时执行一次检测并可视化
+                if (Mathf.Abs(end - start) < 1e-6f)
+                {
+                    float triggerTime = seg.StartTime + segDuration * start;
+                    bool inRange =
+                        (includeStart ? triggerTime >= evalFromTime : triggerTime > evalFromTime) &&
+                        (includeEnd ? triggerTime <= evalToTime : triggerTime < evalToTime);
+
+                    if (!inRange)
+                    {
+                        continue;
+                    }
+
+                    if (!previewTriggeredKeyFrameHitBoxes.TryGetValue(seg.Id, out var triggered))
+                    {
+                        triggered = new HashSet<HitBoxData>();
+                        previewTriggeredKeyFrameHitBoxes[seg.Id] = triggered;
+                    }
+
+                    if (triggered.Contains(hb))
+                    {
+                        continue;
+                    }
+
+                    PerformPreviewHitDetection(player, seg, hb, hitTargets, layerMask);
+                    triggered.Add(hb);
+                    continue;
+                }
+
                 if (end <= start)
                 {
                     continue;
                 }
 
-                // 检查 HitBox 是否在当前时间范围内激活
+                // 区间 HitBox：检查 HitBox 是否在当前时间范围内激活
                 float startTime = seg.StartTime + segDuration * start;
                 float endTime = seg.StartTime + segDuration * end;
 
                 // 检查时间范围是否有重叠（HitBox 激活窗口与检测时间范围有交集）
-                // 只有当 toTime（当前时间）在 HitBox 激活窗口内时才检测
-                bool isActive = toTime >= startTime && toTime <= endTime;
+                // 只有当 evalToTime（当前时间，已夹到 AnimationEnd）在 HitBox 激活窗口内时才检测
+                bool isActive = evalToTime >= startTime && evalToTime <= endTime;
                 
                 if (!isActive)
-                {
-                    continue;
-                }
-
-                // 检查是否超过段的结束阈值（使用外层已计算的 segmentEffectiveEndTime）
-                if (toTime > segmentEffectiveEndTime)
                 {
                     continue;
                 }
@@ -1273,6 +1053,8 @@ public partial class SkillEditorWindow : EditorWindow
     {
         previewHitTargets.Clear();
         previewActiveHitBoxes.Clear();
+        previewTriggeredKeyFrameHitBoxes.Clear();
+        hasPreviewLastHitDetectionTime = false;
     }
 
     #endregion
@@ -1332,6 +1114,9 @@ public partial class SkillEditorWindow : EditorWindow
             }
             segDuration = Mathf.Max(0f, segDuration);
 
+            // 段提前结束阈值：运行时超过 AnimationEnd 就会结束，编辑器预览需对齐
+            float endNorm = GetSegmentAnimationEndNorm(seg);
+
             for (int i = 0; i < seg.VisualEffects.Count; ++i)
             {
                 var vfx = seg.VisualEffects[i];
@@ -1341,6 +1126,10 @@ public partial class SkillEditorWindow : EditorWindow
                 }
 
                 float t = Mathf.Clamp01(vfx.NormalizedStart);
+                if (t > endNorm)
+                {
+                    continue;
+                }
                 float trigger = seg.StartTime + t * segDuration;
 
                 bool afterStart = includeStart ? trigger >= fromTime : trigger > fromTime;
@@ -1771,6 +1560,9 @@ public partial class SkillEditorWindow : EditorWindow
             }
             segDuration = Mathf.Max(0f, segDuration);
 
+            // 段提前结束阈值：运行时超过 AnimationEnd 就会结束，编辑器预览需对齐
+            float endNorm = GetSegmentAnimationEndNorm(seg);
+
             for (int i = 0; i < seg.SoundEffects.Count; ++i)
             {
                 var sfx = seg.SoundEffects[i];
@@ -1780,6 +1572,10 @@ public partial class SkillEditorWindow : EditorWindow
                 }
 
                 float t = Mathf.Clamp01(sfx.NormalizedStart);
+                if (t > endNorm)
+                {
+                    continue;
+                }
                 float trigger = seg.StartTime + t * segDuration;
 
                 bool afterStart = includeStart ? trigger >= fromTime : trigger > fromTime;
@@ -2155,9 +1951,7 @@ public partial class SkillEditorWindow : EditorWindow
 
             // 运行时段结束判定基于 TimeWindow.AnimationEnd（NormalizedTime 阈值），
             // 编辑器预览需对齐：把“可播放有效区间”裁到该阈值对应的绝对时长。
-            float endNorm = seg.TimeWindow != null ? seg.TimeWindow.AnimationEnd : 1f;
-            if (endNorm <= 0f) endNorm = 1f;
-            endNorm = Mathf.Clamp01(endNorm);
+            float endNorm = GetSegmentAnimationEndNorm(seg);
 
             float duration = seg.Duration * endNorm;
             if (duration <= 0f && seg.AnimationClipTrans != null && seg.AnimationClipTrans.Clip != null)

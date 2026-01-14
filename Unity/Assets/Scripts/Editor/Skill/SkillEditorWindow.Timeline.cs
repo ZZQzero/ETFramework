@@ -10,6 +10,8 @@ public partial class SkillEditorWindow : EditorWindow
     private const float LANE_PADDING_Y = 2f;
     private const float LANE_GAP_Y = 4f;
     private const float LANE_ROW_HEIGHT = CLIP_ITEM_HEIGHT + LANE_GAP_Y;
+    private const float RESIZE_HANDLE_HIT_WIDTH_PX = 6f; // 右侧拖拽缩放热区宽度（像素）
+    private const string RESIZE_CURSOR_CLASS = "cursor-resize-h";
     
     private readonly Dictionary<IClipItem, int> laneIndexByClip = new();
     private int draggingLaneIndex = -1;
@@ -18,9 +20,196 @@ public partial class SkillEditorWindow : EditorWindow
     private AnimationClipItem draggingOwnerAnimationClipItem;
     private List<(IClipItem item, VisualElement element)> draggingOwnerChildClips;
 
+    // 子 clip（HitBox/Active）拖拽到 AnimationEnd 边界时：显示红线提示
+    private VisualElement dragAnimationEndLineElement;
+    private VisualElement dragAnimationEndLineOwnerTrackElement; // AnimationClip 所在轨道行
+    private VisualElement dragAnimationEndLineChildTrackElement; // 当前被拖动子 clip 所在轨道行
+
+    // 右侧拖拽缩放（Active/Effect/HitBox）
+    private bool isResizingClip;
+    private VisualElement resizingClipElement;
+    private IClipItem resizingClipItem;
+    private float resizeStartMouseX;
+    private float resizeStartWidthPx;
+    private float resizeClipLeftPx; // 固定左侧（用于计算最大可用宽度）
+    private AnimationClipItem resizingOwnerClipItem; // 所属 AnimationClip（用于 Active/HitBox 约束 AnimationEnd）
+
     private static bool IsLaneTrack(ITrackItem track)
     {
         return track is EffectTrack || track is SoundTrack || track is HitBoxTrack || track is ActiveTrack;
+    }
+
+    private static bool IsResizableClip(IClipItem clipItem)
+    {
+        // 右侧拖拽改变长度：Active / Effect / HitBox
+        return clipItem is ActiveClipItem || clipItem is EffectClipItem || clipItem is HitBoxClipItem;
+    }
+
+    private static bool IsMouseNearRightEdge(VisualElement el, Vector2 localMousePos)
+    {
+        if (el == null)
+        {
+            return false;
+        }
+
+        float w = el.resolvedStyle.width;
+        if (w <= 0f)
+        {
+            w = el.layout.width;
+        }
+        if (w <= 0f)
+        {
+            return false;
+        }
+
+        return localMousePos.x >= (w - RESIZE_HANDLE_HIT_WIDTH_PX);
+    }
+
+    private static float GetElementLeftPx(VisualElement el)
+    {
+        if (el == null)
+        {
+            return 0f;
+        }
+
+        var left = el.style.left;
+        if (left.keyword == StyleKeyword.Auto)
+        {
+            return el.layout.x;
+        }
+
+        return left.value.value;
+    }
+
+    private static float GetElementWidthPx(VisualElement el)
+    {
+        if (el == null)
+        {
+            return 0f;
+        }
+
+        float w = el.resolvedStyle.width;
+        if (w <= 0f)
+        {
+            w = el.layout.width;
+        }
+        if (w <= 0f)
+        {
+            var sw = el.style.width;
+            if (sw.keyword != StyleKeyword.Auto)
+            {
+                w = sw.value.value;
+            }
+        }
+        return w;
+    }
+
+    private void EnsureDragAnimationEndLine()
+    {
+        if (timelineContent == null)
+        {
+            return;
+        }
+
+        if (dragAnimationEndLineElement != null)
+        {
+            return;
+        }
+
+        // 兜底：避免热重载/重复创建导致残留
+        var existing = timelineContent.Q<VisualElement>("DragAnimationEndLine");
+        if (existing != null)
+        {
+            existing.RemoveFromHierarchy();
+        }
+
+        var line = new VisualElement();
+        line.name = "DragAnimationEndLine";
+        line.style.position = Position.Absolute;
+        line.style.top = 0f;
+        line.style.left = 0f;
+        line.style.width = PLAYHEAD_LINE_WIDTH;
+        line.style.height = 0f;
+        // 与播放轴一致的红色
+        line.style.backgroundColor = new Color(1f, 0.3f, 0.3f, 1f);
+        line.style.display = DisplayStyle.None;
+        line.pickingMode = PickingMode.Ignore;
+
+        timelineContent.Add(line); // 保持在最上层
+        dragAnimationEndLineElement = line;
+    }
+
+    private void HideDragAnimationEndLine()
+    {
+        if (dragAnimationEndLineElement == null)
+        {
+            return;
+        }
+
+        dragAnimationEndLineElement.style.display = DisplayStyle.None;
+        dragAnimationEndLineOwnerTrackElement = null;
+        dragAnimationEndLineChildTrackElement = null;
+    }
+
+    private void ShowDragAnimationEndLine(float xPositionPx)
+    {
+        if (timelineContent == null)
+        {
+            return;
+        }
+
+        EnsureDragAnimationEndLine();
+        if (dragAnimationEndLineElement == null)
+        {
+            return;
+        }
+
+        // 没有轨道范围信息就不画（避免画满屏）
+        if (dragAnimationEndLineOwnerTrackElement == null || dragAnimationEndLineChildTrackElement == null)
+        {
+            dragAnimationEndLineElement.style.display = DisplayStyle.None;
+            return;
+        }
+
+        // 计算从 AnimationClip 轨道到子轨道的纵向范围（timelineContent 本地坐标）
+        float ownerTopWorld = dragAnimationEndLineOwnerTrackElement.worldBound.yMin;
+        float ownerBottomWorld = dragAnimationEndLineOwnerTrackElement.worldBound.yMax;
+        float childTopWorld = dragAnimationEndLineChildTrackElement.worldBound.yMin;
+        float childBottomWorld = dragAnimationEndLineChildTrackElement.worldBound.yMax;
+
+        float topWorld = Mathf.Min(ownerTopWorld, childTopWorld);
+        float bottomWorld = Mathf.Max(ownerBottomWorld, childBottomWorld);
+
+        float topPx = timelineContent.WorldToLocal(new Vector2(0f, topWorld)).y;
+        float bottomPx = timelineContent.WorldToLocal(new Vector2(0f, bottomWorld)).y;
+
+        dragAnimationEndLineElement.style.display = DisplayStyle.Flex;
+        // 红线居中在 AnimationEnd 的 x 位置
+        dragAnimationEndLineElement.style.left = Mathf.Max(0f, xPositionPx - PLAYHEAD_HALF_WIDTH);
+        dragAnimationEndLineElement.style.top = Mathf.Max(0f, topPx);
+        dragAnimationEndLineElement.style.height = Mathf.Max(0f, bottomPx - topPx);
+        dragAnimationEndLineElement.BringToFront();
+    }
+
+    private VisualElement FindClipElement(IClipItem clipItem)
+    {
+        if (clipItem == null || trackContainer == null)
+        {
+            return null;
+        }
+
+        // 这里只在拖拽开始时调用一次，性能足够；后续通过缓存 trackElement 来计算红线高度
+        var clipElements = trackContainer.Query<VisualElement>(className: "timeline-clip").ToList();
+        for (int i = 0; i < clipElements.Count; ++i)
+        {
+            var el = clipElements[i];
+            if (el?.userData is IClipItem c && ReferenceEquals(c, clipItem))
+            {
+                return el;
+            }
+        }
+
+        return null;
     }
 
     private static float GetLaneTopPx(int laneIndex)
@@ -374,50 +563,90 @@ public partial class SkillEditorWindow : EditorWindow
     // 获取所有clip中最大的结束时间（用于内容宽度、进度条范围等）
     private float GetMaxClipEndTime()
     {
-        float maxEndTime = 0f;
-        foreach (var trackItem in trackDataList)
+        // 约束：播放/尺子最大范围应取“轨道内容最大结束时间”。
+        // 说明：trackDataList 在视图切换（Global/ClipFocus）时可能会过滤为空；因此这里以 config 作为权威来源计算。
+        if (config == null || config.Segments == null || config.Segments.Count == 0)
         {
-            if (trackItem is AnimationTrack animTrack)
+            return 0f;
+        }
+
+        float maxEndTime = 0f;
+        foreach (var seg in config.Segments)
+        {
+            if (seg == null)
             {
-                foreach (var clip in animTrack.ClipList)
+                continue;
+            }
+
+            float segDuration = seg.Duration;
+            if (segDuration <= 0f && seg.AnimationClipTrans != null && seg.AnimationClipTrans.Clip != null)
+            {
+                float s = Mathf.Max(0.01f, seg.AnimationClipTrans.Speed);
+                segDuration = seg.AnimationClipTrans.Clip.length / s;
+            }
+            segDuration = Mathf.Max(0f, segDuration);
+
+            // AnimationClip 轨道：按“完整动画段”计算（时间轴可视化的最大范围）
+            maxEndTime = Mathf.Max(maxEndTime, seg.StartTime + segDuration);
+
+            // 段结束阈值：子轨道（Effect/Sound/HitBox/Active）的触发窗口限制在 AnimationEnd 内
+            float endNorm = GetSegmentAnimationEndNorm(seg);
+
+            // HitBox：区间结束点（不包含关键帧）
+            if (seg.HitBoxes != null)
+            {
+                foreach (var hb in seg.HitBoxes)
                 {
-                    float endTime = clip.StartTime + clip.Duration;
-                    if (endTime > maxEndTime) maxEndTime = endTime;
+                    if (hb == null) continue;
+                    float endN = Mathf.Clamp01(hb.NormalizedEnd);
+                    endN = Mathf.Min(endN, endNorm);
+                    float endTime = seg.StartTime + segDuration * endN;
+                    maxEndTime = Mathf.Max(maxEndTime, endTime);
                 }
             }
-            else if (trackItem is EffectTrack effectTrack)
+
+            // Active：区间结束点
+            if (seg.AttachedActives != null)
             {
-                foreach (var clip in effectTrack.ClipList)
+                foreach (var a in seg.AttachedActives)
                 {
-                    float endTime = clip.StartTime + clip.Duration;
-                    if (endTime > maxEndTime) maxEndTime = endTime;
+                    if (a == null) continue;
+                    float endN = Mathf.Clamp01(a.NormalizedEnd);
+                    endN = Mathf.Min(endN, endNorm);
+                    float endTime = seg.StartTime + segDuration * endN;
+                    maxEndTime = Mathf.Max(maxEndTime, endTime);
                 }
             }
-            else if (trackItem is SoundTrack soundTrack)
+
+            // VFX：触发点 + Length（允许超出动画段/最后一个段）
+            if (seg.VisualEffects != null)
             {
-                foreach (var clip in soundTrack.ClipList)
+                foreach (var vfx in seg.VisualEffects)
                 {
-                    float endTime = clip.StartTime + clip.Duration;
-                    if (endTime > maxEndTime) maxEndTime = endTime;
+                    if (vfx == null) continue;
+                    float tN = Mathf.Clamp01(vfx.NormalizedStart);
+                    tN = Mathf.Min(tN, endNorm);
+                    float trigger = seg.StartTime + segDuration * tN;
+                    float length = Mathf.Max(0f, vfx.Length);
+                    maxEndTime = Mathf.Max(maxEndTime, trigger + length);
                 }
             }
-            else if (trackItem is HitBoxTrack hitBoxTrack)
+
+            // SFX：触发点 + clip.length（允许超出动画段/最后一个段）
+            if (seg.SoundEffects != null)
             {
-                foreach (var clip in hitBoxTrack.ClipList)
+                foreach (var sfx in seg.SoundEffects)
                 {
-                    float endTime = clip.StartTime + clip.Duration;
-                    if (endTime > maxEndTime) maxEndTime = endTime;
-                }
-            }
-            else if (trackItem is ActiveTrack activeTrack)
-            {
-                foreach (var clip in activeTrack.ClipList)
-                {
-                    float endTime = clip.StartTime + clip.Duration;
-                    if (endTime > maxEndTime) maxEndTime = endTime;
+                    if (sfx == null) continue;
+                    float tN = Mathf.Clamp01(sfx.NormalizedStart);
+                    tN = Mathf.Min(tN, endNorm);
+                    float trigger = seg.StartTime + segDuration * tN;
+                    float length = (sfx.Clip != null) ? Mathf.Max(0.01f, sfx.Clip.length) : 0f;
+                    maxEndTime = Mathf.Max(maxEndTime, trigger + length);
                 }
             }
         }
+
         return maxEndTime;
     }
 
@@ -696,9 +925,7 @@ public partial class SkillEditorWindow : EditorWindow
         }
         else
         {
-            float leftPx = clipElement.style.left.keyword == StyleKeyword.Auto
-                ? clipElement.layout.x
-                : clipElement.style.left.value.value;
+            float leftPx = GetElementLeftPx(clipElement);
             startSeconds = Mathf.Max(0f, leftPx / pixelsPerSecond);
         }
 
@@ -861,9 +1088,7 @@ public partial class SkillEditorWindow : EditorWindow
         if (draggingClipItem == null) return;
 
         // 计算拖拽 clip 的当前像素位置（优先 style.left；如果未设置则回退到 layout.x）
-        float draggingLeftPx = draggingClip.style.left.keyword == StyleKeyword.Auto
-            ? draggingClip.layout.x
-            : draggingClip.style.left.value.value;
+        float draggingLeftPx = GetElementLeftPx(draggingClip);
 
         bool isLaneTrack = trackElement.userData is ITrackItem t && IsLaneTrack(t);
         float defaultTopPx = GetClipTopOffset();
@@ -946,6 +1171,34 @@ public partial class SkillEditorWindow : EditorWindow
             {
                 clipElement.RemoveFromClassList("dragging");
             }
+
+            // 离开时清理缩放光标样式
+            clipElement.RemoveFromClassList(RESIZE_CURSOR_CLASS);
+        });
+
+        // 鼠标移动（非拖拽状态）：右侧显示缩放光标
+        clipElement.RegisterCallback<MouseMoveEvent>(evt =>
+        {
+            if (clipElement == null)
+            {
+                return;
+            }
+
+            // 正在拖拽/缩放时不切换光标（避免闪烁）
+            if (isDragging || isResizingClip)
+            {
+                return;
+            }
+
+            if (clipElement.userData is IClipItem item && IsResizableClip(item))
+            {
+                bool nearRight = IsMouseNearRightEdge(clipElement, evt.localMousePosition);
+                clipElement.EnableInClassList(RESIZE_CURSOR_CLASS, nearRight);
+            }
+            else
+            {
+                clipElement.RemoveFromClassList(RESIZE_CURSOR_CLASS);
+            }
         });
 
         // 鼠标按下 - 开始拖拽
@@ -953,8 +1206,47 @@ public partial class SkillEditorWindow : EditorWindow
         {
             if (evt.button == 0) // 左键
             {
+                // 优先处理“右侧拖拽缩放”（Active/Effect/HitBox）
+                if (!isDragging && !isResizingClip && clipElement.userData is IClipItem resizeCandidate && IsResizableClip(resizeCandidate))
+                {
+                    if (IsMouseNearRightEdge(clipElement, evt.localMousePosition))
+                    {
+                        isResizingClip = true;
+                        resizingClipElement = clipElement;
+                        resizingClipItem = resizeCandidate;
+                        resizeStartMouseX = evt.mousePosition.x;
+                        resizeStartWidthPx = clipElement.resolvedStyle.width;
+                        if (resizeStartWidthPx <= 0f)
+                        {
+                            resizeStartWidthPx = clipElement.layout.width;
+                        }
+
+                        // 记录左侧（时间轴像素），用于计算最大可用宽度
+                        resizeClipLeftPx = GetElementLeftPx(clipElement);
+
+                        // Active/HitBox 需要 AnimationEnd 约束（Effect 允许超过动画末尾）
+                        resizingOwnerClipItem = (resizeCandidate is ActiveClipItem || resizeCandidate is HitBoxClipItem)
+                            ? GetOwnerAnimationClipItem(resizeCandidate)
+                            : null;
+                        dragAnimationEndLineOwnerTrackElement = null;
+                        dragAnimationEndLineChildTrackElement = null;
+                        if (resizingOwnerClipItem != null)
+                        {
+                            var ownerEl = FindClipElement(resizingOwnerClipItem);
+                            dragAnimationEndLineOwnerTrackElement = ownerEl?.parent;
+                            dragAnimationEndLineChildTrackElement = clipElement.parent;
+                        }
+
+                        // 固定缩放光标（通过 USS）
+                        clipElement.AddToClassList(RESIZE_CURSOR_CLASS);
+                        clipElement.CaptureMouse();
+                        evt.StopPropagation();
+                        return;
+                    }
+                }
+
                 // 选中Clip并更新显示（Selection 统一管理）
-                if (clipElement.userData is IClipItem clipItem)
+                if (clipElement.userData is IClipItem selectedItem)
                 {
                     var trackElement = clipElement.parent;
                     ITrackItem trackItem = null;
@@ -963,7 +1255,7 @@ public partial class SkillEditorWindow : EditorWindow
                         trackItem = t;
                     }
 
-                    SelectClip(clipItem, trackItem);
+                    SelectClip(selectedItem, trackItem);
                 }
 
                 isDragging = true;
@@ -973,6 +1265,19 @@ public partial class SkillEditorWindow : EditorWindow
                 float currentLeft = clipElement.layout.x;
                 dragOffset = evt.mousePosition.x - currentLeft;
                 clipElement.AddToClassList("dragging"); // 添加拖拽样式类
+
+                // 子 clip（Effect/Sound/HitBox/Active）：初始化 AnimationEnd 边界红线的纵向范围（横向位置在 MouseMove 里动态计算）
+                if (clipElement.userData is IClipItem dragItem && dragItem is not AnimationClipItem)
+                {
+                    var owner = GetOwnerAnimationClipItem(dragItem);
+                    var ownerEl = FindClipElement(owner);
+                    dragAnimationEndLineOwnerTrackElement = ownerEl?.parent;
+                    dragAnimationEndLineChildTrackElement = clipElement.parent;
+                }
+                else
+                {
+                    HideDragAnimationEndLine();
+                }
 
                 // AnimationClip：缓存其子 clip 元素，用于拖拽时实时同步位置
                 if (clipElement.userData is AnimationClipItem animClipItem)
@@ -1008,13 +1313,74 @@ public partial class SkillEditorWindow : EditorWindow
             }
         });
 
-        // 鼠标移动 - 拖拽过程
+        // 鼠标移动 - 拖拽/缩放过程
         clipElement.RegisterCallback<MouseMoveEvent>(evt =>
         {
+            // 右侧拖拽缩放（Active/Effect/HitBox）
+            if (isResizingClip && ReferenceEquals(resizingClipElement, clipElement) && clipElement.HasMouseCapture())
+            {
+                float deltaX = evt.mousePosition.x - resizeStartMouseX;
+                float desiredWidthPx = Mathf.Max(0f, resizeStartWidthPx + deltaX);
+
+                // 计算新 duration（秒），并保持 UI 最小宽度策略
+                float newDurationSeconds = desiredWidthPx / pixelsPerSecond;
+                if (desiredWidthPx <= MIN_CLIP_WIDTH_PX)
+                {
+                    desiredWidthPx = MIN_CLIP_WIDTH_PX;
+                    newDurationSeconds = 0f;
+                }
+
+                // Active/HitBox：End 不能超过 AnimationEnd
+                if (resizingOwnerClipItem != null && (resizingClipItem is ActiveClipItem || resizingClipItem is HitBoxClipItem))
+                {
+                    float ownerDurationSeconds = Mathf.Max(0f, resizingOwnerClipItem.Duration);
+                    float endNorm = GetSegmentAnimationEndNorm(resizingOwnerClipItem.SegmentData);
+                    float ownerEndPx = (resizingOwnerClipItem.StartTime + ownerDurationSeconds * endNorm) * pixelsPerSecond;
+
+                    float maxWidthPx = Mathf.Max(0f, ownerEndPx - resizeClipLeftPx);
+                    float clampedWidthPx = Mathf.Clamp(desiredWidthPx, MIN_CLIP_WIDTH_PX, Mathf.Max(MIN_CLIP_WIDTH_PX, maxWidthPx));
+                    if (!Mathf.Approximately(clampedWidthPx, desiredWidthPx))
+                    {
+                        // 到达边界还在拖：显示红线（位置在 AnimationEnd 帧上）
+                        ShowDragAnimationEndLine(ownerEndPx);
+                    }
+                    else
+                    {
+                        HideDragAnimationEndLine();
+                    }
+
+                    desiredWidthPx = clampedWidthPx;
+                    newDurationSeconds = (desiredWidthPx <= MIN_CLIP_WIDTH_PX) ? 0f : (desiredWidthPx / pixelsPerSecond);
+                }
+                else
+                {
+                    HideDragAnimationEndLine();
+                }
+
+                clipElement.style.width = desiredWidthPx;
+
+                // 实时更新右侧面板显示（仅当当前选中就是该 clip）
+                if (selectedClip != null && ReferenceEquals(selectedClip, resizingClipItem))
+                {
+                    if (clipLengthField != null)
+                    {
+                        clipLengthField.SetValueWithoutNotify(newDurationSeconds);
+                    }
+                    if (frameField != null)
+                    {
+                        frameField.SetValueWithoutNotify(Mathf.RoundToInt(newDurationSeconds * 60f));
+                    }
+                }
+
+                evt.StopPropagation();
+                return;
+            }
+
             if (isDragging && clipElement.HasMouseCapture())
             {
-                float newLeft = evt.mousePosition.x - dragOffset;
-                newLeft = Mathf.Max(0f, newLeft);
+                float desiredLeft = evt.mousePosition.x - dragOffset;
+                desiredLeft = Mathf.Max(0f, desiredLeft);
+                float newLeft = desiredLeft;
 
                 // 子 clip（Effect/Sound/HitBox）：StartTime 限制在所属 AnimationClip 的 0~1 区间内
                 if (clipElement.userData is IClipItem draggingItem && draggingItem is not AnimationClipItem)
@@ -1023,7 +1389,12 @@ public partial class SkillEditorWindow : EditorWindow
                     if (owner != null)
                     {
                         float ownerStartPx = owner.StartTime * pixelsPerSecond;
-                        float ownerEndPx = (owner.StartTime + Mathf.Max(0f, owner.Duration)) * pixelsPerSecond;
+                        float ownerDurationSeconds = Mathf.Max(0f, owner.Duration);
+                        float ownerEndPx = (owner.StartTime + ownerDurationSeconds) * pixelsPerSecond;
+
+                        // 子 clip：统一限制在 AnimationEnd 内（不能超过该阈值）
+                        float endNorm = GetSegmentAnimationEndNorm(owner.SegmentData);
+                        ownerEndPx = (owner.StartTime + ownerDurationSeconds * endNorm) * pixelsPerSecond;
 
                     // HitBox / Active：End 也必须落在 0~1 内，因此用 duration 反推最大可用 start
                     if (draggingItem is HitBoxClipItem || draggingItem is ActiveClipItem)
@@ -1032,10 +1403,29 @@ public partial class SkillEditorWindow : EditorWindow
                             float ownerLenPx = Mathf.Max(0f, ownerEndPx - ownerStartPx);
                             float maxStartPx = durationPx <= ownerLenPx ? (ownerEndPx - durationPx) : ownerStartPx;
                             newLeft = Mathf.Clamp(newLeft, ownerStartPx, maxStartPx);
+
+                            // 超过 AnimationEnd 还在拖动：显示边界红线（位置在 AnimationEnd 帧上，而非 maxStart）
+                            if (desiredLeft > maxStartPx + 0.01f)
+                            {
+                                ShowDragAnimationEndLine(ownerEndPx);
+                            }
+                            else
+                            {
+                                HideDragAnimationEndLine();
+                            }
                         }
                         else
                         {
                             newLeft = Mathf.Clamp(newLeft, ownerStartPx, ownerEndPx);
+                            // 超过 AnimationEnd 还在拖动：显示边界红线（位置在 AnimationEnd 帧上）
+                            if (desiredLeft > ownerEndPx + 0.01f)
+                            {
+                                ShowDragAnimationEndLine(ownerEndPx);
+                            }
+                            else
+                            {
+                                HideDragAnimationEndLine();
+                            }
                         }
                     }
                 }
@@ -1078,17 +1468,67 @@ public partial class SkillEditorWindow : EditorWindow
         // 鼠标释放 - 结束拖拽
         clipElement.RegisterCallback<MouseUpEvent>(evt =>
         {
+            if (isResizingClip && ReferenceEquals(resizingClipElement, clipElement))
+            {
+                clipElement.ReleaseMouse();
+                HideDragAnimationEndLine();
+
+                // 计算最终 duration（秒）
+                float widthPx = GetElementWidthPx(clipElement);
+                float newDurationSeconds = (widthPx <= MIN_CLIP_WIDTH_PX) ? 0f : Mathf.Max(0f, widthPx / pixelsPerSecond);
+
+                // 写回数据
+                if (resizingClipItem is EffectClipItem effectClip && effectClip.EffectData != null)
+                {
+                    effectClip.Duration = newDurationSeconds;
+                    effectClip.Frame = Mathf.RoundToInt(newDurationSeconds * 60f);
+                    effectClip.EffectData.Length = newDurationSeconds;
+                }
+                else if (resizingClipItem is ActiveClipItem activeClip && activeClip.ActiveData != null && config != null)
+                {
+                    activeClip.Duration = newDurationSeconds;
+                    activeClip.Frame = Mathf.RoundToInt(newDurationSeconds * 60f);
+                    // 同步回配置的归一化 end
+                    UpdateActiveClipTimes(activeClip, activeClip.StartTime, newDurationSeconds);
+                }
+                else if (resizingClipItem is HitBoxClipItem hitBoxClip && hitBoxClip.HitBoxData != null && config != null)
+                {
+                    hitBoxClip.Duration = newDurationSeconds;
+                    hitBoxClip.Frame = Mathf.RoundToInt(newDurationSeconds * 60f);
+                    // 同步回配置的归一化 end（同时会 clamp 到 AnimationEnd）
+                    UpdateHitBoxClipTimes(hitBoxClip, hitBoxClip.StartTime, newDurationSeconds);
+                }
+
+                MarkAssetDirty();
+                RefreshTrackContent();
+                RefreshSelectionHighlight();
+
+                // 清理缩放态
+                isResizingClip = false;
+                resizingClipElement = null;
+                resizingClipItem = null;
+                resizingOwnerClipItem = null;
+                clipElement.RemoveFromClassList(RESIZE_CURSOR_CLASS);
+
+                UpdateTimelineContentWidth();
+                DrawTimelineRulerMarks();
+
+                evt.StopPropagation();
+                return;
+            }
+
             if (isDragging)
             {
                 clipElement.ReleaseMouse();
                 clipElement.RemoveFromClassList("dragging");
+                HideDragAnimationEndLine();
 
                 // 拖拽结束后，同步更新数据
                 var draggedClipItem = clipElement.userData as IClipItem;
                 if (draggedClipItem != null)
                 {
                     isDragging = false;
-                    float currentLeftPx = clipElement.style.left.value.value;
+                    float currentLeftPx = GetElementLeftPx(clipElement);
                     float currentStartTime = currentLeftPx / pixelsPerSecond;
                     currentStartTime = Mathf.Max(0f, currentStartTime);
 
@@ -1099,7 +1539,10 @@ public partial class SkillEditorWindow : EditorWindow
                         if (owner != null)
                         {
                             float ownerStart = owner.StartTime;
-                            float ownerEnd = owner.StartTime + Mathf.Max(0f, owner.Duration);
+                            float ownerDurationSeconds = Mathf.Max(0f, owner.Duration);
+                            // 子 clip：统一限制在 AnimationEnd 内（不能超过该阈值）
+                            float endNorm = GetSegmentAnimationEndNorm(owner.SegmentData);
+                            float ownerEnd = owner.StartTime + ownerDurationSeconds * endNorm;
 
                             if (draggedClipItem is HitBoxClipItem hitBox)
                             {
@@ -1688,6 +2131,7 @@ public partial class SkillEditorWindow : EditorWindow
         var segment = owner.SegmentData;
         float ownerDuration = Mathf.Max(0.0001f, owner.Duration);
         float ownerStart = owner.StartTime;
+        float endNorm = GetSegmentAnimationEndNorm(segment);
 
         EffectClipItem lastClipItem = null;
 
@@ -1699,7 +2143,7 @@ public partial class SkillEditorWindow : EditorWindow
                 continue;
             }
 
-            float normalized = Mathf.Clamp01((dropTimeSeconds - ownerStart) / ownerDuration);
+            float normalized = Mathf.Clamp((dropTimeSeconds - ownerStart) / ownerDuration, 0f, endNorm);
             float absStart = ownerStart + normalized * ownerDuration;
 
             var vfx = new VisualEffectData
@@ -1756,6 +2200,7 @@ public partial class SkillEditorWindow : EditorWindow
         var segment = owner.SegmentData;
         float ownerDuration = Mathf.Max(0.0001f, owner.Duration);
         float ownerStart = owner.StartTime;
+        float endNorm = GetSegmentAnimationEndNorm(segment);
 
         SoundClipItem lastClipItem = null;
 
@@ -1767,7 +2212,7 @@ public partial class SkillEditorWindow : EditorWindow
                 continue;
             }
 
-            float normalized = Mathf.Clamp01((dropTimeSeconds - ownerStart) / ownerDuration);
+            float normalized = Mathf.Clamp((dropTimeSeconds - ownerStart) / ownerDuration, 0f, endNorm);
             float absStart = ownerStart + normalized * ownerDuration;
 
             var sfx = new SoundEffectData

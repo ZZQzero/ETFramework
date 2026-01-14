@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4563493700576625198}
   - component: {fileID: 6602529239390099928}
   - component: {fileID: 1548507514716937426}
-  - component: {fileID: 463686990068954384}
+  - component: {fileID: 6315938382392768999}
   m_Layer: 0
   m_Name: PlayerCamera
   m_TagString: Untagged
@@ -96,7 +96,7 @@ MonoBehaviour:
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
   FollowOffset: {x: 0, y: 9, z: -9}
---- !u!114 &463686990068954384
+--- !u!114 &6315938382392768999
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -105,23 +105,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 502151947379878538}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f38bda98361e1de48a4ca2bd86ea3c17, type: 3}
+  m_Script: {fileID: 11500000, guid: 44d70cc20219cd84593f67d248eafe36, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineRotationComposer
-  Composition:
-    ScreenPosition: {x: -0.000000059604645, y: -0.00000008940697}
-    DeadZone:
-      Enabled: 1
-      Size: {x: 0.48437524, y: 0.4925928}
-    HardLimits:
-      Enabled: 1
-      Size: {x: 0.8, y: 0.8}
-      Offset: {x: 0, y: 0}
-  CenterOnActivate: 1
-  TargetOffset: {x: 0, y: 0, z: 0}
-  Damping: {x: 0.5, y: 0.5}
-  Lookahead:
-    Enabled: 0
-    Time: 0
-    Smoothing: 0
-    IgnoreY: 0
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCameraOffset
+  Offset: {x: 0, y: 0, z: 0}
+  ApplyAfter: 1
+  PreserveComposition: 0

@@ -532,10 +532,10 @@ public partial class SkillEditorWindow : EditorWindow
         }
 
         // 在 AnimationEnd 之后运行时认为段已结束：预览同样不再绘制
-        float endNorm = seg.TimeWindow != null ? seg.TimeWindow.AnimationEnd : 1f;
-        if (endNorm <= 0f) endNorm = 1f;
-        endNorm = Mathf.Clamp01(endNorm);
-        if (normalizedTime > endNorm)
+        float endNorm = GetSegmentAnimationEndNorm(seg);
+        // 允许在 AnimationEnd 那一帧（以及浮点误差附近）正常显示/触发可视化
+        float endEps = Mathf.Max(0.0005f, 0.5f / (FRAMES_PER_SECOND * duration));
+        if (normalizedTime > endNorm + endEps)
         {
             return;
         }
@@ -552,7 +552,17 @@ public partial class SkillEditorWindow : EditorWindow
 
             float start = Mathf.Clamp01(hb.NormalizedStart);
             float end = Mathf.Clamp01(hb.NormalizedEnd);
-            bool isActive = normalizedTime >= start && normalizedTime <= end;
+            bool isActive;
+            if (Mathf.Abs(end - start) < 1e-6f)
+            {
+                // 关键帧 HitBox：用“半帧窗口”近似显示，避免浮点采样永远对不上 exact == 的问题
+                float eps = Mathf.Max(0.0005f, 0.5f / (FRAMES_PER_SECOND * duration));
+                isActive = Mathf.Abs(normalizedTime - start) <= eps;
+            }
+            else
+            {
+                isActive = normalizedTime >= start && normalizedTime <= end;
+            }
             if (!isActive)
             {
                 continue; // 播放时仅显示激活窗口内的 HitBox

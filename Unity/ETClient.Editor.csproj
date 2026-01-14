@@ -67,7 +67,6 @@
     <Compile Include="Assets\Scripts\Editor\Excel\LubanGenerateExcels.cs" />
     <Compile Include="Assets\Scripts\Editor\Skill\SkillEditorWindow.Selection.cs" />
     <Compile Include="Assets\Scripts\Editor\Define.cs" />
-    <Compile Include="Assets\Scripts\Editor\SkillEditorWindow1.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\AssetPostProcessor\OnGenerateCSProjectProcessor.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\LogRedirection\LogRedirection.cs" />
     <Compile Include="Assets\Scripts\Editor\Loader\Helper\ETTaskPoolWindow.cs" />

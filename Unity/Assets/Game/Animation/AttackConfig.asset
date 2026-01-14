@@ -46,8 +46,8 @@ MonoBehaviour:
         Offset: {x: 0, y: 1, z: 1.227207}
         RotationEuler: {x: -0, y: 0, z: 0}
         Size: {x: 1, y: 1, z: 2}
-        NormalizedStart: 0.31046596
-        NormalizedEnd: 0.610466
+        NormalizedStart: 0.25261185
+        NormalizedEnd: 0.5526119
         Effect:
           DamageMultiplier: 1
           HitReaction: 1
@@ -79,25 +79,25 @@ MonoBehaviour:
         EnableMovement: 1
         Distance: 4
         NormalizedStart: 0
-        NormalizedEnd: 1
+        NormalizedEnd: 0.3
         MoveCurve:
           serializedVersion: 2
           m_Curve:
           - serializedVersion: 3
             time: 0
             value: 0
-            inSlope: 0
-            outSlope: 0
-            tangentMode: 0
+            inSlope: 1
+            outSlope: 1
+            tangentMode: 34
             weightedMode: 0
             inWeight: 0
             outWeight: 0
           - serializedVersion: 3
             time: 1
             value: 1
-            inSlope: 0
-            outSlope: 0
-            tangentMode: 0
+            inSlope: 1
+            outSlope: 1
+            tangentMode: 34
             weightedMode: 0
             inWeight: 0
             outWeight: 0
@@ -133,8 +133,8 @@ MonoBehaviour:
         Offset: {x: 0, y: 1, z: 1}
         RotationEuler: {x: 0, y: 0, z: 0}
         Size: {x: 1, y: 1, z: 2}
-        NormalizedStart: 0.21788679
-        NormalizedEnd: 0.5178868
+        NormalizedStart: 0.30090243
+        NormalizedEnd: 0.60090244
         Effect:
           DamageMultiplier: 1
           HitReaction: 1
@@ -220,8 +220,8 @@ MonoBehaviour:
         Offset: {x: 0, y: 1.8319484, z: 0.99129105}
         RotationEuler: {x: -0.59976196, y: 0, z: 0}
         Size: {x: 0.4980985, y: 2.083067, z: 2}
-        NormalizedStart: 0.3075295
-        NormalizedEnd: 0.6075295
+        NormalizedStart: 0.26588732
+        NormalizedEnd: 0.56588733
         Effect:
           DamageMultiplier: 1
           HitReaction: 1
@@ -307,8 +307,8 @@ MonoBehaviour:
         Offset: {x: 0, y: 1, z: 0.39620805}
         RotationEuler: {x: -0, y: 0, z: 0}
         Size: {x: 0.8652337, y: 124.22709, z: 0.43428373}
-        NormalizedStart: 0.121196106
-        NormalizedEnd: 0.42119607
+        NormalizedStart: 0.04573572
+        NormalizedEnd: 0.3457357
         Effect:
           DamageMultiplier: 1
           HitReaction: 1
@@ -327,8 +327,8 @@ MonoBehaviour:
         Offset: {x: 0, y: 1, z: 1}
         RotationEuler: {x: 0, y: 0, z: 0}
         Size: {x: 1, y: 1, z: 2}
-        NormalizedStart: 0.5377746
-        NormalizedEnd: 0.83777463
+        NormalizedStart: 0.49999982
+        NormalizedEnd: 0.79999983
         Effect:
           DamageMultiplier: 1
           HitReaction: 1
@@ -345,11 +345,11 @@ MonoBehaviour:
       VisualEffects:
       - Name: New Effect
         Prefab: {fileID: 0}
-        NormalizedStart: 0.9999999
+        NormalizedStart: 0.8
         Offset: {x: 0, y: 0, z: 0}
         RotationEuler: {x: 0, y: 0, z: 0}
         FollowTarget: 0
-        Length: 1
+        Length: 0.62319595
       SoundEffects: []
       AttachedActives: []
       Movement:

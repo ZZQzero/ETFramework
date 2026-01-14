@@ -53,6 +53,10 @@
                         <ui:Label text="&#21518;&#25671;&#20445;&#25345;(ms):" style="width: 120px;"/>
                         <ui:IntegerField value="200" name="RecoveryHoldMsField" style="flex-grow: 1;"/>
                     </ui:VisualElement>
+                    <ui:VisualElement style="flex-direction: row; align-items: center;">
+                        <ui:Label text="&#21629;&#20013;&#26816;&#27979;&#23618;:" style="width: 120px;"/>
+                        <uie:LayerMaskField name="PreviewHitTargetLayerMaskField" style="flex-grow: 1;"/>
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:Button text="&#28155;&#21152;Clip" name="AddClipToTrackButton" style="margin-top: 8px; display: none;"/>
             </ui:VisualElement>
@@ -240,6 +244,10 @@
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
                             <ui:Label text="&#35302;&#21457;&#26102;&#38388;(&#31186;):" style="width: 120px;"/>
                             <ui:FloatField value="0" name="HitBoxTriggerTimeField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="&#35302;&#21457;&#24103;:" style="width: 120px;"/>
+                            <ui:IntegerField value="0" name="HitBoxTriggerFrameField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
 
                         <ui:Label text="&#21629;&#20013;&#25928;&#26524;(HitEffect)" style="font-size: 13px; font-weight: bold; margin-top: 10px;"/>

@@ -31,6 +31,11 @@ namespace ET
             self.Input = self.PlayerUnit.GetComponent<InputComponent>();
             self.Attack = self.PlayerUnit.GetComponent<AttackComponent>();
             self.CapsuleCollider = player.GetComponent<CapsuleCollider>();
+            self.CameraFollow = self.Root().GetComponent<CameraFollowComponent>();
+            if (self.CameraFollow == null)
+            {
+                Log.Error("没有找到CameraFollowComponent组件");
+            }
             if (self.CapsuleCollider == null)
             {
                 Log.Warning($"CharacterControllerComponent需要CapsuleCollider组件，GameObject: {player.name}");

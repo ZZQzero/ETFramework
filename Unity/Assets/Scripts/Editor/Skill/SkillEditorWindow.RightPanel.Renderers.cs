@@ -348,6 +348,13 @@ public partial class SkillEditorWindow : EditorWindow
             hitBoxTriggerTimeField.SetValueWithoutNotify(clipItem.StartTime);
             hitBoxTriggerTimeField.SetEnabled(false);
         }
+        // 触发帧（只读）：关键帧 HitBox（Start==End）时用于表达“落在哪一帧”
+        if (hitBoxTriggerFrameField != null)
+        {
+            int frame = Mathf.Max(0, Mathf.RoundToInt(clipItem.StartTime * FRAMES_PER_SECOND));
+            hitBoxTriggerFrameField.SetValueWithoutNotify(frame);
+            hitBoxTriggerFrameField.SetEnabled(false);
+        }
 
         // 更新归一化时间字段
         if (hitBoxNormalizedStartField != null)
@@ -377,7 +384,7 @@ public partial class SkillEditorWindow : EditorWindow
         var effect = hitBoxData.Effect ??= new HitEffectData();
         if (hitEffectDamageMultiplierField != null)
         {
-            hitEffectDamageMultiplierField.SetValueWithoutNotify(effect.DamageMultiplier);
+            hitEffectDamageMultiplierField.SetValueWithoutNotify(Mathf.Max(0f, effect.DamageMultiplier));
         }
         if (hitEffectReactionField != null)
         {
@@ -385,15 +392,15 @@ public partial class SkillEditorWindow : EditorWindow
         }
         if (hitEffectKnockbackForceField != null)
         {
-            hitEffectKnockbackForceField.SetValueWithoutNotify(effect.KnockbackForce);
+            hitEffectKnockbackForceField.SetValueWithoutNotify(Mathf.Max(0f, effect.KnockbackForce));
         }
         if (hitEffectKnockupForceField != null)
         {
-            hitEffectKnockupForceField.SetValueWithoutNotify(effect.KnockupForce);
+            hitEffectKnockupForceField.SetValueWithoutNotify(Mathf.Max(0f, effect.KnockupForce));
         }
         if (hitEffectHitStunMsField != null)
         {
-            hitEffectHitStunMsField.SetValueWithoutNotify(effect.HitStunMs);
+            hitEffectHitStunMsField.SetValueWithoutNotify(Mathf.Max(0, effect.HitStunMs));
         }
         if (hitEffectTargetStateField != null)
         {
@@ -403,23 +410,23 @@ public partial class SkillEditorWindow : EditorWindow
         var feedback = hitBoxData.Feedback ??= new HitFeedbackData();
         if (hitFeedbackShakeIntensityField != null)
         {
-            hitFeedbackShakeIntensityField.SetValueWithoutNotify(feedback.ScreenShakeIntensity);
+            hitFeedbackShakeIntensityField.SetValueWithoutNotify(Mathf.Clamp01(feedback.ScreenShakeIntensity));
         }
         if (hitFeedbackShakeDurationField != null)
         {
-            hitFeedbackShakeDurationField.SetValueWithoutNotify(feedback.ScreenShakeDuration);
+            hitFeedbackShakeDurationField.SetValueWithoutNotify(Mathf.Max(0f, feedback.ScreenShakeDuration));
         }
         if (hitFeedbackHitStopMsField != null)
         {
-            hitFeedbackHitStopMsField.SetValueWithoutNotify(feedback.HitStopMs);
+            hitFeedbackHitStopMsField.SetValueWithoutNotify(Mathf.Max(0, feedback.HitStopMs));
         }
         if (hitFeedbackTimeScaleField != null)
         {
-            hitFeedbackTimeScaleField.SetValueWithoutNotify(feedback.TimeScale);
+            hitFeedbackTimeScaleField.SetValueWithoutNotify(Mathf.Max(0f, feedback.TimeScale));
         }
         if (hitFeedbackTimeScaleDurationMsField != null)
         {
-            hitFeedbackTimeScaleDurationMsField.SetValueWithoutNotify(feedback.TimeScaleDurationMs);
+            hitFeedbackTimeScaleDurationMsField.SetValueWithoutNotify(Mathf.Max(0, feedback.TimeScaleDurationMs));
         }
     }
 

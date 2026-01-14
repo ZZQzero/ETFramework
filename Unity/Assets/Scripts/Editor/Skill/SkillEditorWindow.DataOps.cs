@@ -387,7 +387,8 @@ public partial class SkillEditorWindow : EditorWindow
                 if (animationLength > 0)
                 {
                     float normalizedTime = (absoluteStartTime - segment.StartTime) / animationLength;
-                    effectClipItem.EffectData.NormalizedStart = Mathf.Clamp01(normalizedTime);
+                    float endNorm = GetSegmentAnimationEndNorm(segment);
+                    effectClipItem.EffectData.NormalizedStart = Mathf.Clamp(normalizedTime, 0f, endNorm);
                 }
                 break;
             }
@@ -408,7 +409,8 @@ public partial class SkillEditorWindow : EditorWindow
                 if (animationLength > 0)
                 {
                     float normalizedTime = (absoluteStartTime - segment.StartTime) / animationLength;
-                    soundClipItem.SoundData.NormalizedStart = Mathf.Clamp01(normalizedTime);
+                    float endNorm = GetSegmentAnimationEndNorm(segment);
+                    soundClipItem.SoundData.NormalizedStart = Mathf.Clamp(normalizedTime, 0f, endNorm);
                 }
                 break;
             }
@@ -431,8 +433,10 @@ public partial class SkillEditorWindow : EditorWindow
                     float normalizedStartTime = (absoluteStartTime - segment.StartTime) / animationLength;
                     float normalizedEndTime = normalizedStartTime + (absoluteDuration / animationLength);
 
-                    hitBoxClipItem.HitBoxData.NormalizedStart = Mathf.Clamp01(normalizedStartTime);
-                    hitBoxClipItem.HitBoxData.NormalizedEnd = Mathf.Clamp01(normalizedEndTime);
+                    // HitBox 的可编辑范围应限制在 Segment 的 AnimationEnd 之内
+                    float endNorm = GetSegmentAnimationEndNorm(segment);
+                    hitBoxClipItem.HitBoxData.NormalizedStart = Mathf.Clamp(normalizedStartTime, 0f, endNorm);
+                    hitBoxClipItem.HitBoxData.NormalizedEnd = Mathf.Clamp(normalizedEndTime, 0f, endNorm);
 
                     if (hitBoxClipItem.HitBoxData.NormalizedEnd < hitBoxClipItem.HitBoxData.NormalizedStart)
                     {

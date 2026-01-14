@@ -40,7 +40,12 @@ public partial class SkillEditorWindow : EditorWindow
     {
         if (selectedClip == null) return;
 
-        selectedClip.StartTime = Mathf.Max(0f, evt.newValue);
+        float v = Mathf.Max(0f, evt.newValue);
+        selectedClip.StartTime = v;
+        if (startTimeField != null && !Mathf.Approximately(v, evt.newValue))
+        {
+            startTimeField.SetValueWithoutNotify(v);
+        }
 
         if (selectedClip is AnimationClipItem animClipItem && animClipItem.SegmentData != null)
         {
@@ -60,6 +65,10 @@ public partial class SkillEditorWindow : EditorWindow
         }
 
         float newLength = Mathf.Max(0f, evt.newValue);
+        if (clipLengthField != null && !Mathf.Approximately(newLength, evt.newValue))
+        {
+            clipLengthField.SetValueWithoutNotify(newLength);
+        }
 
         if (selectedClip.Type == TrackType.Animation || selectedClip.Type == TrackType.Sound)
         {
@@ -382,7 +391,14 @@ public partial class SkillEditorWindow : EditorWindow
     {
         if (selectedClip is EffectClipItem effectClipItem && effectClipItem.EffectData != null)
         {
-            effectClipItem.EffectData.NormalizedStart = Mathf.Clamp01(evt.newValue);
+            var owner = GetOwnerAnimationClipItem(effectClipItem);
+            float endNorm = GetSegmentAnimationEndNorm(owner?.SegmentData);
+            float v = Mathf.Clamp(evt.newValue, 0f, endNorm);
+            if (effectNormalizedStartField != null && !Mathf.Approximately(v, evt.newValue))
+            {
+                effectNormalizedStartField.SetValueWithoutNotify(v);
+            }
+            effectClipItem.EffectData.NormalizedStart = v;
             // 更新clip的开始时间
             UpdateClipStartTimeFromNormalizedStart(effectClipItem);
             // 标记config配置为脏，确保保存
@@ -575,7 +591,14 @@ public partial class SkillEditorWindow : EditorWindow
     {
         if (selectedClip is SoundClipItem soundClipItem && soundClipItem.SoundData != null)
         {
-            soundClipItem.SoundData.NormalizedStart = Mathf.Clamp01(evt.newValue);
+            var owner = GetOwnerAnimationClipItem(soundClipItem);
+            float endNorm = GetSegmentAnimationEndNorm(owner?.SegmentData);
+            float v = Mathf.Clamp(evt.newValue, 0f, endNorm);
+            if (soundNormalizedStartField != null && !Mathf.Approximately(v, evt.newValue))
+            {
+                soundNormalizedStartField.SetValueWithoutNotify(v);
+            }
+            soundClipItem.SoundData.NormalizedStart = v;
             // 更新clip的开始时间
             UpdateClipStartTimeFromNormalizedStart(soundClipItem);
             // 标记config配置为脏，确保保存
@@ -610,11 +633,13 @@ public partial class SkillEditorWindow : EditorWindow
     {
         if (selectedClip is HitBoxClipItem hitBoxClipItem && hitBoxClipItem.HitBoxData != null)
         {
-            float newValue = Mathf.Clamp01(evt.newValue);
+            var owner = GetOwnerAnimationClipItem(hitBoxClipItem);
+            float endNorm = GetSegmentAnimationEndNorm(owner?.SegmentData);
+            float newValue = Mathf.Clamp(evt.newValue, 0f, endNorm);
             // 确保结束时间永远大于开始时间
             if (newValue >= hitBoxClipItem.HitBoxData.NormalizedEnd)
             {
-                hitBoxClipItem.HitBoxData.NormalizedEnd = Mathf.Min(1f, newValue + 0.01f);
+                hitBoxClipItem.HitBoxData.NormalizedEnd = Mathf.Min(endNorm, newValue + 0.01f);
                 // 更新UI显示
                 if (hitBoxNormalizedEndField != null)
                 {
@@ -638,11 +663,13 @@ public partial class SkillEditorWindow : EditorWindow
     {
         if (selectedClip is HitBoxClipItem hitBoxClipItem && hitBoxClipItem.HitBoxData != null)
         {
-            float newValue = Mathf.Clamp01(evt.newValue);
+            var owner = GetOwnerAnimationClipItem(hitBoxClipItem);
+            float endNorm = GetSegmentAnimationEndNorm(owner?.SegmentData);
+            float newValue = Mathf.Clamp(evt.newValue, 0f, endNorm);
             // 确保结束时间永远大于开始时间
             if (newValue <= hitBoxClipItem.HitBoxData.NormalizedStart)
             {
-                hitBoxClipItem.HitBoxData.NormalizedStart = Mathf.Max(0f, newValue - 0.01f);
+                hitBoxClipItem.HitBoxData.NormalizedStart = Mathf.Clamp(newValue - 0.01f, 0f, endNorm);
                 // 更新UI显示
                 if (hitBoxNormalizedStartField != null)
                 {
@@ -707,8 +734,13 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
+        float v = Mathf.Max(0f, evt.newValue);
+        if (hitEffectDamageMultiplierField != null && !Mathf.Approximately(v, evt.newValue))
+        {
+            hitEffectDamageMultiplierField.SetValueWithoutNotify(v);
+        }
         hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
-        hitBoxClipItem.HitBoxData.Effect.DamageMultiplier = Mathf.Max(0f, evt.newValue);
+        hitBoxClipItem.HitBoxData.Effect.DamageMultiplier = v;
         MarkAssetDirty();
     }
 
@@ -736,8 +768,13 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
+        float v = Mathf.Max(0f, evt.newValue);
+        if (hitEffectKnockbackForceField != null && !Mathf.Approximately(v, evt.newValue))
+        {
+            hitEffectKnockbackForceField.SetValueWithoutNotify(v);
+        }
         hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
-        hitBoxClipItem.HitBoxData.Effect.KnockbackForce = Mathf.Max(0f, evt.newValue);
+        hitBoxClipItem.HitBoxData.Effect.KnockbackForce = v;
         MarkAssetDirty();
     }
 
@@ -748,8 +785,13 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
+        float v = Mathf.Max(0f, evt.newValue);
+        if (hitEffectKnockupForceField != null && !Mathf.Approximately(v, evt.newValue))
+        {
+            hitEffectKnockupForceField.SetValueWithoutNotify(v);
+        }
         hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
-        hitBoxClipItem.HitBoxData.Effect.KnockupForce = Mathf.Max(0f, evt.newValue);
+        hitBoxClipItem.HitBoxData.Effect.KnockupForce = v;
         MarkAssetDirty();
     }
 
@@ -760,8 +802,13 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
+        int v = Mathf.Max(0, evt.newValue);
+        if (hitEffectHitStunMsField != null && v != evt.newValue)
+        {
+            hitEffectHitStunMsField.SetValueWithoutNotify(v);
+        }
         hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
-        hitBoxClipItem.HitBoxData.Effect.HitStunMs = Mathf.Max(0, evt.newValue);
+        hitBoxClipItem.HitBoxData.Effect.HitStunMs = v;
         MarkAssetDirty();
     }
 
@@ -789,8 +836,13 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
+        float v = Mathf.Clamp01(evt.newValue);
+        if (hitFeedbackShakeIntensityField != null && !Mathf.Approximately(v, evt.newValue))
+        {
+            hitFeedbackShakeIntensityField.SetValueWithoutNotify(v);
+        }
         hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
-        hitBoxClipItem.HitBoxData.Feedback.ScreenShakeIntensity = Mathf.Clamp01(evt.newValue);
+        hitBoxClipItem.HitBoxData.Feedback.ScreenShakeIntensity = v;
         MarkAssetDirty();
     }
 
@@ -801,8 +853,13 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
+        float v = Mathf.Max(0f, evt.newValue);
+        if (hitFeedbackShakeDurationField != null && !Mathf.Approximately(v, evt.newValue))
+        {
+            hitFeedbackShakeDurationField.SetValueWithoutNotify(v);
+        }
         hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
-        hitBoxClipItem.HitBoxData.Feedback.ScreenShakeDuration = Mathf.Max(0f, evt.newValue);
+        hitBoxClipItem.HitBoxData.Feedback.ScreenShakeDuration = v;
         MarkAssetDirty();
     }
 
@@ -813,8 +870,13 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
+        int v = Mathf.Max(0, evt.newValue);
+        if (hitFeedbackHitStopMsField != null && v != evt.newValue)
+        {
+            hitFeedbackHitStopMsField.SetValueWithoutNotify(v);
+        }
         hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
-        hitBoxClipItem.HitBoxData.Feedback.HitStopMs = Mathf.Max(0, evt.newValue);
+        hitBoxClipItem.HitBoxData.Feedback.HitStopMs = v;
         MarkAssetDirty();
     }
 
@@ -825,8 +887,13 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
+        float v = Mathf.Max(0f, evt.newValue);
+        if (hitFeedbackTimeScaleField != null && !Mathf.Approximately(v, evt.newValue))
+        {
+            hitFeedbackTimeScaleField.SetValueWithoutNotify(v);
+        }
         hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
-        hitBoxClipItem.HitBoxData.Feedback.TimeScale = Mathf.Max(0f, evt.newValue);
+        hitBoxClipItem.HitBoxData.Feedback.TimeScale = v;
         MarkAssetDirty();
     }
 
@@ -837,8 +904,13 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
+        int v = Mathf.Max(0, evt.newValue);
+        if (hitFeedbackTimeScaleDurationMsField != null && v != evt.newValue)
+        {
+            hitFeedbackTimeScaleDurationMsField.SetValueWithoutNotify(v);
+        }
         hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
-        hitBoxClipItem.HitBoxData.Feedback.TimeScaleDurationMs = Mathf.Max(0, evt.newValue);
+        hitBoxClipItem.HitBoxData.Feedback.TimeScaleDurationMs = v;
         MarkAssetDirty();
     }
 

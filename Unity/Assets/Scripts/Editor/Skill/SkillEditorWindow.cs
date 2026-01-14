@@ -44,9 +44,7 @@ public partial class SkillEditorWindow : EditorWindow
     #endregion
 
     #region UI元素 - 主窗口
-    
-    [SerializeField]
-    private VisualTreeAsset m_VisualTreeAsset = default;
+
     private VisualElement root;
     private VisualElement leftContainer;
     private ScrollView timelineScrollView;
@@ -75,6 +73,7 @@ public partial class SkillEditorWindow : EditorWindow
     private IntegerField inputBufferWindowMsField;
     private IntegerField defaultHitStopMsField;
     private IntegerField recoveryHoldMsField;
+    private LayerMaskField previewHitTargetLayerMaskField;
     
     #endregion
 
@@ -147,6 +146,7 @@ public partial class SkillEditorWindow : EditorWindow
     private VisualElement hitBoxFields;
     private EnumField shapeTypeField;
     private FloatField hitBoxTriggerTimeField;
+    private IntegerField hitBoxTriggerFrameField;
     private FloatField hitBoxNormalizedStartField;
     private FloatField hitBoxNormalizedEndField;
     private Vector3Field hitBoxOffsetField;
@@ -192,7 +192,9 @@ public partial class SkillEditorWindow : EditorWindow
     private Dictionary<AnimationClipItem, List<ITrackItem>> animationClipTrackMap = new();
     private readonly List<ITrackItem> globalTrackDataList = new();
     private readonly List<AnimationClipItem> allAnimationClipItems = new();
-    private static int nextTrackId = 1;
+    
+    // 预览命中检测的 LayerMask：由 UI 配置，避免硬编码层名（商业工程要求）
+    private LayerMask previewHitTargetLayerMask = ~0; // 默认 Everything，用户可按项目需求配置
     
     private ITrackItem selectedTrack;
     private IClipItem selectedClip;
@@ -269,6 +271,22 @@ public partial class SkillEditorWindow : EditorWindow
         }
         
         return DEFAULT_ANIMATION_LENGTH;
+    }
+
+    /// <summary>
+    /// 获取 Segment 的有效播放结束阈值（归一化 0~1）。
+    /// - 运行时：超过该阈值认为段结束（不再触发后续逻辑）
+    /// - 编辑器：用于限制 HitBox 等子片段的可编辑范围
+    /// </summary>
+    private static float GetSegmentAnimationEndNorm(AttackSegmentData segment)
+    {
+        float endNorm = segment?.TimeWindow != null ? segment.TimeWindow.AnimationEnd : 1f;
+        if (endNorm <= 0f)
+        {
+            endNorm = 1f;
+        }
+
+        return Mathf.Clamp01(endNorm);
     }
     
     #endregion

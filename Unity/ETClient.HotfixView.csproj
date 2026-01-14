@@ -75,6 +75,7 @@
     <Compile Include="Assets\Scripts\HotfixView\Camera\CameraFollowComponentSystem.cs" />
     <Compile Include="Assets\Scripts\HotfixView\GameUI\UIScriptsGenerate\UILoginPanelComponent.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Scene\SceneChangeStart_AddComponent.cs" />
+    <Compile Include="Assets\Scripts\HotfixView\Camera\CameraFollowProxy.cs" />
     <Compile Include="Assets\Scripts\HotfixView\GameUI\UIScript\UILobbyPanel.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Unit\AnimatorComponentSystem.cs" />
     <Compile Include="Assets\Scripts\HotfixView\Unit\GameObjectComponentSystem.cs" />
@@ -937,6 +938,9 @@
     </Reference>
     <Reference Include="Unity.Cinemachine">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\Unity.Cinemachine.dll</HintPath>
+    </Reference>
+    <Reference Include="PrimeTween.Runtime">
+      <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\PrimeTween.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>G:\UnityProject\ETFramework\Unity\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>

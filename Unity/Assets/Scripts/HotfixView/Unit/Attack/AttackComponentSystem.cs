@@ -21,6 +21,11 @@ namespace ET
             Unit unit = self.GetParent<Unit>();
             self.AnimatorComponent = unit.GetComponent<AnimatorComponent>();
             self.Player = unit.GetComponent<GameObjectComponent>().Transform;
+            self.CameraFollow = self.Root().GetComponent<CameraFollowComponent>();
+            if (self.CameraFollow == null)
+            {
+                Log.Error("没有找到CameraFollowComponent组件");
+            }
             self.LoadConfigAsync().NoContext();
         }
 
@@ -374,6 +379,9 @@ namespace ET
         /// </summary>
         private static void ResetSegmentState(this AttackComponent self, AttackSegmentData segment)
         {
+            // 段切换前：先恢复上一段接管过的 Active（避免残留显隐影响新段/其他系统）
+            self.RestoreAttachedActives();
+
             self.HasHitThisSegment = false;
             self.HitTargetsThisSegment.Clear();
             self.IsMovementActive = false;
@@ -385,7 +393,6 @@ namespace ET
                 foreach (var hitBox in segment.HitBoxes)
                 {
                     hitBox.IsActive = false;
-                    hitBox.IsCompleted = false;
                 }
             }
         }
@@ -417,6 +424,12 @@ namespace ET
             else
             {
                 self.MovementTargetPosition = self.MovementStartPosition + self.Player.forward * segment.Movement.Distance;
+            }
+            
+            if(segment.Movement.Distance > 0f)
+            {
+                self.CameraFollow.SetCameraOffest(new Vector3(0f, 0f, -1.5f));
+                self.CameraFollow.SetCameraFov(1.5f);
             }
         }
 
@@ -640,24 +653,40 @@ namespace ET
 
                         float start = Mathf.Clamp01(hitBox.NormalizedStart);
                         float end = Mathf.Clamp01(hitBox.NormalizedEnd);
-                        if (end <= start)
+                        if (end < start)
+                        {
                             continue;
+                        }
 
-                        hint = events.Add(hint, start, () =>
+                        if (Mathf.Approximately(start, end))
                         {
-                            if (self.CurrentAnimState != animState || self.CurrentSegment != segment || self.State != AttackState.Attacking)
-                                return;
-                            hitBox.IsActive = true;
-                            hitBox.IsCompleted = false;
-                        });
+                            hint = events.Add(hint, start, () =>
+                            {
+                                if (self.CurrentAnimState != animState || self.CurrentSegment != segment ||
+                                    self.State != AttackState.Attacking)
+                                    return;
+                                hitBox.IsActive = true;
+                                self.UpdateHitDetection();
+                                hitBox.IsActive = false;
+                            });
+                        }
+                        else
+                        {
+                            hint = events.Add(hint, start, () =>
+                            {
+                                if (self.CurrentAnimState != animState || self.CurrentSegment != segment ||
+                                    self.State != AttackState.Attacking)
+                                    return;
+                                hitBox.IsActive = true;
+                            });
 
-                        hint = events.Add(hint, end, () =>
-                        {
-                            if (self.CurrentAnimState != animState || self.CurrentSegment != segment)
-                                return;
-                            hitBox.IsActive = false;
-                            hitBox.IsCompleted = true;
-                        });
+                            hint = events.Add(hint, end, () =>
+                            {
+                                if (self.CurrentAnimState != animState || self.CurrentSegment != segment)
+                                    return;
+                                hitBox.IsActive = false;
+                            });
+                        }
                     }
                 }
 
@@ -695,6 +724,51 @@ namespace ET
                             if (self.CurrentAnimState != animState || self.CurrentSegment != segment || self.State != AttackState.Attacking)
                                 return;
                             self.PlaySoundEffect(sfx);
+                        });
+                    }
+                }
+
+                // AttachedActives：区间内启用，区间外禁用（支持同一对象多区间重叠：引用计数）
+                if (segment.AttachedActives != null)
+                {
+                    int hint = 0;
+                    float endNorm = segment.TimeWindow != null ? segment.TimeWindow.AnimationEnd : 1f;
+                    if (endNorm <= 0f) endNorm = 1f;
+                    endNorm = Mathf.Clamp01(endNorm);
+
+                    for (int i = 0; i < segment.AttachedActives.Count; i++)
+                    {
+                        var a = segment.AttachedActives[i];
+                        if (a == null)
+                            continue;
+
+                        float start = Mathf.Clamp01(a.NormalizedStart);
+                        float end = Mathf.Clamp01(a.NormalizedEnd);
+                        if (end < start)
+                        {
+                            (start, end) = (end, start);
+                        }
+
+                        // 对齐运行时段结束语义：不允许超过 AnimationEnd
+                        start = Mathf.Min(start, endNorm);
+                        end = Mathf.Min(end, endNorm);
+                        if (end <= start)
+                        {
+                            continue;
+                        }
+
+                        hint = events.Add(hint, start, () =>
+                        {
+                            if (self.CurrentAnimState != animState || self.CurrentSegment != segment || self.State != AttackState.Attacking)
+                                return;
+                            self.ApplyAttachedActiveDelta(segment, a, isStart: true);
+                        });
+
+                        hint = events.Add(hint, end, () =>
+                        {
+                            if (self.CurrentAnimState != animState || self.CurrentSegment != segment)
+                                return;
+                            self.ApplyAttachedActiveDelta(segment, a, isStart: false);
                         });
                     }
                 }
@@ -1133,6 +1207,9 @@ namespace ET
             // 清理定时器
             self.CleanupTimers();
 
+            // 恢复本次攻击流程接管过的 Active（避免退出后残留显隐）
+            self.RestoreAttachedActives();
+
             // 结束顿帧
             if (self.State == AttackState.HitStop)
             {
@@ -1166,6 +1243,8 @@ namespace ET
             // 清理定时器：避免旧的连击超时在新起手过程中触发
             self.CleanupTimers();
             self.CancelAttackLayerFadeOutTimer();
+            // 软退出也应恢复 Active，避免“立刻重起手”时上一段显隐残留
+            self.RestoreAttachedActives();
             // 若还在顿帧中，结束顿帧（恢复动画速度）；但不淡出攻击层
             if (self.State == AttackState.HitStop)
             {
@@ -1190,7 +1269,99 @@ namespace ET
             self.AttackLayerFadeOutTimer = 0;
         }
 
-        #region 方案A：AttackLayer 延迟淡出（定时器）
+        #region AttachedActives（运行时显隐控制）
+
+        private static void RestoreAttachedActives(this AttackComponent self)
+        {
+            var dict = self.AttachedActiveOriginalStates;
+            if (dict == null || dict.Count == 0)
+            {
+                // 仍然清掉 refCounts，避免残留计数影响后续段
+                self.AttachedActiveRefCounts?.Clear();
+                return;
+            }
+
+            foreach (var kv in dict)
+            {
+                var go = kv.Key;
+                if (go == null)
+                {
+                    continue;
+                }
+
+                bool original = kv.Value;
+                if (go.activeSelf != original)
+                {
+                    go.SetActive(original);
+                }
+            }
+
+            dict.Clear();
+            self.AttachedActiveRefCounts?.Clear();
+        }
+
+        private static void ApplyAttachedActiveDelta(this AttackComponent self, AttackSegmentData segment, AttachedActiveData data, bool isStart)
+        {
+            if (self == null || self.IsDisposed || segment == null || data == null)
+            {
+                return;
+            }
+
+            var root = self.Player;
+            if (root == null)
+            {
+                return;
+            }
+
+            string path = data.RelativePath ?? string.Empty;
+            if (string.IsNullOrEmpty(path))
+            {
+                // 约束：空路径不控制（避免误操作 root）
+                return;
+            }
+
+            var tf = root.Find(path);
+            var go = tf != null ? tf.gameObject : null;
+            if (go == null)
+            {
+                return;
+            }
+
+            // 记录原始状态（只记录一次，退出攻击/切段时恢复）
+            self.AttachedActiveOriginalStates ??= new Dictionary<GameObject, bool>();
+            if (!self.AttachedActiveOriginalStates.ContainsKey(go))
+            {
+                self.AttachedActiveOriginalStates[go] = go.activeSelf;
+            }
+
+            self.AttachedActiveRefCounts ??= new Dictionary<GameObject, int>();
+            self.AttachedActiveRefCounts.TryGetValue(go, out int count);
+            count += isStart ? 1 : -1;
+            if (count < 0) count = 0;
+
+            if (count == 0)
+            {
+                self.AttachedActiveRefCounts.Remove(go);
+                // 轨道语义：区间外隐藏（退出攻击时会恢复原始状态）
+                if (go.activeSelf)
+                {
+                    go.SetActive(false);
+                }
+            }
+            else
+            {
+                self.AttachedActiveRefCounts[go] = count;
+                // 轨道语义：区间内显示
+                if (!go.activeSelf)
+                {
+                    go.SetActive(true);
+                }
+            }
+        }
+
+        #endregion
+
+        #region AttackLayer 延迟淡出（定时器）
 
         private static void CancelAttackLayerFadeOutTimer(this AttackComponent self)
         {

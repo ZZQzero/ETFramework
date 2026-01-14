@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Animancer;
 using ET;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UIElements;
-using Object = UnityEngine.Object;
 
 public partial class SkillEditorWindow : EditorWindow
 {

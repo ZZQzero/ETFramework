@@ -5,7 +5,7 @@ namespace ET
 {
     /// <summary>
     /// 相机跟随组件
-    /// 使用Cinemachine虚拟相机实现类似王者荣耀的俯视角跟随
+    /// 使用Cinemachine虚拟相机
     /// </summary>
     [ComponentOf(typeof(Scene))]
     public class CameraFollowComponent: Entity, IAwake, ILateUpdate, IDestroy
@@ -16,28 +16,27 @@ namespace ET
         public CinemachineCamera VirtualCamera { get; set; }
         
         public CinemachineFollow Follow { get; set; }
-        
-        public CinemachineRotationComposer RotationComposer { get; set; }
-        
         public CharacterControllerComponent CharacterController { get; set; }
 
+        public CinemachineCameraOffset CameraOffset { get; set; }
         public Unit FollowUnit { get; set; }
         /// <summary>
         /// Follow目标（用于Cinemachine）
         /// </summary>
         public Transform FollowTarget { get; set; }
+        public GameObject CameraFollowProxy { get; set; }
+        
+        public float BaseFov { get; set; } = 60f;
         
         /// <summary>
         /// 相机X轴偏移
         /// </summary>
-        public float FollowOffsetY { get; set; } = 10f;
+        public float FollowOffsetY { get; set; } = 12f;
         
         /// <summary>
         /// 相机Z轴偏移
         /// </summary>
-        public float FollowOffsetZ { get; set; } = -10f;
-        
-        public float DampingSmoothness {get; set; } = 5f;
+        public float FollowOffsetZ { get; set; } = -12f;
         
         /// <summary>
         /// 是否启用跟随

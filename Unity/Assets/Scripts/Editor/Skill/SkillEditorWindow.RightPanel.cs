@@ -40,6 +40,16 @@ public partial class SkillEditorWindow : EditorWindow
         inputBufferWindowMsField = rightContainer.Q<IntegerField>("InputBufferWindowMsField");
         defaultHitStopMsField = rightContainer.Q<IntegerField>("DefaultHitStopMsField");
         recoveryHoldMsField = rightContainer.Q<IntegerField>("RecoveryHoldMsField");
+        previewHitTargetLayerMaskField = rightContainer.Q<LayerMaskField>("PreviewHitTargetLayerMaskField");
+
+        if (previewHitTargetLayerMaskField != null)
+        {
+            previewHitTargetLayerMaskField.SetValueWithoutNotify(previewHitTargetLayerMask);
+            previewHitTargetLayerMaskField.RegisterValueChangedCallback(evt =>
+            {
+                previewHitTargetLayerMask = evt.newValue;
+            });
+        }
 
         // 获取Clip属性面板的标题和字段组
         clipPropertiesTitle = rightContainer.Q<Label>("ClipPropertiesTitle");
@@ -114,6 +124,7 @@ public partial class SkillEditorWindow : EditorWindow
             shapeTypeField.Init(HitShapeType.Box);
         }
         hitBoxTriggerTimeField = rightContainer.Q<FloatField>("HitBoxTriggerTimeField");
+        hitBoxTriggerFrameField = rightContainer.Q<IntegerField>("HitBoxTriggerFrameField");
         hitBoxNormalizedStartField = rightContainer.Q<FloatField>("HitBoxNormalizedStartField");
         hitBoxNormalizedEndField = rightContainer.Q<FloatField>("HitBoxNormalizedEndField");
         hitBoxOffsetField = rightContainer.Q<Vector3Field>("HitBoxOffsetField");
@@ -330,6 +341,16 @@ public partial class SkillEditorWindow : EditorWindow
         if (shapeTypeField != null)
         {
             shapeTypeField.RegisterValueChangedCallback(OnShapeTypeChanged);
+        }
+        if (hitBoxTriggerTimeField != null)
+        {
+            // 触发时间只读显示（由 clip.StartTime 换算）
+            hitBoxTriggerTimeField.SetEnabled(false);
+        }
+        if (hitBoxTriggerFrameField != null)
+        {
+            // 触发帧只读显示（由触发时间换算）
+            hitBoxTriggerFrameField.SetEnabled(false);
         }
         if (hitBoxNormalizedStartField != null)
         {

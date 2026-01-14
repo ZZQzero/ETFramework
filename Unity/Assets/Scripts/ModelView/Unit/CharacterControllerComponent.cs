@@ -17,8 +17,8 @@ namespace ET
         public InputComponent Input { get; set; }
         public Unit PlayerUnit { get; set; }
         public Animator Animator { get; set; }
-        
         public AttackComponent Attack { get; set; }
+        public CameraFollowComponent CameraFollow { get; set; }
 
         /// <summary>
         /// 移动速度（米/秒）

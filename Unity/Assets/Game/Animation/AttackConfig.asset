@@ -32,7 +32,7 @@ MonoBehaviour:
           _Names: []
         _Clip: {fileID: 7400000, guid: 3aeb280aa07caa148891a47a136fcee4, type: 3}
         _NormalizedStartTime: NaN
-      StartTime: 0.007710864
+      StartTime: 0.0077108643
       ClipLength: 0.6000001
       Duration: 0.6000001
       ComboTimeoutOffsetMs: 200
@@ -64,10 +64,11 @@ MonoBehaviour:
       VisualEffects:
       - Name: New Effect
         Prefab: {fileID: 2102702950728354241, guid: c72d8a3d2c3ab5c48a1496d592f6b353, type: 3}
-        NormalizedStart: 0
+        NormalizedStart: 7.76102e-10
         Offset: {x: 0, y: 0, z: 0}
         RotationEuler: {x: 0, y: 0, z: 0}
         FollowTarget: 0
+        IsAnimation: 0
         Length: 1
       SoundEffects:
       - Name: New Sound
@@ -155,6 +156,7 @@ MonoBehaviour:
         Offset: {x: 0, y: 0, z: 0}
         RotationEuler: {x: 0, y: 0, z: 0}
         FollowTarget: 0
+        IsAnimation: 0
         Length: 1
       SoundEffects:
       - Name: New Sound
@@ -242,6 +244,7 @@ MonoBehaviour:
         Offset: {x: 0, y: 0, z: 0}
         RotationEuler: {x: 0, y: 0, z: 0}
         FollowTarget: 0
+        IsAnimation: 0
         Length: 1
       SoundEffects:
       - Name: New Sound
@@ -345,10 +348,11 @@ MonoBehaviour:
       VisualEffects:
       - Name: New Effect
         Prefab: {fileID: 0}
-        NormalizedStart: 0.8
+        NormalizedStart: 0.7999999
         Offset: {x: 0, y: 0, z: 0}
         RotationEuler: {x: 0, y: 0, z: 0}
         FollowTarget: 0
+        IsAnimation: 0
         Length: 0.62319595
       SoundEffects: []
       AttachedActives: []

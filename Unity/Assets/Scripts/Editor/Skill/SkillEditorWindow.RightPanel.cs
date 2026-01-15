@@ -101,6 +101,12 @@ public partial class SkillEditorWindow : EditorWindow
         {
             effectPrefabField.objectType = typeof(UnityEngine.GameObject);
         }
+        effectIsAnimationField = rightContainer.Q<Toggle>("EffectIsAnimationField");
+        if (effectIsAnimationField != null)
+        {
+            effectIsAnimationField.tooltip = "只读：特效预制体下是否存在 Animation 组件。";
+            effectIsAnimationField.SetEnabled(false);
+        }
         effectTriggerTimeField = rightContainer.Q<FloatField>("EffectTriggerTimeField");
         effectNormalizedStartField = rightContainer.Q<FloatField>("EffectNormalizedStartField");
         followTargetField = rightContainer.Q<Toggle>("FollowTargetField");

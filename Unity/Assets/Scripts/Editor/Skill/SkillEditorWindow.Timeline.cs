@@ -2427,6 +2427,5 @@ public partial class SkillEditorWindow : EditorWindow
     {
         return Mathf.RoundToInt((TRACK_ITEM_HEIGHT - CLIP_ITEM_HEIGHT) * 0.5f);
     }
-    // Selection 高亮已抽到 SkillEditorWindow.Selection.cs
 }
 

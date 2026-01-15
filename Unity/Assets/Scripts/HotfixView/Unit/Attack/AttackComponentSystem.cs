@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Animancer;
+using Cysharp.Threading.Tasks;
 using GameUI;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -22,6 +23,8 @@ namespace ET
             self.AnimatorComponent = unit.GetComponent<AnimatorComponent>();
             self.Player = unit.GetComponent<GameObjectComponent>().Transform;
             self.CameraFollow = self.Root().GetComponent<CameraFollowComponent>();
+            self.TimerComponent = self.Root().GetComponent<TimerComponent>();
+            self.EffectRoot = new GameObject("EffectRoot");
             if (self.CameraFollow == null)
             {
                 Log.Error("没有找到CameraFollowComponent组件");
@@ -33,7 +36,6 @@ namespace ET
         private static void Destroy(this AttackComponent self)
         {
             self.CleanupTimers();
-            self.CleanupNonFollowVfxTimers();
             self.ResetState();
             self.Config = null;
             self.CurrentAnimState = null;
@@ -120,48 +122,10 @@ namespace ET
         /// </summary>
         private static void CleanupTimers(this AttackComponent self)
         {
-            var timerComponent = self.Root().GetComponent<TimerComponent>();
-            if (timerComponent != null && self.ComboTimeoutTimer != 0)
+            if (self.TimerComponent != null && self.ComboTimeoutTimer != 0)
             {
-                timerComponent.Remove(ref self.ComboTimeoutTimer);
+                self.TimerComponent.Remove(ref self.ComboTimeoutTimer);
             }
-        }
-
-        /// <summary>
-        /// 清理不跟随特效的定时器
-        /// </summary>
-        private static void CleanupNonFollowVfxTimers(this AttackComponent self)
-        {
-            if (self.NonFollowVfxTimers == null || self.NonFollowVfxTimers.Count == 0)
-            {
-                return;
-            }
-
-            var timerComponent = self.Root().GetComponent<TimerComponent>();
-            if (timerComponent == null)
-            {
-                return;
-            }
-
-            // 移除所有定时器并回收特效实例
-            foreach (var kvp in self.NonFollowVfxTimers)
-            {
-                long timerId = kvp.Key;
-                GameObject instance = kvp.Value;
-
-                if (timerId != 0)
-                {
-                    timerComponent.Remove(ref timerId);
-                }
-
-                // 回收特效实例到对象池
-                if (instance != null)
-                {
-                    GameObjectPool.Instance.ReleaseObject(instance, PoolType.Effect);
-                }
-            }
-
-            self.NonFollowVfxTimers.Clear();
         }
         
         #endregion
@@ -428,8 +392,8 @@ namespace ET
             
             if(segment.Movement.Distance > 0f)
             {
-                self.CameraFollow.SetCameraOffest(new Vector3(0f, 0f, -1.5f));
-                self.CameraFollow.SetCameraFov(1.5f);
+                //self.CameraFollow.SetCameraOffest(new Vector3(0f, 0f, -1.5f));
+                //self.CameraFollow.SetCameraFov(1.5f);
             }
         }
 
@@ -782,18 +746,20 @@ namespace ET
         private static void PlayVisualEffect(this AttackComponent self, VisualEffectData vfx)
         {
             if (vfx == null || vfx.Prefab == null || self.Player == null)
+            {
                 return;
+            }
 
             var instance = GameObjectPool.Instance.GetObjectSync(vfx.Prefab.name, PoolType.Effect);
             if (instance == null)
+            {
                 return;
-
-            // FollowTarget 语义（与编辑器一致）：
-            // - FollowTarget = true：特效跟随角色（作为子物体），Offset/RotationEuler 表示相对角色的 local pose。
-            //   跟随特效的生命周期由 TimeEffect 组件或对象池策略管理，不需要手动回收。
-            // - FollowTarget = false：特效生成后定格在世界（不再跟随角色），Offset/RotationEuler 仍然以“相对角色”描述，
-            //   但在生成时会被烘焙成 world pose：pos = player.TransformPoint(Offset)，rot = player.rotation * Euler(RotationEuler)。
-            //   不跟随特效需要根据 Length 创建定时器，播放完成后自动回收到对象池。
+            }
+            AnimationEffectSystem effectSystem = instance.GetComponent<AnimationEffectSystem>();
+            if (effectSystem == null)
+            {
+                return;
+            }
             if (vfx.FollowTarget)
             {
                 instance.transform.SetParent(self.Player, worldPositionStays: false);
@@ -802,47 +768,12 @@ namespace ET
             }
             else
             {
-                // 不跟随：放在世界中（建议项目里统一挂到一个 EffectRoot，这里先用无父节点的 world）
-                instance.transform.SetParent(null, worldPositionStays: false);
+                instance.transform.SetParent(self.EffectRoot.transform, worldPositionStays: false);
                 instance.transform.position = self.Player.TransformPoint(vfx.Offset);
                 instance.transform.rotation = self.Player.rotation * Quaternion.Euler(vfx.RotationEuler);
-
-                // 不跟随特效：根据 Length 创建定时器，播放完成后自动回收
-                float length = vfx.Length;
-                if (length <= 0f)
-                {
-                    Log.Error("AttackComponent: VisualEffect Length must be greater than 0 for non-follow effects");
-                    return;
-                }
-
-                // 创建定时器，在播放完成后回收
-                var timerComponent = self.Root().GetComponent<TimerComponent>();
-                if (timerComponent != null)
-                {
-                    long triggerTime = TimeInfo.Instance.ServerFrameTime() + Mathf.RoundToInt(length * 1000f);
-                    
-                    // 创建包含定时器ID和实例的数据结构（定时器ID在 NewOnceTimer 返回后设置）
-                    var recycleArgs = new AttackVfxRecycleArgs
-                    {
-                        Component = self,
-                        TimerId = 0, // 将在 NewOnceTimer 返回后设置
-                        Instance = instance
-                    };
-                    
-                    // 创建定时器，传递包含定时器ID和实例的数据结构
-                    long timerId = timerComponent.NewOnceTimer(triggerTime, TimerInvokeType.AttackVfxRecycle, recycleArgs);
-                    recycleArgs.TimerId = timerId;
-
-                    // 存储定时器ID和实例的映射（用于组件销毁时清理）
-                    if (self.NonFollowVfxTimers == null)
-                    {
-                        self.NonFollowVfxTimers = new Dictionary<long, GameObject>();
-                    }
-                    self.NonFollowVfxTimers[timerId] = instance;
-                }
             }
-
             instance.transform.localScale = Vector3.one;
+            effectSystem.Play(vfx).Forget();
         }
 
         private static void PlaySoundEffect(this AttackComponent self, SoundEffectData sfx)
@@ -1099,20 +1030,16 @@ namespace ET
         /// </summary>
         private static void ResetComboTimeout(this AttackComponent self)
         {
-            var timerComponent = self.Root().GetComponent<TimerComponent>();
-            if (timerComponent == null)
-                return;
-
             // 移除旧定时器
             if (self.ComboTimeoutTimer != 0)
             {
-                timerComponent.Remove(ref self.ComboTimeoutTimer);
+                self.TimerComponent.Remove(ref self.ComboTimeoutTimer);
             }
 
             // 创建新定时器
             int timeoutMs = self.GetCurrentSegmentComboTimeoutMs();
             long timeoutTime = TimeInfo.Instance.ServerFrameTime() + timeoutMs;
-            self.ComboTimeoutTimer = timerComponent.NewOnceTimer(timeoutTime, TimerInvokeType.AttackComboTimeout, self);
+            self.ComboTimeoutTimer = self.TimerComponent.NewOnceTimer(timeoutTime, TimerInvokeType.AttackComboTimeout, self);
         }
 
         /// <summary>
@@ -1365,22 +1292,14 @@ namespace ET
 
         private static void CancelAttackLayerFadeOutTimer(this AttackComponent self)
         {
-            var timerComponent = self.Root().GetComponent<TimerComponent>();
-            if (timerComponent != null && self.AttackLayerFadeOutTimer != 0)
+            if (self.TimerComponent != null && self.AttackLayerFadeOutTimer != 0)
             {
-                timerComponent.Remove(ref self.AttackLayerFadeOutTimer);
+                self.TimerComponent.Remove(ref self.AttackLayerFadeOutTimer);
             }
         }
 
         private static void ScheduleAttackLayerFadeOutTimer(this AttackComponent self)
         {
-            // 进入 Recovery 时启动一次性定时器：hold 后淡出 AttackLayer 露出 Layer0
-            var timerComponent = self.Root().GetComponent<TimerComponent>();
-            if (timerComponent == null)
-            {
-                return;
-            }
-
             self.CancelAttackLayerFadeOutTimer();
 
             int holdMs = self.Config?.RecoveryHoldMs ?? 200;
@@ -1403,7 +1322,7 @@ namespace ET
             }
 
             long triggerTime = TimeInfo.Instance.ServerFrameTime() + holdMs;
-            self.AttackLayerFadeOutTimer = timerComponent.NewOnceTimer(triggerTime, TimerInvokeType.AttackLayerFadeOut, self);
+            self.AttackLayerFadeOutTimer = self.TimerComponent.NewOnceTimer(triggerTime, TimerInvokeType.AttackLayerFadeOut, self);
         }
 
         public static void OnAttackLayerFadeOutTimer(this AttackComponent self)

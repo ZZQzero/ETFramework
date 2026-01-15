@@ -123,6 +123,7 @@ public partial class SkillEditorWindow : EditorWindow
     
     private VisualElement effectFields;
     private ObjectField effectPrefabField;
+    private Toggle effectIsAnimationField;
     private FloatField effectTriggerTimeField;
     private FloatField effectNormalizedStartField;
     private Toggle followTargetField;

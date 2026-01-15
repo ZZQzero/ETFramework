@@ -240,6 +240,8 @@ namespace ET
         /// - false：用于落点/地面AOE/法阵等（生成后定格在世界中，不随角色移动/旋转）。
         /// </summary>
         public bool FollowTarget = true;
+
+        public bool IsAnimation = false;
         
         /// <summary>特效时长</summary>
         public float Length = 2f;

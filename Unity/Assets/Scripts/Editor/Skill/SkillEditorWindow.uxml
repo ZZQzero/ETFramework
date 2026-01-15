@@ -178,6 +178,10 @@
                             <uie:ObjectField object-type="UnityEngine.GameObject" name="EffectPrefabField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="&#26159;&#21542;&#21160;&#30011;&#29305;&#25928;:" style="width: 120px;"/>
+                            <ui:Toggle name="EffectIsAnimationField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
                             <ui:Label text="Offset:" style="width: 120px;"/>
                             <ui:Vector3Field name="EffectOffsetField" style="flex-grow: 1;"/>
                         </ui:VisualElement>

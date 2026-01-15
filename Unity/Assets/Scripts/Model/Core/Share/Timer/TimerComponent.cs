@@ -52,6 +52,9 @@ namespace ET
 
         public readonly Dictionary<long, TimerAction> timerActions = new();
 
+        // 反查 timerId 对应的触发时间，便于取消时快速清理 timeId
+        public readonly Dictionary<long, long> timerIdToTime = new();
+
         public long idGenerator;
 
         // 记录最小时间，不用每次都去MultiMap取第一个值

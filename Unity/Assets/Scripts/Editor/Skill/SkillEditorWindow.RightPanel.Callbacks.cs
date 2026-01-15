@@ -349,9 +349,11 @@ public partial class SkillEditorWindow : EditorWindow
 
             // Best practice：若 Prefab 自带 legacy Animation，则以 clip.length 作为特效时长真源，写回 config。
             // ParticleSystem 则不自动覆盖 Length（按配置手填）。
+            bool hasAnimation = false;
             if (prefab != null)
             {
                 var anim = prefab.GetComponentInChildren<Animation>(true);
+                hasAnimation = anim != null;
                 var clip = anim != null ? GetFirstLegacyAnimationClip(anim) : null;
                 if (clip != null)
                 {
@@ -369,6 +371,12 @@ public partial class SkillEditorWindow : EditorWindow
                         frameField.SetValueWithoutNotify(effectClipItem.Frame);
                     }
                 }
+            }
+            effectClipItem.EffectData.IsAnimation = hasAnimation;
+            if (effectIsAnimationField != null)
+            {
+                effectIsAnimationField.SetValueWithoutNotify(effectClipItem.EffectData.IsAnimation);
+                effectIsAnimationField.SetEnabled(false);
             }
 
             MarkAssetDirty();

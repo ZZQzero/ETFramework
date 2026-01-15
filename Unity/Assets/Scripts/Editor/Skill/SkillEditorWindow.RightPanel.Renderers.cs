@@ -206,9 +206,11 @@ public partial class SkillEditorWindow : EditorWindow
 
         // Best practice：选中时若 Prefab 自带 legacy Animation，则把 clip.length 写回到 config 的 Length（真源），并同步 UI clip 时长。
         //（避免 Length 还停留在默认 2s 导致预览窗口/时间轴不匹配）
+        bool hasAnimation = false;
         if (effectData.Prefab != null)
         {
             var anim = effectData.Prefab.GetComponentInChildren<Animation>(true);
+            hasAnimation = anim != null;
             var legacyClip = anim != null ? GetFirstLegacyAnimationClip(anim) : null;
             if (legacyClip != null)
             {
@@ -222,6 +224,15 @@ public partial class SkillEditorWindow : EditorWindow
                     RefreshTrackContent();
                 }
             }
+        }
+        if (effectData.IsAnimation != hasAnimation)
+        {
+            effectData.IsAnimation = hasAnimation;
+            MarkAssetDirty();
+        }
+        if (effectIsAnimationField != null)
+        {
+            effectIsAnimationField.SetValueWithoutNotify(effectData.IsAnimation);
         }
 
         // 更新触发时间（需要从归一化时间转换为绝对时间）

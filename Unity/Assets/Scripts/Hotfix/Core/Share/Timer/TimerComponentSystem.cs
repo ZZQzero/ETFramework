@@ -64,7 +64,8 @@ namespace ET
                 {
                     continue;
                 }
-                
+
+                self.timerIdToTime.Remove(timerId);
                 self.Run(timerId, ref timerAction);
             }
         }
@@ -105,11 +106,27 @@ namespace ET
             }
         }
 
+        private static void RefreshMinTime(this TimerComponent self)
+        {
+            if (self.timeId.Count == 0)
+            {
+                self.minTime = long.MaxValue;
+                return;
+            }
+
+            foreach (var kv in self.timeId)
+            {
+                self.minTime = kv.Key;
+                break;
+            }
+        }
+
         private static void AddTimer(this TimerComponent self, long timerId, ref TimerAction timer)
         {
             long tillTime = timer.StartTime + timer.Time;
             self.timeId.Add(tillTime, timerId);
             self.timerActions.Add(timerId, timer);
+            self.timerIdToTime[timerId] = tillTime;
             if (tillTime < self.minTime)
             {
                 self.minTime = tillTime;
@@ -133,6 +150,13 @@ namespace ET
             if (!self.timerActions.Remove(id, out TimerAction _))
             {
                 return false;
+            }
+            if (self.timerIdToTime.Remove(id, out long tillTime))
+            {
+                if (self.timeId.Remove(tillTime, id) && self.minTime == tillTime)
+                {
+                    self.RefreshMinTime();
+                }
             }
             return true;
         }

@@ -92,8 +92,11 @@ namespace ET
                 self.Rigidbody.linearVelocity = self.CurrentVelocity;
             }
 
-            // 应用旋转（使用可变时间步，响应输入）
-            self.ApplyRotation(deltaTime);
+            // 应用旋转
+            if (!self.Attack.IsInAttack)
+            {
+                self.ApplyRotation(deltaTime);
+            }
             
             // 计算动画速度参数
             self.CalculateAnimationSpeeds();
@@ -113,7 +116,7 @@ namespace ET
             
             self.Ground.Detect();
             
-            if (self.JumpRequested)
+            if (self.JumpRequested && !self.Attack.IsInAttack)
             {
                 self.Jump();
                 self.JumpRequested = false;

@@ -330,6 +330,7 @@ public partial class SkillEditorWindow : EditorWindow
 
         // Effect字段
         if (effectPrefabField != null) effectPrefabField.SetValueWithoutNotify(null);
+        if (effectIsAnimationField != null) effectIsAnimationField.SetValueWithoutNotify(false);
         if (effectTriggerTimeField != null)
         {
             effectTriggerTimeField.SetValueWithoutNotify(0f);

@@ -69,7 +69,7 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.CheckGroundedComponentSystem.ET_CheckGroundedComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.GameObjectComponentSystem.ET_GameObjectComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.GameObjectComponentSystem.ET_GameObjectComponent_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.InputComponentSystem.ET_InputComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.InputComponentSystem.ET_InputComponent_UnityEngine_Transform_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.InputComponentSystem.ET_InputComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ResourcesLoaderComponentSystem.ET_ResourcesLoaderComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ResourcesLoaderComponentSystem.ET_ResourcesLoaderComponent_string_AwakeSystem>();

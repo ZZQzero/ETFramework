@@ -64,7 +64,7 @@ namespace ET
         private static void Update(this CharacterControllerComponent self)
         {
             // 处理输入和跳跃请求（每帧处理，响应性更好）
-            if (self.Input != null && self.Input.HasJumpRequest())
+            if (self.Input != null && self.Input.HasJumpRequest() && !self.Attack.IsInAttack)
             {
                 self.RequestJump();
             }
@@ -91,9 +91,9 @@ namespace ET
                 self.ApplyMovement(deltaTime);
                 self.Rigidbody.linearVelocity = self.CurrentVelocity;
             }
-
+            
             // 应用旋转
-            if (!self.Attack.IsInAttack)
+            if (!self.Attack.IsAttacking)
             {
                 self.ApplyRotation(deltaTime);
             }
@@ -227,7 +227,15 @@ namespace ET
         private static void ApplyRotation(this CharacterControllerComponent self, float deltaTime)
         {
             // 获取输入方向
-            Vector3 inputDirection = self.Input.GetMoveDirection();
+            Vector3 inputDirection;
+            if (self.Attack.State == AttackState.Recovery && self.Input.GetMoveDirection().magnitude > 0.0001f)
+            {
+                inputDirection = self.Input.GetAimDirection(self.Rigidbody.transform);
+            }
+            else
+            {
+                inputDirection = self.Input.GetMoveDirection();
+            }
             
             // 只有当输入方向有效时才旋转，否则保持当前旋转
             if (inputDirection.magnitude < 0.01f)
@@ -240,11 +248,20 @@ namespace ET
             // 计算目标旋转
             Quaternion targetRotation = Quaternion.LookRotation(inputDirection);
 
-            // 根据是否在空中调整旋转速度
-            float actualRotationSpeed = self.Ground.IsAirborne(self.Ground.State) ?
-                self.RotationSpeed * 1.2f : // 空中旋转稍微快一点
-                self.RotationSpeed;
-
+            float actualRotationSpeed;
+            if (self.Attack.State == AttackState.Recovery)
+            {
+                float angle = Quaternion.Angle(player.rotation, targetRotation);
+                float boost = Mathf.Lerp(2.5f, 4.5f, Mathf.Clamp01(angle / 180f));
+                actualRotationSpeed = self.RotationSpeed * boost;
+            }
+            else
+            {
+                // 根据是否在空中调整旋转速度
+                actualRotationSpeed = self.Ground.IsAirborne(self.Ground.State) ?
+                    self.RotationSpeed * 1.2f : // 空中旋转稍微快一点
+                    self.RotationSpeed;
+            }
             // 平滑旋转
             player.rotation = Quaternion.RotateTowards(
                 player.rotation,

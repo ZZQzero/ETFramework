@@ -7,7 +7,7 @@ namespace ET
     /// 只负责基本的输入读取和缓存
     /// </summary>
     [ComponentOf(typeof(Unit))]
-    public class InputComponent : Entity, IAwake, IUpdate
+    public class InputComponent : Entity, IAwake<Transform>, IUpdate
     {
         /// <summary>
         /// 是否启用输入读取
@@ -17,6 +17,8 @@ namespace ET
         /// 移动方向（归一化向量，XZ平面）
         /// </summary>
         public Vector3 MoveDirection;
+
+        public Vector3 LastAimDirection;
         /// <summary>
         /// 是否按下跳跃键
         /// </summary>

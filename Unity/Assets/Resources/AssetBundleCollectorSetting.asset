@@ -30,7 +30,7 @@ MonoBehaviour:
       AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
-      - CollectPath: Assets/Game/UI
+      - CollectPath: Assets/Game/Prefab/UI
         CollectorGUID: aba46fdae3f587a418bb792dc4b20b55
         CollectorType: 0
         AddressRuleName: AddressByFileName
@@ -43,16 +43,16 @@ MonoBehaviour:
       AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
-      - CollectPath: Assets/Game/Bundles
-        CollectorGUID: c6bd2b470bea1414eb44ce0fbd88070e
+      - CollectPath: Assets/Game/Prefab/Runtime
+        CollectorGUID: e2e3bea9cfa17564794fd976e14f5d54
         CollectorType: 0
         AddressRuleName: AddressByFileName
         PackRuleName: PackDirectory
         FilterRuleName: CollectAll
         AssetTags: 
         UserData: 
-      - CollectPath: Assets/Game/Prefab
-        CollectorGUID: 83fa054619bf1874e8b0fd87e17a0903
+      - CollectPath: Assets/Game/Prefab/Unit
+        CollectorGUID: 2f805b95f651fcc47a8ad0cc32706c38
         CollectorType: 0
         AddressRuleName: AddressByFileName
         PackRuleName: PackDirectory
@@ -90,7 +90,7 @@ MonoBehaviour:
       AssetTags: 
       ActiveRuleName: EnableGroup
       Collectors:
-      - CollectPath: Assets/Game/LocalUI
+      - CollectPath: Assets/Game/Prefab/LocalUI
         CollectorGUID: 4faee3ee9c69f114d874fc8e41774c22
         CollectorType: 0
         AddressRuleName: AddressByFileName

@@ -96,7 +96,7 @@ public partial class SkillEditorWindow : EditorWindow
         }
         if (segmentTimeoutMsPreviewField != null)
         {
-            int durMs = Mathf.RoundToInt(Mathf.Max(0f, segmentData.Duration) * 1000f);
+            int durMs = Mathf.RoundToInt(Mathf.Max(0f, segmentData.Duration * segmentData.TimeWindow.AnimationEnd) * 1000f);
             int total = durMs + Mathf.Max(0, segmentData.ComboTimeoutOffsetMs);
             segmentTimeoutMsPreviewField.SetValueWithoutNotify(Mathf.Max(0, total));
             segmentTimeoutMsPreviewField.SetEnabled(false);

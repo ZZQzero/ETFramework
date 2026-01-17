@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Animancer;
 using ET;
@@ -42,6 +42,9 @@ public partial class SkillEditorWindow : EditorWindow
             DrawTimelineRulerMarks();
             UpdatePlayheadSize();
             UpdatePlayheadPosition();
+
+            // UI布局完成后重新创建动画结束时间黄色竖线
+            EditorApplication.delayCall += () => RecreateAllAnimationEndLines();
         }
         finally
         {

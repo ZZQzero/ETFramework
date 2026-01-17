@@ -14,9 +14,6 @@ namespace ET
                 return;
 
             self.OnComboTimeout();
-            
-            //self.ExitAttackState();
-            
         }
     }
 }

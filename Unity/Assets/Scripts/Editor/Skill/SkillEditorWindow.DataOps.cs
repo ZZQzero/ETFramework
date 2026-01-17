@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using ET;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 public partial class SkillEditorWindow : EditorWindow
 {
@@ -117,12 +118,16 @@ public partial class SkillEditorWindow : EditorWindow
         laneIndexByClip.Remove(clipItem);
 
         bool dataChanged = false;
+        AttackSegmentData deletedSegment = null; // 记录被删除的Segment，用于清理预览状态
 
         if (clipItem is AnimationClipItem animClipItem)
         {
             // 删除AnimationClip及其所有子轨道：从Config.Segments中删除对应的SegmentData
             if (animClipItem.SegmentData != null && config.Segments.Contains(animClipItem.SegmentData))
             {
+                deletedSegment = animClipItem.SegmentData; // 保存被删除的Segment信息，用于后续清理预览状态
+                // 在删除段之前先清理预览状态
+                CleanupPreviewStatesForDeletedSegment(deletedSegment);
                 config.Segments.Remove(animClipItem.SegmentData);
                 dataChanged = true;
             }
@@ -231,6 +236,9 @@ public partial class SkillEditorWindow : EditorWindow
             {
                 focusedAnimationClipItem = allAnimationClipItems.Count > 0 ? allAnimationClipItems[0] : null;
             }
+
+            // 删除段后，重新计算相邻段的AnimationEnd
+            RecomputeAnimationEndsAfterDeletion(animClipItem);
         }
         else if (clipItem is EffectClipItem effectClipItem)
         {
@@ -326,6 +334,116 @@ public partial class SkillEditorWindow : EditorWindow
         trackContainer?.MarkDirtyRepaint();
         root?.MarkDirtyRepaint();
         Repaint();
+    }
+
+    // 删除段后重新计算相邻段的AnimationEnd
+    private void RecomputeAnimationEndsAfterDeletion(AnimationClipItem deletedClipItem)
+    {
+        if (deletedClipItem == null) return;
+
+        // 获取被删除段的位置，找到前一个和后一个段
+        GetNeighbors(deletedClipItem, out var prev, out var next);
+
+        // 前一个段的AnimationEnd需要重新计算（因为它现在与不同的下一段重叠）
+        if (prev != null)
+        {
+            RecomputeAnimationEndFromOverlap(prev);
+        }
+
+        // 如果有后一个段，现在它的前一个段变了，也需要重新计算
+        if (next != null)
+        {
+            RecomputeAnimationEndFromOverlap(next);
+        }
+
+        // 更新UI显示
+        if (ReferenceEquals(selectedClip, prev) && prev?.SegmentData != null)
+        {
+            var tw = prev.SegmentData.TimeWindow ??= new TimeWindowData();
+            inputBufferStartField?.SetValueWithoutNotify(tw.InputBufferStart);
+            cancelableTimeField?.SetValueWithoutNotify(tw.CancelableTime);
+            animationEndField?.SetValueWithoutNotify(tw.AnimationEnd);
+        }
+        else if (ReferenceEquals(selectedClip, next) && next?.SegmentData != null)
+        {
+            var tw = next.SegmentData.TimeWindow ??= new TimeWindowData();
+            inputBufferStartField?.SetValueWithoutNotify(tw.InputBufferStart);
+            cancelableTimeField?.SetValueWithoutNotify(tw.CancelableTime);
+            animationEndField?.SetValueWithoutNotify(tw.AnimationEnd);
+        }
+    }
+
+    // 清理与被删除段相关的预览状态
+    private void CleanupPreviewStatesForDeletedSegment(AttackSegmentData deletedSegment)
+    {
+        if (deletedSegment == null)
+        {
+            return;
+        }
+
+        // 清理VFX预览对象
+        for (int i = previewVfxInstances.Count - 1; i >= 0; --i)
+        {
+            var inst = previewVfxInstances[i];
+            if (inst?.Data != null && deletedSegment.VisualEffects.Contains(inst.Data))
+            {
+                if (inst.GameObject != null)
+                {
+                    Object.DestroyImmediate(inst.GameObject);
+                }
+                previewVfxInstances.RemoveAt(i);
+            }
+        }
+
+        // 清理SFX预览状态
+        for (int i = previewSfxInstances.Count - 1; i >= 0; --i)
+        {
+            var inst = previewSfxInstances[i];
+            if (inst?.Clip != null)
+            {
+                bool isRelated = false;
+                foreach (var sfx in deletedSegment.SoundEffects)
+                {
+                    if (sfx?.Clip == inst.Clip)
+                    {
+                        isRelated = true;
+                        break;
+                    }
+                }
+                if (isRelated)
+                {
+                    previewSfxInstances.RemoveAt(i);
+                }
+            }
+        }
+
+        // 清理命中检测缓存
+        previewHitTargets.Remove(deletedSegment.Id);
+        previewTriggeredKeyFrameHitBoxes.Remove(deletedSegment.Id);
+
+        // 清理Active对象状态
+        foreach (var active in deletedSegment.AttachedActives)
+        {
+            if (active?.RelativePath != null)
+            {
+                var rootGo = selectObj != null ? selectObj.value as GameObject : null;
+                Transform root = rootGo != null ? rootGo.transform : animancer != null ? animancer.transform : null;
+                if (root != null)
+                {
+                    Transform target = root.Find(active.RelativePath);
+                    if (target != null && previewOriginalActiveStates.ContainsKey(target.gameObject))
+                    {
+                        // 恢复原始激活状态
+                        bool originalState = previewOriginalActiveStates[target.gameObject];
+                        if (target.gameObject.activeSelf != originalState)
+                        {
+                            target.gameObject.SetActive(originalState);
+                        }
+                        previewOriginalActiveStates.Remove(target.gameObject);
+                    }
+                }
+            }
+        }
     }
 
     // 从轨道中移除指定的Clip

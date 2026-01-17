@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Animancer;
 using ET;
@@ -126,6 +126,9 @@ public partial class SkillEditorWindow : EditorWindow
                 animClipItem.Frame = Mathf.RoundToInt(duration * 60f);
             }
 
+            // 更新动画结束时间黄色竖线位置
+            UpdateAnimationEndLinePosition(animClipItem);
+
             MarkAssetDirty();
             RefreshTrackContent();
 
@@ -157,6 +160,9 @@ public partial class SkillEditorWindow : EditorWindow
                     animClipItem.Frame = Mathf.RoundToInt(duration * 60f);
                 }
             }
+
+            // 更新动画结束时间黄色竖线位置
+            UpdateAnimationEndLinePosition(animClipItem);
 
             MarkAssetDirty();
             RefreshTrackContent();
@@ -214,6 +220,9 @@ public partial class SkillEditorWindow : EditorWindow
             // AnimationEnd <-> 重叠：把下一段的开始时间对齐到“上一段的结束阈值”
             SyncNextAnimationClipStartTimeFromAnimationEnd(animClipItem);
 
+            // 更新动画结束时间黄色竖线位置
+            UpdateAnimationEndLinePosition(animClipItem);
+
             MarkAssetDirty();
             ApplyViewModeAndRefresh();
         }
@@ -229,7 +238,7 @@ public partial class SkillEditorWindow : EditorWindow
             // 更新预览：本段超时 = Duration(ms) + Offset(ms)
             if (segmentTimeoutMsPreviewField != null)
             {
-                int durMs = Mathf.RoundToInt(Mathf.Max(0f, animClipItem.SegmentData.Duration) * 1000f);
+                int durMs = Mathf.RoundToInt(Mathf.Max(0f, animClipItem.SegmentData.Duration * animClipItem.SegmentData.TimeWindow.AnimationEnd) * 1000f);
                 segmentTimeoutMsPreviewField.SetValueWithoutNotify(durMs + v);
             }
 

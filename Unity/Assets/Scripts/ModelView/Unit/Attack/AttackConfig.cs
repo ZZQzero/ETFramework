@@ -19,8 +19,6 @@ namespace ET
         
         /// <summary>
         /// 连击超时兜底（毫秒，兼容/兜底用）。
-        /// 说明：
-        /// - 方案A（分层）下推荐按“每段”计算超时：<c>段超时 = 段时长(ms) + 段偏移(ComboTimeoutOffsetMs)</c>。
         /// - 当段时长未知（例如配置缺失/异常）时，运行时会回退使用该值，防止卡死。
         /// </summary>
         public int ComboTimeoutMs = 800;

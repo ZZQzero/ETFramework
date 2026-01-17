@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using ET;
 using UnityEditor;
@@ -52,17 +52,21 @@ public partial class SkillEditorWindow : EditorWindow
     {
         if (segment?.SegmentData == null) return;
         GetNeighbors(segment, out _, out var next);
-        if (next == null) return;
-
-        float duration = Mathf.Max(0.0001f, segment.Duration);
-        float t = Mathf.Clamp01((next.StartTime - segment.StartTime) / duration);
 
         var tw = segment.SegmentData.TimeWindow ??= new TimeWindowData();
-        tw.AnimationEnd = t;
+
+        if (next != null)
+        {
+            // 有下一段时，基于重叠关系计算AnimationEnd
+            float duration = Mathf.Max(0.0001f, segment.Duration);
+            float t = Mathf.Clamp01((next.StartTime - segment.StartTime) / duration);
+            tw.AnimationEnd = t;
+        }
+        // 没有下一段时，保持现有的AnimationEnd值（用户设置的）
 
         if (ReferenceEquals(selectedClip, segment) && animationEndField != null)
         {
-            animationEndField.SetValueWithoutNotify(t);
+            animationEndField.SetValueWithoutNotify(tw.AnimationEnd);
         }
     }
 

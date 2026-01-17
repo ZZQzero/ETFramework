@@ -9,7 +9,8 @@ namespace ET
         {
             Unit unit = args.Unit;
             // Unit View层
-            string assetsName = $"Ellen";
+            string assetsName = $"Player";
+            //string assetsName = $"Ellen";
             GameObject go = await ResourcesLoadManager.Instance.LoadGameObjectAsync(assetsName);
             go.transform.position = unit.Position;
             go.transform.localScale = Vector3.one;
@@ -17,7 +18,7 @@ namespace ET
             unit.AddComponent<GameObjectComponent>().GameObject = go;
             unit.AddComponent<InputComponent,Transform>(go.transform);
             unit.AddComponent<CheckGroundedComponent,GameObject>(go);
-            unit.AddComponent<AttackComponent,string>("AttackConfig");
+            unit.AddComponent<AttackComponent,string>("AttackConfig1");
             unit.AddComponent<CharacterControllerComponent,GameObject>(go);
             //unit.AddComponent<HitReactionComponent,Transform>(go.transform);
             unit.AddComponent<AnimatorComponent>();

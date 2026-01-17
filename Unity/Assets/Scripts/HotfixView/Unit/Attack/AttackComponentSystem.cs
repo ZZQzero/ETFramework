@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Animancer;
 using Cysharp.Threading.Tasks;
@@ -271,14 +271,6 @@ namespace ET
             
             // 重置攻击段状态
             self.ResetSegmentState(segment);
-
-            var layer0State = self.AnimatorComponent.MoveMixer.State;
-            if (layer0State != null)
-            {
-                layer0State.Speed = 0f;
-                self.AnimatorComponent.MoveMixer.State.Parameter = 0;
-                layer0State.NormalizedTime = 0f;
-            }
             // 播放动画
             var attackLayer = self.AnimatorComponent.AttackLayer;
             if (attackLayer == null)
@@ -288,6 +280,7 @@ namespace ET
                 attackLayer.Weight = 0f;
                 self.AnimatorComponent.AttackLayer = attackLayer;
             }
+            var animState = attackLayer.Play(segment.AnimationClipTrans);
             
             if (segmentIndex == 0)
             {
@@ -300,7 +293,14 @@ namespace ET
                 float fadeIn = Mathf.Max(0.05f, segment.AnimationClipTrans.FadeDuration);
                 attackLayer.StartFade(1f, fadeIn);
             }
-            var animState = attackLayer.Play(segment.AnimationClipTrans);
+            
+            var layer0State = self.AnimatorComponent.MoveMixer.State;
+            if (layer0State != null)
+            {
+                layer0State.Speed = 0f;
+                self.AnimatorComponent.MoveMixer.State.Parameter = 0;
+                layer0State.NormalizedTime = 0f;
+            }
             if (animState == null)
             {
                 Log.Error($"AttackComponent: Failed to play animation for segment {segmentIndex}");
@@ -456,7 +456,6 @@ namespace ET
             if (self.CurrentAnimState == null || self.CurrentSegment == null)
                 return true;
             
-            // 统一以配置的 TimeWindow.AnimationEnd（NormalizedTime）为准；未配置则默认 1.0
             float endTime = self.CurrentSegment.TimeWindow.AnimationEnd;
             if (endTime <= 0f)
             {
@@ -593,9 +592,23 @@ namespace ET
                 float endTrigger = endTime;
                 if (endTrigger <= 0f)
                 {
-                    endTrigger = 1f;
+                    if (animState.IsLooping)
+                    {
+                        endTrigger = AnimancerEvent.AlmostOne;
+                    }
+                    else
+                    {
+                        endTrigger = 1f;
+                    }
                 }
-                endTrigger = Mathf.Clamp01(endTrigger);
+                else
+                {
+                    endTrigger = Mathf.Clamp01(endTrigger);
+                    if (animState.IsLooping && Mathf.Approximately(endTrigger, 1f))
+                    {
+                        endTrigger = AnimancerEvent.AlmostOne;
+                    }
+                }
                 events.Add(endTrigger, () =>
                 {
                     // 防止旧 state 的事件误触发；且只在 Attacking 阶段响应（进入 Recovery/Idle 后不再触发）
@@ -1064,7 +1077,7 @@ namespace ET
                 return Mathf.Max(0, fallback);
             }
 
-            int durMs = Mathf.RoundToInt(durSec * 1000f); //转成毫秒
+            int durMs = Mathf.RoundToInt(durSec * seg.TimeWindow.AnimationEnd * 1000f); //转成毫秒
             int offsetMs = Mathf.Max(0, seg.ComboTimeoutOffsetMs);
             int total = durMs + offsetMs;
             return Mathf.Max(0, total);
@@ -1120,13 +1133,8 @@ namespace ET
         {
             if (self.State == AttackState.Idle)
                 return;
-
             // 退出攻击状态时，淡出攻击层
-            var attackLayer = self.AnimatorComponent?.AttackLayer;
-            if (attackLayer != null)
-            {
-                attackLayer.StartFade(0f, 0.25f);
-            }
+            self.FadeOutAttackLayer();
             self.CancelAttackLayerFadeOutTimer();
 
             int lastIndex = self.CurrentSegmentIndex;
@@ -1305,19 +1313,8 @@ namespace ET
             int holdMs = self.Config?.RecoveryHoldMs ?? 200;
             if (holdMs <= 0)
             {
-                var layer0State = self.AnimatorComponent.MoveMixer.State;
-                if (layer0State != null)
-                {
-                    layer0State.Speed = 1f;
-                    self.AnimatorComponent.MoveMixer.State.Parameter = 0;
-                    layer0State.NormalizedTime = 0f;
-                }
                 // 立刻淡出（不额外占用 Timer）
-                var attackLayer = self.AnimatorComponent?.AttackLayer;
-                if (attackLayer != null)
-                {
-                    attackLayer.StartFade(0f, 0.25f);
-                }
+                self.FadeOutAttackLayer();
                 return;
             }
 
@@ -1329,26 +1326,13 @@ namespace ET
         {
             // Timer 已触发：清掉 id，避免重复 Remove
             self.AttackLayerFadeOutTimer = 0;
-
             // 只有仍在 Recovery 且没有重新进入攻击时才淡出
             if (self.IsDisposed || self.State != AttackState.Recovery)
             {
                 return;
             }
-
-            var layer0State = self.AnimatorComponent.MoveMixer.State;
-            if (layer0State != null)
-            {
-                layer0State.Speed = 1f;
-                self.AnimatorComponent.MoveMixer.State.Parameter = 0;
-                layer0State.NormalizedTime = 0f;
-            }
-
-            var attackLayer = self.AnimatorComponent?.AttackLayer;
-            if (attackLayer != null)
-            {
-                attackLayer.StartFade(0f, 0.25f);
-            }
+            
+            self.FadeOutAttackLayer();
         }
 
         #endregion
@@ -1356,7 +1340,26 @@ namespace ET
         #endregion
 
         #region 辅助方法
-        
+
+        /// <summary>
+        /// 淡出Attack层到指定权重
+        /// </summary>
+        private static void FadeOutAttackLayer(this AttackComponent self, float targetWeight = 0f, float duration = 0.25f)
+        {
+            var layer0State = self.AnimatorComponent.MoveMixer.State;
+            if (layer0State != null)
+            {
+                layer0State.Speed = 1f;
+                self.AnimatorComponent.MoveMixer.State.Parameter = 0;
+                layer0State.NormalizedTime = 0f;
+            }
+            var attackLayer = self.AnimatorComponent?.AttackLayer;
+            if (attackLayer != null)
+            {
+                attackLayer.StartFade(targetWeight, duration);
+            }
+        }
+
         /// <summary>
         /// 获取当前连击数
         /// </summary>

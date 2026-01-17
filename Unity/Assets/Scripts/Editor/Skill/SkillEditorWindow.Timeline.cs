@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using ET;
 using UnityEditor;
@@ -12,7 +12,11 @@ public partial class SkillEditorWindow : EditorWindow
     private const float LANE_ROW_HEIGHT = CLIP_ITEM_HEIGHT + LANE_GAP_Y;
     private const float RESIZE_HANDLE_HIT_WIDTH_PX = 6f; // 右侧拖拽缩放热区宽度（像素）
     private const string RESIZE_CURSOR_CLASS = "cursor-resize-h";
-    
+
+    // 动画结束时间黄色竖线相关常量
+    private const float ANIMATION_END_LINE_WIDTH = 2f; // 黄色竖线宽度
+    private const float ANIMATION_END_HALF_WIDTH = ANIMATION_END_LINE_WIDTH * 0.5f; // 半宽用于定位
+
     private readonly Dictionary<IClipItem, int> laneIndexByClip = new();
     private int draggingLaneIndex = -1;
 
@@ -24,6 +28,9 @@ public partial class SkillEditorWindow : EditorWindow
     private VisualElement dragAnimationEndLineElement;
     private VisualElement dragAnimationEndLineOwnerTrackElement; // AnimationClip 所在轨道行
     private VisualElement dragAnimationEndLineChildTrackElement; // 当前被拖动子 clip 所在轨道行
+
+    // 动画结束时间黄色竖线
+    private readonly Dictionary<AnimationClipItem, VisualElement> animationEndLineElements = new();
 
     // 右侧拖拽缩放（Active/Effect/HitBox）
     private bool isResizingClip;
@@ -512,6 +519,7 @@ public partial class SkillEditorWindow : EditorWindow
     private void ClearTrackUI()
     {
         trackContainer?.Clear();
+        ClearAllAnimationEndLines();
     }
 
     // 初始化Config提示标签（时间轴空态提示）
@@ -685,6 +693,9 @@ public partial class SkillEditorWindow : EditorWindow
         }
         // 同时更新所有轨道的宽度
         UpdateAllTrackWidths();
+
+        // UI布局完成后确保所有动画结束时间竖线都存在并更新位置
+        EditorApplication.delayCall += () => RecreateAllAnimationEndLines();
     }
 
     // 更新所有轨道的宽度（含视觉缓冲，拖动时不穿帮）
@@ -776,6 +787,12 @@ public partial class SkillEditorWindow : EditorWindow
                     }
                 }
                 clipElements.Add(clipElement);
+
+                // 为AnimationClip创建结束时间黄色竖线
+                if (clipItem is AnimationClipItem animClipItem)
+                {
+                    EnsureAnimationEndLine(animClipItem);
+                }
             }
         }
         else if (trackData is EffectTrack effectTrack)
@@ -1978,6 +1995,169 @@ public partial class SkillEditorWindow : EditorWindow
 
         trackElement.pickingMode = PickingMode.Position;
     }
+
+    #region 动画结束时间黄色竖线
+
+    /// <summary>
+    /// 创建或更新动画结束时间的黄色竖线
+    /// </summary>
+    private void EnsureAnimationEndLine(AnimationClipItem clipItem)
+    {
+        if (timelineContent == null || clipItem?.SegmentData == null)
+        {
+            return;
+        }
+
+        // 如果不存在，创建新的黄色竖线元素
+        if (!animationEndLineElements.TryGetValue(clipItem, out var lineElement))
+        {
+            lineElement = new VisualElement();
+            lineElement.name = $"AnimationEndLine_{clipItem.Index}";
+            lineElement.style.position = Position.Absolute;
+            lineElement.style.top = 0f;
+            lineElement.style.width = ANIMATION_END_LINE_WIDTH;
+            lineElement.style.backgroundColor = new Color(1f, 1f, 0f, 1f); // 黄色高亮
+            lineElement.pickingMode = PickingMode.Ignore; // 不接收鼠标事件
+
+            timelineContent.Add(lineElement);
+            animationEndLineElements[clipItem] = lineElement;
+        }
+
+        // 计算竖线位置和高度
+        UpdateAnimationEndLinePosition(clipItem);
+    }
+
+    /// <summary>
+    /// 更新动画结束时间竖线的位置
+    /// </summary>
+    private void UpdateAnimationEndLinePosition(AnimationClipItem clipItem)
+    {
+        if (clipItem?.SegmentData == null || !animationEndLineElements.TryGetValue(clipItem, out var lineElement))
+        {
+            return;
+        }
+
+        // 计算动画真正的结束时间：StartTime + AnimationEnd * Duration
+        float animationEnd = clipItem.SegmentData.TimeWindow?.AnimationEnd ?? 1f;
+        float duration = Mathf.Max(0f, clipItem.Duration);
+        float endTime = clipItem.StartTime + animationEnd * duration;
+
+        // 计算竖线位置（像素）
+        float xPosition = endTime * pixelsPerSecond - ANIMATION_END_HALF_WIDTH;
+
+        // 设置竖线位置
+        lineElement.style.left = Mathf.Max(0f, xPosition);
+
+        // 找到AnimationClip所在的轨道元素
+        VisualElement trackElement = FindTrackElementForClipItem(clipItem);
+        if (trackElement != null)
+        {
+            // 计算竖线在轨道内的位置和高度
+            float trackTop = trackElement.worldBound.yMin - timelineContent.worldBound.yMin;
+            float trackHeight = trackElement.layout.height;
+
+            lineElement.style.top = Mathf.Max(0f, trackTop);
+            lineElement.style.height = Mathf.Max(0f, trackHeight);
+        }
+        else
+        {
+            // 如果找不到轨道，使用默认位置
+            lineElement.style.top = RULER_HEIGHT;
+            lineElement.style.height = TRACK_ITEM_HEIGHT;
+        }
+
+        // 确保在最上层，但低于播放轴
+        lineElement.BringToFront();
+    }
+
+    /// <summary>
+    /// 找到包含指定ClipItem的轨道元素
+    /// </summary>
+    private VisualElement FindTrackElementForClipItem(IClipItem clipItem)
+    {
+        if (trackContainer == null || clipItem == null)
+        {
+            return null;
+        }
+
+        // 遍历所有轨道元素
+        var trackElements = trackContainer.Query<VisualElement>(name: "track").ToList();
+        foreach (var trackElement in trackElements)
+        {
+            // 检查轨道是否包含该clipItem
+            var clipElements = trackElement.Query<VisualElement>(className: "timeline-clip").ToList();
+            foreach (var clipElement in clipElements)
+            {
+                if (clipElement.userData is IClipItem item && ReferenceEquals(item, clipItem))
+                {
+                    return trackElement;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// 移除指定动画片段的结束时间竖线
+    /// </summary>
+    private void RemoveAnimationEndLine(AnimationClipItem clipItem)
+    {
+        if (clipItem == null || !animationEndLineElements.TryGetValue(clipItem, out var lineElement))
+        {
+            return;
+        }
+
+        if (lineElement.parent != null)
+        {
+            lineElement.RemoveFromHierarchy();
+        }
+
+        animationEndLineElements.Remove(clipItem);
+    }
+
+    /// <summary>
+    /// 更新所有动画结束时间竖线的位置
+    /// </summary>
+    private void UpdateAllAnimationEndLines()
+    {
+        foreach (var kvp in animationEndLineElements)
+        {
+            UpdateAnimationEndLinePosition(kvp.Key);
+        }
+    }
+
+    /// <summary>
+    /// 清理所有动画结束时间竖线
+    /// </summary>
+    private void ClearAllAnimationEndLines()
+    {
+        foreach (var lineElement in animationEndLineElements.Values)
+        {
+            if (lineElement.parent != null)
+            {
+                lineElement.RemoveFromHierarchy();
+            }
+        }
+        animationEndLineElements.Clear();
+    }
+
+    /// <summary>
+    /// 重新创建所有动画结束时间竖线
+    /// </summary>
+    private void RecreateAllAnimationEndLines()
+    {
+        // 遍历所有AnimationClip（不受视图模式限制）
+        foreach (var animClipItem in allAnimationClipItems)
+        {
+            if (animClipItem != null)
+            {
+                EnsureAnimationEndLine(animClipItem);
+            }
+        }
+    }
+
+    #endregion
 
     private static string GetRelativePath(Transform root, Transform target)
     {

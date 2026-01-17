@@ -354,7 +354,7 @@ namespace ET
         /// <summary>
         /// 连击超时偏移（毫秒）。
         /// 说明：用于计算“本段攻击流程的超时”，避免全局超时小于动画时长导致攻击还没播完就被强制退出。
-        /// 计算公式：<c>SegmentTimeoutMs = max(0, Duration * 1000) + max(0, ComboTimeoutOffsetMs)</c>。
+        /// 计算公式：<c>SegmentTimeoutMs = max(0, Duration * AnimationEnd * 1000) + max(0, ComboTimeoutOffsetMs)</c>。
         /// </summary>
         public int ComboTimeoutOffsetMs = 200;
 

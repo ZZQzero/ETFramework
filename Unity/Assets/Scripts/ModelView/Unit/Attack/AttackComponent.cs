@@ -48,7 +48,6 @@ namespace ET
         public long ComboTimeoutTimer;
 
         /// <summary>
-        /// AttackLayer（Layer1）淡出定时器ID（方案A）。
         /// 进入 Recovery 后会启动一次性定时器，超时后淡出攻击层露出 Layer0 的 Move/Idle。
         /// 若接段/重起手/退出攻击，会取消该定时器。
         /// </summary>

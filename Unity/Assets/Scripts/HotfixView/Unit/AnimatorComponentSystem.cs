@@ -76,7 +76,7 @@ namespace ET
 		private static async ETTask LoadAnimation(this AnimatorComponent self)
 		{
 			// 加载PlayerMove资源（水平移动混合动画）
-			var moveAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<ScriptableObject>("PlayerMove");
+			var moveAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<ScriptableObject>("PlayerMove1");
 			if (moveAsset == null)
 			{
 				Log.Error("加载PlayerMove资源失败：资源为null");

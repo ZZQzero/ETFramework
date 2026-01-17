@@ -1,4 +1,4 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -97,7 +97,7 @@ public partial class SkillEditorWindow : EditorWindow
         }
 
         playheadElement.style.height = height;
-        
+
         // 更新进度线的高度（从顶部到轨道底部）
         var playheadLine = playheadElement.Q<VisualElement>("PlayheadLine");
         if (playheadLine != null)

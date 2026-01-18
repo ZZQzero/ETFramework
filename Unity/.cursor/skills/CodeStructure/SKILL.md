@@ -1,3 +1,8 @@
+---
+name: code-structure
+description: ET框架代码目录结构说明，提供客户端和服务端代码组织架构的详细文档。
+---
+
 # ET框架代码目录结构说明
 
 ## 概述

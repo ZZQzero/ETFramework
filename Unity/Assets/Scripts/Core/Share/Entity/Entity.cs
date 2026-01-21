@@ -19,7 +19,7 @@ namespace ET
         //实例化Id
         public long InstanceId { get; protected set; }
         //EntityId
-        public long Id { get; set; }
+        public long EntityId { get; set; }
         //类型Id (T)即使销毁也不变
         public long TypeId { get; set; }
         public bool IsDisposed => this.InstanceId == 0;
@@ -209,7 +209,7 @@ namespace ET
 
         private void AddToChildren(Entity entity)
         {
-            if (!Children.TryAdd(entity.Id, entity))
+            if (!Children.TryAdd(entity.EntityId, entity))
             {
                 Log.Error($"已经存在相同的key {entity.GetType()}");
             }
@@ -231,7 +231,7 @@ namespace ET
         
         private void RemoveChild(Entity entity)
         {
-            if (this.children?.Remove(entity.Id) == true)
+            if (this.children?.Remove(entity.EntityId) == true)
             {
                 EntityObjectPool.Instance.RecycleEntity(entity);
             }
@@ -301,7 +301,7 @@ namespace ET
         {
             this.ValidateComponentNotExists<K>();
             K component = EntityObjectPool.Instance.GetEntity<K>(TypeId<K>.Id,isFromPool);
-            component.Id = id;
+            component.EntityId = id;
             component.ComponentParent = this;
             awakeAction(component);
             return component;
@@ -311,7 +311,7 @@ namespace ET
         {
             this.ValidateComponentNotExists<K>();
             K component = EntityObjectPool.Instance.GetEntity<K>(TypeId<K>.Id,isFromPool);
-            component.Id = id;
+            component.EntityId = id;
             component.ComponentParent = this;
             awakeAction(component, p1);
             return component;
@@ -321,7 +321,7 @@ namespace ET
         {
             this.ValidateComponentNotExists<K>();
             K component = EntityObjectPool.Instance.GetEntity<K>(TypeId<K>.Id,isFromPool);
-            component.Id = id;
+            component.EntityId = id;
             component.ComponentParent = this;
             awakeAction(component, p1, p2);
             return component;
@@ -331,7 +331,7 @@ namespace ET
         {
             this.ValidateComponentNotExists<K>();
             K component = EntityObjectPool.Instance.GetEntity<K>(TypeId<K>.Id,isFromPool);
-            component.Id = id;
+            component.EntityId = id;
             component.ComponentParent = this;
             awakeAction(component, p1, p2, p3);
             return component;
@@ -348,22 +348,22 @@ namespace ET
         // 便捷方法
         public K AddComponent<K>(bool isFromPool = false) where K : Entity, IAwake, new()
         {
-            return this.AddComponentWithId<K>(this.Id, isFromPool);
+            return this.AddComponentWithId<K>(this.EntityId, isFromPool);
         }
 
         public K AddComponent<K, P1>(P1 p1, bool isFromPool = false) where K : Entity, IAwake<P1>, new()
         {
-            return this.AddComponentWithId<K, P1>(this.Id, p1, isFromPool);
+            return this.AddComponentWithId<K, P1>(this.EntityId, p1, isFromPool);
         }
 
         public K AddComponent<K, P1, P2>(P1 p1, P2 p2, bool isFromPool = false) where K : Entity, IAwake<P1, P2>, new()
         {
-            return this.AddComponentWithId<K, P1, P2>(this.Id, p1, p2, isFromPool);
+            return this.AddComponentWithId<K, P1, P2>(this.EntityId, p1, p2, isFromPool);
         }
 
         public K AddComponent<K, P1, P2, P3>(P1 p1, P2 p2, P3 p3, bool isFromPool = false) where K : Entity, IAwake<P1, P2, P3>, new()
         {
-            return this.AddComponentWithId<K, P1, P2, P3>(this.Id, p1, p2, p3, isFromPool);
+            return this.AddComponentWithId<K, P1, P2, P3>(this.EntityId, p1, p2, p3, isFromPool);
         }
         #endregion
 
@@ -421,7 +421,7 @@ namespace ET
         private T CreateAndAddChild<T>(bool isFromPool, long id, Action<T> awakeAction) where T : Entity, new()
         {
             T component = EntityObjectPool.Instance.GetEntity<T>(TypeId<T>.Id,isFromPool);
-            component.Id = id;
+            component.EntityId = id;
             component.Parent = this;
             awakeAction(component);
             return component;
@@ -430,7 +430,7 @@ namespace ET
         private T CreateAndAddChild<T, A>(bool isFromPool, long id, Action<T, A> awakeAction, A a) where T : Entity, new()
         {
             T component = EntityObjectPool.Instance.GetEntity<T>(TypeId<T>.Id,isFromPool);
-            component.Id = id;
+            component.EntityId = id;
             component.Parent = this;
             awakeAction(component, a);
             return component;
@@ -439,7 +439,7 @@ namespace ET
         private T CreateAndAddChild<T, A, B>(bool isFromPool, long id, Action<T, A, B> awakeAction, A a, B b) where T : Entity, new()
         {
             T component = EntityObjectPool.Instance.GetEntity<T>(TypeId<T>.Id,isFromPool);
-            component.Id = id;
+            component.EntityId = id;
             component.Parent = this;
             awakeAction(component, a, b);
             return component;
@@ -448,7 +448,7 @@ namespace ET
         private T CreateAndAddChild<T, A, B, C>(bool isFromPool, long id, Action<T, A, B, C> awakeAction, A a, B b, C c) where T : Entity, new()
         {
             T component = EntityObjectPool.Instance.GetEntity<T>(TypeId<T>.Id,isFromPool);
-            component.Id = id;
+            component.EntityId = id;
             component.Parent = this;
             awakeAction(component, a, b, c);
             return component;
@@ -484,7 +484,7 @@ namespace ET
 
             // 清空其他标识
             IsRegister = false;
-            Id = 0;
+            EntityId = 0;
 
             // 清理子级
             if (this.children != null && this.children.Count > 0)

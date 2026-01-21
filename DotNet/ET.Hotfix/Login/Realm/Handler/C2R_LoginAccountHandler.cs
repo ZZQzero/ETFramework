@@ -22,6 +22,7 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
         }
 
         User user = null;
+        List<Role> roleList = null;
         var coroutineLockComponent = session.Root().GetComponent<CoroutineLockComponent>();
         using (session.AddComponent<SessionLockingComponent>())
         {
@@ -45,6 +46,8 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
                         session.Disconnect().NoContext();
                         return;
                     }
+
+                    roleList = await db.QueryByIds<Role, long>(user.RoleIds);
                 }
                 else
                 {
@@ -66,6 +69,22 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
                             LastLoginTime = now
                         }
                     };
+                    
+                    long roleId = GenerateIdManager.Instance.GenerateId();
+                    var defaultRole = RoleConfig.Instance.Get(GlobalConstConfig.Data.DefaultRoleId);
+                    Role role = new Role
+                    {
+                        Id = roleId,
+                        RoleConfigId = defaultRole.Id,
+                        RoleName = defaultRole.Name,
+                        Level = defaultRole.Level,
+                        Job = defaultRole.Job,
+                        CreateTime = now,
+                    };
+                    roleList = new List<Role>() { role };
+                    user.RoleIds.Add(roleId);
+                    user.LastRoleId = roleId;
+                    await db.Save<Role, long>(role, roleId);
                     await db.Save<User, string>(user, request.Account);
                 }
             }
@@ -101,7 +120,13 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
         
         response.Token = token;
         response.Error = ErrorCode.ERR_Success;
-        
+
+        SetUserInfo(response, user, roleList);
+        await ETTask.CompletedTask;
+    }
+
+    private void SetUserInfo(R2C_LoginAccount response,User user, List<Role> roleList)
+    {
         // 填充用户信息
         response.UserInfo = UserInfo.Create();
         response.UserInfo.Account = user.Account;
@@ -120,15 +145,24 @@ public class C2R_LoginAccountHandler : MessageSessionHandler<C2R_LoginAccount,R2
             response.UserInfo.TotalRecharge = 0;
         }
         
-        // 确保RoleIds不为null
-        if (user.RoleIds != null && user.RoleIds.Count > 0)
+        if (roleList is { Count: > 0 })
         {
-            response.UserInfo.RoleIds = new List<long>(user.RoleIds);
+            foreach (var role in roleList)
+            {
+                RoleInfo roleInfo = new RoleInfo();
+                roleInfo.RoleId = role.Id;
+                roleInfo.RoleConfigId = role.RoleConfigId;
+                response.UserInfo.RoleInfoList.Add(roleInfo);
+                if (user.LastRoleId == role.Id)
+                {
+                    response.UserInfo.LastRoleInfo = roleInfo;
+                }
+            }
+
+            if (response.UserInfo.LastRoleInfo == null)
+            {
+                response.UserInfo.LastRoleInfo = response.UserInfo.RoleInfoList[0];
+            }
         }
-        else
-        {
-            response.UserInfo.RoleIds = new List<long>();
-        }
-        await ETTask.CompletedTask;
     }
 }

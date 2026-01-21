@@ -24,7 +24,7 @@ public class L2G_DisconnectGateUnitHandler : MessageHandler<Scene,L2G_Disconnect
                 Session gateSession = userEntitySessionComponent.Session;
                 if (gateSession != null && !gateSession.IsDisposed)
                 {
-                    Log.Debug($"通知另一个客户端下线 {gateSession.Id}");
+                    Log.Debug($"通知另一个客户端下线 {gateSession.EntityId}");
                     A2C_Disconnect a2CDisconnect = A2C_Disconnect.Create();
                     a2CDisconnect.Error = ErrorCode.ERR_OtherAccountLogin;
                     gateSession.Send(a2CDisconnect);

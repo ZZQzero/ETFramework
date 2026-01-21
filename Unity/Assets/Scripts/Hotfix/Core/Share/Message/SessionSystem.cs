@@ -16,20 +16,20 @@ namespace ET
 
             self.requestCallbacks.Clear();
             
-            Log.Info($"session create: zone: {self.Zone()} id: {self.Id} {timeNow} ");
+            Log.Info($"session create: zone: {self.Zone()} id: {self.EntityId} {timeNow} ");
         }
         
         [EntitySystem]
         private static void Destroy(this Session self)
         {
-            self.AService.Remove(self.Id, self.Error);
+            self.AService.Remove(self.EntityId, self.Error);
             
             foreach (RpcInfo responseCallback in self.requestCallbacks.Values.ToArray())
             {
-                responseCallback.SetException(new RpcException(self.Error, $"session dispose: {self.Id} {self.RemoteAddress}"));
+                responseCallback.SetException(new RpcException(self.Error, $"session dispose: {self.EntityId} {self.RemoteAddress}"));
             }
 
-            Log.Info($"session dispose: {self.RemoteAddress} id: {self.Id} ErrorCode: {self.Error}, please see ErrorCode.cs! {TimeInfo.Instance.ClientNow()}");
+            Log.Info($"session dispose: {self.RemoteAddress} id: {self.EntityId} ErrorCode: {self.Error}, please see ErrorCode.cs! {TimeInfo.Instance.ClientNow()}");
             
             self.requestCallbacks.Clear();
         }
@@ -94,7 +94,7 @@ namespace ET
         {
             self.LastSendTime = TimeInfo.Instance.ClientNow();
             (ushort opcode, MemoryBuffer memoryBuffer) = MessageSerializeHelper.ToMemoryBuffer(self.AService, actorId, message);
-            self.AService.Send(self.Id, memoryBuffer);
+            self.AService.Send(self.EntityId, memoryBuffer);
             (message as MessageObject)?.Dispose();
         }
     }

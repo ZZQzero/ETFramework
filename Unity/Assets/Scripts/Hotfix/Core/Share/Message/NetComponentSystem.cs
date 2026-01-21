@@ -86,7 +86,7 @@ namespace ET
             session.RemoteAddress = realIPEndPoint;
             session.AddComponent<SessionIdleCheckerComponent>();
             
-            self.AService.Create(session.Id, session.RemoteAddress);
+            self.AService.Create(session.EntityId, session.RemoteAddress);
 
             return session;
         }
@@ -97,7 +97,7 @@ namespace ET
             Session session = self.AddChildWithId<Session, AService>(channelId, self.AService);
             session.RemoteAddress = realIPEndPoint;
             session.AddComponent<SessionIdleCheckerComponent>();
-            self.AService.Create(session.Id, routerIPEndPoint);
+            self.AService.Create(session.EntityId, routerIPEndPoint);
             return session;
         }
     }

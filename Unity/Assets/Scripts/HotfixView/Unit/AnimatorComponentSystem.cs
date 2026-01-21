@@ -101,7 +101,7 @@ namespace ET
 			}
 
 			// 加载PlayerJump资源（跳跃混合动画）
-			var jumpAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<ScriptableObject>("PlayerJump");
+			var jumpAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<ScriptableObject>("PlayerJump1");
 			if (jumpAsset == null)
 			{
 				Log.Error("加载PlayerJump资源失败：资源为null");

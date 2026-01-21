@@ -8,7 +8,7 @@ namespace ET
         public override async ETTask Handle(FiberInit fiberInit)
         {
             Scene root = fiberInit.Fiber.Root;
-            StartSceneTable startSceneConfig = StartSceneConfig.Instance.Get((int)root.Id);
+            StartSceneTable startSceneConfig = StartSceneConfig.Instance.Get((int)root.EntityId);
             
             // 开发期间使用OuterIPPort，云服务器因为本机没有OuterIP，所以要改成InnerIPPort，然后在云防火墙中端口映射到InnerIPPort
             StartProcessTable startProcessConfig = StartProcessConfig.Instance.Get(startSceneConfig.Process);

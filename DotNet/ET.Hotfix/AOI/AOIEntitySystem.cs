@@ -51,10 +51,10 @@ namespace ET
         // cell中的unit进入self的视野
         public static void SubEnter(this AOIEntity self, Cell cell)
         {
-            cell.SubsEnterEntities.Add(self.Id, self);
+            cell.SubsEnterEntities.Add(self.EntityId, self);
             foreach (KeyValuePair<long, EntityRef<AOIEntity>> kv in cell.AOIUnits)
             {
-                if (kv.Key == self.Id)
+                if (kv.Key == self.EntityId)
                 {
                     continue;
                 }
@@ -65,12 +65,12 @@ namespace ET
 
         public static void UnSubEnter(this AOIEntity self, Cell cell)
         {
-            cell.SubsEnterEntities.Remove(self.Id);
+            cell.SubsEnterEntities.Remove(self.EntityId);
         }
 
         public static void SubLeave(this AOIEntity self, Cell cell)
         {
-            cell.SubsLeaveEntities.Add(self.Id, self);
+            cell.SubsLeaveEntities.Add(self.EntityId, self);
         }
 
         // cell中的unit离开self的视野
@@ -78,7 +78,7 @@ namespace ET
         {
             foreach (KeyValuePair<long, EntityRef<AOIEntity>> kv in cell.AOIUnits)
             {
-                if (kv.Key == self.Id)
+                if (kv.Key == self.EntityId)
                 {
                     continue;
                 }
@@ -86,7 +86,7 @@ namespace ET
                 self.LeaveSight(kv.Value);
             }
 
-            cell.SubsLeaveEntities.Remove(self.Id);
+            cell.SubsLeaveEntities.Remove(self.EntityId);
         }
 
         // enter进入self视野
@@ -99,7 +99,7 @@ namespace ET
             }
             
             // 有可能之前在Enter，后来出了Enter还在LeaveCell，这样仍然没有删除，继续进来Enter，这种情况不需要处理
-            if (self.SeeUnits.ContainsKey(enter.Id))
+            if (self.SeeUnits.ContainsKey(enter.EntityId))
             {
                 return;
             }
@@ -113,31 +113,31 @@ namespace ET
             {
                 if (enter.Unit.Type() == UnitType.Player)
                 {
-                    self.SeeUnits.Add(enter.Id, enter);
-                    enter.BeSeeUnits.Add(self.Id, self);
-                    self.SeePlayers.Add(enter.Id, enter);
-                    enter.BeSeePlayers.Add(self.Id, self);
+                    self.SeeUnits.Add(enter.EntityId, enter);
+                    enter.BeSeeUnits.Add(self.EntityId, self);
+                    self.SeePlayers.Add(enter.EntityId, enter);
+                    enter.BeSeePlayers.Add(self.EntityId, self);
                     
                 }
                 else
                 {
-                    self.SeeUnits.Add(enter.Id, enter);
-                    enter.BeSeeUnits.Add(self.Id, self);
-                    enter.BeSeePlayers.Add(self.Id, self);
+                    self.SeeUnits.Add(enter.EntityId, enter);
+                    enter.BeSeeUnits.Add(self.EntityId, self);
+                    enter.BeSeePlayers.Add(self.EntityId, self);
                 }
             }
             else
             {
                 if (enter.Unit.Type() == UnitType.Player)
                 {
-                    self.SeeUnits.Add(enter.Id, enter);
-                    enter.BeSeeUnits.Add(self.Id, self);
-                    self.SeePlayers.Add(enter.Id, enter);
+                    self.SeeUnits.Add(enter.EntityId, enter);
+                    enter.BeSeeUnits.Add(self.EntityId, self);
+                    self.SeePlayers.Add(enter.EntityId, enter);
                 }
                 else
                 {
-                    self.SeeUnits.Add(enter.Id, enter);
-                    enter.BeSeeUnits.Add(self.Id, self);
+                    self.SeeUnits.Add(enter.EntityId, enter);
+                    enter.BeSeeUnits.Add(self.EntityId, self);
                 }
             }
             EventSystem.Instance.Publish(self.Scene(), new UnitEnterSightRange() { A = self, B = enter });
@@ -152,26 +152,26 @@ namespace ET
                 return;
             }
             
-            if (self.Id == leave.Id)
+            if (self.EntityId == leave.EntityId)
             {
                 return;
             }
 
-            if (!self.SeeUnits.ContainsKey(leave.Id))
+            if (!self.SeeUnits.ContainsKey(leave.EntityId))
             {
                 return;
             }
 
-            self.SeeUnits.Remove(leave.Id);
+            self.SeeUnits.Remove(leave.EntityId);
             if (leave.Unit.Type() == UnitType.Player)
             {
-                self.SeePlayers.Remove(leave.Id);
+                self.SeePlayers.Remove(leave.EntityId);
             }
 
-            leave.BeSeeUnits.Remove(self.Id);
+            leave.BeSeeUnits.Remove(self.EntityId);
             if (self.Unit.Type() == UnitType.Player)
             {
-                leave.BeSeePlayers.Remove(self.Id);
+                leave.BeSeePlayers.Remove(self.EntityId);
             }
 
             EventSystem.Instance.Publish(self.Scene(), new UnitLeaveSightRange { A = self, B = leave });

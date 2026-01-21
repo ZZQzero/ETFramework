@@ -47,7 +47,13 @@ namespace ET
         /// 角色ID列表
         /// </summary>
         [NinoMember(5)]
-        public List<long> RoleIds { get; set; } = new();
+        public List<RoleInfo> RoleInfoList { get; set; } = new();
+
+        /// <summary>
+        /// 上次登录角色
+        /// </summary>
+        [NinoMember(6)]
+        public RoleInfo LastRoleInfo { get; set; }
 
         public override void Dispose()
         {
@@ -61,7 +67,45 @@ namespace ET
             this.Username = null;
             this.VipLevel = 0;
             this.TotalRecharge = 0;
-            this.RoleIds.Clear();
+            this.RoleInfoList.Clear();
+            this.LastRoleInfo?.Dispose();
+            this.LastRoleInfo = null;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    // 角色信息
+    [NinoType(false)]
+    [Message(LoginOuter.RoleInfo)]
+    public partial class RoleInfo : MessageObject
+    {
+        public static RoleInfo Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<RoleInfo>(isFromPool);
+        }
+
+        /// <summary>
+        /// 角色Id
+        /// </summary>
+        [NinoMember(0)]
+        public long RoleId { get; set; }
+
+        /// <summary>
+        /// 角色表Id
+        /// </summary>
+        [NinoMember(1)]
+        public int RoleConfigId { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RoleId = 0;
+            this.RoleConfigId = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -604,7 +648,7 @@ namespace ET
         public long Key { get; set; }
 
         [NinoMember(2)]
-        public string AccountName { get; set; }
+        public string Account { get; set; }
 
         /// <summary>
         /// 用户ID（永久唯一标识）
@@ -618,6 +662,9 @@ namespace ET
         [NinoMember(4)]
         public long RoleId { get; set; }
 
+        [NinoMember(5)]
+        public int RoleConfigId { get; set; }
+
         public override void Dispose()
         {
             if (!this.IsFromPool)
@@ -627,9 +674,10 @@ namespace ET
 
             this.RpcId = 0;
             this.Key = 0;
-            this.AccountName = null;
+            this.Account = null;
             this.UserId = 0;
             this.RoleId = 0;
+            this.RoleConfigId = 0;
 
             ObjectPool.Recycle(this);
         }
@@ -730,6 +778,7 @@ namespace ET
     public static class LoginOuter
     {
         public const ushort UserInfo = 31906;
+        public const ushort RoleInfo = 39861;
         public const ushort Main2NetClient_Login = 41960;
         public const ushort NetClient2Main_Login = 7172;
         public const ushort C2G_Ping = 58286;

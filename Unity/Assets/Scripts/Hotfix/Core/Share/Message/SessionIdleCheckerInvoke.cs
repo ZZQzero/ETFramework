@@ -13,7 +13,7 @@ namespace ET
             }
             catch (Exception e)
             {
-                Log.Error($"session idle checker timer error: {self.Id}\n{e}");
+                Log.Error($"session idle checker timer error: {self.EntityId}\n{e}");
             }
         }
     }

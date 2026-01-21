@@ -22,7 +22,7 @@ public class G2M_RequestExitGameHandler : MessageLocationHandler<Unit,G2M_Reques
         await unit.Fiber().WaitFrameFinish();
         // 重新创建Unit时，GateSession可能已经换了，需要清理消息缓存，保证重新从Location拉取ActorId
         var locationSenderComponent = unit.Root().GetComponent<MessageLocationSenderComponent>();
-        locationSenderComponent.Get(LocationType.GateSession).Remove(unit.Id);
+        locationSenderComponent.Get(LocationType.GateSession).Remove(unit.EntityId);
         // 移除Location注册
         await unit.RemoveLocation(LocationType.Unit);
         
@@ -30,7 +30,7 @@ public class G2M_RequestExitGameHandler : MessageLocationHandler<Unit,G2M_Reques
         var unitComponent = unit.Root().GetComponent<UnitComponent>();
         if (unitComponent != null && !unitComponent.IsDisposed)
         {
-            unitComponent.Remove(unit.Id);
+            unitComponent.Remove(unit.EntityId);
         }
     }
 }

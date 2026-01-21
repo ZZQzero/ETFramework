@@ -39,6 +39,10 @@ public partial class TbGlobalConst
     /// 登录中心服Id
     /// </summary>
      public int LoginCenter => _data.LoginCenter;
+    /// <summary>
+    /// 默认角色
+    /// </summary>
+     public int DefaultRoleId => _data.DefaultRoleId;
     
     public void ResolveRef(Tables tables)
     {

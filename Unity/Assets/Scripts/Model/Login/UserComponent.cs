@@ -2,6 +2,13 @@
 
 namespace ET
 {
+    public class RoleData
+    {
+        public long RoleId { get; set; }
+        public int RoleConfigId { get; set; }
+        public string RoleName { get; set; }
+        public int Level { get; set; }
+    }
     /// <summary>
     /// 用户信息组件（Main Fiber全局组件）
     /// 存储当前登录用户的基本信息，供全局访问
@@ -25,9 +32,9 @@ namespace ET
         public long TotalRecharge { get; set; }
         
         /// <summary>角色ID列表</summary>
-        public List<long> RoleIds { get; set; }
+        public List<RoleData> RoleList { get; set; }
         
-        /// <summary>当前选择的角色ID</summary>
-        public long CurrentRoleId { get; set; }
+        /// <summary>当前选择的角色</summary>
+        public RoleData CurrentRole { get; set; }
     }
 }

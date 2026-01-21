@@ -14,7 +14,7 @@ namespace ET
             }
             catch (Exception e)
             {
-                Log.Error($"move timer error: {self.Id}\n{e}");
+                Log.Error($"move timer error: {self.EntityId}\n{e}");
             }
         }
     }

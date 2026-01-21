@@ -10,7 +10,7 @@
 			
 			foreach (UnitInfo unitInfo in message.Units)
 			{
-				if (component.Get(unitInfo.UnitId) != null)
+				if (component.Get(unitInfo.RoleId) != null)
 				{
 					continue;
 				}

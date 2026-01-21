@@ -10,7 +10,15 @@ message UserInfo
 	string Username = 3;		// 用户昵称
 	int32 VipLevel = 4;			// VIP等级
 	int64 TotalRecharge = 5;	// 累计充值
-	repeated int64 RoleIds = 6;	// 角色ID列表
+	repeated RoleInfo RoleInfoList = 6;	// 角色ID列表
+	RoleInfo LastRoleInfo = 7;		//上次登录角色
+}
+
+//角色信息
+message RoleInfo
+{
+	int64 RoleId = 1;		//角色Id
+	int32 RoleConfigId = 2;	//角色表Id
 }
 
 // ResponseType NetClient2Main_Login
@@ -132,9 +140,10 @@ message C2G_LoginGameGate // ISessionRequest
 {
 	int32 RpcId = 1;
 	int64 Key = 2;
-	string AccountName = 3;
+	string Account = 3;
 	long UserId = 4;	// 用户ID（永久唯一标识）
 	long RoleId = 5;	// 角色ID（当前选择的角色）
+	int32 RoleConfigId = 6;
 }
 
 message G2C_LoginGameGate // ISessionResponse

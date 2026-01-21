@@ -24,7 +24,7 @@
             if (!self.isStart)
             {
                 self.isStart = true;
-                coroutineLock = self.AddChild<CoroutineLock, long, long, int>(self.type, self.Id, 1, true);
+                coroutineLock = self.AddChild<CoroutineLock, long, long, int>(self.type, self.EntityId, 1, true);
                 return coroutineLock;
             }
 
@@ -52,7 +52,7 @@
                     continue;
                 }
                 //TODO 这里怀疑有问题
-                CoroutineLock coroutineLock = self.AddChild<CoroutineLock, long, long, int>(self.type, self.Id, level, true);
+                CoroutineLock coroutineLock = self.AddChild<CoroutineLock, long, long, int>(self.type, self.EntityId, level, true);
 
                 waitCoroutineLock.SetResult(coroutineLock);
                 return true;

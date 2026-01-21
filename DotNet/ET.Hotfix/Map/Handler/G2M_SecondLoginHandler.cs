@@ -8,7 +8,7 @@ public class G2M_SecondLoginHandler : MessageLocationHandler<Unit,G2M_SecondLogi
         // 二次登录：客户端重新连接，需要更新GateSession的绑定
         // 1. 清理旧的GateSession Location缓存，确保Map服务器重新从Location拉取新的ActorId
         var locationSenderComponent = unit.Root().GetComponent<MessageLocationSenderComponent>();
-        locationSenderComponent.Get(LocationType.GateSession).Remove(unit.Id);
+        locationSenderComponent.Get(LocationType.GateSession).Remove(unit.EntityId);
         response.Error = ErrorCode.ERR_Success;
         
         // 2. 等待Gate服务器更新完Location（通过RPC完成时间保证时序）

@@ -111,8 +111,10 @@ public class C2G_EnterGameHandler : MessageSessionHandler<C2G_EnterGame,G2C_Ente
                     M2M_UnitTransferRequest m2MUnitTransferRequest = M2M_UnitTransferRequest.Create();
                     m2MUnitTransferRequest.OldActorId = default; // 首次创建，没有旧的ActorId
                     m2MUnitTransferRequest.UnitInfo = UnitInfo.Create();
-                    m2MUnitTransferRequest.UnitInfo.ConfigId = 1001; // 默认配置ID，可以从数据库加载
-                    m2MUnitTransferRequest.UnitInfo.UnitId = unitId;
+                    
+                    m2MUnitTransferRequest.UnitInfo.EntityId = userEntity.UserId; 
+                    m2MUnitTransferRequest.UnitInfo.RoleId = userEntity.CurrentRoleId;
+                    m2MUnitTransferRequest.UnitInfo.RoleConfigId = userEntity.RoleConfigId;
 
                     M2M_UnitTransferResponse m2MUnitTransferResponse = (M2M_UnitTransferResponse)await session.Root().GetComponent<MessageSender>().Call(startSceneConfig.ActorId, m2MUnitTransferRequest);
 

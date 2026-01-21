@@ -105,7 +105,7 @@ namespace ET
             foreach (KeyValuePair<long, EntityRef<AOIEntity>> kv in newCell.SubsEnterEntities)
             {
                 AOIEntity e = kv.Value;
-                if (e.SubEnterCells.Contains(preCell.Id))
+                if (e.SubEnterCells.Contains(preCell.EntityId))
                 {
                     continue;
                 }
@@ -117,7 +117,7 @@ namespace ET
             {
                 // 如果新的cell仍然在对方订阅的subleave中
                 AOIEntity e = kv.Value;
-                if (e.SubLeaveCells.Contains(newCell.Id))
+                if (e.SubLeaveCells.Contains(newCell.EntityId))
                 {
                     continue;
                 }
@@ -129,7 +129,7 @@ namespace ET
         public static void Move(this AOIManagerComponent self, AOIEntity aoiEntity, int cellX, int cellY)
         {
             long newCellId = AOIHelper.CreateCellId(cellX, cellY);
-            if (aoiEntity.Cell.Id == newCellId) // cell没有变化
+            if (aoiEntity.Cell.EntityId == newCellId) // cell没有变化
             {
                 return;
             }

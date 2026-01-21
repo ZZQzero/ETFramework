@@ -122,7 +122,7 @@ namespace ET
             component.TypeId = TypeId<T>.Id;
             component.IsFromPool = isFormPool;
             component.IsNew = true;
-            component.Id = 0;
+            component.EntityId = 0;
             return component; 
         }
 

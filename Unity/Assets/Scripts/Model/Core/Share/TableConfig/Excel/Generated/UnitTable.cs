@@ -17,12 +17,8 @@ public sealed partial class UnitTable : Luban.BeanBase
     public UnitTable(ByteBuf _buf) 
     {
         Id = _buf.ReadInt();
-        Type = _buf.ReadInt();
-        Name = _buf.ReadString();
-        Desc = _buf.ReadString();
+        UnitType = _buf.ReadInt();
         Position = _buf.ReadInt();
-        Height = _buf.ReadInt();
-        Weight = _buf.ReadInt();
     }
 
     public static UnitTable DeserializeUnitTable(ByteBuf _buf)
@@ -35,29 +31,13 @@ public sealed partial class UnitTable : Luban.BeanBase
     /// </summary>
     public readonly int Id;
     /// <summary>
-    /// Type
+    /// Unit类型
     /// </summary>
-    public readonly int Type;
-    /// <summary>
-    /// 名字
-    /// </summary>
-    public readonly string Name;
-    /// <summary>
-    /// 描述
-    /// </summary>
-    public readonly string Desc;
+    public readonly int UnitType;
     /// <summary>
     /// 位置
     /// </summary>
     public readonly int Position;
-    /// <summary>
-    /// 身高
-    /// </summary>
-    public readonly int Height;
-    /// <summary>
-    /// 体重
-    /// </summary>
-    public readonly int Weight;
    
     public const int __ID__ = 1520952458;
     public override int GetTypeId() => __ID__;
@@ -70,12 +50,8 @@ public sealed partial class UnitTable : Luban.BeanBase
     {
         return "{ "
         + "Id:" + Id + ","
-        + "Type:" + Type + ","
-        + "Name:" + Name + ","
-        + "Desc:" + Desc + ","
+        + "UnitType:" + UnitType + ","
         + "Position:" + Position + ","
-        + "Height:" + Height + ","
-        + "Weight:" + Weight + ","
         + "}";
     }
 }

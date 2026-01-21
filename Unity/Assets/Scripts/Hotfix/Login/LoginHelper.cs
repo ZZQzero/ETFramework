@@ -35,33 +35,15 @@ namespace ET
             }
             
             await EventSystem.Instance.PublishAsync(root, new LoginFinish());
-
-            // 如果已有角色，使用第一个角色ID；否则生成新角色ID
-            long roleId;
-            if (userComponent.HasRole())
-            {
-                roleId = userComponent.RoleIds[0];
-                userComponent.CurrentRoleId = roleId;
-                Log.Info($"使用已有角色：RoleId={roleId}");
-            }
-            else
-            {
-                roleId = GenerateIdManager.Instance.GenerateId();
-                Log.Info($"创建新角色：RoleId={roleId}");
-            }
-
-            roleId = 123456;
-            // 设置当前角色ID
-            userComponent.CurrentRoleId = roleId;
             
             // 传递UserId和RoleId到服务端
-            var netClient2MainLoginGame = await clientSenderComponent.LoginGameAsync(account, r2CGateRealmKey.Key, userComponent.UserId, roleId, r2CGateRealmKey.Address);
+            var netClient2MainLoginGame = await clientSenderComponent.LoginGameAsync(account, r2CGateRealmKey.Key, userComponent.UserId, userComponent.CurrentRole, r2CGateRealmKey.Address);
             if (netClient2MainLoginGame.Error != ErrorCode.ERR_Success)
             {
                 clientSenderComponent.NectClientDisconnect();
                 return;
             }
-            Log.Info($"进入游戏成功，CurrentRoleId={userComponent.CurrentRoleId}");
+            Log.Info($"进入游戏成功，CurrentRoleId={userComponent.CurrentRole}");
         }
     }
 }

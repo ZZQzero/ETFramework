@@ -20,6 +20,8 @@ public partial class Tables
     public TbStartProcess TbStartProcess {get; }
     public TbStartScene TbStartScene {get; }
     public TbUnit TbUnit {get; }
+    public TbMonster TbMonster {get; }
+    public TbRole TbRole {get; }
 
     public Tables(System.Func<string, ByteBuf> loader)
     {
@@ -30,6 +32,8 @@ public partial class Tables
         TbStartProcess = new TbStartProcess(loader("tbstartprocess"));
         TbStartScene = new TbStartScene(loader("tbstartscene"));
         TbUnit = new TbUnit(loader("tbunit"));
+        TbMonster = new TbMonster(loader("tbmonster"));
+        TbRole = new TbRole(loader("tbrole"));
         ResolveRef();
     }
     
@@ -42,6 +46,8 @@ public partial class Tables
         TbStartProcess.ResolveRef(this);
         TbStartScene.ResolveRef(this);
         TbUnit.ResolveRef(this);
+        TbMonster.ResolveRef(this);
+        TbRole.ResolveRef(this);
     }
 }
 

@@ -17,7 +17,7 @@ namespace ET
         public static void NoticeUnitRemove(Unit unit, Unit sendUnit)
         {
             M2C_RemoveUnits removeUnits = M2C_RemoveUnits.Create();
-            removeUnits.Units.Add(sendUnit.Id);
+            removeUnits.Units.Add(sendUnit.EntityId);
             MapMessageHelper.SendToClient(unit, removeUnits);
         }
         
@@ -29,13 +29,13 @@ namespace ET
             MessageLocationSenderOneType oneTypeMessageLocationType = unit.Root().GetComponent<MessageLocationSenderComponent>().Get(LocationType.GateSession);
             foreach (AOIEntity u in dict.Values)
             {
-                oneTypeMessageLocationType.Send(u.Unit.Id, message);
+                oneTypeMessageLocationType.Send(u.Unit.EntityId, message);
             }
         }
         
         public static void SendToClient(Unit unit, IMessage message)
         {
-            unit.Root().GetComponent<MessageLocationSenderComponent>().Get(LocationType.GateSession).Send(unit.Id, message);
+            unit.Root().GetComponent<MessageLocationSenderComponent>().Get(LocationType.GateSession).Send(unit.EntityId, message);
         }
         
         /// <summary>

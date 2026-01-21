@@ -28,10 +28,10 @@
             var unitComponent = unit.Root().GetComponent<UnitComponent>();
             if (unitComponent != null && !unitComponent.IsDisposed)
             {
-                unitComponent.Remove(unit.Id);
+                unitComponent.Remove(unit.EntityId);
             }
           
-            Log.Info($"Unit {unit.Id} 清理完成");
+            Log.Info($"Unit {unit.EntityId} 清理完成");
         }
     }
 }

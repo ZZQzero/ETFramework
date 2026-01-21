@@ -15,7 +15,7 @@
 
         public static CoroutineLockQueue New(this CoroutineLockQueueType self, long key)
         {
-            CoroutineLockQueue queue = self.AddChildWithId<CoroutineLockQueue, long>(key, self.Id, true);
+            CoroutineLockQueue queue = self.AddChildWithId<CoroutineLockQueue, long>(key, self.EntityId, true);
             return queue;
         }
 

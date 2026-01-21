@@ -59,7 +59,7 @@ namespace ET
                 
                 try
                 {
-                    (uint localConn, uint remoteConn) = session.AService.GetChannelConn(session.Id);
+                    (uint localConn, uint remoteConn) = session.AService.GetChannelConn(session.EntityId);
                     
                     // 验证连接ID有效性（任一为0都无效）
                     if (localConn == 0 || remoteConn == 0)
@@ -90,7 +90,7 @@ namespace ET
                     }
                     
                     // 重连成功，更新Session地址
-                    session.AService.ChangeAddress(session.Id, routerAddress);
+                    session.AService.ChangeAddress(session.EntityId, routerAddress);
                     totalFailures = 0;
                     
                     // 等待连接稳定，不手动更新LastRecvTime，等待实际收到消息

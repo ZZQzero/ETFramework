@@ -208,13 +208,16 @@ namespace ET
         }
 
         [NinoMember(0)]
-        public long UnitId { get; set; }
+        public long EntityId { get; set; }
 
+        /// <summary>
+        /// 角色Id
+        /// </summary>
         [NinoMember(1)]
-        public int ConfigId { get; set; }
+        public long RoleId { get; set; }
 
         [NinoMember(2)]
-        public int Type { get; set; }
+        public int RoleConfigId { get; set; }
 
         [NinoMember(3)]
         public Unity.Mathematics.float3 Position { get; set; }
@@ -226,7 +229,7 @@ namespace ET
         [MongoDB.Bson.Serialization.Attributes.BsonDictionaryOptions(MongoDB.Bson.Serialization.Options.DictionaryRepresentation.ArrayOfArrays)]
         #endif
         [NinoMember(5)]
-        public Dictionary<int, long> KV { get; set; } = new();
+        public Dictionary<int, long> NumericDic { get; set; } = new();
         [NinoMember(6)]
         public MoveInfo MoveInfo { get; set; }
 
@@ -237,12 +240,12 @@ namespace ET
                 return;
             }
 
-            this.UnitId = 0;
-            this.ConfigId = 0;
-            this.Type = 0;
+            this.EntityId = 0;
+            this.RoleId = 0;
+            this.RoleConfigId = 0;
             this.Position = default;
             this.Forward = default;
-            this.KV.Clear();
+            this.NumericDic.Clear();
             this.MoveInfo?.Dispose();
             this.MoveInfo = null;
 

@@ -278,6 +278,9 @@ namespace ET
         public long RoleId { get; set; }
 
         [NinoMember(5)]
+        public int RoleConfigId { get; set; }
+
+        [NinoMember(6)]
         public string GateAddress { get; set; }
 
         public override void Dispose()
@@ -292,6 +295,7 @@ namespace ET
             this.RealmKey = 0;
             this.UserId = 0;
             this.RoleId = 0;
+            this.RoleConfigId = 0;
             this.GateAddress = null;
 
             ObjectPool.Recycle(this);

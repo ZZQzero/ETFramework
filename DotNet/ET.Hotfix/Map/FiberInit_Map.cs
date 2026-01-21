@@ -17,6 +17,9 @@ namespace ET
             root.AddComponent<AOIManagerComponent>();
             root.AddComponent<LocationProxyComponent>();
             root.AddComponent<MessageLocationSenderComponent>();
+            
+            // 启动刷怪（最小闭环：从 MonsterConfig 读表刷一批怪）
+            root.AddComponent<MonsterSpawnerComponent>();
 
             await ETTask.CompletedTask;
         }

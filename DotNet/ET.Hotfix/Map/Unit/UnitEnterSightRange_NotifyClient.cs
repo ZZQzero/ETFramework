@@ -8,7 +8,7 @@
         {
             AOIEntity a = args.A;
             AOIEntity b = args.B;
-            if (a.Id == b.Id)
+            if (a.EntityId == b.EntityId)
             {
                 return;
             }

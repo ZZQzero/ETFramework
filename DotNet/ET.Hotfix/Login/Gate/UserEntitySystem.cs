@@ -4,10 +4,10 @@
     public static partial class UserEntitySystem
     {
         [EntitySystem]
-        private static void Awake(this UserEntity self, string account, long userId)
+        private static void Awake(this UserEntity self, string account, long roleId)
         {
             self.Account = account;
-            self.UserId = userId;
+            self.CurrentRoleId = roleId;
         }
     }
 }

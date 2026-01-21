@@ -13,9 +13,10 @@
             root.GetComponent<SessionComponent>().Session = gateSession;
             C2G_LoginGameGate c2GLoginGameGate = C2G_LoginGameGate.Create();
             c2GLoginGameGate.Key = request.RealmKey;
-            c2GLoginGameGate.AccountName = request.Account;
+            c2GLoginGameGate.Account = request.Account;
             c2GLoginGameGate.UserId = request.UserId;
             c2GLoginGameGate.RoleId = request.RoleId;
+            c2GLoginGameGate.RoleConfigId = request.RoleConfigId;
             G2C_LoginGameGate g2CLoginGameGate = (G2C_LoginGameGate) await gateSession.Call(c2GLoginGameGate);
 
             if (g2CLoginGameGate.Error != ErrorCode.ERR_Success)

@@ -14,7 +14,7 @@ namespace ET
         
         public static async ETTask Add(this LocationOneType self, long key, ActorId instanceId)
         {
-            long coroutineLockType = (self.Id << 32) | CoroutineLockType.Location;
+            long coroutineLockType = (self.EntityId << 32) | CoroutineLockType.Location;
             using (await self.Root().GetComponent<CoroutineLockComponent>().Wait(coroutineLockType, key))
             {
                 self.locations[key] = instanceId;
@@ -32,7 +32,7 @@ namespace ET
                 return;
             }
     
-            long coroutineLockType = (self.Id << 32) | CoroutineLockType.Location;
+            long coroutineLockType = (self.EntityId << 32) | CoroutineLockType.Location;
             using (await self.Root().GetComponent<CoroutineLockComponent>().Wait(coroutineLockType, lockKey))
             {
                 foreach (var (key, instanceId) in items)
@@ -44,7 +44,7 @@ namespace ET
 
         public static async ETTask Remove(this LocationOneType self, long key)
         {
-            long coroutineLockType = (self.Id << 32) | CoroutineLockType.Location;
+            long coroutineLockType = (self.EntityId << 32) | CoroutineLockType.Location;
             using (await self.Root().GetComponent<CoroutineLockComponent>().Wait(coroutineLockType, key))
             {
                 self.locations.Remove(key);
@@ -53,7 +53,7 @@ namespace ET
 
         public static async ETTask Lock(this LocationOneType self, long key, ActorId actorId, int time = 0)
         {
-            long coroutineLockType = (self.Id << 32) | CoroutineLockType.Location;
+            long coroutineLockType = (self.EntityId << 32) | CoroutineLockType.Location;
             CoroutineLock coroutineLock = await self.Root().GetComponent<CoroutineLockComponent>().Wait(coroutineLockType, key);
 
             LockInfo lockInfo = self.AddChild<LockInfo, ActorId, CoroutineLock>(actorId, coroutineLock);
@@ -109,7 +109,7 @@ namespace ET
 
         public static async ETTask<ActorId> Get(this LocationOneType self, long key)
         {
-            long coroutineLockType = (self.Id << 32) | CoroutineLockType.Location;
+            long coroutineLockType = (self.EntityId << 32) | CoroutineLockType.Location;
             using (await self.Root().GetComponent<CoroutineLockComponent>().Wait(coroutineLockType, key))
             {
                 self.locations.TryGetValue(key, out ActorId actorId);

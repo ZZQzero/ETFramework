@@ -11,7 +11,7 @@ namespace ET
 			long key = RandomGenerator.RandInt64();
 			scene.GetComponent<GateSessionKeyComponent>().Add(key, request.UserId);
 			response.Key = key;
-			response.GateId = scene.Id;
+			response.GateId = scene.EntityId;
 			await ETTask.CompletedTask;
 		}
 	}

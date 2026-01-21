@@ -76,7 +76,7 @@ namespace ET
 
         public static async ETTask AddLocation(this Entity self, int type)
         {
-            await self.Root().GetComponent<LocationProxyComponent>().Add(type, self.Id, self.GetActorId());
+            await self.Root().GetComponent<LocationProxyComponent>().Add(type, self.EntityId, self.GetActorId());
         }
 
         /// <summary>
@@ -174,7 +174,7 @@ namespace ET
 
         public static async ETTask RemoveLocation(this Entity self, int type)
         {
-            await self.Root().GetComponent<LocationProxyComponent>().Remove(type, self.Id);
+            await self.Root().GetComponent<LocationProxyComponent>().Remove(type, self.EntityId);
         }
     }
 }

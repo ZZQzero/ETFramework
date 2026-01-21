@@ -112,6 +112,32 @@ namespace ET
         }
 
         /// <summary>
+        /// 通过主键批量查询（_id in ids）。
+        /// 适用于实体使用 [BsonId] 映射到 MongoDB 的 _id 字段的场景。
+        /// </summary>
+        public static async ETTask<List<T>> QueryByIds<T, TKey>(this DBComponent self, IEnumerable<TKey> ids, string collection = null) where T : class
+        {
+            if (ids == null)
+            {
+                return new List<T>();
+            }
+
+            // 避免重复枚举 & 兼容多种 IEnumerable
+            List<TKey> idList = ids as List<TKey> ?? ids.ToList();
+            if (idList.Count == 0)
+            {
+                return new List<T>();
+            }
+
+            using (await self.Root().GetComponent<CoroutineLockComponent>().Wait(CoroutineLockType.DB, RandomGenerator.RandInt64() % DBComponent.TaskCount))
+            {
+                var filter = Builders<T>.Filter.In(MongoIdFieldName, idList);
+                using IAsyncCursor<T> cursor = await self.GetCollection<T>(collection).FindAsync(filter);
+                return await cursor.ToListAsync();
+            }
+        }
+        
+        /// <summary>
         /// 查询单个数据对象（根据业务条件）
         /// </summary>
         public static async ETTask<T> QuerySingle<T>(this DBComponent self, Expression<Func<T, bool>> filter, string collection = null) where T : class

@@ -11,7 +11,7 @@ public class MessageLocationSenderChecker: ATimer<MessageLocationSenderOneType>
         }
         catch (Exception e)
         {
-            Log.Error($"move timer error: {self.Id}\n{e}");
+            Log.Error($"move timer error: {self.EntityId}\n{e}");
         }
     }
 }
@@ -119,7 +119,7 @@ public static partial class MessageLocationSenderOneTypeSystem
             if (messageLocationSender.ActorId == default)
             {
                 messageLocationSender.ActorId = await root.GetComponent<LocationProxyComponent>()
-                    .Get((int)self.Id, messageLocationSender.Id);
+                    .Get((int)self.EntityId, messageLocationSender.EntityId);
                 if (messageLocationSender.InstanceId != instanceId)
                 {
                     throw new RpcException(ErrorCode.ERR_ActorLocationSenderTimeout2, $"{message}");
@@ -162,7 +162,7 @@ public static partial class MessageLocationSenderOneTypeSystem
 
             if (messageLocationSender.ActorId == default)
             {
-                messageLocationSender.ActorId = await root.GetComponent<LocationProxyComponent>().Get((int)self.Id, messageLocationSender.Id);
+                messageLocationSender.ActorId = await root.GetComponent<LocationProxyComponent>().Get((int)self.EntityId, messageLocationSender.EntityId);
                 if (messageLocationSender.InstanceId != instanceId)
                 {
                     throw new RpcException(ErrorCode.ERR_ActorLocationSenderTimeout2, $"{request}");
@@ -203,12 +203,12 @@ public static partial class MessageLocationSenderOneTypeSystem
             catch (RpcException)
             {
                 // 快速路径失败，清理缓存重试
-                self.Remove(messageLocationSender.Id);
+                self.Remove(messageLocationSender.EntityId);
                 throw;
             }
             catch (Exception e)
             {
-                self.Remove(messageLocationSender.Id);
+                self.Remove(messageLocationSender.EntityId);
                 throw new Exception($"{iRequestType.FullName}", e);
             }
         }
@@ -226,12 +226,12 @@ public static partial class MessageLocationSenderOneTypeSystem
             }
             catch (RpcException)
             {
-                self.Remove(messageLocationSender.Id);
+                self.Remove(messageLocationSender.EntityId);
                 throw;
             }
             catch (Exception e)
             {
-                self.Remove(messageLocationSender.Id);
+                self.Remove(messageLocationSender.EntityId);
                 throw new Exception($"{iRequestType.FullName}", e);
             }
         }
@@ -250,7 +250,7 @@ public static partial class MessageLocationSenderOneTypeSystem
         {
             if (messageLocationSender.ActorId == default)
             {
-                messageLocationSender.ActorId = await root.GetComponent<LocationProxyComponent>().Get((int)self.Id, messageLocationSender.Id);
+                messageLocationSender.ActorId = await root.GetComponent<LocationProxyComponent>().Get((int)self.EntityId, messageLocationSender.EntityId);
                 if (messageLocationSender.InstanceId != instanceId)
                 {
                     throw new RpcException(ErrorCode.ERR_ActorLocationSenderTimeout2, $"{iRequest}");
@@ -277,10 +277,10 @@ public static partial class MessageLocationSenderOneTypeSystem
                     ++failTimes;
                     if (failTimes > 3)
                     {
-                        Log.Debug($"actor send message fail, actorid: {messageLocationSender.Id} {requestType.FullName}");
+                        Log.Debug($"actor send message fail, actorid: {messageLocationSender.EntityId} {requestType.FullName}");
 
                         // 这里删除actor，后面等待发送的消息会判断InstanceId，InstanceId不一致返回ERR_NotFoundActor
-                        self.Remove(messageLocationSender.Id);
+                        self.Remove(messageLocationSender.EntityId);
                         return response;
                     }
 

@@ -35,7 +35,7 @@ namespace ET
                 return;
             }
 
-            Log.Info($"session timeout: {session.Id} {timeNow} {session.LastRecvTime} {session.LastSendTime} {timeNow - session.LastRecvTime} {timeNow - session.LastSendTime}");
+            Log.Info($"session timeout: {session.EntityId} {timeNow} {session.LastRecvTime} {session.LastSendTime} {timeNow - session.LastRecvTime} {timeNow - session.LastSendTime}");
             session.Error = ErrorCode.ERR_SessionSendOrRecvTimeout;
 
             session.Dispose();

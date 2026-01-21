@@ -15,7 +15,7 @@ namespace ET
         [EntitySystem]
         private static void Destroy(this MessageLocationSender self)
         {
-            Log.Debug($"actor location remove: {self.Id}");
+            Log.Debug($"actor location remove: {self.EntityId}");
             self.LastSendOrRecvTime = 0;
             self.ActorId = default;
         }

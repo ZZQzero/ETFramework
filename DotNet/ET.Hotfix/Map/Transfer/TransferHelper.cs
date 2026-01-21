@@ -18,13 +18,13 @@ namespace ET
             Scene root = unit.Root();
             
             // location加锁
-            long unitId = unit.Id;
+            long unitId = unit.EntityId;
             
             M2M_UnitTransferRequest request = M2M_UnitTransferRequest.Create();
             request.OldActorId = unit.GetActorId();
             request.UnitInfo = UnitInfo.Create();
-            request.UnitInfo.ConfigId = unit.ConfigId;
-            request.UnitInfo.UnitId = unit.Id;
+            /*request.UnitInfo.ConfigId = unit.ConfigId;
+            request.UnitInfo.UnitId = unit.EntityId;*/
             /*foreach (Entity entity in unit.Components.Values)
             {
                 if (entity is ITransfer)

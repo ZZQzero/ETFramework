@@ -59,6 +59,12 @@ namespace ET
         /// <summary>角色ID列表</summary>
         public List<long> RoleIds;
         
+        /// <summary>最后使用的角色ID</summary>
+        public long LastRoleId;
+        
+        /// <summary>玩家基地场景ID</summary>
+        public long BaseSceneId;
+        
         /// <summary>用户资料</summary>
         public UserProfile Profile;
     }

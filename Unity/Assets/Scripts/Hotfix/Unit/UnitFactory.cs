@@ -7,13 +7,13 @@ namespace ET
         public static Unit Create(Scene currentScene, UnitInfo unitInfo)
         {
 	        UnitComponent unitComponent = currentScene.GetComponent<UnitComponent>();
-	        Unit unit = unitComponent.AddChildWithId<Unit, int>(unitInfo.UnitId, unitInfo.ConfigId);
+	        Unit unit = unitComponent.AddChildWithId<Unit, int>(unitInfo.EntityId, unitInfo.RoleConfigId);
 	        unit.Position = unitInfo.Position;
 	        unit.Forward = unitInfo.Forward;
 	        
 	        NumericComponent numericComponent = unit.AddComponent<NumericComponent>();
 
-			foreach (var kv in unitInfo.KV)
+			foreach (var kv in unitInfo.NumericDic)
 			{
 				numericComponent.Set(kv.Key, kv.Value);
 			}

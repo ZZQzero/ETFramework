@@ -280,19 +280,6 @@ namespace ET
                 attackLayer.Weight = 0f;
                 self.AnimatorComponent.AttackLayer = attackLayer;
             }
-            var animState = attackLayer.Play(segment.AnimationClipTrans);
-            
-            if (segmentIndex == 0)
-            {
-                // 0 秒淡入等价于“立刻到 1”，同时也会取消之前的 FadeGroup。
-                attackLayer.StartFade(1f, 0f);
-                attackLayer.Weight = 1f;
-            }
-            else
-            {
-                float fadeIn = Mathf.Max(0.05f, segment.AnimationClipTrans.FadeDuration);
-                attackLayer.StartFade(1f, fadeIn);
-            }
             
             var layer0State = self.AnimatorComponent.MoveMixer.State;
             if (layer0State != null)
@@ -301,6 +288,22 @@ namespace ET
                 self.AnimatorComponent.MoveMixer.State.Parameter = 0;
                 layer0State.NormalizedTime = 0f;
             }
+            AnimancerState animState;
+            
+            if (segmentIndex == 0)
+            {
+                // 0 秒淡入等价于“立刻到 1”，同时也会取消之前的 FadeGroup。
+                animState = attackLayer.Play(segment.AnimationClipTrans,0);
+                attackLayer.StartFade(1f, 0f);
+                attackLayer.Weight = 1f;
+            }
+            else
+            {
+                animState = attackLayer.Play(segment.AnimationClipTrans);
+                float fadeIn = Mathf.Max(0.05f, segment.AnimationClipTrans.FadeDuration);
+                attackLayer.StartFade(1f, fadeIn);
+            }
+            
             if (animState == null)
             {
                 Log.Error($"AttackComponent: Failed to play animation for segment {segmentIndex}");

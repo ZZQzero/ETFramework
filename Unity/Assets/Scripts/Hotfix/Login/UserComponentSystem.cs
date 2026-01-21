@@ -8,7 +8,7 @@ namespace ET
         [EntitySystem]
         private static void Awake(this UserComponent self)
         {
-            self.RoleIds = new List<long>();
+            self.RoleList = new List<RoleData>();
         }
         
         /// <summary>
@@ -23,13 +23,24 @@ namespace ET
             self.TotalRecharge = userInfo.TotalRecharge;
             
             // 安全地复制角色ID列表
-            self.RoleIds.Clear();
-            if (userInfo.RoleIds != null)
+            self.RoleList.Clear();
+            if (userInfo.RoleInfoList != null)
             {
-                self.RoleIds.AddRange(userInfo.RoleIds);
+                foreach (var roleInfo in userInfo.RoleInfoList)
+                {
+                    RoleData roleData = new RoleData();
+                    roleData.RoleId = roleInfo.RoleId;
+                    roleData.RoleConfigId = roleInfo.RoleConfigId;
+                    self.RoleList.Add(roleData);
+                }
             }
-            
-            Log.Info($"用户信息已加载：{self.GetDisplayInfo()}");
+            if(userInfo.LastRoleInfo != null)
+            {
+                RoleData roleData = new RoleData();
+                roleData.RoleId = userInfo.LastRoleInfo.RoleId;
+                roleData.RoleConfigId = userInfo.LastRoleInfo.RoleConfigId;
+                self.CurrentRole = roleData;
+            }
         }
         
         /// <summary>
@@ -37,7 +48,7 @@ namespace ET
         /// </summary>
         public static bool HasRole(this UserComponent self)
         {
-            return self.RoleIds != null && self.RoleIds.Count > 0;
+            return self.RoleList != null && self.RoleList.Count > 0;
         }
         
         /// <summary>
@@ -45,7 +56,7 @@ namespace ET
         /// </summary>
         public static string GetDisplayInfo(this UserComponent self)
         {
-            return $"[{self.Username}] UserId={self.UserId}, VIP={self.VipLevel}, 角色数={self.RoleIds?.Count ?? 0}";
+            return $"[{self.Username}] UserId={self.UserId}, VIP={self.VipLevel}, 角色数={self.RoleList?.Count ?? 0}";
         }
         
         /// <summary>
@@ -53,7 +64,7 @@ namespace ET
         /// </summary>
         public static bool IsInGame(this UserComponent self)
         {
-            return self.CurrentRoleId != 0;
+            return self.CurrentRole != null;
         }
     }
 }

@@ -10,6 +10,8 @@ namespace ET
         [BsonId]
         public long Id;
         
+        public int RoleConfigId;
+        
         public string RoleName;
         
         public int Level;

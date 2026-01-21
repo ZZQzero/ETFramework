@@ -12,7 +12,7 @@ namespace ET
 
             if (recvLocalConn == 0)
             {
-                throw new Exception($"get router fail: {netComponent.Root().Id} {address}");
+                throw new Exception($"get router fail: {netComponent.Root().EntityId} {address}");
             }
 
             Session routerSession = netComponent.Create(routerAddress, address, recvLocalConn);

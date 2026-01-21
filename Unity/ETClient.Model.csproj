@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Model\Move\Share\MoveEventType.cs" />
     <Compile Include="Assets\Scripts\Model\Login\UserComponent.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\MonsterConfig.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Move\Wait_UnitStop.cs" />
     <Compile Include="Assets\Scripts\Model\Unit\Share\Unit.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\LoginOuter_C_1000.cs" />
@@ -59,6 +60,7 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\IMessageSessionHandler.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbStartZone.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbGlobalConst.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbRole.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\NumericType.cs" />
     <Compile Include="Assets\Scripts\Model\Unit\Share\UnitComponent.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\EventType.cs" />
@@ -85,6 +87,7 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\StartSceneConfigManager.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\AI\XunLuoPathComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\LoginInner_S_20001.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\RoleTable.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\TableConfigBase.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Share\CurrentScenesComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Login\Router\RouterAddressComponent.cs" />
@@ -93,6 +96,7 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\WaitCoroutineLock.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\NetComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\ConstValue\UnityScene.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbMonster.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\StateSyncInner_S_20001.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLock.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\ActorLocation_S_20100.cs" />
@@ -100,6 +104,7 @@
     <Compile Include="Assets\Scripts\Model\Login\NetClient\PingComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\StartConfigPartial\StartSceneConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\Response.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\RoleConfig.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Actor\MessageDispatcher.cs" />
     <Compile Include="Assets\Scripts\Model\Numeric\Share\NumericComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\ConstValue\MailBoxType.cs" />
@@ -109,11 +114,13 @@
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Category\UnitConfig.cs" />
     <Compile Include="Assets\Scripts\Model\StateSync\Scene\Wait_CreateMyUnit.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\ConstValue\PackageType.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\Proto\ClientServer\Map_C_20001.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\Message\SessionIdleCheckerComponent.cs" />
     <Compile Include="Assets\Scripts\Model\AI\Share\AIComponent.cs" />
     <Compile Include="Assets\Scripts\Model\Move\Share\MoveComponent.cs" />
     <Compile Include="Assets\Scripts\Model\AI\Share\AIDispatcherSingle.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\TbAIRobot.cs" />
+    <Compile Include="Assets\Scripts\Model\Core\Share\TableConfig\Excel\Generated\MonsterTable.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\ConstValue\CoroutineLockType.cs" />
     <Compile Include="Assets\Scripts\Model\Core\Share\CoroutineLock\CoroutineLockQueueType.cs" />
     <Compile Include="Assets\Scripts\Model\Login\FiberParentComponent.cs" />

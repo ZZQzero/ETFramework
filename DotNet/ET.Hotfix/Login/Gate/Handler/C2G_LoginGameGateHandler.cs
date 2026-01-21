@@ -54,9 +54,8 @@ public class C2G_LoginGameGateHandler : MessageSessionHandler<C2G_LoginGameGate,
                 var userEntity = userEntityComponent.GetByAccount(request.UserId);
                 if (userEntity == null)
                 {
-                    // 使用RoleId作为Player的Id（保持现有逻辑），但同时存储UserId
-                    userEntity = userEntityComponent.AddChildWithId<UserEntity, string, long>(request.UserId, request.AccountName, request.UserId);
-                    userEntity.CurrentRoleId = request.RoleId;
+                    userEntity = userEntityComponent.AddChildWithId<UserEntity, string, long>(request.UserId, request.Account, request.RoleId);
+                    userEntity.RoleConfigId = request.RoleConfigId;
                     userEntityComponent.Add(userEntity);
 
                     UserEntitySessionComponent userEntitySessionComponent = userEntity.AddComponent<UserEntitySessionComponent>();

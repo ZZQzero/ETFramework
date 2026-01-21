@@ -220,7 +220,7 @@ namespace ET
                     if (routerNode.ConnectId != connectId)
                     {
                         Log.Warning($"kcp router router reconnect connectId diff, maybe router count too less: {connectId} {routerNode.ConnectId} {routerNode.OuterIpEndPoint} {(IPEndPoint) self.IPEndPoint}");
-                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterSame);
+                        self.OnError(routerNode.EntityId, ErrorCode.ERR_KcpRouterSame);
                         break;
                     }
                     
@@ -246,14 +246,14 @@ namespace ET
                     
                     if (++routerNode.RouterSyncCount > 40)
                     {
-                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterRouterSyncCountTooMuchTimes);
+                        self.OnError(routerNode.EntityId, ErrorCode.ERR_KcpRouterRouterSyncCountTooMuchTimes);
                         break;
                     }
                     routerNode.KcpTransport = transport;
                     // 限流前置
                     if (!routerNode.CheckOuterCount(timeNow))
                     {
-                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterTooManyPackets);
+                        self.OnError(routerNode.EntityId, ErrorCode.ERR_KcpRouterTooManyPackets);
                         break;
                     }
                     // 转发到内网
@@ -309,7 +309,7 @@ namespace ET
                     
                     if (++routerNode.RouterSyncCount > 40)
                     {
-                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterRouterSyncCountTooMuchTimes);
+                        self.OnError(routerNode.EntityId, ErrorCode.ERR_KcpRouterRouterSyncCountTooMuchTimes);
                         break;
                     }
                     
@@ -331,7 +331,7 @@ namespace ET
                     // 限流前置
                     if (!routerNode.CheckOuterCount(timeNow))
                     {
-                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterTooManyPackets);
+                        self.OnError(routerNode.EntityId, ErrorCode.ERR_KcpRouterTooManyPackets);
                         break;
                     }
                     self.Cache.WriteTo(0, KcpProtocalType.RouterACK);
@@ -360,7 +360,7 @@ namespace ET
 
                     if (++routerNode.SyncCount > 20)
                     {
-                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterSyncCountTooMuchTimes);
+                        self.OnError(routerNode.EntityId, ErrorCode.ERR_KcpRouterSyncCountTooMuchTimes);
                         break;
                     }
 
@@ -383,7 +383,7 @@ namespace ET
                     // 限流前置
                     if (!routerNode.CheckOuterCount(timeNow))
                     {
-                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterTooManyPackets);
+                        self.OnError(routerNode.EntityId, ErrorCode.ERR_KcpRouterTooManyPackets);
                         break;
                     }
                     // 转发到内网, 带上客户端的地址
@@ -428,7 +428,7 @@ namespace ET
                     // 限流前置
                     if (!routerNode.CheckOuterCount(timeNow))
                     {
-                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterTooManyPackets);
+                        self.OnError(routerNode.EntityId, ErrorCode.ERR_KcpRouterTooManyPackets);
                         break;
                     }
                     self.InnerSocket.Send(self.Cache, 0, messageLength, routerNode.InnerIpEndPoint, ChannelType.Accept);
@@ -474,7 +474,7 @@ namespace ET
                     // 限流前置
                     if (!routerNode.CheckOuterCount(timeNow))
                     {
-                        self.OnError(routerNode.Id, ErrorCode.ERR_KcpRouterTooManyPackets);
+                        self.OnError(routerNode.EntityId, ErrorCode.ERR_KcpRouterTooManyPackets);
                         break;
                     }
                     self.InnerSocket.Send(self.Cache, 0, messageLength, routerNode.InnerIpEndPoint, ChannelType.Connect);
@@ -687,7 +687,7 @@ namespace ET
                 return;
             }
             
-            Log.Info($"router remove: {routerNode.Id} outerConn: {routerNode.OuterConn} innerConn: {routerNode.InnerConn}");
+            Log.Info($"router remove: {routerNode.EntityId} outerConn: {routerNode.OuterConn} innerConn: {routerNode.InnerConn}");
 
             // 从checkTimeout队列中移除，避免僵尸id
             // 由于队列可能很大，使用临时队列重建

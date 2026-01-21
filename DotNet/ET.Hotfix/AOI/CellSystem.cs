@@ -24,12 +24,12 @@ namespace ET
 
         public static void Add(this Cell self, AOIEntity aoiEntity)
         {
-            self.AOIUnits.Add(aoiEntity.Id, aoiEntity);
+            self.AOIUnits.Add(aoiEntity.EntityId, aoiEntity);
         }
 
         public static void Remove(this Cell self, AOIEntity aoiEntity)
         {
-            self.AOIUnits.Remove(aoiEntity.Id);
+            self.AOIUnits.Remove(aoiEntity.EntityId);
         }
 
         public static string CellIdToString(this long cellId)

@@ -20,7 +20,7 @@ namespace ET
         {
             get
             {
-                return (uint)this.Id;
+                return (uint)this.EntityId;
             }
         }
         public uint InnerConn;

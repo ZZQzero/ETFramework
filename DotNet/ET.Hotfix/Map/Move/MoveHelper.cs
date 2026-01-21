@@ -26,7 +26,7 @@ namespace ET
             
             //Log.Info($"广播寻路 {m2CPathfindingResult}");
             // 广播寻路路径
-            m2CPathfindingResult.Id = unit.Id;
+            m2CPathfindingResult.Id = unit.EntityId;
             MapMessageHelper.Broadcast(unit, m2CPathfindingResult);
 
             MoveComponent moveComponent = unit.GetComponent<MoveComponent>();
@@ -49,7 +49,7 @@ namespace ET
         {
             M2C_Stop m2CStop = M2C_Stop.Create();
             m2CStop.Error = error;
-            m2CStop.Id = unit.Id;
+            m2CStop.Id = unit.EntityId;
             m2CStop.Position = unit.Position;
             m2CStop.Rotation = unit.Rotation;
             

@@ -11,9 +11,9 @@ namespace ET
         {
             UnitInfo unitInfo = UnitInfo.Create();
             NumericComponent nc = unit.GetComponent<NumericComponent>();
-            unitInfo.UnitId = unit.Id;
-            unitInfo.ConfigId = unit.ConfigId;
-            unitInfo.Type = (int)unit.Type();
+            unitInfo.RoleConfigId = unit.UnitTable.Id;
+            unitInfo.RoleId = unit.RoleId;
+            unitInfo.EntityId = unit.EntityId;
             unitInfo.Position = unit.Position;
             unitInfo.Forward = unit.Forward;
 
@@ -34,7 +34,7 @@ namespace ET
 
             foreach ((int key, long value) in nc.NumericDic)
             {
-                unitInfo.KV.Add(key, value);
+                unitInfo.NumericDic.Add(key, value);
             }
 
             return unitInfo;

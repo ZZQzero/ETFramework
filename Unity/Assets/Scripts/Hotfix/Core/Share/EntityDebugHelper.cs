@@ -57,7 +57,7 @@ namespace ET
             // Entity基本信息
             sb.AppendLine($"{indent}┌─ Entity: {entity.GetType().Name}");
             sb.AppendLine($"{indent}│  InstanceId: {entity.InstanceId}");
-            sb.AppendLine($"{indent}│  Id: {entity.Id}");
+            sb.AppendLine($"{indent}│  Id: {entity.EntityId}");
             sb.AppendLine($"{indent}│  TypeId: {entity.TypeId}");
             sb.AppendLine($"{indent}│  IsDisposed: {entity.IsDisposed}");
             sb.AppendLine($"{indent}│  IsFromPool: {entity.IsFromPool}");
@@ -66,7 +66,7 @@ namespace ET
             // 父Entity信息
             if (entity.Parent != null)
             {
-                sb.AppendLine($"{indent}│  Parent: {entity.Parent.GetType().Name} (Id: {entity.Parent.Id}, InstanceId: {entity.Parent.InstanceId})");
+                sb.AppendLine($"{indent}│  Parent: {entity.Parent.GetType().Name} (Id: {entity.Parent.EntityId}, InstanceId: {entity.Parent.InstanceId})");
             }
 
             // Scene信息
@@ -93,7 +93,7 @@ namespace ET
                         if (includeComponentChildren && component.Children != null && component.Children.Count > 0)
                         {
                             // 先打印组件基本信息
-                            sb.AppendLine($"{indent}│    {componentPrefix} {component.GetType().Name} (Id: {component.Id}, InstanceId: {component.InstanceId})");
+                            sb.AppendLine($"{indent}│    {componentPrefix} {component.GetType().Name} (Id: {component.EntityId}, InstanceId: {component.InstanceId})");
                             sb.AppendLine($"{indent}│    {(isLastComponent ? " " : "│")}    Children ({component.Children.Count}):");
                             
                             // 打印组件的子Entity
@@ -153,7 +153,7 @@ namespace ET
                         else
                         {
                             // 不包含组件的子Entity，只打印组件基本信息
-                            string componentInfo = $"{component.GetType().Name} (Id: {component.Id}, InstanceId: {component.InstanceId})";
+                            string componentInfo = $"{component.GetType().Name} (Id: {component.EntityId}, InstanceId: {component.InstanceId})";
                             sb.AppendLine($"{indent}│    {componentPrefix} {componentInfo}");
                         }
                     }
@@ -300,7 +300,7 @@ namespace ET
                 }
             }
 
-            Log.Info($"Entity: {entity.GetType().Name} (Id: {entity.Id}, InstanceId: {entity.InstanceId})");
+            Log.Info($"Entity: {entity.GetType().Name} (Id: {entity.EntityId}, InstanceId: {entity.InstanceId})");
             Log.Info($"  Components: {componentCount} (Disposed: {disposedComponentCount})");
             Log.Info($"  Children: {childrenCount}");
         }

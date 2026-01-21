@@ -18,7 +18,7 @@ namespace ET
             root.AddComponent<LocationProxyComponent>();
             root.AddComponent<MessageLocationSenderComponent>();
 
-            StartSceneTable startSceneConfig = StartSceneConfig.Instance.Get((int)root.Id);
+            StartSceneTable startSceneConfig = StartSceneConfig.Instance.Get((int)root.EntityId);
             root.AddComponent<NetComponent, IKcpTransport>(new UdpTransport(startSceneConfig.InnerIPPort));
             await ETTask.CompletedTask;
         }

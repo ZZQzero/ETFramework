@@ -29,11 +29,11 @@ namespace ET
                     if (playerUnit != null)
                     {
                         cameraComponent.FollowUnit = playerUnit;
-                        Log.Info($"相机跟随已设置为Unit {playerUnit.Id}");
+                        Log.Info($"相机跟随已设置为Unit {playerUnit.EntityId}");
                     }
                     else
                     {
-                        Log.Warning($"未找到玩家Unit {userComponent.CurrentRoleId}，相机跟随未设置");
+                        Log.Warning($"未找到玩家Unit {userComponent.CurrentRole.RoleId}，相机跟随未设置");
                     }
                 }
             }

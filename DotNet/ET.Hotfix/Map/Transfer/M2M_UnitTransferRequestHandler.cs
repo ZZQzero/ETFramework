@@ -8,7 +8,7 @@ namespace ET
     {
         protected override async ETTask Run(Scene scene, M2M_UnitTransferRequest request, M2M_UnitTransferResponse response)
         {
-			Unit unit = UnitFactory.Create(scene, request.UnitInfo.UnitId, UnitType.Player);
+            Unit unit = UnitFactory.CreatePlayer(scene, request.UnitInfo);
             unit.AddComponent<PathfindingComponent, string>(scene.Name);
             unit.Position = new float3(-10, 0, -10);
 
@@ -29,12 +29,12 @@ namespace ET
             if (request.OldActorId == default)
             {
                 // 首次创建，直接Add到Location
-                await locationProxyComponent.Add(LocationType.Unit, unit.Id, unit.GetActorId());
+                await locationProxyComponent.Add(LocationType.Unit, unit.EntityId, unit.GetActorId());
             }
             else
             {
                 // 转移场景，UnLock（需要先Lock）
-                await locationProxyComponent.UnLock(LocationType.Unit, unit.Id, request.OldActorId, unit.GetActorId());
+                await locationProxyComponent.UnLock(LocationType.Unit, unit.EntityId, request.OldActorId, unit.GetActorId());
             }
         }
     }

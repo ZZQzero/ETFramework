@@ -7,7 +7,9 @@ namespace ET
     [DebuggerDisplay("ViewName,nq")]
     public partial class Unit: Entity, IAwake<int>
     {
-        public int ConfigId { get; set; } //配置表id
+        public UnitTable UnitTable { get; set; }
+        public int RoleConfigId { get; set; }
+        public long RoleId { get; set; }
 
         private float3 position; //坐标
 

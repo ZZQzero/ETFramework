@@ -13,7 +13,7 @@ namespace ET
             {
                 NetComponent netComponent = self.GetParent<NetComponent>();
                 KService kService = (KService)netComponent.AService;
-                kService.AddRouterAckCallback(self.Id, (flag) =>
+                kService.AddRouterAckCallback(self.EntityId, (flag) =>
                 {
                     // 检查RouterConnector是否已被释放
                     if (self.IsDisposed)
@@ -25,7 +25,7 @@ namespace ET
             }
             catch (Exception e)
             {
-                Log.Error($"RouterConnector Awake异常: {self.Id}, {e}");
+                Log.Error($"RouterConnector Awake异常: {self.EntityId}, {e}");
                 // 如果注册失败，标记Flag为错误状态，让Connect方法知道失败
                 self.Flag = 0;
             }
@@ -35,7 +35,7 @@ namespace ET
         {
             NetComponent netComponent = self.GetParent<NetComponent>();
             KService kService = (KService)netComponent.AService;
-            kService.RemoveRouterAckCallback(self.Id);
+            kService.RemoveRouterAckCallback(self.EntityId);
         }
 
         public static void Connect(this RouterConnector self, byte[] bytes, int index, int length, IPEndPoint ipEndPoint)

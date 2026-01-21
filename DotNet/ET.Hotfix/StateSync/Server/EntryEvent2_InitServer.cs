@@ -23,6 +23,7 @@
             var scenes = StartSceneConfigManager.Instance.GetByProcess(process);
             foreach (StartSceneTable startConfig in scenes)
             {
+                Log.Info($"{startConfig.Name}");
                 int sceneType = SceneTypeSingleton.Instance.GetSceneType(startConfig.SceneType);
                 await FiberManager.Instance.Create(SchedulerType.ThreadPool, startConfig.Id, startConfig.Zone, sceneType, startConfig.Name);
             }

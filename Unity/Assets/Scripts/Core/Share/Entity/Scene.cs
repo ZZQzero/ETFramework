@@ -10,9 +10,9 @@ namespace ET
         public int SceneType { get; set; }
         public string Name { get; set; }
 
-        public Scene(Fiber fiber, long id, long instanceId, int sceneType, string name)
+        public Scene(Fiber fiber, long entityId, long instanceId, int sceneType, string name)
         {
-            this.Id = id;
+            this.EntityId = entityId;
             this.Name = name;
             this.InstanceId = instanceId;
             this.SceneType = sceneType;
@@ -27,7 +27,7 @@ namespace ET
         {
             base.Dispose();
             
-            Log.Info($"scene dispose: {this.SceneType} {this.Id} {this.InstanceId}");
+            Log.Info($"scene dispose: {this.SceneType} {this.EntityId} {this.InstanceId}");
         }
     }
 }

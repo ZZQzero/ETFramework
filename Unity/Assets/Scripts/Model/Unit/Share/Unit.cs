@@ -8,11 +8,8 @@ namespace ET
     public partial class Unit: Entity, IAwake<int>
     {
         public UnitTable UnitTable { get; set; }
-        public int RoleConfigId { get; set; }
-        public long RoleId { get; set; }
 
         private float3 position; //坐标
-
         public float3 Position
         {
             get => this.position;

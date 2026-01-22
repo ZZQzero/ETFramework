@@ -9,7 +9,7 @@ namespace ET
             self.UnitTable = UnitConfig.Instance.Get(configId);
         }
         
-        public static int Type(this Unit self)
+        public static int UnitType(this Unit self)
         {
             return self.UnitTable.UnitType;
         }

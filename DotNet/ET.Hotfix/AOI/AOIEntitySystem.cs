@@ -109,9 +109,9 @@ namespace ET
                 return;
             }
 
-            if (self.Unit.Type() == UnitType.Player)
+            if (self.Unit.UnitType() == UnitType.Player)
             {
-                if (enter.Unit.Type() == UnitType.Player)
+                if (enter.Unit.UnitType() == UnitType.Player)
                 {
                     self.SeeUnits.Add(enter.EntityId, enter);
                     enter.BeSeeUnits.Add(self.EntityId, self);
@@ -128,7 +128,7 @@ namespace ET
             }
             else
             {
-                if (enter.Unit.Type() == UnitType.Player)
+                if (enter.Unit.UnitType() == UnitType.Player)
                 {
                     self.SeeUnits.Add(enter.EntityId, enter);
                     enter.BeSeeUnits.Add(self.EntityId, self);
@@ -163,13 +163,13 @@ namespace ET
             }
 
             self.SeeUnits.Remove(leave.EntityId);
-            if (leave.Unit.Type() == UnitType.Player)
+            if (leave.Unit.UnitType() == UnitType.Player)
             {
                 self.SeePlayers.Remove(leave.EntityId);
             }
 
             leave.BeSeeUnits.Remove(self.EntityId);
-            if (self.Unit.Type() == UnitType.Player)
+            if (self.Unit.UnitType() == UnitType.Player)
             {
                 leave.BeSeePlayers.Remove(self.EntityId);
             }

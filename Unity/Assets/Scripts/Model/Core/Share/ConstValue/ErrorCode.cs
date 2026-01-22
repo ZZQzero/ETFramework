@@ -61,6 +61,7 @@ namespace ET
         public const int ERR_ReEnterGameError = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 14;
         public const int ERR_KickedByServer = ERR_WithoutException + PackageType.Login * ConstValue.Seed + 15;
         public const int ERR_SpawnMonsterError = ERR_WithoutException + PackageType.Unit * ConstValue.Seed + 1;
+        public const int ERR_SceneLoadError = ERR_WithoutException + PackageType.StateSync * ConstValue.Seed + 1;
 
         //------------------------------------------------------------------------
 

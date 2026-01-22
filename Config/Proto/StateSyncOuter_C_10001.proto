@@ -71,6 +71,20 @@ message M2C_StartSceneChange // IMessage
 	string SceneName = 2;
 }
 
+// ResponseType M2C_SceneLoadFinish
+message C2M_SceneLoadFinish // ILocationRequest
+{
+	int32 RpcId = 1;
+	string SceneName = 2;
+}
+
+message M2C_SceneLoadFinish // ILocationResponse
+{
+	int32 RpcId = 1;
+	int32 Error = 2;
+	string Message = 3;
+}
+
 message M2C_RemoveUnits // IMessage
 {
 	repeated int64 Units = 1;

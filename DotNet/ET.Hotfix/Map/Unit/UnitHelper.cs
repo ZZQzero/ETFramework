@@ -11,8 +11,9 @@ namespace ET
         {
             UnitInfo unitInfo = UnitInfo.Create();
             NumericComponent nc = unit.GetComponent<NumericComponent>();
-            unitInfo.RoleConfigId = unit.UnitTable.Id;
-            unitInfo.RoleId = unit.RoleId;
+            RoleIdentityComponent role = unit.GetComponent<RoleIdentityComponent>();
+            unitInfo.RoleConfigId = role.RoleConfigId;
+            unitInfo.RoleId = role.RoleId;
             unitInfo.EntityId = unit.EntityId;
             unitInfo.Position = unit.Position;
             unitInfo.Forward = unit.Forward;

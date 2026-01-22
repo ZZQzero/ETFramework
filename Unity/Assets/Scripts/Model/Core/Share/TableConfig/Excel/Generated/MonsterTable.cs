@@ -31,6 +31,7 @@ public sealed partial class MonsterTable : Luban.BeanBase
         DropId = _buf.ReadInt();
         Exp = _buf.ReadInt();
         IsBoss = _buf.ReadBool();
+        Prefab = _buf.ReadString();
     }
 
     public static MonsterTable DeserializeMonsterTable(ByteBuf _buf)
@@ -98,6 +99,10 @@ public sealed partial class MonsterTable : Luban.BeanBase
     /// 是否是boss
     /// </summary>
     public readonly bool IsBoss;
+    /// <summary>
+    /// 模型预制体
+    /// </summary>
+    public readonly string Prefab;
    
     public const int __ID__ = 706228276;
     public override int GetTypeId() => __ID__;
@@ -124,6 +129,7 @@ public sealed partial class MonsterTable : Luban.BeanBase
         + "DropId:" + DropId + ","
         + "Exp:" + Exp + ","
         + "IsBoss:" + IsBoss + ","
+        + "Prefab:" + Prefab + ","
         + "}";
     }
 }

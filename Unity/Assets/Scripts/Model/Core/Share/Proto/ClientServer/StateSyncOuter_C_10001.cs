@@ -334,6 +334,69 @@ namespace ET
     }
 
     [NinoType(false)]
+    [Message(StateSyncOuter.C2M_SceneLoadFinish)]
+    [ResponseType(nameof(M2C_SceneLoadFinish))]
+    public partial class C2M_SceneLoadFinish : MessageObject, ILocationRequest
+    {
+        public static C2M_SceneLoadFinish Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<C2M_SceneLoadFinish>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int RpcId { get; set; }
+
+        [NinoMember(1)]
+        public string SceneName { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RpcId = 0;
+            this.SceneName = null;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [NinoType(false)]
+    [Message(StateSyncOuter.M2C_SceneLoadFinish)]
+    public partial class M2C_SceneLoadFinish : MessageObject, ILocationResponse
+    {
+        public static M2C_SceneLoadFinish Create(bool isFromPool = false)
+        {
+            return ObjectPool.Fetch<M2C_SceneLoadFinish>(isFromPool);
+        }
+
+        [NinoMember(0)]
+        public int RpcId { get; set; }
+
+        [NinoMember(1)]
+        public int Error { get; set; }
+
+        [NinoMember(2)]
+        public string Message { get; set; }
+
+        public override void Dispose()
+        {
+            if (!this.IsFromPool)
+            {
+                return;
+            }
+
+            this.RpcId = 0;
+            this.Error = 0;
+            this.Message = null;
+
+            ObjectPool.Recycle(this);
+        }
+    }
+
+    [NinoType(false)]
     [Message(StateSyncOuter.M2C_RemoveUnits)]
     public partial class M2C_RemoveUnits : MessageObject, IMessage
     {
@@ -850,6 +913,8 @@ namespace ET
         public const ushort M2C_CreateUnits = 13127;
         public const ushort M2C_CreateMyUnit = 50428;
         public const ushort M2C_StartSceneChange = 18740;
+        public const ushort C2M_SceneLoadFinish = 24487;
+        public const ushort M2C_SceneLoadFinish = 41063;
         public const ushort M2C_RemoveUnits = 9267;
         public const ushort C2M_PathfindingResult = 4873;
         public const ushort C2M_Stop = 45292;

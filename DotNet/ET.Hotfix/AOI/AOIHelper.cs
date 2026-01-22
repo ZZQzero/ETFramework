@@ -16,7 +16,7 @@ namespace ET
             leaveCell.Clear();
             int r = (aoiEntity.ViewDistance - 1) / AOIManagerComponent.CellSize + 1;
             int leaveR = r;
-            if (aoiEntity.Unit.Type() == UnitType.Player)
+            if (aoiEntity.Unit.UnitType() == UnitType.Player)
             {
                 leaveR += 1;
             }

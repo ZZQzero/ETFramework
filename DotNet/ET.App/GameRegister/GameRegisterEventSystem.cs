@@ -36,6 +36,8 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.UserSessionComponentSystem.ET_UserSessionComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.UserSessionTimeoutComponentSystem.ET_UserSessionTimeoutComponent_long_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.UserSessionTimeoutComponentSystem.ET_UserSessionTimeoutComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MonsterSpawnerComponentSystem.ET_MonsterSpawnerComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MonsterSpawnerComponentSystem.ET_MonsterSpawnerComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MoveComponentSystem.ET_MoveComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.MoveComponentSystem.ET_MoveComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ProcessOuterSenderSystem.ET_ProcessOuterSender_System_Net_IPEndPoint_AwakeSystem>();
@@ -78,6 +80,8 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.ObjectWaitSystem.ET_ObjectWait_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.TimerComponentSystem.ET_TimerComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.TimerComponentSystem.ET_TimerComponent_UpdateSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.RoleIdentityComponentSystem.ET_RoleIdentityComponent_ET_UnitInfo_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.RoleIdentityComponentSystem.ET_RoleIdentityComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.UnitSystem.ET_Unit_int_AwakeSystem>();
         }
     }

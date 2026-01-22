@@ -13,16 +13,15 @@ namespace ET
             unit.Position = new float3(-10, 0, -10);
 
             unit.AddComponent<MailBoxComponent, int>(MailBoxType.OrderedMessage);
+            
             // 通知客户端开始切场景
             M2C_StartSceneChange m2CStartSceneChange = M2C_StartSceneChange.Create();
             m2CStartSceneChange.SceneInstanceId = scene.InstanceId;
             m2CStartSceneChange.SceneName = scene.Name;
             MapMessageHelper.SendToClient(unit, m2CStartSceneChange);
 
-            // 通知客户端创建My Unit
-            M2C_CreateMyUnit m2CCreateUnits = M2C_CreateMyUnit.Create();
-            m2CCreateUnits.Unit = UnitHelper.CreateUnitInfo(unit);
-            MapMessageHelper.SendToClient(unit, m2CCreateUnits);
+            // ⚠️ 注意：不再立即发送M2C_CreateMyUnit
+            // 等待客户端场景加载完成后，在C2M_SceneLoadFinishHandler中发送
 
             // 注册Location：如果是首次创建（OldActorId为default），直接Add；否则UnLock（转移场景）
             LocationProxyComponent locationProxyComponent = scene.Root().GetComponent<LocationProxyComponent>();

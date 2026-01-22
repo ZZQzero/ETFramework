@@ -46,6 +46,8 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.RouterCheckComponentSystem.ET_RouterCheckComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.RouterConnectorSystem.ET_RouterConnector_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.RouterConnectorSystem.ET_RouterConnector_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.RoleIdentityComponentSystem.ET_RoleIdentityComponent_ET_UnitInfo_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.RoleIdentityComponentSystem.ET_RoleIdentityComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.UnitSystem.ET_Unit_int_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CameraFollowComponentSystem.ET_CameraFollowComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CameraFollowComponentSystem.ET_CameraFollowComponent_LateUpdateSystem>();

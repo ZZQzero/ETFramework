@@ -8,7 +8,6 @@ namespace ET
     {
         protected override void Run(MonsterSpawnerComponent t)
         {
-            t.SpawnTick();
         }
     }
 
@@ -18,15 +17,11 @@ namespace ET
         [EntitySystem]
         private static void Awake(this MonsterSpawnerComponent self)
         {
-            // Map 启动后稍微延迟一下刷怪，避免启动期抖动
-            self.Timer = self.Root().GetComponent<TimerComponent>().NewOnceTimer(TimeInfo.Instance.ServerNow() + 200,
-                TimerInvokeType.MonsterSpawnTimer, self);
         }
 
         [EntitySystem]
         private static void Destroy(this MonsterSpawnerComponent self)
         {
-            self.Root().GetComponent<TimerComponent>()?.Remove(ref self.Timer);
         }
 
         public static void SpawnTick(this MonsterSpawnerComponent self)
@@ -60,7 +55,7 @@ namespace ET
                 float z = -12f;
                 float3 pos = new float3(x, 0f, z);
 
-                UnitFactory.CreateMonster(scene, cfg.Id, pos);
+                UnitFactory.CreateMonster(scene, cfg, pos);
                 ++count;
             }
 

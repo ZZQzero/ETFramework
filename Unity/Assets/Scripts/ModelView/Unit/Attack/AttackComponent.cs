@@ -9,7 +9,7 @@ namespace ET
     /// 攻击组件 - 负责管理攻击连击逻辑
     /// </summary>
     [ComponentOf(typeof(Unit))]
-    public class AttackComponent : Entity, IAwake<string>, IDestroy, IUpdate, IFixedUpdate
+    public class AttackComponent : Entity, IAwake, IDestroy, IUpdate, IFixedUpdate
     {
         public AnimatorComponent AnimatorComponent { get; set; }
         
@@ -19,11 +19,10 @@ namespace ET
         public GameObject EffectRoot { get; set; }
         #region 配置数据
         
-        /// <summary>攻击配置资源路径</summary>
-        public string ConfigPath { get; set; }
-        
         /// <summary>攻击配置</summary>
         public AttackConfig Config { get; set; }
+        /// <summary>角色配置</summary>
+        public RoleIdentityComponent RoleIdentity { get; set; }
         
         #endregion
 

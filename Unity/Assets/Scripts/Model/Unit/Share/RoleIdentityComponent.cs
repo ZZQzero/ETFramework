@@ -9,5 +9,7 @@
         public long RoleId { get; set; }
         public long UserId { get; set; }
         public RoleTable RoleTable { get; set; }
+        
+        public RoleSkillSetTable RoleSkillSetTable { get; set; }
     }
 }

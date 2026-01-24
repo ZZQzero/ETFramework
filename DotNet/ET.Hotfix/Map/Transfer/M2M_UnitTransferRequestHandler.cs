@@ -13,7 +13,9 @@ namespace ET
             unit.Position = new float3(-10, 0, -10);
 
             unit.AddComponent<MailBoxComponent, int>(MailBoxType.OrderedMessage);
-            
+
+            var monster = scene.GetComponent<MonsterSpawnerComponent>();
+            monster.SpawnTick();
             // 通知客户端开始切场景
             M2C_StartSceneChange m2CStartSceneChange = M2C_StartSceneChange.Create();
             m2CStartSceneChange.SceneInstanceId = scene.InstanceId;

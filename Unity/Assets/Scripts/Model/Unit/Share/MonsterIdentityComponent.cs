@@ -1,6 +1,6 @@
 ﻿namespace ET
 {
-    public class MonsterIdentityComponent :  Entity,IAwake<UnitInfo>,IDestroy
+    public class MonsterIdentityComponent :  Entity,IAwake<MonsterTable>,IDestroy
     {
         public MonsterTable MonsterTable { get; set; }
         

@@ -15,15 +15,15 @@ namespace ET
         #region 生命周期
         
         [EntitySystem]
-        private static void Awake(this AttackComponent self, string configPath)
+        private static void Awake(this AttackComponent self)
         {
-            self.ConfigPath = configPath;
             self.ResetState();
             Unit unit = self.GetParent<Unit>();
             self.AnimatorComponent = unit.GetComponent<AnimatorComponent>();
             self.Player = unit.GetComponent<GameObjectComponent>().Transform;
             self.CameraFollow = self.Root().GetComponent<CameraFollowComponent>();
             self.TimerComponent = self.Root().GetComponent<TimerComponent>();
+            self.RoleIdentity = unit.GetComponent<RoleIdentityComponent>();
             self.EffectRoot = new GameObject("EffectRoot");
             if (self.CameraFollow == null)
             {
@@ -74,16 +74,12 @@ namespace ET
         /// </summary>
         private static async ETTask LoadConfigAsync(this AttackComponent self)
         {
-            if (string.IsNullOrEmpty(self.ConfigPath))
-            {
-                Log.Error("AttackComponent: ConfigPath is null or empty");
-                return;
-            }
-
-            var configAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<AttackConfigAsset>(self.ConfigPath);
+            var id = self.RoleIdentity.RoleSkillSetTable.BasicAttackSkillId;
+            var skillTable = SkillConfig.Instance.Get(id);
+            var configAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<AttackConfigAsset>(skillTable.SkillAsset);
             if (configAsset == null)
             {
-                Log.Error($"AttackComponent: Failed to load config from {self.ConfigPath}");
+                Log.Error($"AttackComponent: Failed to load config from {skillTable.SkillAsset}");
                 return;
             }
 

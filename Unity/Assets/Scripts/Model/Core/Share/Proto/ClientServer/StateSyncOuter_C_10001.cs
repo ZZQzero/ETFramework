@@ -233,6 +233,9 @@ namespace ET
         [NinoMember(6)]
         public MoveInfo MoveInfo { get; set; }
 
+        [NinoMember(7)]
+        public int MonsterConfigId { get; set; }
+
         public override void Dispose()
         {
             if (!this.IsFromPool)
@@ -248,6 +251,7 @@ namespace ET
             this.NumericDic.Clear();
             this.MoveInfo?.Dispose();
             this.MoveInfo = null;
+            this.MonsterConfigId = 0;
 
             ObjectPool.Recycle(this);
         }

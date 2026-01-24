@@ -22,6 +22,8 @@ public partial class Tables
     public TbUnit TbUnit {get; }
     public TbMonster TbMonster {get; }
     public TbRole TbRole {get; }
+    public TbSkill TbSkill {get; }
+    public TbRoleSkillSet TbRoleSkillSet {get; }
 
     public Tables(System.Func<string, ByteBuf> loader)
     {
@@ -34,6 +36,8 @@ public partial class Tables
         TbUnit = new TbUnit(loader("tbunit"));
         TbMonster = new TbMonster(loader("tbmonster"));
         TbRole = new TbRole(loader("tbrole"));
+        TbSkill = new TbSkill(loader("tbskill"));
+        TbRoleSkillSet = new TbRoleSkillSet(loader("tbroleskillset"));
         ResolveRef();
     }
     
@@ -48,6 +52,8 @@ public partial class Tables
         TbUnit.ResolveRef(this);
         TbMonster.ResolveRef(this);
         TbRole.ResolveRef(this);
+        TbSkill.ResolveRef(this);
+        TbRoleSkillSet.ResolveRef(this);
     }
 }
 

@@ -15,14 +15,21 @@
             Log.Info($"{m2CCreateMyUnit.Unit.RoleConfigId}  {m2CCreateMyUnit.Unit.EntityId}  {m2CCreateMyUnit.Unit.RoleId}");
             MapMessageHelper.SendToClient(unit, m2CCreateMyUnit);
 			
-            // TODO: 如果需要，可以在这里发送场景内其他实体数据
-            // 例如：场景内其他玩家、NPC、怪物等
-            // M2C_CreateUnits otherUnits = M2C_CreateUnits.Create();
-            // foreach (var otherUnit in scene.GetNearbyUnits(unit.Position))
-            // {
-            //     otherUnits.Units.Add(UnitHelper.CreateUnitInfo(otherUnit));
-            // }
-            // MapMessageHelper.SendToClient(unit, otherUnits);
+
+            M2C_CreateUnits otherUnits = M2C_CreateUnits.Create();
+            UnitComponent unitComponent = unit.GetParent<UnitComponent>();
+            
+            foreach (var otherUnit in unitComponent.Children)
+            {
+                var monsterUnit =  (Unit)otherUnit.Value;
+                if (monsterUnit.UnitType() != UnitType.Monster)
+                {
+                    continue;
+                }
+
+                otherUnits.Units.Add(UnitHelper.CreateUnitInfo(monsterUnit));
+            }
+            MapMessageHelper.SendToClient(unit, otherUnits);
 			
             Log.Info($"Unit场景加载完成: {unit.EntityId}, SceneName: {request.SceneName}");
 			

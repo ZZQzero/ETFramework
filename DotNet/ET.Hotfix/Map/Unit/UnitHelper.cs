@@ -11,9 +11,20 @@ namespace ET
         {
             UnitInfo unitInfo = UnitInfo.Create();
             NumericComponent nc = unit.GetComponent<NumericComponent>();
-            RoleIdentityComponent role = unit.GetComponent<RoleIdentityComponent>();
-            unitInfo.RoleConfigId = role.RoleConfigId;
-            unitInfo.RoleId = role.RoleId;
+            switch (unit.UnitType())
+            {
+                case UnitType.Player:
+                    RoleIdentityComponent role = unit.GetComponent<RoleIdentityComponent>();
+                    unitInfo.RoleConfigId = role.RoleConfigId;
+                    unitInfo.RoleId = role.RoleId;
+                    break;
+                case UnitType.Monster:
+                    MonsterIdentityComponent monster = unit.GetComponent<MonsterIdentityComponent>();
+                    unitInfo.MonsterConfigId = monster.MonsterConfigId;
+                    break;
+                case UnitType.NPC:
+                    break;
+            }
             unitInfo.EntityId = unit.EntityId;
             unitInfo.Position = unit.Position;
             unitInfo.Forward = unit.Forward;

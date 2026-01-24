@@ -25,6 +25,7 @@ public sealed partial class RoleTable : Luban.BeanBase
         Height = _buf.ReadInt();
         Weight = _buf.ReadInt();
         Prefab = _buf.ReadString();
+        SkillSetId = _buf.ReadInt();
     }
 
     public static RoleTable DeserializeRoleTable(ByteBuf _buf)
@@ -68,6 +69,10 @@ public sealed partial class RoleTable : Luban.BeanBase
     /// 模型预制体
     /// </summary>
     public readonly string Prefab;
+    /// <summary>
+    /// 技能组id
+    /// </summary>
+    public readonly int SkillSetId;
    
     public const int __ID__ = -1965701928;
     public override int GetTypeId() => __ID__;
@@ -88,6 +93,7 @@ public sealed partial class RoleTable : Luban.BeanBase
         + "Height:" + Height + ","
         + "Weight:" + Weight + ","
         + "Prefab:" + Prefab + ","
+        + "SkillSetId:" + SkillSetId + ","
         + "}";
     }
 }

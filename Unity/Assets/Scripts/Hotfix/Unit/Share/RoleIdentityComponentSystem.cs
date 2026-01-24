@@ -9,6 +9,7 @@
             self.RoleId = unitInfo.RoleId;
             self.UserId = unitInfo.EntityId;
             self.RoleTable = RoleConfig.Instance.Get(unitInfo.RoleConfigId);
+            self.RoleSkillSetTable = RoleSkillSetConfig.Instance.Get(self.RoleTable.SkillSetId);
         }
 
         [EntitySystem]

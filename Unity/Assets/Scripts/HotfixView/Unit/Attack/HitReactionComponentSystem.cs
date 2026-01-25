@@ -130,7 +130,7 @@ namespace ET
             self.KnockbackDirection = direction.normalized;
             self.KnockbackSpeed = knockbackForce;
             self.VerticalVelocity = upForce;
-            self.StunEndTime = TimeInfo.Instance.ClientFrameTime() + stunMs;
+            self.StunEndTime = self.GetCombatNowMs() + stunMs;
 
             // 通知其他组件（如攻击组件）停止当前动作
             var unit = self.GetParent<Unit>();
@@ -161,7 +161,7 @@ namespace ET
         /// </summary>
         private static void UpdateStun(this HitReactionComponent self)
         {
-            long currentTime = TimeInfo.Instance.ClientFrameTime();
+            long currentTime = self.GetCombatNowMs();
             if (currentTime >= self.StunEndTime)
             {
                 self.EndHitReaction();
@@ -173,7 +173,11 @@ namespace ET
         /// </summary>
         private static void UpdateKnockback(this HitReactionComponent self)
         {
-            float deltaTime = Time.deltaTime;
+            float deltaTime = self.GetCombatDeltaSeconds();
+            if (deltaTime <= 0f)
+            {
+                return;
+            }
 
             // 应用击退位移
             if (self.KnockbackSpeed > 0.1f)
@@ -208,7 +212,7 @@ namespace ET
             }
 
             // 检查硬直结束
-            long currentTime = TimeInfo.Instance.ClientFrameTime();
+            long currentTime = self.GetCombatNowMs();
             if (currentTime >= self.StunEndTime && self.KnockbackSpeed < 0.1f && 
                 self.Player.position.y <= self.GroundHeight)
             {
@@ -221,7 +225,11 @@ namespace ET
         /// </summary>
         private static void UpdateAirborne(this HitReactionComponent self)
         {
-            float deltaTime = Time.deltaTime;
+            float deltaTime = self.GetCombatDeltaSeconds();
+            if (deltaTime <= 0f)
+            {
+                return;
+            }
             // 应用重力
             self.VerticalVelocity -= self.Gravity * deltaTime;
             self.Player.position += Vector3.up * (self.VerticalVelocity * deltaTime);
@@ -262,7 +270,7 @@ namespace ET
             {
                 // 浮空落地后倒地
                 self.CurrentState = HitState.Knockdown;
-                self.KnockdownEndTime = TimeInfo.Instance.ClientFrameTime() + self.KnockdownDurationMs;
+                self.KnockdownEndTime = self.GetCombatNowMs() + self.KnockdownDurationMs;
                 self.PlayAnimation(self.KnockdownAnimation);
             }
             else
@@ -276,7 +284,7 @@ namespace ET
         /// </summary>
         private static void UpdateKnockdown(this HitReactionComponent self)
         {
-            long currentTime = TimeInfo.Instance.ClientFrameTime();
+            long currentTime = self.GetCombatNowMs();
             if (currentTime >= self.KnockdownEndTime)
             {
                 // 开始起身
@@ -332,6 +340,40 @@ namespace ET
             return self.IsAirborne;
         }
         
+        #endregion
+
+        #region CombatTime（顿帧期间不推进）
+
+        private static CombatFeedbackComponent GetFeedback(this HitReactionComponent self)
+        {
+            var unit = self.GetParent<Unit>();
+            return unit?.GetComponent<CombatFeedbackComponent>();
+        }
+
+        private static long GetCombatNowMs(this HitReactionComponent self)
+        {
+            var fb = self.GetFeedback();
+            if (fb != null)
+            {
+                return fb.NowCombatMs();
+            }
+
+            // 兜底：没有 CombatFeedback 时退回 client frame time
+            return TimeInfo.Instance.ClientFrameTime();
+        }
+
+        private static float GetCombatDeltaSeconds(this HitReactionComponent self)
+        {
+            var fb = self.GetFeedback();
+            if (fb != null)
+            {
+                return Mathf.Max(0f, fb.CombatDeltaMs * 0.001f);
+            }
+
+            // 兜底
+            return Time.deltaTime;
+        }
+
         #endregion
     }
 }

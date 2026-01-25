@@ -15,6 +15,8 @@ namespace ET
         
         public CameraFollowComponent CameraFollow { get; set; }
         
+        public CombatFeedbackComponent HitStop { get; set; }
+        
         public TimerComponent TimerComponent { get; set; }
         public GameObject EffectRoot { get; set; }
         #region 配置数据
@@ -44,19 +46,13 @@ namespace ET
         public int ComboCount { get; set; }
 
         /// <summary>连击超时定时器ID</summary>
-        public long ComboTimeoutTimer;
+        public long ComboTimeoutAtCombatMs { get; set; }
 
         /// <summary>
-        /// 进入 Recovery 后会启动一次性定时器，超时后淡出攻击层露出 Layer0 的 Move/Idle。
-        /// 若接段/重起手/退出攻击，会取消该定时器。
+        /// 进入 Recovery 后会启动一次性“combat-time 截止点”，到期后淡出攻击层露出 Layer0 的 Move/Idle。
+        /// 若接段/重起手/退出攻击，会重置/清空该截止点。
         /// </summary>
-        public long AttackLayerFadeOutTimer;
-        
-        /// <summary>顿帧结束时间</summary>
-        public long HitStopEndTime { get; set; }
-        
-        /// <summary>顿帧前的动画速度</summary>
-        public float HitStopPreviousSpeed { get; set; }
+        public long AttackLayerFadeOutAtCombatMs { get; set; }
 
         /// <summary>当前攻击段是否已经自然结束（避免 ExitAttackState 重复触发 OnAttackEnd）</summary>
         public bool CurrentSegmentEnded { get; set; }
@@ -135,13 +131,10 @@ namespace ET
         #region 便捷属性
         
         /// <summary>是否正在攻击</summary>
-        public bool IsAttacking => State == AttackState.Attacking || State == AttackState.HitStop;
+        public bool IsAttacking => State == AttackState.Attacking;
 
         /// <summary>是否处于攻击流程中（包含后摇/顿帧），用于动画/移动系统判定</summary>
         public bool IsInAttack => State != AttackState.Idle;
-        
-        /// <summary>是否在顿帧中</summary>
-        public bool IsInHitStop => State == AttackState.HitStop;
         
         /// <summary>是否可以输入缓冲</summary>
         public bool CanBufferInput

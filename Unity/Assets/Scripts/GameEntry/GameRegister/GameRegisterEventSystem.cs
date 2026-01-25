@@ -46,6 +46,7 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.RouterCheckComponentSystem.ET_RouterCheckComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.RouterConnectorSystem.ET_RouterConnector_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.RouterConnectorSystem.ET_RouterConnector_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MonsterIdentityComponentSystem.ET_MonsterIdentityComponent_ET_MonsterTable_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.RoleIdentityComponentSystem.ET_RoleIdentityComponent_ET_UnitInfo_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.RoleIdentityComponentSystem.ET_RoleIdentityComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.UnitSystem.ET_Unit_int_AwakeSystem>();
@@ -69,6 +70,9 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.CharacterControllerComponentSystem.ET_CharacterControllerComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CheckGroundedComponentSystem.ET_CheckGroundedComponent_UnityEngine_GameObject_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CheckGroundedComponentSystem.ET_CheckGroundedComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.CombatFeedbackComponentSystem.ET_CombatFeedbackComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.CombatFeedbackComponentSystem.ET_CombatFeedbackComponent_UpdateSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.CombatFeedbackComponentSystem.ET_CombatFeedbackComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.GameObjectComponentSystem.ET_GameObjectComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.GameObjectComponentSystem.ET_GameObjectComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.InputComponentSystem.ET_InputComponent_UnityEngine_Transform_AwakeSystem>();

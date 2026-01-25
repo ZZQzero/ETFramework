@@ -25,6 +25,7 @@ namespace ET
                 case UnitType.NPC:
                     break;
             }
+            unitInfo.UnitType = unit.UnitType();
             unitInfo.EntityId = unit.EntityId;
             unitInfo.Position = unit.Position;
             unitInfo.Forward = unit.Forward;

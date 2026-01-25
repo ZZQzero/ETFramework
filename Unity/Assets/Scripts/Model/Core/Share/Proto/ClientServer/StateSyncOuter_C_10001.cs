@@ -236,6 +236,9 @@ namespace ET
         [NinoMember(7)]
         public int MonsterConfigId { get; set; }
 
+        [NinoMember(8)]
+        public int UnitType { get; set; }
+
         public override void Dispose()
         {
             if (!this.IsFromPool)
@@ -252,6 +255,7 @@ namespace ET
             this.MoveInfo?.Dispose();
             this.MoveInfo = null;
             this.MonsterConfigId = 0;
+            this.UnitType = 0;
 
             ObjectPool.Recycle(this);
         }

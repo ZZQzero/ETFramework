@@ -17,7 +17,7 @@ namespace ET
         {
             // 这里可以添加攻击开始的逻辑
             // 如果需要与ET框架通信，可以通过EventSystem或其他方式
-            Log.Info($"MeleeAttackStart事件触发，参数: {throwing}");
+//            Log.Info($"MeleeAttackStart事件触发，参数: {throwing}");
         }
 
         /// <summary>
@@ -26,7 +26,7 @@ namespace ET
         private void MeleeAttackEnd()
         {
             // 这里可以添加攻击结束的逻辑
-            Log.Info("MeleeAttackEnd事件触发");
+            //Log.Info("MeleeAttackEnd事件触发");
         }
     }
 }

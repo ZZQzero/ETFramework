@@ -21,13 +21,7 @@ namespace ET
             UnityEngine.Object.DontDestroyOnLoad(go);
 
             unit.AddComponent<GameObjectComponent>().GameObject = go;
-            unit.AddComponent<AnimatorComponent>();
-
-            // 可选：如果后续你要做“打到怪物/选中怪物”，建议在 prefab 上挂 Collider，
-            // 并在这里挂一个 UnitReference（MonoBehaviour）来反查 Unit。
-            // var ur = go.GetComponent<UnitReference>() ?? go.AddComponent<UnitReference>();
-            // ur.Unit = unit;
-
+            unit.AddComponent<CombatFeedbackComponent>();
             await ETTask.CompletedTask;
         }
     }

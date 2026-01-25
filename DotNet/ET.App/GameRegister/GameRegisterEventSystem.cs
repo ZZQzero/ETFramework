@@ -80,6 +80,7 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.ObjectWaitSystem.ET_ObjectWait_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.TimerComponentSystem.ET_TimerComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.TimerComponentSystem.ET_TimerComponent_UpdateSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MonsterIdentityComponentSystem.ET_MonsterIdentityComponent_ET_MonsterTable_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.RoleIdentityComponentSystem.ET_RoleIdentityComponent_ET_UnitInfo_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.RoleIdentityComponentSystem.ET_RoleIdentityComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.UnitSystem.ET_Unit_int_AwakeSystem>();

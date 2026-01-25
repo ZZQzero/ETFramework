@@ -14,7 +14,6 @@ namespace ET
         Idle = 0,           // 空闲
         Attacking = 1,      // 攻击中
         Recovery = 2,       // 后摇恢复中
-        HitStop = 3,        // 顿帧中
     }
     /// <summary>
     /// 连击输入类型

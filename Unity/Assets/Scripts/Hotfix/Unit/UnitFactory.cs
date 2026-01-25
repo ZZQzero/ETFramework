@@ -7,9 +7,33 @@ namespace ET
         public static Unit Create(Scene currentScene, UnitInfo unitInfo)
         {
             UnitComponent unitComponent = currentScene.GetComponent<UnitComponent>();
-            var role = RoleConfig.Instance.Get(unitInfo.RoleConfigId);
-            Unit unit = unitComponent.AddChildWithId<Unit, int>(unitInfo.EntityId, role.UnitId);
-            unit.AddComponent<RoleIdentityComponent, UnitInfo>(unitInfo);
+            Unit unit = null;
+            switch (unitInfo.UnitType)
+            {
+                case UnitType.Player:
+                    var role = RoleConfig.Instance.Get(unitInfo.RoleConfigId);
+                    unit = unitComponent.AddChildWithId<Unit, int>(unitInfo.EntityId, role.UnitId);
+                    unit.AddComponent<RoleIdentityComponent, UnitInfo>(unitInfo);
+                    break;
+                case UnitType.Monster:
+                    var monster = MonsterConfig.Instance.Get(unitInfo.MonsterConfigId);
+                    unit = unitComponent.AddChildWithId<Unit, int>(unitInfo.EntityId, monster.UnitId);
+                    unit.AddComponent<MonsterIdentityComponent, MonsterTable>(monster);
+                    unit.AddComponent<XunLuoPathComponent>();
+                    unit.AddComponent<MoveComponent>();
+                    if (unitInfo.MoveInfo != null)
+                    {
+                        if (unitInfo.MoveInfo.Points.Count > 0)
+                        {
+                            unitInfo.MoveInfo.Points[0] = unit.Position;
+                            unit.MoveToAsync(unitInfo.MoveInfo.Points).NoContext();
+                        }
+                    }
+                    break;
+                case UnitType.NPC:
+                    break;
+            }
+          
             unit.Position = unitInfo.Position;
             unit.Forward = unitInfo.Forward;
 	        
@@ -19,20 +43,8 @@ namespace ET
             {
                 numericComponent.Set(kv.Key, kv.Value);
             }
-	        
-            unit.AddComponent<MoveComponent>();
-            if (unitInfo.MoveInfo != null)
-            {
-                if (unitInfo.MoveInfo.Points.Count > 0)
-                {
-                    unitInfo.MoveInfo.Points[0] = unit.Position;
-                    unit.MoveToAsync(unitInfo.MoveInfo.Points).NoContext();
-                }
-            }
-
             unit.AddComponent<ObjectWait>();
 
-            unit.AddComponent<XunLuoPathComponent>();
 	        
             EventSystem.Instance.Publish(unit.Scene(), new AfterUnitCreate() {Unit = unit});
             return unit;

@@ -2,6 +2,7 @@
 {
     public static partial class MonsterIdentityComponentSystem
     {
+        [EntitySystem]
         public static void Awake(this MonsterIdentityComponent self, MonsterTable monsterTable)
         {
             self.MonsterTable = monsterTable;

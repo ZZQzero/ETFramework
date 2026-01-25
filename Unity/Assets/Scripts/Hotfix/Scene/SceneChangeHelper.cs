@@ -44,7 +44,6 @@ namespace ET
             Wait_CreateMyUnit waitCreateMyUnit = await waitUnitTask;
             M2C_CreateMyUnit m2CCreateMyUnit = waitCreateMyUnit.Message;
             
-            Log.Error($"{m2CCreateMyUnit.Unit.RoleConfigId}  {m2CCreateMyUnit.Unit.RoleId}  {m2CCreateMyUnit.Unit.EntityId}");
             //创建Unit（此时场景已完全准备好）
             Unit unit = UnitFactory.Create(currentScene, m2CCreateMyUnit.Unit);
             Log.Info($"Unit创建成功: {unit.EntityId}");

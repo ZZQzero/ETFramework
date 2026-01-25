@@ -11,14 +11,14 @@ namespace ET
             RoleTable roleTable = RoleConfig.Instance.Get(info.RoleConfigId);
             Unit unit = unitComponent.AddChildWithId<Unit, int>(info.EntityId,roleTable.UnitId);
             unit.AddComponent<RoleIdentityComponent, UnitInfo>(info);
-            unit.AddComponent<MoveComponent>();
+            //unit.AddComponent<MoveComponent>();
             unit.Position = new float3(-10, 0, -10);
             NumericComponent numericComponent = unit.AddComponent<NumericComponent>();
             numericComponent.Set(NumericType.Speed, 6f); // 速度是6米每秒
             numericComponent.Set(NumericType.AOI, 15000); // 视野15米
 
             // 加入aoi
-            unit.AddComponent<AOIEntity, int, float3>(9 * 1000, unit.Position);
+            //unit.AddComponent<AOIEntity, int, float3>(9 * 1000, unit.Position);
             return unit;
         }
 
@@ -34,7 +34,7 @@ namespace ET
             Unit unit = unitComponent.AddChildWithId<Unit, int>(entity, monsterTable.UnitId);
             unit.AddComponent<MonsterIdentityComponent,MonsterTable>(monsterTable);
             // 基础组件：至少要有 Numeric + AOIEntity，否则 AOI 同步 UnitInfo 时会空指针
-            unit.AddComponent<MoveComponent>();
+            //unit.AddComponent<MoveComponent>();
             unit.Position = position;
 
             NumericComponent nc = unit.AddComponent<NumericComponent>();
@@ -44,7 +44,7 @@ namespace ET
             nc.Set(NumericType.Hp, monsterTable.HP);
 
             // 加入 AOI（视野距离建议直接用配置）
-            unit.AddComponent<AOIEntity, int, float3>(monsterTable.AOI, unit.Position);
+            //unit.AddComponent<AOIEntity, int, float3>(monsterTable.AOI, unit.Position);
 
             // 基础寻路（可选，但通常怪物 AI 会用到）
             unit.AddComponent<PathfindingComponent, string>(scene.Name);

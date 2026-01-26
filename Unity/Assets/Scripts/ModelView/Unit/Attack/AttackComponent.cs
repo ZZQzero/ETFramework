@@ -15,10 +15,12 @@ namespace ET
         
         public CameraFollowComponent CameraFollow { get; set; }
         
-        public CombatFeedbackComponent HitStop { get; set; }
+        public HitStopComponent HitStop { get; set; }
         
         public TimerComponent TimerComponent { get; set; }
         public GameObject EffectRoot { get; set; }
+        
+        public Unit Unit { get; set; }
         #region 配置数据
         
         /// <summary>攻击配置</summary>

@@ -24,8 +24,42 @@ namespace ET
     [ComponentOf(typeof(Unit))]
     public class HitReactionComponent : Entity, IAwake<Transform>, IDestroy, IUpdate
     {
-        public Transform Player {get; set;}
+        public Transform Owner {get; set;}
         
+        public Unit OwnerUnit {get; set;}
+
+        #region 驱动/配置（可扩展）
+
+        /// <summary>
+        /// 动画淡入淡出时长（秒）。商业级：统一入口，可由配置覆盖。
+        /// </summary>
+        public float AnimationFadeSec { get; set; } = 0.05f;
+
+        /// <summary>
+        /// 击退衰减（每帧乘系数，combat-time）。
+        /// </summary>
+        public float KnockbackDamping { get; set; } = 0.90f;
+
+        /// <summary>
+        /// 空中水平衰减（每帧乘系数，combat-time）。
+        /// </summary>
+        public float AirborneHorizontalDamping { get; set; } = 0.95f;
+
+        /// <summary>
+        /// 进入受击时是否禁用角色移动（玩家通常需要）。
+        /// </summary>
+        public bool DisableMovementOnHit { get; set; } = true;
+
+        /// <summary>
+        /// 进入受击时是否取消攻击（用于“被打断”）。
+        /// </summary>
+        public bool CancelAttackOnHit { get; set; } = true;
+
+        // 运行时：用于恢复移动开关
+        public bool CachedMovementEnabled { get; set; }
+        public bool HasCachedMovementEnabled { get; set; }
+
+        #endregion
         #region 配置
         
         /// <summary>轻度受击动画</summary>

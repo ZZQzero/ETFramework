@@ -39,14 +39,16 @@ namespace ET
     }
 
     /// <summary>
-    /// 目标状态类型
+    /// 目标状态过滤（可多选）。
+    /// - Any：地面/空中/倒地都命中
     /// </summary>
-    public enum TargetStateType
+    [System.Flags]
+    public enum TargetStateMask
     {
-        Any = 0,         // 任意状态
-        Grounded = 1,    // 地面
-        Airborne = 2,    // 浮空
-        Knockdown = 3,   // 倒地
+        Grounded = 1 << 0,
+        Airborne = 1 << 1,
+        Knockdown = 1 << 2,
+        Any = Grounded | Airborne | Knockdown,
     }
 
     /// <summary>
@@ -125,8 +127,10 @@ namespace ET
         /// <summary>硬直时间（毫秒）</summary>
         public int HitStunMs = 200;
         
-        /// <summary>目标状态过滤</summary>
-        public TargetStateType TargetState = TargetStateType.Any;
+        /// <summary>
+        /// 目标状态过滤（新版本：可多选）。
+        /// </summary>
+        public TargetStateMask TargetStates = TargetStateMask.Any;
     }
 
     /// <summary>

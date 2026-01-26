@@ -160,10 +160,10 @@ public partial class SkillEditorWindow : EditorWindow
         hitEffectKnockbackForceField = rightContainer.Q<FloatField>("HitEffectKnockbackForceField");
         hitEffectKnockupForceField = rightContainer.Q<FloatField>("HitEffectKnockupForceField");
         hitEffectHitStunMsField = rightContainer.Q<IntegerField>("HitEffectHitStunMsField");
-        hitEffectTargetStateField = rightContainer.Q<EnumField>("HitEffectTargetStateField");
+        hitEffectTargetStateField = rightContainer.Q<UnityEditor.UIElements.EnumFlagsField>("HitEffectTargetStateField");
         if (hitEffectTargetStateField != null)
         {
-            hitEffectTargetStateField.Init(TargetStateType.Any);
+            hitEffectTargetStateField.Init(TargetStateMask.Any);
         }
 
         hitFeedbackShakeIntensityField = rightContainer.Q<FloatField>("HitFeedbackShakeIntensityField");

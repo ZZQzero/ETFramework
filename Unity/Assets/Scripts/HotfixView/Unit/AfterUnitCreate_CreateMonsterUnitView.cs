@@ -21,7 +21,15 @@ namespace ET
             UnityEngine.Object.DontDestroyOnLoad(go);
 
             unit.AddComponent<GameObjectComponent>().GameObject = go;
-            unit.AddComponent<CombatFeedbackComponent>();
+            unit.AddComponent<HitStopComponent>();
+            unit.AddComponent<HitReactionComponent,Transform>(go.transform);
+            var unitReference = go.GetComponent<UnitReference>();
+            if (unitReference == null)
+            {
+                unitReference = go.AddComponent<UnitReference>();
+            }
+
+            unitReference.Unit = unit;
             await ETTask.CompletedTask;
         }
     }

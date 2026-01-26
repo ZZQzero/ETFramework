@@ -20,11 +20,18 @@ namespace ET
             unit.AddComponent<GameObjectComponent>().GameObject = go;
             unit.AddComponent<InputComponent,Transform>(go.transform);
             unit.AddComponent<CheckGroundedComponent,GameObject>(go);
-            unit.AddComponent<CombatFeedbackComponent>();
+            unit.AddComponent<HitStopComponent>();
             unit.AddComponent<AttackComponent>();
             unit.AddComponent<CharacterControllerComponent,GameObject>(go);
             unit.AddComponent<HitReactionComponent,Transform>(go.transform);
             unit.AddComponent<AnimatorComponent>();
+            var unitReference = go.GetComponent<UnitReference>();
+            if (unitReference == null)
+            {
+                unitReference = go.AddComponent<UnitReference>();
+            }
+
+            unitReference.Unit = unit;
             await ETTask.CompletedTask;
         }
     }

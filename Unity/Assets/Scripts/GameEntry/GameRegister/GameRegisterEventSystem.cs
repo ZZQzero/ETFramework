@@ -70,11 +70,11 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.CharacterControllerComponentSystem.ET_CharacterControllerComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CheckGroundedComponentSystem.ET_CheckGroundedComponent_UnityEngine_GameObject_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CheckGroundedComponentSystem.ET_CheckGroundedComponent_DestroySystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.CombatFeedbackComponentSystem.ET_CombatFeedbackComponent_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.CombatFeedbackComponentSystem.ET_CombatFeedbackComponent_UpdateSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.CombatFeedbackComponentSystem.ET_CombatFeedbackComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.GameObjectComponentSystem.ET_GameObjectComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.GameObjectComponentSystem.ET_GameObjectComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.HitStopComponentSystem.ET_HitStopComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.HitStopComponentSystem.ET_HitStopComponent_UpdateSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.HitStopComponentSystem.ET_HitStopComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.InputComponentSystem.ET_InputComponent_UnityEngine_Transform_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.InputComponentSystem.ET_InputComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ResourcesLoaderComponentSystem.ET_ResourcesLoaderComponent_AwakeSystem>();

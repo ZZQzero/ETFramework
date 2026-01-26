@@ -24,7 +24,7 @@ namespace ET
             self.CameraFollow = self.Root().GetComponent<CameraFollowComponent>();
             self.TimerComponent = self.Root().GetComponent<TimerComponent>();
             self.RoleIdentity = unit.GetComponent<RoleIdentityComponent>();
-            self.HitStop = unit.GetComponent<CombatFeedbackComponent>();
+            self.HitStop = unit.GetComponent<HitStopComponent>();
             self.EffectRoot = new GameObject("EffectRoot");
             if (self.CameraFollow == null)
             {
@@ -1360,14 +1360,14 @@ namespace ET
         private static bool IsInHitStop(this AttackComponent self)
         {
             var unit = self.GetParent<Unit>();
-            var feedback = unit?.GetComponent<CombatFeedbackComponent>();
+            var feedback = unit?.GetComponent<HitStopComponent>();
             return feedback != null && feedback.IsHitStopActive;
         }
 
         private static long GetCombatNowMs(this AttackComponent self)
         {
             var unit = self.GetParent<Unit>();
-            var feedback = unit?.GetComponent<CombatFeedbackComponent>();
+            var feedback = unit?.GetComponent<HitStopComponent>();
             if (feedback != null)
             {
                 return feedback.NowCombatMs();

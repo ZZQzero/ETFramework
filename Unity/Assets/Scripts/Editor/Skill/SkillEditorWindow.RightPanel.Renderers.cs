@@ -415,7 +415,7 @@ public partial class SkillEditorWindow : EditorWindow
         }
         if (hitEffectTargetStateField != null)
         {
-            hitEffectTargetStateField.SetValueWithoutNotify(effect.TargetState);
+            hitEffectTargetStateField.SetValueWithoutNotify(effect.TargetStates);
         }
 
         var feedback = hitBoxData.Feedback ??= new HitFeedbackData();

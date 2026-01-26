@@ -842,7 +842,9 @@ public partial class SkillEditorWindow : EditorWindow
         }
 
         hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
-        hitBoxClipItem.HitBoxData.Effect.TargetState = (TargetStateType)evt.newValue;
+
+        // 新字段：TargetStates（可多选）。旧字段 TargetState 保持兼容（这里不再写入具体单选值，避免丢信息）。
+        hitBoxClipItem.HitBoxData.Effect.TargetStates = (TargetStateMask)evt.newValue;
         MarkAssetDirty();
     }
 

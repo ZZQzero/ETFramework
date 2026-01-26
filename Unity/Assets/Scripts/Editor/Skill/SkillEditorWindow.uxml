@@ -277,7 +277,7 @@
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
                             <ui:Label text="TargetState:" style="width: 120px;"/>
-                            <ui:EnumField name="HitEffectTargetStateField" style="flex-grow: 1;"/>
+                            <uie:EnumFlagsField name="HitEffectTargetStateField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
 
                         <ui:Label text="&#21629;&#20013;&#21453;&#39304;(HitFeedback)" style="font-size: 13px; font-weight: bold; margin-top: 10px;"/>

@@ -159,7 +159,7 @@ public partial class SkillEditorWindow : EditorWindow
     private FloatField hitEffectKnockbackForceField;
     private FloatField hitEffectKnockupForceField;
     private IntegerField hitEffectHitStunMsField;
-    private EnumField hitEffectTargetStateField;
+    private UnityEditor.UIElements.EnumFlagsField hitEffectTargetStateField;
     
     private FloatField hitFeedbackShakeIntensityField;
     private FloatField hitFeedbackShakeDurationField;

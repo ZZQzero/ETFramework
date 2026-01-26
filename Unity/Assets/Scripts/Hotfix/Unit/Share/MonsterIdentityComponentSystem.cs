@@ -8,6 +8,7 @@
             self.MonsterTable = monsterTable;
             self.MonsterConfigId = monsterTable.Id;
             self.MonsterId = self.EntityId;
+            self.IsBoss = monsterTable.IsBoss;
         }
     }
 }

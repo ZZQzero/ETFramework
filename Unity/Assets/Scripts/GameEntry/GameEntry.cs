@@ -24,7 +24,7 @@ namespace ET
             GameRegisterHotfix.RegisterMessageAuto();
             GameRegisterHotfix.RegisterMessageSessionAuto();
             GameRegisterHotfixView.RegisterEventAuto();
-            GameRegisterHotfixView.RegisterInvokeAuto();
+            //GameRegisterHotfixView.RegisterInvokeAuto();
             StartAsync().NoContext();
         }
         

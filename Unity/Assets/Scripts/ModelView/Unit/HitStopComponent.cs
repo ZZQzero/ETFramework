@@ -14,8 +14,9 @@ namespace ET
     /// - 仅影响客户端表现（动画/相机），不影响网络/服务端逻辑
     /// </summary>
     [ComponentOf(typeof(Unit))]
-    public class CombatFeedbackComponent : Entity, IAwake, IUpdate, IDestroy
+    public class HitStopComponent : Entity, IAwake, IUpdate, IDestroy
     {
+        public AnimancerComponent Animancer { get; set; }
         /// <summary>
         /// 是否处于 HitStop（顿帧）中。
         /// </summary>
@@ -43,15 +44,5 @@ namespace ET
         /// 上一次 Update 的 realtime 时间（毫秒）。
         /// </summary>
         public long LastRealtimeMs { get; set; }
-
-        /// <summary>
-        /// 已暂停的 Animancer：
-        /// - Key: AnimancerComponent
-        /// - Value: 该图在我们暂停之前是否正在播放（Graph.IsGraphPlaying）
-        ///
-        /// 说明：Animancer 推荐用 Graph.PauseGraph/UnpauseGraph 来冻结/恢复 PlayableGraph。
-        /// 我们需要记录“之前是否在播放”，避免把原本就暂停的图强行 Unpause。
-        /// </summary>
-        public Dictionary<AnimancerComponent, bool> PausedAnimancers { get; set; } = new Dictionary<AnimancerComponent, bool>(32);
     }
 }

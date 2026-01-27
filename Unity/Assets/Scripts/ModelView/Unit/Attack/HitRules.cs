@@ -3,9 +3,8 @@
 namespace ET
 {
     /// <summary>
-    /// 受击规则层（商业级）：
     /// - 负责“能否受击/是否通过过滤/受击优先级/参数归一化”等判定
-    /// - 只产出决策，不直接操作动画/位移/组件（保持可测试、可维护）
+    /// - 只产出决策，不直接操作动画/位移/组件
     /// </summary>
     public static class HitRules
     {
@@ -110,9 +109,9 @@ namespace ET
                 ku = profile.MaxKnockupForce;
             }
 
-            int hitStop = Mathf.Max(0, r.HitStopMs);
+            int hitStop = Mathf.Max(0, r.VictimHitStopMs);
             float shakeIntensity = Mathf.Max(0f, r.ScreenShakeIntensity);
-            float shakeDuration = Mathf.Max(0f, r.ScreenShakeDuration);
+            int shakeDurationMs = Mathf.Max(0, r.ScreenShakeDurationMs);
             float timeScale = r.TimeScale <= 0f ? 1f : r.TimeScale;
             int timeScaleMs = Mathf.Max(0, r.TimeScaleDurationMs);
 
@@ -125,7 +124,7 @@ namespace ET
                 stun,
                 hitStop,
                 shakeIntensity,
-                shakeDuration,
+                shakeDurationMs,
                 timeScale,
                 timeScaleMs);
         }

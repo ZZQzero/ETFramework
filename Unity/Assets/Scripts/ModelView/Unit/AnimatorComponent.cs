@@ -16,7 +16,11 @@ namespace ET
         public AnimancerComponent Animancer { get; set; }
         public CharacterControllerComponent CharacterController { get; set; }
         public CheckGroundedComponent Ground { get; set; }
-        public InputComponent Input { get; set; }
-        public AttackComponent Attack { get; set; }
+
+        /// <summary>
+        /// 是否已完成 Locomotion（Move/Jump）过渡资源加载。
+        /// 用于避免重复异步加载与销毁后回写。
+        /// </summary>
+        public bool LocomotionLoaded { get; set; }
     }
 }

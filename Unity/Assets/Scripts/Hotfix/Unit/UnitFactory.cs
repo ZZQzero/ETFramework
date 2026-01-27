@@ -19,16 +19,8 @@ namespace ET
                     var monster = MonsterConfig.Instance.Get(unitInfo.MonsterConfigId);
                     unit = unitComponent.AddChildWithId<Unit, int>(unitInfo.EntityId, monster.UnitId);
                     unit.AddComponent<MonsterIdentityComponent, MonsterTable>(monster);
-                    unit.AddComponent<XunLuoPathComponent>();
-                    unit.AddComponent<MoveComponent>();
-                    if (unitInfo.MoveInfo != null)
-                    {
-                        if (unitInfo.MoveInfo.Points.Count > 0)
-                        {
-                            unitInfo.MoveInfo.Points[0] = unit.Position;
-                            unit.MoveToAsync(unitInfo.MoveInfo.Points).NoContext();
-                        }
-                    }
+                    // 运动系统重构：怪物移动由 AI Driver → Intent → Motor 负责。
+                    // 旧的 MoveComponent/寻路同步链路会直接写 Unit.Position，容易与 Rigidbody Motor 冲突产生抖动/穿模。
                     break;
                 case UnitType.NPC:
                     break;

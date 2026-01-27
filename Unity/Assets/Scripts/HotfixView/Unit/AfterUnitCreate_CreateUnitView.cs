@@ -19,12 +19,32 @@ namespace ET
             UnityEngine.Object.DontDestroyOnLoad(go);
             unit.AddComponent<GameObjectComponent>().GameObject = go;
             unit.AddComponent<InputComponent,Transform>(go.transform);
+            unit.AddComponent<LocomotionIntentComponent>();
+            unit.AddComponent<AttackCommandComponent>();
+            unit.AddComponent<PlayerDriverComponent>();
+            var animCatalog = unit.AddComponent<AnimationCatalogComponent>();
+            animCatalog.Set(AnimationCatalogComponent.AnimKey.Locomotion_Move, roleComponent.RoleTable.MoveAsset);
+            animCatalog.Set(AnimationCatalogComponent.AnimKey.Locomotion_Jump, roleComponent.RoleTable.JumpAsset);
+
+            var attackCatalog = unit.AddComponent<AttackCatalogComponent>();
+            attackCatalog.BasicAttackSkillId = roleComponent.RoleSkillSetTable.BasicAttackSkillId;
+            Log.Error($"{attackCatalog.BasicAttackSkillId}");
+            attackCatalog.SkillIds.Clear();
+            if (roleComponent.RoleSkillSetTable.SkillIds != null)
+            {
+                attackCatalog.SkillIds.AddRange(roleComponent.RoleSkillSetTable.SkillIds);
+            }
+            // 目标层：玩家攻击默认打 Enemy
+            attackCatalog.TargetLayerMask = LayerMask.GetMask("Enemy");
+            
+            // MovementConfig：玩家可后续接 Numeric/装备/BUFF 合成，这里先使用默认值（商业级：执行层不读表）
+            unit.AddComponent<MovementConfigComponent>();
             unit.AddComponent<CheckGroundedComponent,GameObject>(go);
+            unit.AddComponent<CharacterControllerComponent,GameObject>(go);
+            unit.AddComponent<AnimatorComponent>();
             unit.AddComponent<HitStopComponent>();
             unit.AddComponent<AttackComponent>();
-            unit.AddComponent<CharacterControllerComponent,GameObject>(go);
             unit.AddComponent<HitReactionComponent,Transform>(go.transform);
-            unit.AddComponent<AnimatorComponent>();
             var unitReference = go.GetComponent<UnitReference>();
             if (unitReference == null)
             {

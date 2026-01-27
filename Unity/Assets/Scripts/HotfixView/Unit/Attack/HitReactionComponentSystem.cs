@@ -10,9 +10,10 @@ namespace ET
         {
             self.Owner = player;
             self.OwnerUnit = self.GetParent<Unit>();
+            self.HitStop = self.OwnerUnit.GetComponent<HitStopComponent>();
             self.LoadAnimationsAsync().NoContext();
 
-            // 商业级默认：以当前脚底为“地面高度”初始值（后续可接 Ground/地形系统动态更新）
+            // 以当前脚底为“地面高度”初始值（后续可接 Ground/地形系统动态更新）
             if (self.Owner != null)
             {
                 self.GroundHeight = self.Owner.position.y;
@@ -150,7 +151,7 @@ namespace ET
             // 进入受击：必要时先打断攻击/禁用移动
             self.BeginExternalLocksOnHit();
 
-            // 反馈：目标侧顿帧（商业级：只影响表现域，不影响数值/服务端）
+            // 反馈：目标侧顿帧
             self.ApplyFeedback(in effective, in feedbackProfile);
 
             // 按规则决策执行
@@ -213,9 +214,9 @@ namespace ET
         private static void ApplyFeedback(this HitReactionComponent self, in HitReactionRequest request, in HitFeedbackProfile profile)
         {
             // 目标侧顿帧：用 HitStopComponent（combat-time 一致）
-            if (profile.AllowVictimHitStop && request.HitStopMs > 0)
+            if (profile.AllowVictimHitStop && request.VictimHitStopMs > 0)
             {
-                int ms = request.HitStopMs;
+                int ms = request.VictimHitStopMs;
                 if (profile.VictimHitStopScale != 1f)
                 {
                     ms = Mathf.RoundToInt(ms * Mathf.Max(0f, profile.VictimHitStopScale));
@@ -234,7 +235,7 @@ namespace ET
             }
 
             // 震屏/慢动作：商业级应由统一反馈系统/相机系统处理，这里先预留扩展点（不硬编码 Camera 单例）。
-            // - request.ScreenShakeIntensity/Duration
+            // - request.ScreenShakeIntensity/ScreenShakeDurationMs
             // - request.TimeScale/TimeScaleDurationMs
         }
 
@@ -246,7 +247,7 @@ namespace ET
             self.KnockbackSpeed = Mathf.Max(0f, request.KnockbackForce);
             self.VerticalVelocity = Mathf.Max(0f, request.KnockupForce);
 
-            // 商业级：以当前高度作为“落地基准”（后续可替换为地形/地面检测）
+            //以当前高度作为“落地基准”（后续可替换为地形/地面检测）
             self.GroundHeight = self.Owner.position.y;
 
             // 硬直截止点（combat-time）
@@ -330,9 +331,8 @@ namespace ET
         {
             if (animation == null)
                 return;
-
-            var unit = self.GetParent<Unit>();
-            var animatorComponent = unit?.GetComponent<AnimatorComponent>();
+            
+            var animatorComponent = self.OwnerUnit?.GetComponent<AnimatorComponent>();
             if (animatorComponent?.Animancer != null)
             {
                 float fade = Mathf.Max(0f, self.AnimationFadeSec);
@@ -571,18 +571,11 @@ namespace ET
 
         #region CombatTime（顿帧期间不推进）
 
-        private static HitStopComponent GetFeedback(this HitReactionComponent self)
-        {
-            var unit = self.GetParent<Unit>();
-            return unit?.GetComponent<HitStopComponent>();
-        }
-
         private static long GetCombatNowMs(this HitReactionComponent self)
         {
-            var fb = self.GetFeedback();
-            if (fb != null)
+            if (self.HitStop != null)
             {
-                return fb.NowCombatMs();
+                return self.HitStop.NowCombatMs();
             }
 
             // 兜底：没有 CombatFeedback 时退回 client frame time
@@ -591,10 +584,9 @@ namespace ET
 
         private static float GetCombatDeltaSeconds(this HitReactionComponent self)
         {
-            var fb = self.GetFeedback();
-            if (fb != null)
+            if (self.HitStop != null)
             {
-                return Mathf.Max(0f, fb.CombatDeltaMs * 0.001f);
+                return Mathf.Max(0f, self.HitStop.CombatDeltaMs * 0.001f);
             }
 
             // 兜底

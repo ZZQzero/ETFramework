@@ -3,7 +3,9 @@ using UnityEngine;
 namespace ET
 {
     /// <summary>
-    /// 角色移动控制组件
+    /// 角色运动执行组件（Motor）
+    /// - 上层（玩家输入/AI/回放）只写入 Intent
+    /// - 本组件只负责运动学/物理执行，并把结果同步回 Unit.Position/Rotation
     /// </summary>
     [ComponentOf(typeof(Unit))]
     public class CharacterControllerComponent: Entity, IAwake<GameObject>, IUpdate,IFixedUpdate,IOnAnimatorMove,IDestroy
@@ -14,11 +16,10 @@ namespace ET
         public Rigidbody Rigidbody { get; set; }
         public CapsuleCollider CapsuleCollider { get; set; }
         public CheckGroundedComponent  Ground { get; set; }
-        public InputComponent Input { get; set; }
-        public Unit PlayerUnit { get; set; }
+        public LocomotionIntentComponent LocomotionIntent { get; set; }
+        public Unit Unit { get; set; }
         public Animator Animator { get; set; }
         public AttackComponent Attack { get; set; }
-        public CameraFollowComponent CameraFollow { get; set; }
 
         /// <summary>
         /// 移动速度（米/秒）

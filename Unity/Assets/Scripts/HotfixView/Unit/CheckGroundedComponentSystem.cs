@@ -7,7 +7,7 @@ namespace ET
         [EntitySystem]
         private static void Awake(this CheckGroundedComponent self, GameObject go)
         {
-            self.Player = go.transform;
+            self.OwnerTransform = go.transform;
             self.Capsule = go.GetComponent<CapsuleCollider>();
             self.Rigidbody = go.GetComponent<Rigidbody>();
 
@@ -76,7 +76,7 @@ namespace ET
             self.GroundHit.Reset();
 
             var config = self.Config;
-            Vector3 position = self.Player.position;
+            Vector3 position = self.OwnerTransform.position;
 
             float checkRadius = self.CapsuleRadius * config.RadiusScale;
             float skinWidth = config.SkinWidth;
@@ -176,7 +176,7 @@ namespace ET
                 ref RaycastHit hit = ref self.SphereCastBuffer[i];
 
                 // 忽略自身
-                if (hit.collider.transform.IsChildOf(self.Player)) continue;
+                if (hit.collider.transform.IsChildOf(self.OwnerTransform)) continue;
                 
                 // 忽略下跳穿透的平台
                 if (hit.collider == self.IgnoredPlatform) continue;
@@ -214,8 +214,8 @@ namespace ET
         {
             var config = self.Config;
             float offset = self.CapsuleRadius * 0.5f;
-            Vector3 forward = self.Player.forward;
-            Vector3 right = self.Player.right;
+            Vector3 forward = self.OwnerTransform.forward;
+            Vector3 right = self.OwnerTransform.right;
             float rayStartY = position.y + config.SkinWidth * 2;
 
             // 使用预分配数组
@@ -434,7 +434,7 @@ namespace ET
             {
                 self.GroundedDuration += deltaTime;
                 self.AirborneDuration = 0;
-                self.LastGroundedPosition = self.Player.position;
+                self.LastGroundedPosition = self.OwnerTransform.position;
             }
             else
             {
@@ -471,7 +471,7 @@ namespace ET
 
             if (!wasGrounded && isGrounded)
             {
-                float fallHeight = self.LastGroundedPosition.y - self.Player.position.y;
+                float fallHeight = self.LastGroundedPosition.y - self.OwnerTransform.position.y;
                 self.InvokeLanded();
                 self.AirborneReason = AirborneReason.None;
             }
@@ -481,7 +481,7 @@ namespace ET
         {
             if (self.IgnoredPlatform == null) return;
 
-            if (Time.time > self.IgnorePlatformUntil || self.Player.position.y < self.IgnoredPlatform.bounds.min.y - 0.1f)
+            if (Time.time > self.IgnorePlatformUntil || self.OwnerTransform.position.y < self.IgnoredPlatform.bounds.min.y - 0.1f)
             {
                 if (self.Capsule != null)
                 {
@@ -537,7 +537,7 @@ namespace ET
             self.State = GroundState.Airborne;
             self.AirborneReason = AirborneReason.Jump;
             self.TimeLeftGround = Time.time;
-            self.LastGroundedPosition = self.Player.position;
+            self.LastGroundedPosition = self.OwnerTransform.position;
             self.InCoyoteTime = false;
         }
 

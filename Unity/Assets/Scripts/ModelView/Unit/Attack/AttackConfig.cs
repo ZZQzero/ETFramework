@@ -33,7 +33,8 @@ namespace ET
         
         /// <summary>
         /// 默认顿帧时间（毫秒）。
-        /// 说明：当某个 <see cref="HitBoxData"/> 未配置 <see cref="HitFeedbackData.HitStopMs"/>（<=0）时，运行时使用该值作为兜底顿帧时长。
+        /// 说明：当某个 <see cref="HitBoxData"/> 未配置 <see cref="HitFeedbackData.AttackerHitStopMs"/> / <see cref="HitFeedbackData.VictimHitStopMs"/>（为 -1）时，
+        /// 运行时使用该值作为兜底顿帧时长。
         /// </summary>
         public int DefaultHitStopMs = 40;
 
@@ -94,6 +95,27 @@ namespace ET
                 return Segments[index];
             }
             return null;
+        }
+
+        /// <summary>
+        /// 归一化/规范化入口（编辑器保存、配置构建、运行时加载后调用均可）。
+        /// - 目标：统一约束时间窗口、子事件范围、负值等，避免运行时/编辑器各自 Clamp 导致逻辑漂移。
+        /// </summary>
+        public void ValidateAndNormalize()
+        {
+            if (this.Segments == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < this.Segments.Count; i++)
+            {
+                var seg = this.Segments[i];
+                seg?.ValidateAndNormalize();
+            }
+
+            // 规范化后，索引缓存可能过期（段可能被编辑器改动）
+            this._cachedSegmentCount = -1;
         }
     }
 }

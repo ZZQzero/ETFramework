@@ -756,8 +756,9 @@ public partial class SkillEditorWindow : EditorWindow
         {
             hitEffectDamageMultiplierField.SetValueWithoutNotify(v);
         }
-        hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
-        hitBoxClipItem.HitBoxData.Effect.DamageMultiplier = v;
+        var effect = hitBoxClipItem.HitBoxData.Effect;
+        effect.DamageMultiplier = v;
+        hitBoxClipItem.HitBoxData.Effect = effect;
         MarkAssetDirty();
     }
 
@@ -773,8 +774,9 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
-        hitBoxClipItem.HitBoxData.Effect.HitReaction = (HitReactionType)evt.newValue;
+        var effect = hitBoxClipItem.HitBoxData.Effect;
+        effect.HitReaction = (HitReactionType)evt.newValue;
+        hitBoxClipItem.HitBoxData.Effect = effect;
         MarkAssetDirty();
     }
 
@@ -790,8 +792,9 @@ public partial class SkillEditorWindow : EditorWindow
         {
             hitEffectKnockbackForceField.SetValueWithoutNotify(v);
         }
-        hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
-        hitBoxClipItem.HitBoxData.Effect.KnockbackForce = v;
+        var effect = hitBoxClipItem.HitBoxData.Effect;
+        effect.KnockbackForce = v;
+        hitBoxClipItem.HitBoxData.Effect = effect;
         MarkAssetDirty();
     }
 
@@ -807,8 +810,9 @@ public partial class SkillEditorWindow : EditorWindow
         {
             hitEffectKnockupForceField.SetValueWithoutNotify(v);
         }
-        hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
-        hitBoxClipItem.HitBoxData.Effect.KnockupForce = v;
+        var effect = hitBoxClipItem.HitBoxData.Effect;
+        effect.KnockupForce = v;
+        hitBoxClipItem.HitBoxData.Effect = effect;
         MarkAssetDirty();
     }
 
@@ -824,8 +828,9 @@ public partial class SkillEditorWindow : EditorWindow
         {
             hitEffectHitStunMsField.SetValueWithoutNotify(v);
         }
-        hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
-        hitBoxClipItem.HitBoxData.Effect.HitStunMs = v;
+        var effect = hitBoxClipItem.HitBoxData.Effect;
+        effect.HitStunMs = v;
+        hitBoxClipItem.HitBoxData.Effect = effect;
         MarkAssetDirty();
     }
 
@@ -841,10 +846,9 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        hitBoxClipItem.HitBoxData.Effect ??= new HitEffectData();
-
-        // 新字段：TargetStates（可多选）。旧字段 TargetState 保持兼容（这里不再写入具体单选值，避免丢信息）。
-        hitBoxClipItem.HitBoxData.Effect.TargetStates = (TargetStateMask)evt.newValue;
+        var effect = hitBoxClipItem.HitBoxData.Effect;
+        effect.TargetStates = (TargetStateMask)evt.newValue;
+        hitBoxClipItem.HitBoxData.Effect = effect;
         MarkAssetDirty();
     }
 
@@ -860,29 +864,13 @@ public partial class SkillEditorWindow : EditorWindow
         {
             hitFeedbackShakeIntensityField.SetValueWithoutNotify(v);
         }
-        hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
-        hitBoxClipItem.HitBoxData.Feedback.ScreenShakeIntensity = v;
+        var feedback = hitBoxClipItem.HitBoxData.Feedback;
+        feedback.ScreenShakeIntensity = v;
+        hitBoxClipItem.HitBoxData.Feedback = feedback;
         MarkAssetDirty();
     }
 
-    private void OnHitFeedbackShakeDurationChanged(ChangeEvent<float> evt)
-    {
-        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
-        {
-            return;
-        }
-
-        float v = Mathf.Max(0f, evt.newValue);
-        if (hitFeedbackShakeDurationField != null && !Mathf.Approximately(v, evt.newValue))
-        {
-            hitFeedbackShakeDurationField.SetValueWithoutNotify(v);
-        }
-        hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
-        hitBoxClipItem.HitBoxData.Feedback.ScreenShakeDuration = v;
-        MarkAssetDirty();
-    }
-
-    private void OnHitFeedbackHitStopMsChanged(ChangeEvent<int> evt)
+    private void OnHitFeedbackShakeDurationMsChanged(ChangeEvent<int> evt)
     {
         if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
         {
@@ -890,12 +878,49 @@ public partial class SkillEditorWindow : EditorWindow
         }
 
         int v = Mathf.Max(0, evt.newValue);
-        if (hitFeedbackHitStopMsField != null && v != evt.newValue)
+        if (hitFeedbackShakeDurationMsField != null && v != evt.newValue)
         {
-            hitFeedbackHitStopMsField.SetValueWithoutNotify(v);
+            hitFeedbackShakeDurationMsField.SetValueWithoutNotify(v);
         }
-        hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
-        hitBoxClipItem.HitBoxData.Feedback.HitStopMs = v;
+        var feedback = hitBoxClipItem.HitBoxData.Feedback;
+        feedback.ScreenShakeDurationMs = v;
+        hitBoxClipItem.HitBoxData.Feedback = feedback;
+        MarkAssetDirty();
+    }
+
+    private void OnHitFeedbackAttackerHitStopMsChanged(ChangeEvent<int> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        int v = Mathf.Max(-1, evt.newValue);
+        if (hitFeedbackAttackerHitStopMsField != null && v != evt.newValue)
+        {
+            hitFeedbackAttackerHitStopMsField.SetValueWithoutNotify(v);
+        }
+        var feedback = hitBoxClipItem.HitBoxData.Feedback;
+        feedback.AttackerHitStopMs = v;
+        hitBoxClipItem.HitBoxData.Feedback = feedback;
+        MarkAssetDirty();
+    }
+
+    private void OnHitFeedbackVictimHitStopMsChanged(ChangeEvent<int> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        int v = Mathf.Max(-1, evt.newValue);
+        if (hitFeedbackVictimHitStopMsField != null && v != evt.newValue)
+        {
+            hitFeedbackVictimHitStopMsField.SetValueWithoutNotify(v);
+        }
+        var feedback = hitBoxClipItem.HitBoxData.Feedback;
+        feedback.VictimHitStopMs = v;
+        hitBoxClipItem.HitBoxData.Feedback = feedback;
         MarkAssetDirty();
     }
 
@@ -911,8 +936,9 @@ public partial class SkillEditorWindow : EditorWindow
         {
             hitFeedbackTimeScaleField.SetValueWithoutNotify(v);
         }
-        hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
-        hitBoxClipItem.HitBoxData.Feedback.TimeScale = v;
+        var feedback = hitBoxClipItem.HitBoxData.Feedback;
+        feedback.TimeScale = v;
+        hitBoxClipItem.HitBoxData.Feedback = feedback;
         MarkAssetDirty();
     }
 
@@ -928,8 +954,9 @@ public partial class SkillEditorWindow : EditorWindow
         {
             hitFeedbackTimeScaleDurationMsField.SetValueWithoutNotify(v);
         }
-        hitBoxClipItem.HitBoxData.Feedback ??= new HitFeedbackData();
-        hitBoxClipItem.HitBoxData.Feedback.TimeScaleDurationMs = v;
+        var feedback = hitBoxClipItem.HitBoxData.Feedback;
+        feedback.TimeScaleDurationMs = v;
+        hitBoxClipItem.HitBoxData.Feedback = feedback;
         MarkAssetDirty();
     }
 

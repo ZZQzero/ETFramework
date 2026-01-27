@@ -27,6 +27,8 @@ namespace ET
         public Transform Owner {get; set;}
         
         public Unit OwnerUnit {get; set;}
+        
+        public HitStopComponent HitStop {get; set;}
 
         #region 驱动/配置（可扩展）
 

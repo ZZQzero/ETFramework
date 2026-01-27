@@ -3,11 +3,11 @@
 namespace ET
 {
     /// <summary>
-    /// 一次命中对“目标侧”的受击请求（商业级：数据驱动、接口边界清晰）。
+    /// 一次命中对“目标侧”的受击请求
     /// - Effect：影响目标的 gameplay effect（受击类型/控制/击退/击飞/硬直/过滤）
-    /// - Feedback：命中反馈（顿帧/震屏/慢动作等；通常主要作用于表现域）
+    /// - Feedback：命中反馈（受击者侧顿帧、以及可选的镜头/时间反馈参数）
     /// 说明：
-    /// - 这里刻意使用值类型+基础字段，避免把可变的配置对象（HitEffectData/HitFeedbackData）直接引用进运行时状态。
+    /// - 这里刻意使用值类型+基础字段，避免把可变的配置对象直接引用进运行时状态。
     /// </summary>
     public readonly struct HitReactionRequest
     {
@@ -26,12 +26,12 @@ namespace ET
         public readonly int HitStunMs;
 
         // ===== 反馈（可选） =====
-        /// <summary>顿帧(ms)（表现域；是否生效由 HitFeedbackProfile 决定）。</summary>
-        public readonly int HitStopMs;
+        /// <summary>受击者侧顿帧(ms)（是否生效由 <see cref="HitFeedbackProfile"/> 决定）。</summary>
+        public readonly int VictimHitStopMs;
         /// <summary>震屏强度(0-1)（通常由相机/反馈系统消费）。</summary>
         public readonly float ScreenShakeIntensity;
-        /// <summary>震屏时长(秒)。</summary>
-        public readonly float ScreenShakeDuration;
+        /// <summary>震屏时长(ms)。</summary>
+        public readonly int ScreenShakeDurationMs;
         /// <summary>慢动作倍率（1=正常，小于1=慢）。</summary>
         public readonly float TimeScale;
         /// <summary>慢动作持续时间(ms)。</summary>
@@ -44,9 +44,9 @@ namespace ET
             float knockbackForce,
             float knockupForce,
             int hitStunMs,
-            int hitStopMs = 0,
+            int victimHitStopMs = 0,
             float screenShakeIntensity = 0f,
-            float screenShakeDuration = 0f,
+            int screenShakeDurationMs = 0,
             float timeScale = 1f,
             int timeScaleDurationMs = 0)
         {
@@ -57,22 +57,16 @@ namespace ET
             this.KnockupForce = knockupForce;
             this.HitStunMs = hitStunMs;
 
-            this.HitStopMs = hitStopMs;
+            this.VictimHitStopMs = victimHitStopMs;
             this.ScreenShakeIntensity = screenShakeIntensity;
-            this.ScreenShakeDuration = screenShakeDuration;
+            this.ScreenShakeDurationMs = screenShakeDurationMs;
             this.TimeScale = timeScale;
             this.TimeScaleDurationMs = timeScaleDurationMs;
         }
 
-        public static HitReactionRequest From(HitEffectData effect, HitFeedbackData feedback, Vector3 hitDirection)
+        public static HitReactionRequest From(in HitEffectData effect, in HitFeedbackData feedback, Vector3 hitDirection, int defaultHitStopMs)
         {
-            if (effect == null)
-            {
-                // 兜底：不做受击
-                return new HitReactionRequest(HitReactionType.None, TargetStateMask.Any, hitDirection, 0f, 0f, 0);
-            }
-
-            // 说明：这里“只做数据拷贝”，不做归一化/钳制；归一化由规则层 HitRules 执行。
+            // 说明：这里只做数据拷贝（含 default 兜底），不做归一化/钳制；归一化由规则层 HitRules 执行。
             return new HitReactionRequest(
                 effect.HitReaction,
                 effect.TargetStates,
@@ -80,11 +74,11 @@ namespace ET
                 effect.KnockbackForce,
                 effect.KnockupForce,
                 effect.HitStunMs,
-                feedback != null ? feedback.HitStopMs : 0,
-                feedback != null ? feedback.ScreenShakeIntensity : 0f,
-                feedback != null ? feedback.ScreenShakeDuration : 0f,
-                feedback != null ? feedback.TimeScale : 1f,
-                feedback != null ? feedback.TimeScaleDurationMs : 0
+                feedback.ResolveVictimHitStopMs(defaultHitStopMs),
+                feedback.ScreenShakeIntensity,
+                feedback.ScreenShakeDurationMs,
+                feedback.TimeScale,
+                feedback.TimeScaleDurationMs
             );
         }
     }

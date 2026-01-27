@@ -53,6 +53,8 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.CameraFollowComponentSystem.ET_CameraFollowComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CameraFollowComponentSystem.ET_CameraFollowComponent_LateUpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CameraFollowComponentSystem.ET_CameraFollowComponent_DestroySystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.AIDriverComponentSystem.ET_AIDriverComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.AIDriverComponentSystem.ET_AIDriverComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.AnimatorComponentSystem.ET_AnimatorComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.AnimatorComponentSystem.ET_AnimatorComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.AnimatorComponentSystem.ET_AnimatorComponent_DestroySystem>();
@@ -77,6 +79,10 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.HitStopComponentSystem.ET_HitStopComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.InputComponentSystem.ET_InputComponent_UnityEngine_Transform_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.InputComponentSystem.ET_InputComponent_UpdateSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.PlayerDriverComponentSystem.ET_PlayerDriverComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.PlayerDriverComponentSystem.ET_PlayerDriverComponent_UpdateSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.SimpleMonsterAIComponentSystem.ET_SimpleMonsterAIComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.SimpleMonsterAIComponentSystem.ET_SimpleMonsterAIComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ResourcesLoaderComponentSystem.ET_ResourcesLoaderComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ResourcesLoaderComponentSystem.ET_ResourcesLoaderComponent_string_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ResourcesLoaderComponentSystem.ET_ResourcesLoaderComponent_DestroySystem>();

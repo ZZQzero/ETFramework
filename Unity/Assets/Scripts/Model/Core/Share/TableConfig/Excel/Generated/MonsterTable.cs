@@ -32,6 +32,8 @@ public sealed partial class MonsterTable : Luban.BeanBase
         Exp = _buf.ReadInt();
         IsBoss = _buf.ReadBool();
         Prefab = _buf.ReadString();
+        MoveAsset = _buf.ReadString();
+        JumpAsset = _buf.ReadString();
     }
 
     public static MonsterTable DeserializeMonsterTable(ByteBuf _buf)
@@ -103,6 +105,14 @@ public sealed partial class MonsterTable : Luban.BeanBase
     /// 模型预制体
     /// </summary>
     public readonly string Prefab;
+    /// <summary>
+    /// idle和移动动画资源
+    /// </summary>
+    public readonly string MoveAsset;
+    /// <summary>
+    /// 跳跃动画资源
+    /// </summary>
+    public readonly string JumpAsset;
    
     public const int __ID__ = 706228276;
     public override int GetTypeId() => __ID__;
@@ -130,6 +140,8 @@ public sealed partial class MonsterTable : Luban.BeanBase
         + "Exp:" + Exp + ","
         + "IsBoss:" + IsBoss + ","
         + "Prefab:" + Prefab + ","
+        + "MoveAsset:" + MoveAsset + ","
+        + "JumpAsset:" + JumpAsset + ","
         + "}";
     }
 }

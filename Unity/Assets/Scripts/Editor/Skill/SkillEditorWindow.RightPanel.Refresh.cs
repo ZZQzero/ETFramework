@@ -388,8 +388,9 @@ public partial class SkillEditorWindow : EditorWindow
         if (hitEffectTargetStateField != null) hitEffectTargetStateField.SetValueWithoutNotify(TargetStateMask.Any);
 
         if (hitFeedbackShakeIntensityField != null) hitFeedbackShakeIntensityField.SetValueWithoutNotify(0f);
-        if (hitFeedbackShakeDurationField != null) hitFeedbackShakeDurationField.SetValueWithoutNotify(0f);
-        if (hitFeedbackHitStopMsField != null) hitFeedbackHitStopMsField.SetValueWithoutNotify(0);
+        if (hitFeedbackShakeDurationMsField != null) hitFeedbackShakeDurationMsField.SetValueWithoutNotify(0);
+        if (hitFeedbackAttackerHitStopMsField != null) hitFeedbackAttackerHitStopMsField.SetValueWithoutNotify(-1);
+        if (hitFeedbackVictimHitStopMsField != null) hitFeedbackVictimHitStopMsField.SetValueWithoutNotify(-1);
         if (hitFeedbackTimeScaleField != null) hitFeedbackTimeScaleField.SetValueWithoutNotify(1f);
         if (hitFeedbackTimeScaleDurationMsField != null) hitFeedbackTimeScaleDurationMsField.SetValueWithoutNotify(0);
     }

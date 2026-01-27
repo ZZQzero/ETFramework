@@ -18,45 +18,88 @@ namespace ET
         private static void Awake(this AttackComponent self)
         {
             self.ResetState();
-            Unit unit = self.GetParent<Unit>();
-            self.AnimatorComponent = unit.GetComponent<AnimatorComponent>();
-            self.Player = unit.GetComponent<GameObjectComponent>().Transform;
+            self.Unit = self.GetParent<Unit>();
+            self.AnimatorComponent = self.Unit.GetComponent<AnimatorComponent>();
+            self.AttackCommand = self.Unit.GetComponent<AttackCommandComponent>();
+            self.AttackCatalog = self.Unit.GetComponent<AttackCatalogComponent>();
+            self.OwnerTransform = self.Unit.GetComponent<GameObjectComponent>().Transform;
             self.CameraFollow = self.Root().GetComponent<CameraFollowComponent>();
             self.TimerComponent = self.Root().GetComponent<TimerComponent>();
-            self.RoleIdentity = unit.GetComponent<RoleIdentityComponent>();
-            self.HitStop = unit.GetComponent<HitStopComponent>();
+            self.HitStop = self.Unit.GetComponent<HitStopComponent>();
             self.EffectRoot = new GameObject("EffectRoot");
-            if (self.CameraFollow == null)
+            // CameraFollow 只对“玩家表现”有意义，怪物没有也正常
+            if (self.CameraFollow == null && self.Unit.UnitType() == UnitType.Player)
             {
-                Log.Error("没有找到CameraFollowComponent组件");
+                Log.Warning("没有找到CameraFollowComponent组件（仅玩家需要）");
             }
-            self.LoadConfigAsync().NoContext();
+            if (self.OwnerTransform != null && self.EffectRoot != null)
+            {
+                self.EffectRoot.transform.SetParent(self.OwnerTransform, worldPositionStays: false);
+            }
+            // 预加载基础攻击配置（如未配置则等待命令触发时再报错）
+            if (self.AttackCatalog != null && self.AttackCatalog.BasicAttackSkillId > 0)
+            {
+                Log.Error($"Attack {self.AttackCatalog.BasicAttackSkillId}");
+                self.LoadConfigAsync(self.AttackCatalog.BasicAttackSkillId).NoContext();
+            }
         }
 
         [EntitySystem]
         private static void Destroy(this AttackComponent self)
         {
-            self.CleanupTimers();
+            self.ClearCombatDeadlines();
             self.ResetState();
             self.Config = null;
+            self.LoadedSkillId = 0;
+            self.IsLoadingConfig = false;
+            self.HasPendingCommand = false;
             self.CurrentAnimState = null;
             self.OnAttackStart = null;
             self.OnAttackEnd = null;
             self.OnHit = null;
             self.OnComboReset = null;
             self.OnComboCountChanged = null;
+
+            if (self.EffectRoot != null)
+            {
+                UnityEngine.Object.Destroy(self.EffectRoot);
+                self.EffectRoot = null;
+            }
         }
 
         [EntitySystem]
         private static void Update(this AttackComponent self)
         {
-            if (!self.IsInAttack)
-                return;
+            // 统一入口：消费 AttackCommand（玩家/AI/回放/网络共用）
+            if (self.AttackCommand != null)
+            {
+                // 先处理“配置未就绪时挂起”的命令
+                if (self.HasPendingCommand && self.Config != null && !self.IsLoadingConfig)
+                {
+                    var pending = self.PendingCommand;
+                    self.HasPendingCommand = false;
+                    self.ExecuteAttackCommand(in pending);
+                }
 
-            self.UpdateBufferedInputTimeout();
-            self.UpdateComboTimeout();
+                if (self.AttackCommand.TryDequeue(out var cmd))
+                {
+                    self.ExecuteAttackCommand(in cmd);
+                }
+            }
+
+            if (!self.IsInAttack)
+            {
+                return;
+            }
+
+            // 统一使用“combat-time”（受 HitStop 影响的时间源）来驱动所有截止点，
+            // 保证顿帧期间不会提前超时/提前淡出。
+            long nowCombatMs = self.GetCombatNowMs();
+
+            self.UpdateBufferedInputTimeout(nowCombatMs);
+            self.UpdateComboTimeout(nowCombatMs);
             self.UpdateAnimationState();
-            self.UpdateAttackLayerFadeOut();
+            self.UpdateAttackLayerFadeOut(nowCombatMs);
         }
 
         [EntitySystem]
@@ -81,18 +124,72 @@ namespace ET
         /// <summary>
         /// 异步加载攻击配置
         /// </summary>
-        private static async ETTask LoadConfigAsync(this AttackComponent self)
+        private static async ETTask LoadConfigAsync(this AttackComponent self, int skillId)
         {
-            var id = self.RoleIdentity.RoleSkillSetTable.BasicAttackSkillId;
-            var skillTable = SkillConfig.Instance.Get(id);
+            if (skillId <= 0)
+            {
+                Log.Error("AttackComponent: skillId 无效，无法加载攻击配置");
+                return;
+            }
+            if (self.IsLoadingConfig)
+            {
+                return;
+            }
+            self.IsLoadingConfig = true;
+
+            var skillTable = SkillConfig.Instance.Get(skillId);
             var configAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<AttackConfigAsset>(skillTable.SkillAsset);
             if (configAsset == null)
             {
-                Log.Error($"AttackComponent: Failed to load config from {skillTable.SkillAsset}  {id}");
+                self.IsLoadingConfig = false;
+                Log.Error($"AttackComponent: Failed to load config from {skillTable.SkillAsset}  {skillId}");
                 return;
             }
 
             self.Config = configAsset.Config;
+            self.LoadedSkillId = skillId;
+            self.IsLoadingConfig = false;
+            // 运行时加载后统一规范化（保证窗口/子事件不越界，避免各处自行 Clamp 导致不一致）
+            self.Config?.ValidateAndNormalize();
+        }
+
+        private static void ExecuteAttackCommand(this AttackComponent self, in AttackCommandComponent.AttackCommand cmd)
+        {
+            if (self.AnimatorComponent == null)
+            {
+                self.AnimatorComponent = self.Unit.GetComponent<AnimatorComponent>();
+            }
+            if (self.AnimatorComponent == null)
+            {
+                Log.Error("AttackComponent: AnimatorComponent 未就绪，无法执行攻击命令");
+                return;
+            }
+
+            int skillId = cmd.SkillId;
+            if (skillId <= 0)
+            {
+                skillId = self.AttackCatalog?.BasicAttackSkillId ?? 0;
+            }
+            if (skillId <= 0)
+            {
+                Log.Error("AttackComponent: AttackCatalog 未配置 BasicAttackSkillId，无法执行攻击命令");
+                return;
+            }
+
+            // 配置未加载或技能切换：先加载，再挂起命令
+            if (self.Config == null || self.LoadedSkillId != skillId)
+            {
+                self.PendingCommand = cmd;
+                self.HasPendingCommand = true;
+                if (!self.IsLoadingConfig)
+                {
+                    self.LoadConfigAsync(skillId).NoContext();
+                }
+                return;
+            }
+
+            // 目前命令只影响连段分支（InputType），目标/指向性留作后续扩展
+            self.HandleAttackInput(self.AnimatorComponent, cmd.InputType);
         }
         #endregion
 
@@ -114,6 +211,7 @@ namespace ET
             self.HitTargetsThisSegment.Clear();
             self.TotalHitCount = 0;
             self.IsMovementActive = false;
+            self.HitBoxActiveMask = 0UL;
             self.TrackTarget = null;
             self.CurrentSegmentEnded = false;
             self.IsInputBufferWindowOpen = false;
@@ -122,15 +220,189 @@ namespace ET
             self.AttackLayerFadeOutAtCombatMs = 0;
         }
 
+        private static bool IsHitBoxActive(ulong mask, int index)
+        {
+            return (uint)index < 64u && (mask & (1UL << index)) != 0UL;
+        }
+
+        private static void SetHitBoxActive(ref ulong mask, int index, bool active)
+        {
+            if ((uint)index >= 64u)
+            {
+                return;
+            }
+
+            ulong bit = 1UL << index;
+            if (active)
+            {
+                mask |= bit;
+            }
+            else
+            {
+                mask &= ~bit;
+            }
+        }
+
         /// <summary>
-        /// 清理定时器
+        /// 清理所有基于 combat-time 的截止点（0 表示未启用）。
         /// </summary>
-        private static void CleanupTimers(this AttackComponent self)
+        private static void ClearCombatDeadlines(this AttackComponent self)
         {
             self.ComboTimeoutAtCombatMs = 0;
             self.AttackLayerFadeOutAtCombatMs = 0;
         }
         
+        #endregion
+
+        #region 时间与超时（combat-time）
+
+        /// <summary>
+        /// Combat-Time：受 HitStop 影响的时间源（顿帧期间暂停/缩放）。
+        /// 所有“超时/截止点”均以此时间为准，避免顿帧期间提前触发。
+        /// </summary>
+        private static long GetCombatNowMs(this AttackComponent self)
+        {
+            return self.HitStop.NowCombatMs();
+        }
+
+        #region 输入缓冲过期
+
+        private static bool IsBufferedInputValid(this AttackComponent self)
+        {
+            if (!self.HasBufferedInput)
+                return false;
+
+            int windowMs = self.Config?.InputBufferWindowMs ?? 200;
+            if (windowMs <= 0)
+                return true;
+
+            return self.IsBufferedInputValid(self.GetCombatNowMs());
+        }
+
+        private static bool IsBufferedInputValid(this AttackComponent self, long nowCombatMs)
+        {
+            int windowMs = self.Config?.InputBufferWindowMs ?? 200;
+            if (windowMs <= 0)
+                return true;
+
+            return nowCombatMs - self.BufferedInputTime <= windowMs;
+        }
+
+        private static void UpdateBufferedInputTimeout(this AttackComponent self, long nowCombatMs)
+        {
+            if (!self.HasBufferedInput)
+                return;
+
+            if (!self.IsBufferedInputValid(nowCombatMs))
+            {
+                self.ClearBufferedInput();
+            }
+        }
+
+        #endregion
+
+        #region 连击超时（截止点）
+
+        /// <summary>
+        /// 刷新连击截止点（combat-time）。
+        /// 0ms 表示禁用（不会触发超时退出）。
+        /// </summary>
+        private static void ResetComboTimeout(this AttackComponent self, long nowCombatMs)
+        {
+            int timeoutMs = self.GetCurrentSegmentComboTimeoutMs();
+            self.ComboTimeoutAtCombatMs = timeoutMs <= 0 ? 0 : nowCombatMs + timeoutMs;
+        }
+
+        /// <summary>
+        /// 获取当前段的连击超时（毫秒）。
+        /// 规则：段超时 = 段时长(ms) + 段偏移(ComboTimeoutOffsetMs)，用于避免全局超时小于动画时长导致提前退出。
+        /// </summary>
+        private static int GetCurrentSegmentComboTimeoutMs(this AttackComponent self)
+        {
+            // 默认兜底
+            int fallback = self.Config?.ComboTimeoutMs ?? 800;
+
+            var seg = self.CurrentSegment;
+            if (seg == null)
+            {
+                return Mathf.Max(0, fallback);
+            }
+
+            float durSec = Mathf.Max(0f, seg.Duration);
+            // Duration 若异常为 0，则回退使用兜底超时，避免一直被判定为立即超时
+            if (durSec <= 0f)
+            {
+                return Mathf.Max(0, fallback);
+            }
+
+            int durMs = Mathf.RoundToInt(durSec * seg.TimeWindow.AnimationEnd * 1000f); //转成毫秒
+            int offsetMs = Mathf.Max(0, seg.ComboTimeoutOffsetMs);
+            int total = durMs + offsetMs;
+            return Mathf.Max(0, total);
+        }
+        
+        /// <summary>
+        /// 连击超时处理
+        /// </summary>
+        private static void UpdateComboTimeout(this AttackComponent self, long nowCombatMs)
+        {
+            if (self.ComboTimeoutAtCombatMs <= 0)
+            {
+                return;
+            }
+
+            if (nowCombatMs >= self.ComboTimeoutAtCombatMs)
+            {
+                self.ComboTimeoutAtCombatMs = 0;
+                self.ExitAttackState();
+            }
+        }
+
+        #endregion
+
+        #region AttackLayer 延迟淡出（截止点）
+
+        private static void ClearAttackLayerFadeOutDeadline(this AttackComponent self)
+        {
+            self.AttackLayerFadeOutAtCombatMs = 0;
+        }
+
+        private static void ArmAttackLayerFadeOutDeadline(this AttackComponent self)
+        {
+            self.ClearAttackLayerFadeOutDeadline();
+
+            int holdMs = self.Config?.RecoveryHoldMs ?? 200;
+            if (holdMs <= 0)
+            {
+                // 立刻淡出（无需截止点）
+                self.FadeOutAttackLayer();
+                return;
+            }
+
+            self.AttackLayerFadeOutAtCombatMs = self.GetCombatNowMs() + holdMs;
+        }
+
+        private static void UpdateAttackLayerFadeOut(this AttackComponent self, long nowCombatMs)
+        {
+            if (self.State != AttackState.Recovery)
+            {
+                return;
+            }
+
+            if (self.AttackLayerFadeOutAtCombatMs <= 0)
+            {
+                return;
+            }
+
+            if (nowCombatMs >= self.AttackLayerFadeOutAtCombatMs)
+            {
+                self.AttackLayerFadeOutAtCombatMs = 0;
+                self.FadeOutAttackLayer();
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region 输入处理
@@ -153,7 +425,8 @@ namespace ET
                 self.AnimatorComponent = animatorComponent;
             }
             // 记录输入时间
-            self.LastInputTime = self.GetCombatNowMs();
+            long nowCombatMs = self.GetCombatNowMs();
+            self.LastInputTime = nowCombatMs;
 
             // 如果不在攻击状态，开始第一段攻击
             if (!self.IsInAttack)
@@ -162,9 +435,9 @@ namespace ET
             }
 
             // 若处于 HitStop（顿帧）中：继续收输入，但不推进攻击段（保证“停顿中也能搓招”的手感）
-            if (self.IsInHitStop())
+            if (self.HitStop.IsHitStopActive)
             {
-                self.BufferInput(inputType);
+                self.BufferInput(inputType, nowCombatMs);
                 return true;
             }
 
@@ -197,19 +470,19 @@ namespace ET
 
             // 无论是否已到输入窗口，都缓存输入；真正消费发生在动画结束时
             // 配合 InputBufferWindowMs 做过期控制
-            self.BufferInput(inputType);
-            self.ResetComboTimeout();
+            self.BufferInput(inputType, nowCombatMs);
+            self.ResetComboTimeout(nowCombatMs);
             return true;
         }
 
         /// <summary>
         /// 缓存输入
         /// </summary>
-        private static void BufferInput(this AttackComponent self, ComboInputType inputType)
+        private static void BufferInput(this AttackComponent self, ComboInputType inputType, long nowCombatMs)
         {
             self.HasBufferedInput = true;
             self.BufferedInputType = inputType;
-            self.BufferedInputTime = self.GetCombatNowMs();
+            self.BufferedInputTime = nowCombatMs;
         }
 
         private static void ClearBufferedInput(this AttackComponent self)
@@ -322,7 +595,7 @@ namespace ET
             self.CurrentSegmentEnded = false;
             self.IsMovementActive = self.CurrentSegment.Movement.EnableMovement;
             self.ClearBufferedInput();
-            self.CancelAttackLayerFadeOutTimer();
+            self.ClearAttackLayerFadeOutDeadline();
             
             self.BindAnimancerEvents(animState, segment);
 
@@ -333,8 +606,8 @@ namespace ET
             // 初始化位移
             self.InitializeMovement(segment);
 
-            // 重置超时定时器
-            self.ResetComboTimeout();
+            // 刷新连击截止点（combat-time）
+            self.ResetComboTimeout(self.GetCombatNowMs());
 
             // 播放攻击特效和音效
             self.PlayAttackEffects(segment);
@@ -357,14 +630,8 @@ namespace ET
             self.IsMovementActive = false;
             self.IsInputBufferWindowOpen = false;
             self.IsCancelWindowOpen = false;
-            // 重置判定框状态
-            if (segment.HitBoxes != null)
-            {
-                foreach (var hitBox in segment.HitBoxes)
-                {
-                    hitBox.IsActive = false;
-                }
-            }
+            // 重置判定框状态（运行时状态必须在组件内维护，不能污染配置对象）
+            self.HitBoxActiveMask = 0UL;
         }
 
         /// <summary>
@@ -374,7 +641,7 @@ namespace ET
         {
             if (segment.Movement == null || !segment.Movement.EnableMovement)
                 return;
-            self.MovementStartPosition = self.Player.position;
+            self.MovementStartPosition = self.OwnerTransform.position;
 
             // 如果启用追踪，寻找最近目标
             if (segment.Movement.TrackTarget)
@@ -382,18 +649,18 @@ namespace ET
                 self.TrackTarget = self.FindNearestTarget(segment.Movement.TrackRange);
                 if (self.TrackTarget != null)
                 {
-                    Vector3 direction = (self.TrackTarget.position - self.Player.position).normalized;
+                    Vector3 direction = (self.TrackTarget.position - self.OwnerTransform.position).normalized;
                     direction.y = 0;
                     self.MovementTargetPosition = self.MovementStartPosition + direction * segment.Movement.Distance;
                 }
                 else
                 {
-                    self.MovementTargetPosition = self.MovementStartPosition + self.Player.forward * segment.Movement.Distance;
+                    self.MovementTargetPosition = self.MovementStartPosition + self.OwnerTransform.forward * segment.Movement.Distance;
                 }
             }
             else
             {
-                self.MovementTargetPosition = self.MovementStartPosition + self.Player.forward * segment.Movement.Distance;
+                self.MovementTargetPosition = self.MovementStartPosition + self.OwnerTransform.forward * segment.Movement.Distance;
             }
             
             if(segment.Movement.Distance > 0f)
@@ -416,7 +683,7 @@ namespace ET
         }
 
         /// <summary>
-        /// TODO 播放攻击特效和音效
+        /// 播放攻击特效和音效
         /// </summary>
         private static void PlayAttackEffects(this AttackComponent self, AttackSegmentData segment)
         {
@@ -461,13 +728,8 @@ namespace ET
         {
             if (self.CurrentAnimState == null || self.CurrentSegment == null)
                 return true;
-            
-            float endTime = self.CurrentSegment.TimeWindow.AnimationEnd;
-            if (endTime <= 0f)
-            {
-                endTime = 1f;
-            }
-            endTime = Mathf.Clamp01(endTime);
+
+            float endTime = self.CurrentSegment.GetAnimationEnd01();
             return self.CurrentAnimState.NormalizedTime >= endTime;
         }
 
@@ -501,7 +763,7 @@ namespace ET
 
             // 没有后续攻击，进入后摇状态
             self.State = AttackState.Recovery;
-            self.ScheduleAttackLayerFadeOutTimer();
+            self.ArmAttackLayerFadeOutDeadline();
             
         }
         
@@ -520,17 +782,26 @@ namespace ET
             if (self.CurrentSegment?.HitBoxes == null)
                 return;
 
-            foreach (var hitBox in self.CurrentSegment.HitBoxes)
+            // 由 Animancer Events 置位 ActiveMask，FixedUpdate 轮询读取
+            ulong mask = self.HitBoxActiveMask;
+            if (mask == 0UL) return;
+
+            var hitBoxes = self.CurrentSegment.HitBoxes;
+            for (int i = 0; i < hitBoxes.Count; i++)
             {
-                // 执行命中检测
-                if (hitBox.IsActive)
+                if (!IsHitBoxActive(mask, i))
+                {
+                    continue;
+                }
+                var hitBox = hitBoxes[i];
+                if (hitBox != null)
                 {
                     self.PerformHitDetection(hitBox);
                 }
             }
         }
 
-        #region Animancer Events 绑定（Pro）
+        #region Animancer Events 绑定
 
         private static void BindAnimancerEvents(this AttackComponent self, AnimancerState animState, AttackSegmentData segment)
         {
@@ -552,7 +823,7 @@ namespace ET
                 }
 
                 // 窗口：输入缓冲 / 取消。由事件驱动置位，避免分散在逻辑里到处比较时间。
-                float inputWindow = Mathf.Clamp01(segment.TimeWindow.InputBufferStart);
+                float inputWindow = segment.TimeWindow != null ? segment.TimeWindow.GetInputBufferStart01() : 0f;
                 if (inputWindow > 0f)
                 {
                     events.Add(inputWindow, () =>
@@ -568,7 +839,7 @@ namespace ET
                     self.IsInputBufferWindowOpen = true;
                 }
 
-                float cancelWindow = Mathf.Clamp01(segment.TimeWindow.CancelableTime);
+                float cancelWindow = segment.TimeWindow != null ? segment.TimeWindow.GetCancelableTime01() : 0f;
                 if (cancelWindow > 0f)
                 {
                     events.Add(cancelWindow, () =>
@@ -585,10 +856,10 @@ namespace ET
                 }
 
                 // 段结束阈值：使用 TimeWindow.AnimationEnd（可早于 1），实现提前进入后摇/接段。
-                float endTime = segment.TimeWindow.AnimationEnd;
+                float endTime = segment.GetAnimationEnd01();
                 if (endTime > 0f && endTime < 1f)
                 {
-                    events.NormalizedEndTime = Mathf.Clamp01(endTime);
+                    events.NormalizedEndTime = endTime;
                 }
                 // endTime <= 0 或 >= 1 则保持默认（NaN -> 自动取 1 或 0，取决于播放方向）
 
@@ -609,7 +880,6 @@ namespace ET
                 }
                 else
                 {
-                    endTrigger = Mathf.Clamp01(endTrigger);
                     if (animState.IsLooping && Mathf.Approximately(endTrigger, 1f))
                     {
                         endTrigger = AnimancerEvent.AlmostOne;
@@ -633,41 +903,42 @@ namespace ET
                         var hitBox = segment.HitBoxes[i];
                         if (hitBox == null)
                             continue;
-
-                        float start = Mathf.Clamp01(hitBox.NormalizedStart);
-                        float end = Mathf.Clamp01(hitBox.NormalizedEnd);
-                        if (end < start)
-                        {
-                            continue;
-                        }
+                        
+                        // - 0~1
+                        // - start<=end
+                        // - start/end <= segmentEnd
+                        float start = hitBox.NormalizedStart;
+                        float end = hitBox.NormalizedEnd;
 
                         if (Mathf.Approximately(start, end))
                         {
+                            int idx = i;
                             hint = events.Add(hint, start, () =>
                             {
                                 if (self.CurrentAnimState != animState || self.CurrentSegment != segment ||
                                     self.State != AttackState.Attacking)
                                     return;
-                                hitBox.IsActive = true;
-                                self.UpdateHitDetection();
-                                hitBox.IsActive = false;
+                                SetHitBoxActive(ref self.HitBoxActiveMask, idx, active: true);
+                                self.UpdateHitDetection(); // 关键帧：即时扫一次
+                                SetHitBoxActive(ref self.HitBoxActiveMask, idx, active: false);
                             });
                         }
                         else
                         {
+                            int idx = i;
                             hint = events.Add(hint, start, () =>
                             {
                                 if (self.CurrentAnimState != animState || self.CurrentSegment != segment ||
                                     self.State != AttackState.Attacking)
                                     return;
-                                hitBox.IsActive = true;
+                                SetHitBoxActive(ref self.HitBoxActiveMask, idx, active: true);
                             });
 
                             hint = events.Add(hint, end, () =>
                             {
                                 if (self.CurrentAnimState != animState || self.CurrentSegment != segment)
                                     return;
-                                hitBox.IsActive = false;
+                                SetHitBoxActive(ref self.HitBoxActiveMask, idx, active: false);
                             });
                         }
                     }
@@ -682,7 +953,7 @@ namespace ET
                         var vfx = segment.VisualEffects[i];
                         if (vfx == null)
                             continue;
-                        float t = Mathf.Clamp01(vfx.NormalizedStart);
+                        float t = vfx.NormalizedStart;
                         hint = events.Add(hint, t, () =>
                         {
                             if (self.CurrentAnimState != animState || self.CurrentSegment != segment || self.State != AttackState.Attacking)
@@ -701,7 +972,7 @@ namespace ET
                         var sfx = segment.SoundEffects[i];
                         if (sfx == null)
                             continue;
-                        float t = Mathf.Clamp01(sfx.NormalizedStart);
+                        float t = sfx.NormalizedStart;
                         hint = events.Add(hint, t, () =>
                         {
                             if (self.CurrentAnimState != animState || self.CurrentSegment != segment || self.State != AttackState.Attacking)
@@ -715,30 +986,17 @@ namespace ET
                 if (segment.AttachedActives != null)
                 {
                     int hint = 0;
-                    float endNorm = segment.TimeWindow != null ? segment.TimeWindow.AnimationEnd : 1f;
-                    if (endNorm <= 0f) endNorm = 1f;
-                    endNorm = Mathf.Clamp01(endNorm);
+                    float endNorm = segment.GetAnimationEnd01();
 
                     for (int i = 0; i < segment.AttachedActives.Count; i++)
                     {
                         var a = segment.AttachedActives[i];
                         if (a == null)
                             continue;
-
-                        float start = Mathf.Clamp01(a.NormalizedStart);
-                        float end = Mathf.Clamp01(a.NormalizedEnd);
-                        if (end < start)
-                        {
-                            (start, end) = (end, start);
-                        }
-
-                        // 对齐运行时段结束语义：不允许超过 AnimationEnd
-                        start = Mathf.Min(start, endNorm);
-                        end = Mathf.Min(end, endNorm);
-                        if (end <= start)
-                        {
-                            continue;
-                        }
+                        
+                        float start = a.NormalizedStart;
+                        float end = a.NormalizedEnd;
+                        if (end <= start) continue;
 
                         hint = events.Add(hint, start, () =>
                         {
@@ -764,7 +1022,7 @@ namespace ET
 
         private static void PlayVisualEffect(this AttackComponent self, VisualEffectData vfx)
         {
-            if (vfx == null || vfx.Prefab == null || self.Player == null)
+            if (vfx == null || vfx.Prefab == null || self.OwnerTransform == null)
             {
                 return;
             }
@@ -781,15 +1039,15 @@ namespace ET
             }
             if (vfx.FollowTarget)
             {
-                instance.transform.SetParent(self.Player, worldPositionStays: false);
+                instance.transform.SetParent(self.OwnerTransform, worldPositionStays: false);
                 instance.transform.localPosition = vfx.Offset;
                 instance.transform.localRotation = Quaternion.Euler(vfx.RotationEuler);
             }
             else
             {
                 instance.transform.SetParent(self.EffectRoot.transform, worldPositionStays: false);
-                instance.transform.position = self.Player.TransformPoint(vfx.Offset);
-                instance.transform.rotation = self.Player.rotation * Quaternion.Euler(vfx.RotationEuler);
+                instance.transform.position = self.OwnerTransform.TransformPoint(vfx.Offset);
+                instance.transform.rotation = self.OwnerTransform.rotation * Quaternion.Euler(vfx.RotationEuler);
             }
             instance.transform.localScale = Vector3.one;
             effectSystem.Play(vfx).Forget();
@@ -797,14 +1055,14 @@ namespace ET
 
         private static void PlaySoundEffect(this AttackComponent self, SoundEffectData sfx)
         {
-            if (sfx == null || sfx.Clip == null || self.Player == null)
+            if (sfx == null || sfx.Clip == null || self.OwnerTransform == null)
                 return;
 
             try
             {
-                float volume = Mathf.Clamp01(sfx.Volume);
+                float volume = sfx.Volume;
                 // 商用项目建议替换为统一的音频系统（这里先用 PlayClipAtPoint 作为最小可用实现）
-                AudioSource.PlayClipAtPoint(sfx.Clip, self.Player.position, volume);
+                AudioSource.PlayClipAtPoint(sfx.Clip, self.OwnerTransform.position, volume);
             }
             catch (Exception e)
             {
@@ -820,12 +1078,14 @@ namespace ET
         private static void PerformHitDetection(this AttackComponent self, HitBoxData hitBox)
         {
             // 计算判定框世界坐标
-            Vector3 worldPosition = self.Player.position + self.Player.rotation * hitBox.Offset;
-            Quaternion worldRotation = self.Player.rotation * Quaternion.Euler(hitBox.RotationEuler);
+            Vector3 worldPosition = self.OwnerTransform.position + self.OwnerTransform.rotation * hitBox.Offset;
+            Quaternion worldRotation = self.OwnerTransform.rotation * Quaternion.Euler(hitBox.RotationEuler);
 
             // 根据形状类型进行检测
             var hitTargets = ListComponent<GameObject>.Create();
-            var layer = LayerMask.GetMask("Enemy");
+            int layer = self.AttackCatalog != null && self.AttackCatalog.TargetLayerMask != 0
+                ? self.AttackCatalog.TargetLayerMask
+                : LayerMask.GetMask("Enemy");
             try
             {
                 switch (hitBox.ShapeType)
@@ -848,8 +1108,6 @@ namespace ET
                 {
                     return;
                 }
-
-                Log.Error($"命中个数 {hitTargets.Count}");
                 // 处理命中目标
                 foreach (var target in hitTargets)
                 {
@@ -889,27 +1147,39 @@ namespace ET
             /*var targetHealth = target.GetComponent<HealthComponent>();
             targetHealth?.TakeDamage(damage, attacker);*/
 
-            //应用受击反应
-            //self.ApplyHitReaction(target, effect);
+            // 应用受击反应：统一走 HitReactionRequest + HitRules（过滤/优先级/归一化）
+            {
+                Unit unit = target.GetComponent<UnitReference>().Unit;
+                var hitReactionComponent = unit.GetComponent<HitReactionComponent>();
+                if (hitReactionComponent != null)
+                {
+                    Vector3 hitDirection = (target.transform.position - self.OwnerTransform.position);
+                    hitDirection.y = 0f;
+                    if (hitDirection.sqrMagnitude > 0.0001f)
+                    {
+                        hitDirection.Normalize();
+                    }
+
+                    int defaultHitStopMs = self.Config?.DefaultHitStopMs ?? 0;
+                    var req = HitReactionRequest.From(in effect, in feedback, hitDirection, defaultHitStopMs);
+                    hitReactionComponent.TryApplyHit(in req);
+                }
+            }
 
             // 播放命中特效和音效
             self.PlayHitEffects(target, hitBox);
 
-            // 申请顿帧：由 CombatFeedbackComponent 统一合并/叠加，避免多目标命中导致重入与恢复错误
-            int hitStopMs = feedback.HitStopMs;
-            if (hitStopMs <= 0)
+            // 攻击者侧顿帧：由 HitStopComponent 统一合并/叠加，避免多目标命中导致重入与恢复错误
+            int attackerHitStopMs = feedback.ResolveAttackerHitStopMs(self.Config?.DefaultHitStopMs ?? 0);
+            if (attackerHitStopMs > 0)
             {
-                hitStopMs = self.Config?.DefaultHitStopMs ?? 0;
-            }
-            if (hitStopMs > 0)
-            {
-                self.HitStop.RequestHitStop(hitStopMs,self.AnimatorComponent.Animancer);
+                self.HitStop.RequestHitStop(attackerHitStopMs, self.AnimatorComponent.Animancer);
             }
 
             // 应用屏幕震动
-            if (feedback.ScreenShakeIntensity > 0)
+            if (feedback.ScreenShakeIntensity > 0f)
             {
-                //CameraManager.Instance?.Shake(feedback.ScreenShakeIntensity, feedback.ScreenShakeDuration);
+                //CameraManager.Instance?.Shake(feedback.ScreenShakeIntensity, feedback.ScreenShakeDurationMs * 0.001f);
             }
 
             // 触发命中事件
@@ -921,7 +1191,7 @@ namespace ET
         /// <summary>
         /// 计算伤害（使用 HitEffectData）
         /// </summary>
-        private static float CalculateDamage(this AttackComponent self, GameObject target, HitEffectData effect)
+        private static float CalculateDamage(this AttackComponent self, GameObject target, in HitEffectData effect)
         {
             // 获取攻击者属性
             /*var attackerAttr = attacker.GetComponent<AttributeComponent>();
@@ -939,97 +1209,12 @@ namespace ET
         }
 
         /// <summary>
-        /// 应用受击反应（使用 HitEffectData）
-        /// </summary>
-        private static void ApplyHitReaction(this AttackComponent self, GameObject target, HitEffectData effect)
-        {
-            var hitReactionComponent = target.GetComponent<HitReactionComponent>();
-            if (hitReactionComponent == null)
-                return;
-
-            var attacker = self.GetParent<Unit>();
-            Vector3 hitDirection = (target.transform.position - self.Player.position).normalized;
-            hitDirection.y = 0;
-
-            switch (effect.HitReaction)
-            {
-                case HitReactionType.Light:
-                    hitReactionComponent.PlayLightHit(hitDirection, effect.HitStunMs);
-                    break;
-                case HitReactionType.Medium:
-                    hitReactionComponent.PlayMediumHit(hitDirection, effect.HitStunMs);
-                    break;
-                case HitReactionType.Heavy:
-                    hitReactionComponent.PlayHeavyHit(hitDirection, effect.HitStunMs);
-                    break;
-                case HitReactionType.Knockback:
-                    hitReactionComponent.PlayKnockback(hitDirection, effect.KnockbackForce, effect.HitStunMs);
-                    break;
-                case HitReactionType.Knockup:
-                    hitReactionComponent.PlayKnockup(effect.KnockupForce, effect.HitStunMs);
-                    break;
-                case HitReactionType.Knockdown:
-                    hitReactionComponent.PlayKnockdown(hitDirection, effect.KnockbackForce, effect.HitStunMs);
-                    break;
-            }
-        }
-
-        /// <summary>
         /// 播放命中特效和音效
         /// </summary>
         private static void PlayHitEffects(this AttackComponent self, GameObject target, HitBoxData hitBox)
         {
             // 命中特效/音效同样建议通过轨道驱动（例如在命中点触发一条 VisualEffectData）。
             // 这里保留扩展点，避免把资源路径硬编码在配置里。
-        }
-        
-        #endregion
-
-        #region 连击超时
-        
-        /// <summary>
-        /// 重置连击超时定时器
-        /// </summary>
-        private static void ResetComboTimeout(this AttackComponent self)
-        {
-            int timeoutMs = self.GetCurrentSegmentComboTimeoutMs();
-            self.ComboTimeoutAtCombatMs = self.GetCombatNowMs() + timeoutMs;
-        }
-
-        /// <summary>
-        /// 获取当前段的连击超时（毫秒）。
-        /// 规则：段超时 = 段时长(ms) + 段偏移(ComboTimeoutOffsetMs)，用于避免全局超时小于动画时长导致提前退出。
-        /// </summary>
-        private static int GetCurrentSegmentComboTimeoutMs(this AttackComponent self)
-        {
-            // 默认兜底
-            int fallback = self.Config?.ComboTimeoutMs ?? 800;
-
-            var seg = self.CurrentSegment;
-            if (seg == null)
-            {
-                return Mathf.Max(0, fallback);
-            }
-
-            float durSec = Mathf.Max(0f, seg.Duration);
-            // Duration 若异常为 0，则回退使用兜底超时，避免一直被判定为立即超时
-            if (durSec <= 0f)
-            {
-                return Mathf.Max(0, fallback);
-            }
-
-            int durMs = Mathf.RoundToInt(durSec * seg.TimeWindow.AnimationEnd * 1000f); //转成毫秒
-            int offsetMs = Mathf.Max(0, seg.ComboTimeoutOffsetMs);
-            int total = durMs + offsetMs;
-            return Mathf.Max(0, total);
-        }
-
-        /// <summary>
-        /// 连击超时处理（由定时器调用）
-        /// </summary>
-        public static void OnComboTimeout(this AttackComponent self)
-        {
-            self.ExitAttackState();
         }
         
         #endregion
@@ -1076,12 +1261,12 @@ namespace ET
                 return;
             // 退出攻击状态时，淡出攻击层
             self.FadeOutAttackLayer();
-            self.CancelAttackLayerFadeOutTimer();
+            self.ClearAttackLayerFadeOutDeadline();
 
             int lastIndex = self.CurrentSegmentIndex;
 
-            // 清理定时器
-            self.CleanupTimers();
+            // 清理截止点：避免旧截止点在退出后触发
+            self.ClearCombatDeadlines();
 
             // 恢复本次攻击流程接管过的 Active（避免退出后残留显隐）
             self.RestoreAttachedActives();
@@ -1110,9 +1295,9 @@ namespace ET
         /// </summary>
         private static void SoftExitForRestart(this AttackComponent self)
         {
-            // 清理定时器：避免旧的连击超时在新起手过程中触发
-            self.CleanupTimers();
-            self.CancelAttackLayerFadeOutTimer();
+            // 清理截止点：避免旧的连击超时/淡出在新起手过程中触发
+            self.ClearCombatDeadlines();
+            self.ClearAttackLayerFadeOutDeadline();
             // 软退出也应恢复 Active，避免“立刻重起手”时上一段显隐残留
             self.RestoreAttachedActives();
 
@@ -1172,7 +1357,7 @@ namespace ET
                 return;
             }
 
-            var root = self.Player;
+            var root = self.OwnerTransform;
             if (root == null)
             {
                 return;
@@ -1226,40 +1411,6 @@ namespace ET
 
         #endregion
 
-        #region AttackLayer 延迟淡出（定时器）
-
-        private static void CancelAttackLayerFadeOutTimer(this AttackComponent self)
-        {
-            self.AttackLayerFadeOutAtCombatMs = 0;
-        }
-
-        private static void ScheduleAttackLayerFadeOutTimer(this AttackComponent self)
-        {
-            self.CancelAttackLayerFadeOutTimer();
-
-            int holdMs = self.Config?.RecoveryHoldMs ?? 200;
-            if (holdMs <= 0)
-            {
-                // 立刻淡出（不额外占用 Timer）
-                self.FadeOutAttackLayer();
-                return;
-            }
-
-            self.AttackLayerFadeOutAtCombatMs = self.GetCombatNowMs() + holdMs;
-        }
-
-        public static void OnAttackLayerFadeOutTimer(this AttackComponent self)
-        {
-            // 兼容旧调用点：新实现不再依赖 TimerInvokeType
-            self.AttackLayerFadeOutAtCombatMs = 0;
-            if (!self.IsDisposed && self.State == AttackState.Recovery)
-            {
-                self.FadeOutAttackLayer();
-            }
-        }
-
-        #endregion
-        
         #endregion
 
         #region 辅助方法
@@ -1325,93 +1476,6 @@ namespace ET
             return (self.CurrentSegmentIndex, self.CurrentSegment.Name, self.CurrentNormalizedTime);
         }
         
-        #endregion
-
-        #region 输入缓冲过期控制
-
-        private static bool IsBufferedInputValid(this AttackComponent self)
-        {
-            if (!self.HasBufferedInput)
-                return false;
-
-            int windowMs = self.Config?.InputBufferWindowMs ?? 200;
-            if (windowMs <= 0)
-                return true;
-
-            long now = self.GetCombatNowMs();
-            return now - self.BufferedInputTime <= windowMs;
-        }
-
-        private static void UpdateBufferedInputTimeout(this AttackComponent self)
-        {
-            if (!self.HasBufferedInput)
-                return;
-
-            if (!self.IsBufferedInputValid())
-            {
-                self.ClearBufferedInput();
-            }
-        }
-
-        #endregion
-
-        #region 顿帧
-
-        private static bool IsInHitStop(this AttackComponent self)
-        {
-            var unit = self.GetParent<Unit>();
-            var feedback = unit?.GetComponent<HitStopComponent>();
-            return feedback != null && feedback.IsHitStopActive;
-        }
-
-        private static long GetCombatNowMs(this AttackComponent self)
-        {
-            var unit = self.GetParent<Unit>();
-            var feedback = unit?.GetComponent<HitStopComponent>();
-            if (feedback != null)
-            {
-                return feedback.NowCombatMs();
-            }
-
-            // 兜底：没有控制器时，退回原有 client frame time
-            return TimeInfo.Instance.ClientFrameTime();
-        }
-
-        private static void UpdateComboTimeout(this AttackComponent self)
-        {
-            if (self.ComboTimeoutAtCombatMs <= 0)
-            {
-                return;
-            }
-
-            long now = self.GetCombatNowMs();
-            if (now >= self.ComboTimeoutAtCombatMs)
-            {
-                self.ComboTimeoutAtCombatMs = 0;
-                self.OnComboTimeout();
-            }
-        }
-
-        private static void UpdateAttackLayerFadeOut(this AttackComponent self)
-        {
-            if (self.State != AttackState.Recovery)
-            {
-                return;
-            }
-
-            if (self.AttackLayerFadeOutAtCombatMs <= 0)
-            {
-                return;
-            }
-
-            long now = self.GetCombatNowMs();
-            if (now >= self.AttackLayerFadeOutAtCombatMs)
-            {
-                self.AttackLayerFadeOutAtCombatMs = 0;
-                self.FadeOutAttackLayer();
-            }
-        }
-
         #endregion
     }
 }

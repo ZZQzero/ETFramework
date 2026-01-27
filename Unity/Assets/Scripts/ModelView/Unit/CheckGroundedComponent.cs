@@ -480,10 +480,10 @@ namespace ET
         // ==================== 引用组件 ====================
 
         /// <summary>
-        /// 角色 Transform（通常是角色根节点）。
+        /// 单位视图根节点（通常是角色根节点）。
         /// 所有检测与位移计算的空间参考。
         /// </summary>
-        public Transform Player;
+        public Transform OwnerTransform;
 
         /// <summary>
         /// 角色的 CapsuleCollider。

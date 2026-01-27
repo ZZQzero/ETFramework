@@ -26,16 +26,24 @@ namespace ET
             // 初始化速度为零，防止启动时有初始速度导致角色移动
             self.Rigidbody.linearVelocity = Vector3.zero;
             self.Rigidbody.angularVelocity = Vector3.zero;
-            self.PlayerUnit = self.GetParent<Unit>();
-            self.Ground = self.PlayerUnit.GetComponent<CheckGroundedComponent>();
-            self.Input = self.PlayerUnit.GetComponent<InputComponent>();
-            self.Attack = self.PlayerUnit.GetComponent<AttackComponent>();
-            self.CapsuleCollider = player.GetComponent<CapsuleCollider>();
-            self.CameraFollow = self.Root().GetComponent<CameraFollowComponent>();
-            if (self.CameraFollow == null)
+            self.Unit = self.GetParent<Unit>();
+            self.Ground = self.Unit.GetComponent<CheckGroundedComponent>();
+            self.LocomotionIntent = self.Unit.GetComponent<LocomotionIntentComponent>();
+            self.Attack = self.Unit.GetComponent<AttackComponent>();
+
+            // 运动配置：只消费最终参数，不关心来源（玩家/怪物/BUFF/数值）
+            var moveConfig = self.Unit.GetComponent<MovementConfigComponent>();
+            if (moveConfig != null)
             {
-                Log.Error("没有找到CameraFollowComponent组件");
+                self.MoveSpeed = moveConfig.MoveSpeed;
+                self.Acceleration = moveConfig.Acceleration;
+                self.Deceleration = moveConfig.Deceleration;
+                self.RotationSpeed = moveConfig.RotationSpeed;
+                self.Gravity = moveConfig.Gravity;
+                self.JumpForce = moveConfig.JumpForce;
+                self.GravityMultiplier = moveConfig.GravityMultiplier;
             }
+            self.CapsuleCollider = player.GetComponent<CapsuleCollider>();
             if (self.CapsuleCollider == null)
             {
                 Log.Warning($"CharacterControllerComponent需要CapsuleCollider组件，GameObject: {player.name}");
@@ -63,8 +71,10 @@ namespace ET
         [EntitySystem]
         private static void Update(this CharacterControllerComponent self)
         {
-            // 处理输入和跳跃请求（每帧处理，响应性更好）
-            if (self.Input != null && self.Input.HasJumpRequest() && !self.Attack.IsInAttack)
+            // 处理跳跃请求（意图层边沿触发，响应性更好）
+            if (self.LocomotionIntent != null &&
+                self.LocomotionIntent.ConsumeJumpRequest() &&
+                (self.Attack == null || !self.Attack.IsInAttack))
             {
                 self.RequestJump();
             }
@@ -74,14 +84,18 @@ namespace ET
         private static void OnAnimatorMove(this CharacterControllerComponent self)
         {
             float deltaTime = Time.deltaTime;
+            if (self.Attack == null)
+            {
+                self.Attack = self.Unit?.GetComponent<AttackComponent>();
+            }
             
-            if (self.Attack.IsMovementActive)
+            if (self.Attack != null && self.Attack.IsMovementActive)
             {
                 self.UpdateAttackMovement();
                 self.CurrentVelocity = Vector3.up * self.CurrentVelocity.y;
                 self.Rigidbody.linearVelocity = self.CurrentVelocity;
             }
-            else if (!self.EnableMovement || self.Attack.IsInAttack)
+            else if (!self.EnableMovement || (self.Attack != null && self.Attack.IsInAttack))
             {
                 self.ApplyDeceleration(deltaTime);
                 self.Rigidbody.linearVelocity = self.CurrentVelocity;
@@ -93,7 +107,7 @@ namespace ET
             }
             
             // 应用旋转
-            if (!self.Attack.IsAttacking)
+            if (self.Attack == null || !self.Attack.IsAttacking)
             {
                 self.ApplyRotation(deltaTime);
             }
@@ -102,11 +116,13 @@ namespace ET
             self.CalculateAnimationSpeeds();
             
             // 处理Root Motion
-            if (!self.Attack.IsMovementActive && self.CurrentVelocity.magnitude <= 0.0001f && 
+            if ((self.Attack == null || !self.Attack.IsMovementActive) && self.CurrentVelocity.magnitude <= 0.0001f && 
                 self.Animator != null && self.Animator.deltaPosition.magnitude > 0.0001f)
             {
                 self.Rigidbody.MovePosition(self.Rigidbody.position + self.Animator.deltaPosition);
             }
+
+            self.SyncUnitTransformFromRigidbody();
         }
 
         [EntitySystem]
@@ -116,13 +132,21 @@ namespace ET
             
             self.Ground.Detect();
             
-            if (self.JumpRequested && !self.Attack.IsInAttack)
+            if (self.Attack == null)
+            {
+                self.Attack = self.Unit?.GetComponent<AttackComponent>();
+            }
+
+            if (self.JumpRequested && (self.Attack == null || !self.Attack.IsInAttack))
             {
                 self.Jump();
                 self.JumpRequested = false;
             }
 
             self.ApplyGravity(deltaTime);
+
+            // Ground/重力只在 FixedUpdate 推进，这里也同步一次，避免只动 Y 时 Unit 不更新
+            self.SyncUnitTransformFromRigidbody();
         }
         
         [EntitySystem]
@@ -131,6 +155,43 @@ namespace ET
             // 清理引用
             self.Rigidbody = null;
             self.CapsuleCollider = null;
+        }
+
+        /// <summary>
+        /// 将 Rigidbody 的最终结果同步回 Unit（作为逻辑/事件系统的权威位置）。
+        /// 注意：避免每帧无意义 Publish，通过阈值过滤抖动。
+        /// </summary>
+        private static void SyncUnitTransformFromRigidbody(this CharacterControllerComponent self)
+        {
+            if (self.Unit == null || self.Rigidbody == null)
+            {
+                return;
+            }
+
+            Vector3 pos = self.Rigidbody.position;
+            Quaternion rot = self.Rigidbody.rotation;
+
+            // Position
+            var unitPos3 = self.Unit.Position;
+            var unitPos = new Vector3(unitPos3.x, unitPos3.y, unitPos3.z);
+            if ((unitPos - pos).sqrMagnitude > 0.000001f)
+            {
+                self.Unit.Position = pos;
+            }
+
+            // Rotation（只同步水平旋转）
+            Vector3 fwd = rot * Vector3.forward;
+            fwd.y = 0f;
+            if (fwd.sqrMagnitude > 0.0001f)
+            {
+                fwd.Normalize();
+                var unitFwd3 = self.Unit.Forward;
+                var unitFwd = new Vector3(unitFwd3.x, unitFwd3.y, unitFwd3.z);
+                if ((unitFwd - fwd).sqrMagnitude > 0.0001f)
+                {
+                    self.Unit.Forward = fwd;
+                }
+            }
         }
 
 
@@ -195,7 +256,7 @@ namespace ET
         /// </summary>
         private static void ApplyMovement(this CharacterControllerComponent self, float deltaTime)
         {
-            Vector3 inputDirection = self.Input.GetMoveDirection();
+            Vector3 inputDirection = self.LocomotionIntent != null ? self.LocomotionIntent.MoveDirection : Vector3.zero;
             
             // 在地面时才能应用移动（包括稳定斜坡、边缘等状态）
             if (inputDirection.magnitude > 0.01f)
@@ -226,15 +287,15 @@ namespace ET
         /// </summary>
         private static void ApplyRotation(this CharacterControllerComponent self, float deltaTime)
         {
-            // 获取输入方向
-            Vector3 inputDirection;
-            if (self.Attack.State == AttackState.Recovery && self.Input.GetMoveDirection().magnitude > 0.0001f)
+            // 获取期望朝向：优先 FaceDirection，回退 MoveDirection
+            Vector3 inputDirection = Vector3.zero;
+            if (self.LocomotionIntent != null)
             {
-                inputDirection = self.Input.GetAimDirection(self.Rigidbody.transform);
-            }
-            else
-            {
-                inputDirection = self.Input.GetMoveDirection();
+                inputDirection = self.LocomotionIntent.FaceDirection;
+                if (inputDirection.sqrMagnitude < 0.0001f)
+                {
+                    inputDirection = self.LocomotionIntent.MoveDirection;
+                }
             }
             
             // 只有当输入方向有效时才旋转，否则保持当前旋转
@@ -249,7 +310,7 @@ namespace ET
             Quaternion targetRotation = Quaternion.LookRotation(inputDirection);
 
             float actualRotationSpeed;
-            if (self.Attack.State == AttackState.Recovery)
+            if (self.Attack != null && self.Attack.State == AttackState.Recovery)
             {
                 float angle = Quaternion.Angle(player.rotation, targetRotation);
                 float boost = Mathf.Lerp(2.5f, 4.5f, Mathf.Clamp01(angle / 180f));
@@ -268,8 +329,7 @@ namespace ET
                 targetRotation,
                 actualRotationSpeed * deltaTime
             );
-            // 同步到Unit的Rotation
-            self.PlayerUnit.Rotation = player.rotation;
+            // Unit 同步由 SyncUnitTransformFromRigidbody 统一负责
         }
         
         /// <summary>
@@ -292,9 +352,10 @@ namespace ET
         /// </summary>
         public static void StopMovement(this CharacterControllerComponent self)
         {
-            if (self.Input != null)
+            if (self.LocomotionIntent != null)
             {
-                self.Input.MoveDirection = Vector3.zero;
+                self.LocomotionIntent.MoveDirection = Vector3.zero;
+                self.LocomotionIntent.FaceDirection = Vector3.zero;
             }
             // 只停止水平移动，保持垂直速度（重力/跳跃）
             Vector3 velocity = self.CurrentVelocity;

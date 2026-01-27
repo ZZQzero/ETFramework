@@ -162,8 +162,9 @@ public partial class SkillEditorWindow : EditorWindow
     private UnityEditor.UIElements.EnumFlagsField hitEffectTargetStateField;
     
     private FloatField hitFeedbackShakeIntensityField;
-    private FloatField hitFeedbackShakeDurationField;
-    private IntegerField hitFeedbackHitStopMsField;
+    private IntegerField hitFeedbackShakeDurationMsField;
+    private IntegerField hitFeedbackAttackerHitStopMsField;
+    private IntegerField hitFeedbackVictimHitStopMsField;
     private FloatField hitFeedbackTimeScaleField;
     private IntegerField hitFeedbackTimeScaleDurationMsField;
     
@@ -256,22 +257,9 @@ public partial class SkillEditorWindow : EditorWindow
     /// </summary>
     private static float GetSegmentAnimationLength(AttackSegmentData segment)
     {
-        if (segment == null)
-        {
-            return DEFAULT_ANIMATION_LENGTH;
-        }
-        
-        if (segment.Duration > 0f)
-        {
-            return segment.Duration;
-        }
-        
-        if (segment.AnimationClipTrans != null && segment.AnimationClipTrans.Clip != null)
-        {
-            return segment.AnimationClipTrans.Clip.length;
-        }
-        
-        return DEFAULT_ANIMATION_LENGTH;
+        return segment != null
+            ? segment.GetEffectiveDurationSec(DEFAULT_ANIMATION_LENGTH)
+            : DEFAULT_ANIMATION_LENGTH;
     }
 
     /// <summary>
@@ -281,13 +269,7 @@ public partial class SkillEditorWindow : EditorWindow
     /// </summary>
     private static float GetSegmentAnimationEndNorm(AttackSegmentData segment)
     {
-        float endNorm = segment?.TimeWindow != null ? segment.TimeWindow.AnimationEnd : 1f;
-        if (endNorm <= 0f)
-        {
-            endNorm = 1f;
-        }
-
-        return Mathf.Clamp01(endNorm);
+        return segment != null ? segment.GetAnimationEnd01() : 1f;
     }
     
     #endregion

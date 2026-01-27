@@ -7,6 +7,35 @@ using UnityEngine.Serialization;
 namespace ET
 {
     /// <summary>
+    /// 攻击数据时间/数值工具：
+    /// - 统一 Clamp/排序/比较阈值，避免运行时与编辑器各写一套导致语义漂移
+    /// </summary>
+    public static class AttackDataUtil
+    {
+        public const float Epsilon = 1e-6f;
+
+        public static float Clamp01(float v)
+        {
+            if (v < 0f) return 0f;
+            if (v > 1f) return 1f;
+            return v;
+        }
+
+        public static void Clamp01Range(ref float start, ref float end)
+        {
+            start = Clamp01(start);
+            end = Clamp01(end);
+            if (end < start)
+            {
+                (start, end) = (end, start);
+            }
+        }
+
+        public static int ClampNonNegative(int v) => v < 0 ? 0 : v;
+        public static float ClampNonNegative(float v) => v < 0f ? 0f : v;
+    }
+
+    /// <summary>
     /// 攻击状态枚举
     /// </summary>
     public enum AttackState
@@ -104,58 +133,132 @@ namespace ET
         /// 说明：用于提前判定“本段结束”，进入后摇/允许接段（不一定等到动画真正播放到 1.0）。
         /// </summary>
         public float AnimationEnd = 0.9f;
+
+        /// <summary>
+        /// 归一化/规范化（编辑器保存、配置构建时调用）。
+        /// </summary>
+        public void ValidateAndNormalize()
+        {
+            this.InputBufferStart = AttackDataUtil.Clamp01(this.InputBufferStart);
+            this.CancelableTime = AttackDataUtil.Clamp01(this.CancelableTime);
+            this.AnimationEnd = AttackDataUtil.Clamp01(this.AnimationEnd <= 0f ? 1f : this.AnimationEnd);
+
+            // 约束：窗口点不应超过段结束阈值
+            if (this.InputBufferStart > this.AnimationEnd) this.InputBufferStart = this.AnimationEnd;
+            if (this.CancelableTime > this.AnimationEnd) this.CancelableTime = this.AnimationEnd;
+        }
+
+        /// <summary>
+        /// 读取“已规范化”的输入缓冲窗口点（0~1）。
+        /// 约束：在编辑器保存与运行时加载后都会调用 <see cref="ValidateAndNormalize"/>，因此运行时可完全信任该值已在 0~1 且 <= AnimationEnd。
+        /// </summary>
+        public float GetInputBufferStart01() => this.InputBufferStart;
+
+        /// <summary>
+        /// 读取“已规范化”的可取消窗口点（0~1）。
+        /// </summary>
+        public float GetCancelableTime01() => this.CancelableTime;
+
+        /// <summary>
+        /// 段结束阈值（0~1）。若配置<=0 则视为 1。
+        /// </summary>
+        public float GetAnimationEnd01() => this.AnimationEnd;
     }
 
     /// <summary>
     /// 击中效果数据（伤害、控制、状态过滤）
     /// </summary>
     [Serializable]
-    public class HitEffectData
+    public struct HitEffectData
     {
         /// <summary>伤害倍率</summary>
-        public float DamageMultiplier = 1f;
-        
+        public float DamageMultiplier;
+
         /// <summary>受击反应类型</summary>
-        public HitReactionType HitReaction = HitReactionType.Light;
-        
+        public HitReactionType HitReaction;
+
         /// <summary>击退力度</summary>
-        public float KnockbackForce = 0f;
-        
+        public float KnockbackForce;
+
         /// <summary>击飞力度</summary>
-        public float KnockupForce = 0f;
-        
+        public float KnockupForce;
+
         /// <summary>硬直时间（毫秒）</summary>
-        public int HitStunMs = 200;
-        
+        public int HitStunMs;
+
         /// <summary>
-        /// 目标状态过滤（新版本：可多选）。
+        /// 目标状态过滤（可多选）。
         /// </summary>
-        public TargetStateMask TargetStates = TargetStateMask.Any;
+        public TargetStateMask TargetStates;
+
+        public static HitEffectData Default => new HitEffectData
+        {
+            DamageMultiplier = 1f,
+            HitReaction = HitReactionType.Light,
+            KnockbackForce = 0f,
+            KnockupForce = 0f,
+            HitStunMs = 200,
+            TargetStates = TargetStateMask.Any,
+        };
     }
 
     /// <summary>
     /// 击中反馈数据（顿帧、屏幕震动、时间缩放）
     /// </summary>
     [Serializable]
-    public class HitFeedbackData
+    public struct HitFeedbackData
     {
-        /// <summary>屏幕震动强度（0-1）</summary>
-        public float ScreenShakeIntensity = 0f;
-        
-        /// <summary>屏幕震动时长（秒）</summary>
-        public float ScreenShakeDuration = 0f;
-        
         /// <summary>
-        /// 顿帧时长（毫秒）。
-        /// 说明：<= 0 表示不在该 HitBox 上强制顿帧，运行时会回退使用 <see cref="AttackConfig.DefaultHitStopMs"/>。
+        /// 攻击者侧顿帧(ms)：
+        /// - -1：使用 <see cref="AttackConfig.DefaultHitStopMs"/> 作为兜底
+        /// -  0：不顿帧
+        /// - >0：强制使用该值
         /// </summary>
-        public int HitStopMs = 0;
-        
+        public int AttackerHitStopMs;
+
+        /// <summary>
+        /// 受击者侧顿帧(ms)：
+        /// - -1：使用 <see cref="AttackConfig.DefaultHitStopMs"/> 作为兜底
+        /// -  0：不顿帧（即使 profile 允许）
+        /// - >0：强制使用该值（最终是否生效仍受 <see cref="HitFeedbackProfile.AllowVictimHitStop"/> 控制）
+        /// </summary>
+        public int VictimHitStopMs;
+
+        /// <summary>屏幕震动强度（0-1）</summary>
+        public float ScreenShakeIntensity;
+
+        /// <summary>屏幕震动时长（毫秒）</summary>
+        public int ScreenShakeDurationMs;
+
         /// <summary>时间缩放（慢动作，1为正常）</summary>
-        public float TimeScale = 1f;
-        
+        public float TimeScale;
+
         /// <summary>时间缩放持续时间（毫秒）</summary>
-        public int TimeScaleDurationMs = 0;
+        public int TimeScaleDurationMs;
+
+        public static HitFeedbackData Default => new HitFeedbackData
+        {
+            AttackerHitStopMs = -1,
+            VictimHitStopMs = -1,
+            ScreenShakeIntensity = 0f,
+            ScreenShakeDurationMs = 0,
+            TimeScale = 1f,
+            TimeScaleDurationMs = 0,
+        };
+
+        public int ResolveAttackerHitStopMs(int defaultHitStopMs)
+        {
+            int ms = this.AttackerHitStopMs;
+            if (ms < 0) ms = defaultHitStopMs;
+            return ms < 0 ? 0 : ms;
+        }
+
+        public readonly int ResolveVictimHitStopMs(int defaultHitStopMs)
+        {
+            int ms = this.VictimHitStopMs;
+            if (ms < 0) ms = defaultHitStopMs;
+            return ms < 0 ? 0 : ms;
+        }
     }
 
     /// <summary>
@@ -164,6 +267,12 @@ namespace ET
     [Serializable]
     public class HitBoxData
     {
+        public HitBoxData()
+        {
+            this.Effect = HitEffectData.Default;
+            this.Feedback = HitFeedbackData.Default;
+        }
+
         /// <summary>判定名称（编辑器显示用）</summary>
         public string Name = "HitBox";
         
@@ -195,15 +304,41 @@ namespace ET
         public float NormalizedEnd = 0.5f;
         
         /// <summary>击中效果（伤害、控制）</summary>
-        public HitEffectData Effect = new HitEffectData();
-        
+        public HitEffectData Effect;
+
         /// <summary>击中反馈（顿帧、屏幕震动）</summary>
-        public HitFeedbackData Feedback = new HitFeedbackData();
-        
-        // === 运行时状态 ===
-        /// <summary>是否已激活判定</summary>
-        [NonSerialized]
-        public bool IsActive;
+        public HitFeedbackData Feedback;
+
+        /// <summary>
+        /// 归一化/规范化（编辑器保存、配置构建时调用）。
+        /// - segmentEnd01：段结束阈值（用于限制子事件不超过段结束语义）
+        /// </summary>
+        public void ValidateAndNormalize(float segmentEnd01)
+        {
+            float start = this.NormalizedStart;
+            float end = this.NormalizedEnd;
+            AttackDataUtil.Clamp01Range(ref start, ref end);
+            segmentEnd01 = AttackDataUtil.Clamp01(segmentEnd01 <= 0f ? 1f : segmentEnd01);
+
+            if (start > segmentEnd01) start = segmentEnd01;
+            if (end > segmentEnd01) end = segmentEnd01;
+            if (end < start) end = start;
+
+            this.NormalizedStart = start;
+            this.NormalizedEnd = end;
+        }
+
+        public void GetWindow01(float segmentEnd01, out float start, out float end)
+        {
+            start = this.NormalizedStart;
+            end = this.NormalizedEnd;
+            AttackDataUtil.Clamp01Range(ref start, ref end);
+            segmentEnd01 = AttackDataUtil.Clamp01(segmentEnd01 <= 0f ? 1f : segmentEnd01);
+
+            if (start > segmentEnd01) start = segmentEnd01;
+            if (end > segmentEnd01) end = segmentEnd01;
+            if (end < start) end = start;
+        }
     }
 
     /// <summary>
@@ -248,6 +383,15 @@ namespace ET
         
         /// <summary>特效时长</summary>
         public float Length = 2f;
+
+        public void ValidateAndNormalize(float segmentEnd01)
+        {
+            segmentEnd01 = AttackDataUtil.Clamp01(segmentEnd01 <= 0f ? 1f : segmentEnd01);
+            float t = AttackDataUtil.Clamp01(this.NormalizedStart);
+            if (t > segmentEnd01) t = segmentEnd01;
+            this.NormalizedStart = t;
+            this.Length = Mathf.Max(0f, this.Length);
+        }
     }
 
     /// <summary>
@@ -267,6 +411,15 @@ namespace ET
         
         /// <summary>音量（0-1）</summary>
         public float Volume = 1f;
+
+        public void ValidateAndNormalize(float segmentEnd01)
+        {
+            segmentEnd01 = AttackDataUtil.Clamp01(segmentEnd01 <= 0f ? 1f : segmentEnd01);
+            float t = AttackDataUtil.Clamp01(this.NormalizedStart);
+            if (t > segmentEnd01) t = segmentEnd01;
+            this.NormalizedStart = t;
+            this.Volume = Mathf.Clamp01(this.Volume);
+        }
     }
 
     /// <summary>
@@ -293,6 +446,21 @@ namespace ET
 
         /// <summary>结束时间（归一化 0-1，相对于动画片段）</summary>
         public float NormalizedEnd = 0.2f;
+
+        public void ValidateAndNormalize(float segmentEnd01)
+        {
+            float start = this.NormalizedStart;
+            float end = this.NormalizedEnd;
+            AttackDataUtil.Clamp01Range(ref start, ref end);
+
+            segmentEnd01 = AttackDataUtil.Clamp01(segmentEnd01 <= 0f ? 1f : segmentEnd01);
+            if (start > segmentEnd01) start = segmentEnd01;
+            if (end > segmentEnd01) end = segmentEnd01;
+            if (end < start) end = start;
+
+            this.NormalizedStart = start;
+            this.NormalizedEnd = end;
+        }
     }
     
     /// <summary>
@@ -321,6 +489,24 @@ namespace ET
         
         /// <summary>追踪范围</summary>
         public float TrackRange = 5f;
+
+        public void ValidateAndNormalize(float segmentEnd01)
+        {
+            this.Distance = Mathf.Max(0f, this.Distance);
+            this.TrackRange = Mathf.Max(0f, this.TrackRange);
+
+            float start = this.NormalizedStart;
+            float end = this.NormalizedEnd;
+            AttackDataUtil.Clamp01Range(ref start, ref end);
+
+            segmentEnd01 = AttackDataUtil.Clamp01(segmentEnd01 <= 0f ? 1f : segmentEnd01);
+            if (start > segmentEnd01) start = segmentEnd01;
+            if (end > segmentEnd01) end = segmentEnd01;
+            if (end < start) end = start;
+
+            this.NormalizedStart = start;
+            this.NormalizedEnd = end;
+        }
     }
 
     /// <summary>
@@ -392,5 +578,93 @@ namespace ET
         
         /// <summary>连击分支（键为输入类型，值为下一段攻击ID）</summary>
         public Dictionary<ComboInputType, int> ComboBranches = new Dictionary<ComboInputType, int>();
+
+        /// <summary>
+        /// 获取 Segment 的有效播放时长（秒）：
+        /// - 优先使用 Duration（用于服务端/无 Clip 情况）
+        /// - 其次使用 AnimationClipTrans.Clip.length（编辑器/客户端有资源）
+        /// - 再次使用 ClipLength（仅作为兜底展示字段）
+        /// </summary>
+        public float GetEffectiveDurationSec(float defaultDurationSec = 1f)
+        {
+            if (this.Duration > 0f)
+            {
+                return this.Duration;
+            }
+
+            if (this.AnimationClipTrans != null && this.AnimationClipTrans.Clip != null)
+            {
+                return this.AnimationClipTrans.Clip.length;
+            }
+
+            if (this.ClipLength > 0f)
+            {
+                return this.ClipLength;
+            }
+
+            return defaultDurationSec;
+        }
+
+        public float GetAnimationEnd01()
+        {
+            return this.TimeWindow != null ? this.TimeWindow.GetAnimationEnd01() : 1f;
+        }
+
+        public float ToAbsoluteTimeSec(float normalized01, float defaultDurationSec = 1f)
+        {
+            return this.StartTime + this.GetEffectiveDurationSec(defaultDurationSec) * AttackDataUtil.Clamp01(normalized01);
+        }
+
+        /// <summary>
+        /// 归一化/规范化（编辑器保存、配置构建时调用）。
+        /// - 目标：保证“窗口/子事件/位移”等都不越界，不产生隐性不一致。
+        /// </summary>
+        public void ValidateAndNormalize()
+        {
+            this.StartTime = Mathf.Max(0f, this.StartTime);
+            this.ClipLength = Mathf.Max(0f, this.ClipLength);
+            this.Duration = Mathf.Max(0f, this.Duration);
+            this.ComboTimeoutOffsetMs = Mathf.Max(0, this.ComboTimeoutOffsetMs);
+
+            this.TimeWindow ??= new TimeWindowData();
+            this.TimeWindow.ValidateAndNormalize();
+
+            float end01 = this.GetAnimationEnd01();
+
+            this.Movement ??= new AttackMovementData();
+            this.Movement.ValidateAndNormalize(end01);
+
+            if (this.HitBoxes != null)
+            {
+                foreach (var hb in this.HitBoxes)
+                {
+                    hb?.ValidateAndNormalize(end01);
+                }
+            }
+
+            if (this.VisualEffects != null)
+            {
+                foreach (var v in this.VisualEffects)
+                {
+                    v?.ValidateAndNormalize(end01);
+                }
+            }
+
+            if (this.SoundEffects != null)
+            {
+                foreach (var s in this.SoundEffects)
+                {
+                    s?.ValidateAndNormalize(end01);
+                }
+            }
+
+            if (this.AttachedActives != null)
+            {
+                foreach (var a in this.AttachedActives)
+                {
+                    a?.ValidateAndNormalize(end01);
+                }
+            }
+        }
     }
 }

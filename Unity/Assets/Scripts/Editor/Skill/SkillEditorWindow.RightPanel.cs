@@ -167,8 +167,9 @@ public partial class SkillEditorWindow : EditorWindow
         }
 
         hitFeedbackShakeIntensityField = rightContainer.Q<FloatField>("HitFeedbackShakeIntensityField");
-        hitFeedbackShakeDurationField = rightContainer.Q<FloatField>("HitFeedbackShakeDurationField");
-        hitFeedbackHitStopMsField = rightContainer.Q<IntegerField>("HitFeedbackHitStopMsField");
+        hitFeedbackShakeDurationMsField = rightContainer.Q<IntegerField>("HitFeedbackShakeDurationMsField");
+        hitFeedbackAttackerHitStopMsField = rightContainer.Q<IntegerField>("HitFeedbackAttackerHitStopMsField");
+        hitFeedbackVictimHitStopMsField = rightContainer.Q<IntegerField>("HitFeedbackVictimHitStopMsField");
         hitFeedbackTimeScaleField = rightContainer.Q<FloatField>("HitFeedbackTimeScaleField");
         hitFeedbackTimeScaleDurationMsField = rightContainer.Q<IntegerField>("HitFeedbackTimeScaleDurationMsField");
 
@@ -387,7 +388,7 @@ public partial class SkillEditorWindow : EditorWindow
         }
         if (defaultHitStopMsField != null)
         {
-            defaultHitStopMsField.tooltip = "默认顿帧(ms)：当 HitFeedback.HitStopMs <= 0 时回退使用该值。";
+            defaultHitStopMsField.tooltip = "默认顿帧(ms)：当 HitFeedback.Attacker/VictimHitStopMs 为 -1 时回退使用该值。";
             defaultHitStopMsField.RegisterValueChangedCallback(OnDefaultHitStopMsChanged);
         }
         if (recoveryHoldMsField != null)
@@ -433,15 +434,20 @@ public partial class SkillEditorWindow : EditorWindow
             hitFeedbackShakeIntensityField.tooltip = "震屏强度(0-1)。";
             hitFeedbackShakeIntensityField.RegisterValueChangedCallback(OnHitFeedbackShakeIntensityChanged);
         }
-        if (hitFeedbackShakeDurationField != null)
+        if (hitFeedbackShakeDurationMsField != null)
         {
-            hitFeedbackShakeDurationField.tooltip = "震屏持续时间(秒)。";
-            hitFeedbackShakeDurationField.RegisterValueChangedCallback(OnHitFeedbackShakeDurationChanged);
+            hitFeedbackShakeDurationMsField.tooltip = "震屏持续时间(ms)。";
+            hitFeedbackShakeDurationMsField.RegisterValueChangedCallback(OnHitFeedbackShakeDurationMsChanged);
         }
-        if (hitFeedbackHitStopMsField != null)
+        if (hitFeedbackAttackerHitStopMsField != null)
         {
-            hitFeedbackHitStopMsField.tooltip = "顿帧时长(ms)：<=0 表示不覆盖，回退使用 DefaultHitStopMs。";
-            hitFeedbackHitStopMsField.RegisterValueChangedCallback(OnHitFeedbackHitStopMsChanged);
+            hitFeedbackAttackerHitStopMsField.tooltip = "攻击者侧顿帧(ms)：-1=回退 DefaultHitStopMs；0=不顿帧；>0=强制使用。";
+            hitFeedbackAttackerHitStopMsField.RegisterValueChangedCallback(OnHitFeedbackAttackerHitStopMsChanged);
+        }
+        if (hitFeedbackVictimHitStopMsField != null)
+        {
+            hitFeedbackVictimHitStopMsField.tooltip = "受击者侧顿帧(ms)：-1=回退 DefaultHitStopMs；0=不顿帧；>0=强制使用（是否生效仍受 Victim Profile 控制）。";
+            hitFeedbackVictimHitStopMsField.RegisterValueChangedCallback(OnHitFeedbackVictimHitStopMsChanged);
         }
         if (hitFeedbackTimeScaleField != null)
         {

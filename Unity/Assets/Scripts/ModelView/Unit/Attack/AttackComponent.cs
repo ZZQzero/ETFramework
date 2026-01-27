@@ -13,6 +13,10 @@ namespace ET
     {
         public AnimatorComponent AnimatorComponent { get; set; }
         
+        public AttackCommandComponent AttackCommand { get; set; }
+        
+        public AttackCatalogComponent AttackCatalog { get; set; }
+        
         public CameraFollowComponent CameraFollow { get; set; }
         
         public HitStopComponent HitStop { get; set; }
@@ -21,12 +25,20 @@ namespace ET
         public GameObject EffectRoot { get; set; }
         
         public Unit Unit { get; set; }
+        
+        /// <summary>当前已加载的技能ID（对应 AttackCatalog/命令的 SkillId）</summary>
+        public int LoadedSkillId { get; set; }
+        
+        /// <summary>配置加载中（用于命令到来时的兜底）</summary>
+        public bool IsLoadingConfig { get; set; }
+
+        /// <summary>等待配置就绪后执行的一条命令（最小可用：避免 Update 中 await）</summary>
+        public bool HasPendingCommand { get; set; }
+        public AttackCommandComponent.AttackCommand PendingCommand;
         #region 配置数据
         
         /// <summary>攻击配置</summary>
         public AttackConfig Config { get; set; }
-        /// <summary>角色配置</summary>
-        public RoleIdentityComponent RoleIdentity { get; set; }
         
         #endregion
 
@@ -93,6 +105,16 @@ namespace ET
         
         /// <summary>连击期间累计命中数</summary>
         public int TotalHitCount { get; set; }
+
+        /// <summary>
+        /// HitBox 激活标记（运行时状态，位掩码）：
+        /// - 每段攻击的 HitBox 数量上限非常小（<=16），用位掩码比数组更轻量
+        /// - bit i = 1 表示当前段第 i 个 HitBox 处于激活窗口
+        /// - 由 Animancer Events 在窗口开始/结束时置位/清位
+        /// - 命中检测在 FixedUpdate 中读取
+        /// 说明：运行时状态必须放在组件中，避免污染配置对象。
+        /// </summary>
+        public ulong HitBoxActiveMask;
         
         #endregion
 
@@ -127,7 +149,11 @@ namespace ET
         /// <summary>追踪目标</summary>
         public Transform TrackTarget { get; set; }
 
-        public Transform Player;
+        /// <summary>
+        /// 单位视图根节点（用于位移基准、挂点、VFX/SFX、命中方向等）。
+        /// 注意：这是“OwnerTransform”，不是“Player”，避免语义误导。
+        /// </summary>
+        public Transform OwnerTransform;
         #endregion
 
         #region 便捷属性
@@ -149,7 +175,7 @@ namespace ET
                 }
                 return CurrentAnimState.HasEvents
                     ? IsInputBufferWindowOpen
-                    : CurrentAnimState.NormalizedTime >= CurrentSegment.TimeWindow.InputBufferStart;
+                    : CurrentAnimState.NormalizedTime >= (CurrentSegment.TimeWindow != null ? CurrentSegment.TimeWindow.GetInputBufferStart01() : 0f);
             }
         }
         
@@ -164,7 +190,7 @@ namespace ET
                 }
                 return CurrentAnimState.HasEvents
                     ? IsCancelWindowOpen
-                    : CurrentAnimState.NormalizedTime >= CurrentSegment.TimeWindow.CancelableTime;
+                    : CurrentAnimState.NormalizedTime >= (CurrentSegment.TimeWindow != null ? CurrentSegment.TimeWindow.GetCancelableTime01() : 0f);
             }
         }
         

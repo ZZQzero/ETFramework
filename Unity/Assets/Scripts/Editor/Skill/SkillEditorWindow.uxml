@@ -286,12 +286,16 @@
                             <ui:FloatField value="0" name="HitFeedbackShakeIntensityField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
-                            <ui:Label text="ShakeDuration(s):" style="width: 120px;"/>
-                            <ui:FloatField value="0" name="HitFeedbackShakeDurationField" style="flex-grow: 1;"/>
+                            <ui:Label text="ShakeDuration(ms):" style="width: 120px;"/>
+                            <ui:IntegerField value="0" name="HitFeedbackShakeDurationMsField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
-                            <ui:Label text="HitStop(ms):" style="width: 120px;"/>
-                            <ui:IntegerField value="0" name="HitFeedbackHitStopMsField" style="flex-grow: 1;"/>
+                            <ui:Label text="AttackerHitStop(ms):" style="width: 120px;"/>
+                            <ui:IntegerField value="-1" name="HitFeedbackAttackerHitStopMsField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="VictimHitStop(ms):" style="width: 120px;"/>
+                            <ui:IntegerField value="-1" name="HitFeedbackVictimHitStopMsField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
                             <ui:Label text="TimeScale:" style="width: 120px;"/>

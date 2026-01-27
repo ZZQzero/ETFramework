@@ -392,7 +392,7 @@ public partial class SkillEditorWindow : EditorWindow
         }
 
         // HitEffectData / HitFeedbackData（命中效果/反馈）
-        var effect = hitBoxData.Effect ??= new HitEffectData();
+        var effect = hitBoxData.Effect;
         if (hitEffectDamageMultiplierField != null)
         {
             hitEffectDamageMultiplierField.SetValueWithoutNotify(Mathf.Max(0f, effect.DamageMultiplier));
@@ -418,18 +418,22 @@ public partial class SkillEditorWindow : EditorWindow
             hitEffectTargetStateField.SetValueWithoutNotify(effect.TargetStates);
         }
 
-        var feedback = hitBoxData.Feedback ??= new HitFeedbackData();
+        var feedback = hitBoxData.Feedback;
         if (hitFeedbackShakeIntensityField != null)
         {
             hitFeedbackShakeIntensityField.SetValueWithoutNotify(Mathf.Clamp01(feedback.ScreenShakeIntensity));
         }
-        if (hitFeedbackShakeDurationField != null)
+        if (hitFeedbackShakeDurationMsField != null)
         {
-            hitFeedbackShakeDurationField.SetValueWithoutNotify(Mathf.Max(0f, feedback.ScreenShakeDuration));
+            hitFeedbackShakeDurationMsField.SetValueWithoutNotify(Mathf.Max(0, feedback.ScreenShakeDurationMs));
         }
-        if (hitFeedbackHitStopMsField != null)
+        if (hitFeedbackAttackerHitStopMsField != null)
         {
-            hitFeedbackHitStopMsField.SetValueWithoutNotify(Mathf.Max(0, feedback.HitStopMs));
+            hitFeedbackAttackerHitStopMsField.SetValueWithoutNotify(Mathf.Max(-1, feedback.AttackerHitStopMs));
+        }
+        if (hitFeedbackVictimHitStopMsField != null)
+        {
+            hitFeedbackVictimHitStopMsField.SetValueWithoutNotify(Mathf.Max(-1, feedback.VictimHitStopMs));
         }
         if (hitFeedbackTimeScaleField != null)
         {

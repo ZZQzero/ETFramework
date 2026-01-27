@@ -36,9 +36,7 @@ namespace ET
 			{
 				obj.AddComponent<AttackEventReceiver>();
 			}
-			
-			self.Input = unit.GetComponent<InputComponent>();
-			self.Attack = unit.GetComponent<AttackComponent>();
+
 			self.CharacterController = unit.GetComponent<CharacterControllerComponent>();
 			self.CharacterController.Animator = self.Animancer.Animator;
 			self.Ground = self.CharacterController.Ground;
@@ -75,11 +73,30 @@ namespace ET
 
 		private static async ETTask LoadAnimation(this AnimatorComponent self)
 		{
-			// 加载PlayerMove资源（水平移动混合动画）
-			var moveAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<ScriptableObject>("PlayerMove1");
+			if (self.LocomotionLoaded)
+			{
+				return;
+			}
+
+			var unit = self.GetParent<Unit>();
+			var catalog = unit.GetComponent<AnimationCatalogComponent>();
+			if (catalog == null ||
+			    !catalog.TryGet(AnimationCatalogComponent.AnimKey.Locomotion_Move, out var moveAssetName) ||
+			    !catalog.TryGet(AnimationCatalogComponent.AnimKey.Locomotion_Jump, out var jumpAssetName))
+			{
+				Log.Error("AnimationCatalog 缺失或未配置 Locomotion_Move/Locomotion_Jump，无法加载 Move/Jump TransitionAsset");
+				return;
+			}
+
+			// 加载Move资源（水平移动混合动画）
+			var moveAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<ScriptableObject>(moveAssetName);
+			if (self.IsDisposed || self.Animancer == null)
+			{
+				return;
+			}
 			if (moveAsset == null)
 			{
-				Log.Error("加载PlayerMove资源失败：资源为null");
+				Log.Error($"加载Move TransitionAsset失败：{moveAssetName}");
 				return;
 			}
 
@@ -96,15 +113,19 @@ namespace ET
 				}
 				else
 				{
-					Log.Error($"PlayerMove资源不包含LinearMixerTransition，实际类型: {moveTransition?.GetType().Name}");
+					Log.Error($"Move TransitionAsset不包含LinearMixerTransition，实际类型: {moveTransition?.GetType().Name}");
 				}
 			}
 
-			// 加载PlayerJump资源（跳跃混合动画）
-			var jumpAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<ScriptableObject>("PlayerJump1");
+			// 加载Jump资源（跳跃混合动画）
+			var jumpAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<ScriptableObject>(jumpAssetName);
+			if (self.IsDisposed || self.Animancer == null)
+			{
+				return;
+			}
 			if (jumpAsset == null)
 			{
-				Log.Error("加载PlayerJump资源失败：资源为null");
+				Log.Error($"加载Jump TransitionAsset失败：{jumpAssetName}");
 				return;
 			}
 
@@ -118,10 +139,11 @@ namespace ET
 				}
 				else
 				{
-					Log.Error($"PlayerJump资源不包含LinearMixerTransition，实际类型: {jumpTransition?.GetType().Name}");
+					Log.Error($"Jump TransitionAsset不包含LinearMixerTransition，实际类型: {jumpTransition?.GetType().Name}");
 				}
 			}
 
+			self.LocomotionLoaded = self.MoveMixer != null && self.JumpMixer != null;
 			await ETTask.CompletedTask;
 		}
 
@@ -133,12 +155,6 @@ namespace ET
 				return;
 			}
 
-			// 检测攻击输入，交给AttackComponent处理
-			if (self.Attack != null && self.Input != null && self.Input.HasAttackRequest())
-			{
-				self.Attack.HandleAttackInput(self);
-			}
-			
 			AnimancerLayer layer = self.Animancer; // 隐式转换到 Layer 0
 			if (self.Ground.IsGrounded(self.Ground.State))
 			{

@@ -20,8 +20,7 @@
         public readonly byte KnockdownPriority;
 
         /// <summary>
-        /// 当 incomingPriority &lt;= currentPriority 时的策略。
-        /// 商业级默认：Refresh（不重播动画，延长硬直/叠加力度）。
+        /// Refresh（不重播动画，延长硬直/叠加力度）。
         /// </summary>
         public readonly HitRules.ApplyMode LowerOrEqualMode;
 

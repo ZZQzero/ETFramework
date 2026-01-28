@@ -122,6 +122,10 @@ public partial class SkillEditorWindow : EditorWindow
 
         if (clipItem is AnimationClipItem animClipItem)
         {
+            // AnimationEnd 黄色竖线是独立于轨道 UI 的元素（挂在 timelineContent 上并缓存于字典），
+            // 删除 AnimationClip 时必须同步移除，否则会出现“Clip删了但竖线还在”的残留。
+            RemoveAnimationEndLine(animClipItem);
+
             // 删除AnimationClip及其所有子轨道：从Config.Segments中删除对应的SegmentData
             if (animClipItem.SegmentData != null && config.Segments.Contains(animClipItem.SegmentData))
             {

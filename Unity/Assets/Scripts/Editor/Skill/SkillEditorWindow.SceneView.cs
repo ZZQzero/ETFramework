@@ -542,6 +542,11 @@ public partial class SkillEditorWindow : EditorWindow
 
         Handles.zTest = UnityEngine.Rendering.CompareFunction.LessEqual;
 
+        // 预览/拖拽播放头时：默认只显示“当前时间激活窗口内”的 HitBox。
+        // 但编辑配置时，用户常常需要在“未激活的时间点”也能看到选中的 HitBox（便于摆放/调整 Offset/Rotation/Size）。
+        // 因此：若当前选中了某个 HitBoxClip，则即使不在激活窗口也绘制该 HitBox（以 inactive 颜色显示）。
+        var selectedHitBox = (selectedClip as HitBoxClipItem)?.HitBoxData;
+
         for (int i = 0; i < seg.HitBoxes.Count; ++i)
         {
             var hb = seg.HitBoxes[i];
@@ -563,7 +568,8 @@ public partial class SkillEditorWindow : EditorWindow
             {
                 isActive = normalizedTime >= start && normalizedTime <= end;
             }
-            if (!isActive)
+            bool isSelected = selectedHitBox != null && ReferenceEquals(hb, selectedHitBox);
+            if (!isActive && !isSelected)
             {
                 continue; // 播放时仅显示激活窗口内的 HitBox
             }

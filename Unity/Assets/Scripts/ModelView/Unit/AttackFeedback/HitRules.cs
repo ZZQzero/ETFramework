@@ -27,6 +27,11 @@ namespace ET
                 this.Mode = mode;
                 this.Request = request;
             }
+
+            public override string ToString()
+            {
+                return $"HitRules.Result(Accepted={this.Accepted}, Mode={this.Mode}, {this.Request})";
+            }
         }
 
         public static Result Evaluate(HitReactionComponent target, in HitReactionRequest incoming, in HitRulesProfile profile)
@@ -56,7 +61,7 @@ namespace ET
 
             // 优先级/互斥：默认“高优先级覆盖低优先级”
             int incomingPriority = profile.GetPriority(normalized.ReactionType);
-            int currentPriority = GetPriority(target.CurrentState);
+            int currentPriority = GetPriority(target.CurrentState, in profile);
 
             // 当前没有受击：直接替换（启动）
             if (!target.IsInHitReaction)
@@ -80,33 +85,37 @@ namespace ET
             }
 
             int stun = Mathf.Max(0, r.HitStunMs);
-            if (profile.StunScale > 0f && profile.StunScale != 1f)
+            if (profile.Scale.Stun > 0f && profile.Scale.Stun != 1f)
             {
-                stun = Mathf.RoundToInt(stun * profile.StunScale);
+                stun = Mathf.RoundToInt(stun * profile.Scale.Stun);
             }
-            if (profile.MaxHitStunMs > 0 && stun > profile.MaxHitStunMs)
+            if (profile.Limit.MaxHitStunMs > 0 && stun > profile.Limit.MaxHitStunMs)
             {
-                stun = profile.MaxHitStunMs;
+                stun = profile.Limit.MaxHitStunMs;
             }
 
             float kb = Mathf.Max(0f, r.KnockbackForce);
-            if (profile.KnockbackScale > 0f && profile.KnockbackScale != 1f)
+            if (profile.Scale.Knockback > 0f && profile.Scale.Knockback != 1f)
             {
-                kb *= profile.KnockbackScale;
+                kb *= profile.Scale.Knockback;
             }
-            if (profile.MaxKnockbackForce > 0f && kb > profile.MaxKnockbackForce)
+            if (profile.Limit.MaxKnockbackForce > 0f && kb > profile.Limit.MaxKnockbackForce)
             {
-                kb = profile.MaxKnockbackForce;
+                kb = profile.Limit.MaxKnockbackForce;
             }
 
-            float ku = Mathf.Max(0f, r.KnockupForce);
-            if (profile.KnockupScale > 0f && profile.KnockupScale != 1f)
+            // 语义约束：只有 Knockup/Knockdown 才消费 KnockupForce。
+            // 否则会出现“配置了上抛力的 Knockback 也会把目标抬离地面”的非预期行为。
+            float ku = (r.ReactionType == HitReactionType.Knockup || r.ReactionType == HitReactionType.Knockdown)
+                ? Mathf.Max(0f, r.KnockupForce)
+                : 0f;
+            if (profile.Scale.Knockup > 0f && profile.Scale.Knockup != 1f)
             {
-                ku *= profile.KnockupScale;
+                ku *= profile.Scale.Knockup;
             }
-            if (profile.MaxKnockupForce >= 0f && ku > profile.MaxKnockupForce)
+            if (profile.Limit.MaxKnockupForce >= 0f && ku > profile.Limit.MaxKnockupForce)
             {
-                ku = profile.MaxKnockupForce;
+                ku = profile.Limit.MaxKnockupForce;
             }
 
             int hitStop = Mathf.Max(0, r.VictimHitStopMs);
@@ -115,6 +124,13 @@ namespace ET
             float timeScale = r.TimeScale <= 0f ? 1f : r.TimeScale;
             int timeScaleMs = Mathf.Max(0, r.TimeScaleDurationMs);
 
+            HitReactionRequest.FeedbackPayload fp = new HitReactionRequest.FeedbackPayload(
+                victimHitStopMs: hitStop,
+                screenShakeIntensity: shakeIntensity,
+                screenShakeDurationMs: shakeDurationMs,
+                timeScale: timeScale,
+                timeScaleDurationMs: timeScaleMs);
+
             return new HitReactionRequest(
                 r.ReactionType,
                 r.TargetStates,
@@ -122,11 +138,7 @@ namespace ET
                 kb,
                 ku,
                 stun,
-                hitStop,
-                shakeIntensity,
-                shakeDurationMs,
-                timeScale,
-                timeScaleMs);
+                in fp);
         }
 
         private static bool PassTargetStateFilter(HitReactionComponent target, TargetStateMask filter)
@@ -153,22 +165,22 @@ namespace ET
             return (filter & current) != 0;
         }
 
-        private static int GetPriority(HitState state)
+        private static int GetPriority(HitState state, in HitRulesProfile profile)
         {
-            // 与 HitReactionType 的默认映射保持一致
+            // 从配置表 (Profile) 读取抵抗力，实现完全数据驱动
             switch (state)
             {
                 case HitState.GetUp:
-                    return 80;
+                    return profile.Resistance.GetUp;
                 case HitState.Knockdown:
-                    return 60;
+                    return profile.Resistance.Knockdown;
                 case HitState.Airborne:
                 case HitState.Falling:
-                    return 50;
+                    return profile.Resistance.Airborne;
                 case HitState.Knockback:
-                    return 40;
+                    return profile.Resistance.Knockback;
                 case HitState.Stun:
-                    return 20;
+                    return profile.Resistance.Stun;
                 default:
                     return 0;
             }

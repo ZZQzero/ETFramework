@@ -30,7 +30,8 @@ public partial class SkillEditorWindow : EditorWindow
         }
         
         var refresh = root.Q<Button>("Refresh");
-        refresh.clicked += RefreshTrackContent;
+        // Refresh：重建数据/视图（不仅仅是重绘 trackContainer）
+        refresh.clicked += RebuildFromCurrentSelection;
 
         toggleViewModeButton = root.Q<Button>("ToggleViewMode");
         if (toggleViewModeButton != null)
@@ -89,18 +90,57 @@ public partial class SkillEditorWindow : EditorWindow
     
     private void OnObjectFieldChanged(ChangeEvent<Object> evt)
     {
-        if (selectObj != null && selectObj.value != null &&
-            selectConfigAsset != null && selectConfigAsset.value != null)
+        RebuildFromCurrentSelection();
+    }
+
+    /// <summary>
+    /// 根据当前 SelectConfig/SelectObj 重建数据与 UI。
+    /// 说明：旧逻辑只在 config==null 时绑定一次，导致切换 Config/对象后仍显示旧数据，Refresh 按钮也无效。
+    /// </summary>
+    private void RebuildFromCurrentSelection()
+    {
+        // 先停止播放预览，避免旧状态影响新对象/新配置
+        if (isPlaying || isDraggingPlayhead)
         {
-            InitTrackData();
-            InitTimelineRuler();
-            InitPlayHead();
-            CreateTrack();
-            UpdateConfigHint();
-            DrawTimelineRulerMarks();
-            UpdateViewModeButtonText();
-            UpdateTrackInfo(selectedTrack);
+            StopPreviewPlayback(resetTime: false, sampleAfterStop: false);
         }
+
+        // 每次都从当前选择重新绑定 config（允许切换 Config）
+        var asset = selectConfigAsset != null ? selectConfigAsset.value as AttackConfigAsset : null;
+        config = asset != null ? asset.Config : null;
+
+        // 每次都尝试绑定预览对象（允许切换 GameObject）
+        EnsurePreviewObject();
+
+        // 清空选中与 UI（避免 selectedTrack/selectedClip 悬挂到上一次的数据对象）
+        ClearSelection();
+        ClearTrackUI();
+        laneIndexByClip.Clear();
+        animationClipTrackMap.Clear();
+        globalTrackDataList.Clear();
+        allAnimationClipItems.Clear();
+
+        UpdateConfigHint();
+
+        // 任意一项为空：维持空态
+        if (config == null || animancer == null)
+        {
+            UpdateTimelineContentWidth();
+            DrawTimelineRulerMarks();
+            UpdatePlayheadSize();
+            UpdatePlayheadPosition();
+            return;
+        }
+
+        // 重建轨道数据与 UI
+        InitTimelineRuler();
+        InitPlayHead();
+        InitTrackAndClipData();
+        CreateTrack();
+        DrawTimelineRulerMarks();
+        UpdateViewModeButtonText();
+        UpdatePlayheadSize();
+        UpdatePlayheadPosition();
     }
     
     #endregion
@@ -109,14 +149,9 @@ public partial class SkillEditorWindow : EditorWindow
     
     private void InitTrackData()
     {
-        if (config == null)
-        {
-            var asset = selectConfigAsset.value as AttackConfigAsset;
-            if (asset != null)
-            {
-                config = asset.Config;
-            }
-        }
+        // 旧逻辑只在 config==null 时赋值，会导致切换 Config 后仍然用旧数据。
+        var asset = selectConfigAsset != null ? selectConfigAsset.value as AttackConfigAsset : null;
+        config = asset != null ? asset.Config : null;
 
         EnsurePreviewObject();
         InitTrackAndClipData();

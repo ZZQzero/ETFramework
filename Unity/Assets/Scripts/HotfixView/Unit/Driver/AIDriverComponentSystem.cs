@@ -27,6 +27,12 @@ namespace ET
             {
                 move.Normalize();
             }
+
+            // 驱动层抑制
+            if (!self.LocomotionIntent.Capabilities.HasFlag(ActionCapabilities.Move))
+            {
+                move = Vector3.zero;
+            }
             self.LocomotionIntent.MoveDirection = move;
 
             Vector3 face = self.DesiredFaceDirection;
@@ -34,30 +40,42 @@ namespace ET
             if (face.sqrMagnitude > 0.001f)
             {
                 face.Normalize();
-                self.LocomotionIntent.FaceDirection = face;
+                // 驱动层抑制
+                if (self.LocomotionIntent.Capabilities.HasFlag(ActionCapabilities.Rotate))
+                {
+                    self.LocomotionIntent.FaceDirection = face;
+                }
             }
             else
             {
-                // 没有 face 方向时回退用 move
                 self.LocomotionIntent.FaceDirection = move;
             }
 
             if (self.DesiredJump)
             {
-                self.LocomotionIntent.JumpRequested = true;
+                // 驱动层抑制
+                if (self.LocomotionIntent.Capabilities.HasFlag(ActionCapabilities.Jump))
+                {
+                    self.LocomotionIntent.JumpRequested = true;
+                }
                 self.DesiredJump = false;
             }
 
             if (self.DesiredAttack)
             {
-                self.AttackCommand.Enqueue(new AttackCommandComponent.AttackCommand
+                // 驱动层抑制：如果当前不具备攻击能力，则不产生指令
+                if (self.LocomotionIntent.Capabilities.HasFlag(ActionCapabilities.Attack))
                 {
-                    SkillId = 0,
-                    InputType = ComboInputType.Normal,
-                    TargetUnitId = 0,
-                });
+                    self.AttackCommand.Enqueue(new AttackCommandComponent.AttackCommand
+                    {
+                        SkillId = 0,
+                        InputType = ComboInputType.Normal,
+                        TargetUnitId = 0,
+                    });
+                }
                 self.DesiredAttack = false;
             }
         }
     }
 }
+

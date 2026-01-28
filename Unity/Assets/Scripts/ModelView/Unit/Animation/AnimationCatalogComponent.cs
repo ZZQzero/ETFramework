@@ -19,6 +19,16 @@ namespace ET
         {
             Locomotion_Move = 1,
             Locomotion_Jump = 2,
+
+            // 受击系列 (Hit Reactions)
+            Hit_Light = 10,
+            Hit_Medium = 11,
+            Hit_Heavy = 12,
+            Hit_Knockback = 13,
+            Hit_Airborne = 14,
+            Hit_Falling = 15,
+            Hit_Knockdown = 16,
+            Hit_GetUp = 17,
         }
 
         private readonly Dictionary<AnimKey, string> _assets = new Dictionary<AnimKey, string>(8);

@@ -9,6 +9,8 @@ namespace ET
     {
         public UnitTable UnitTable { get; set; }
 
+        public string UnitName;
+
         private float3 position; //坐标
         public float3 Position
         {

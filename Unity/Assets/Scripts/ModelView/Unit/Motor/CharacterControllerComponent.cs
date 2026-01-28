@@ -20,6 +20,15 @@ namespace ET
         public Unit Unit { get; set; }
         public Animator Animator { get; set; }
         public AttackComponent Attack { get; set; }
+        /// <summary>
+        /// 受击系统引用：用于在受击期间由受击系统接管速度（避免 Motor 自己减速/改写速度）。
+        /// </summary>
+        public HitReactionComponent HitReaction { get; set; }
+        
+        /// <summary>
+        /// 顿帧组件：用于在 HitStop 期间冻结运动/重力推进（战斗手感一致）。
+        /// </summary>
+        public HitStopComponent HitStop { get; set; }
 
         /// <summary>
         /// 移动速度（米/秒）

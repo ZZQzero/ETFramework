@@ -36,6 +36,11 @@ namespace ET
             _queue.Enqueue(cmd);
         }
 
+        public void Clear()
+        {
+            _queue.Clear();
+        }
+
         public bool TryDequeue(out AttackCommand cmd)
         {
             if (_queue.Count <= 0)

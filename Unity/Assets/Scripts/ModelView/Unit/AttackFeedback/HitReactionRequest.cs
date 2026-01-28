@@ -11,6 +11,40 @@ namespace ET
     /// </summary>
     public readonly struct HitReactionRequest
     {
+        /// <summary>
+        /// 反馈参数（表现域）。
+        /// 目的：减少主构造函数参数数量，让语义更清晰。
+        /// </summary>
+        public readonly struct FeedbackPayload
+        {
+            public readonly int VictimHitStopMs;
+            public readonly float ScreenShakeIntensity;
+            public readonly int ScreenShakeDurationMs;
+            public readonly float TimeScale;
+            public readonly int TimeScaleDurationMs;
+
+            public FeedbackPayload(
+                int victimHitStopMs,
+                float screenShakeIntensity,
+                int screenShakeDurationMs,
+                float timeScale,
+                int timeScaleDurationMs)
+            {
+                this.VictimHitStopMs = victimHitStopMs;
+                this.ScreenShakeIntensity = screenShakeIntensity;
+                this.ScreenShakeDurationMs = screenShakeDurationMs;
+                this.TimeScale = timeScale;
+                this.TimeScaleDurationMs = timeScaleDurationMs;
+            }
+
+            public static readonly FeedbackPayload Default = new FeedbackPayload(
+                victimHitStopMs: 0,
+                screenShakeIntensity: 0f,
+                screenShakeDurationMs: 0,
+                timeScale: 1f,
+                timeScaleDurationMs: 0);
+        }
+
         /// <summary>受击类型（决定规则层优先级/动画选择）。</summary>
         public readonly HitReactionType ReactionType;
         /// <summary>目标状态过滤（可多选；Any=都可命中）。</summary>
@@ -44,6 +78,29 @@ namespace ET
             float knockbackForce,
             float knockupForce,
             int hitStunMs,
+            in FeedbackPayload feedback)
+            : this(
+                reactionType,
+                targetStates,
+                hitDirection,
+                knockbackForce,
+                knockupForce,
+                hitStunMs,
+                victimHitStopMs: feedback.VictimHitStopMs,
+                screenShakeIntensity: feedback.ScreenShakeIntensity,
+                screenShakeDurationMs: feedback.ScreenShakeDurationMs,
+                timeScale: feedback.TimeScale,
+                timeScaleDurationMs: feedback.TimeScaleDurationMs)
+        {
+        }
+
+        public HitReactionRequest(
+            HitReactionType reactionType,
+            TargetStateMask targetStates,
+            Vector3 hitDirection,
+            float knockbackForce,
+            float knockupForce,
+            int hitStunMs,
             int victimHitStopMs = 0,
             float screenShakeIntensity = 0f,
             int screenShakeDurationMs = 0,
@@ -67,6 +124,12 @@ namespace ET
         public static HitReactionRequest From(in HitEffectData effect, in HitFeedbackData feedback, Vector3 hitDirection, int defaultHitStopMs)
         {
             // 说明：这里只做数据拷贝（含 default 兜底），不做归一化/钳制；归一化由规则层 HitRules 执行。
+            FeedbackPayload fp = new FeedbackPayload(
+                victimHitStopMs: feedback.ResolveVictimHitStopMs(defaultHitStopMs),
+                screenShakeIntensity: feedback.ScreenShakeIntensity,
+                screenShakeDurationMs: feedback.ScreenShakeDurationMs,
+                timeScale: feedback.TimeScale,
+                timeScaleDurationMs: feedback.TimeScaleDurationMs);
             return new HitReactionRequest(
                 effect.HitReaction,
                 effect.TargetStates,
@@ -74,13 +137,14 @@ namespace ET
                 effect.KnockbackForce,
                 effect.KnockupForce,
                 effect.HitStunMs,
-                feedback.ResolveVictimHitStopMs(defaultHitStopMs),
-                feedback.ScreenShakeIntensity,
-                feedback.ScreenShakeDurationMs,
-                feedback.TimeScale,
-                feedback.TimeScaleDurationMs
+                in fp
             );
+        }
+
+        public override string ToString()
+        {
+            // 注：HitDirection 在规则层会归一化/钳制，这里输出的是“请求原始值”
+            return $"HitRequest(Type={this.ReactionType}, States={this.TargetStates}, Dir={this.HitDirection}, KB={this.KnockbackForce:0.###}, KU={this.KnockupForce:0.###}, StunMs={this.HitStunMs}, VictimStopMs={this.VictimHitStopMs}, Shake={this.ScreenShakeIntensity:0.###}@{this.ScreenShakeDurationMs}ms, TimeScale={this.TimeScale:0.###}@{this.TimeScaleDurationMs}ms)";
         }
     }
 }
-

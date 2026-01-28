@@ -5,9 +5,21 @@ using UnityEngine;
 namespace ET
 {
     /// <summary>
+    /// HitStop 对“运动域”的冻结策略（可配置）。
+    /// 说明：
+    /// - Animation 停顿由 Animancer.Graph.PauseGraph 负责（本组件默认都会暂停动画图）
+    /// - Motion 冻结由 CharacterControllerComponentSystem 消费本枚举来执行
+    /// </summary>
+    public enum HitStopFreezeMode : byte
+    {
+        None = 0,                 // 不冻结运动（只停动画/只影响 combat-time）
+        FreezeAnimationOnly = 1,  // 仅停动画（不冻结运动）
+        FreezeXZOnly = 2,         // 冻结水平运动（允许 Y 重力/上抛继续）
+        FreezeAll = 3,            // 冻结全部运动（XZ+Y 都停）
+    }
+
+    /// <summary>
     /// 战斗反馈控制器（客户端表现域）。
-    ///
-    /// 设计目标（商业级手感）：
     /// - 命中反馈请求式（Request），同帧/多目标自动合并与叠加
     /// - HitStop 使用不受暂停影响的 realtime 计时
     /// - 暂停/恢复以“目标集合”为单位，避免重复写回导致恢复错误
@@ -21,6 +33,11 @@ namespace ET
         /// 是否处于 HitStop（顿帧）中。
         /// </summary>
         public bool IsHitStopActive { get; set; }
+
+        /// <summary>
+        /// 当前 HitStop 对“运动域”的冻结策略（多次 Request 会取更强的策略）。
+        /// </summary>
+        public HitStopFreezeMode FreezeMode { get; set; } = HitStopFreezeMode.FreezeAll;
 
         /// <summary>
         /// HitStop 结束的真实时间（毫秒，realtime）。
@@ -44,5 +61,13 @@ namespace ET
         /// 上一次 Update 的 realtime 时间（毫秒）。
         /// </summary>
         public long LastRealtimeMs { get; set; }
+
+        /// <summary>
+        /// 便于日志查看的快照字符串（调试用）。
+        /// </summary>
+        public override string ToString()
+        {
+            return $"HitStop(Active={this.IsHitStopActive}, Freeze={this.FreezeMode}, EndRealtimeMs={this.HitStopEndRealtimeMs}, CombatMs={this.CombatTimeMs}, CombatDeltaMs={this.CombatDeltaMs})";
+        }
     }
 }

@@ -17,6 +17,7 @@ namespace ET
             go.transform.position = unit.Position;
             go.transform.localScale = Vector3.one;
             UnityEngine.Object.DontDestroyOnLoad(go);
+            unit.UnitName = roleComponent.RoleTable.Name;
             unit.AddComponent<GameObjectComponent>().GameObject = go;
             unit.AddComponent<InputComponent,Transform>(go.transform);
             unit.AddComponent<LocomotionIntentComponent>();
@@ -28,7 +29,6 @@ namespace ET
 
             var attackCatalog = unit.AddComponent<AttackCatalogComponent>();
             attackCatalog.BasicAttackSkillId = roleComponent.RoleSkillSetTable.BasicAttackSkillId;
-            Log.Error($"{attackCatalog.BasicAttackSkillId}");
             attackCatalog.SkillIds.Clear();
             if (roleComponent.RoleSkillSetTable.SkillIds != null)
             {

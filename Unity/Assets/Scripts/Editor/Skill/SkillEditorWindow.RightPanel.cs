@@ -86,6 +86,35 @@ public partial class SkillEditorWindow : EditorWindow
         comboTimeoutOffsetMsField = rightContainer.Q<IntegerField>("ComboTimeoutOffsetMsField");
         segmentTimeoutMsPreviewField = rightContainer.Q<IntegerField>("SegmentTimeoutMsPreviewField");
 
+        // FloatField 输入体验（关键）：
+        // 多数 FloatField 的回调会立刻触发 Refresh/ApplyViewMode/MarkAssetDirty（间接导致规范化/回写/重绘），
+        // 若使用“即时回调”，输入 0.8 过程中会先触发一次 0/0. -> 立刻刷新把输入打断，看起来就像“无法输入小数”。
+        // 这里统一改为延迟提交（回车/失焦才触发回调），避免输入中途被刷新覆盖。
+        if (startTimeField != null) startTimeField.isDelayed = true;
+        if (clipLengthField != null) clipLengthField.isDelayed = true;
+        if (speedField != null) speedField.isDelayed = true;
+        if (fadeDurationField != null) fadeDurationField.isDelayed = true;
+        if (inputBufferStartField != null) inputBufferStartField.isDelayed = true;
+        if (cancelableTimeField != null) cancelableTimeField.isDelayed = true;
+        if (animationEndField != null)
+        {
+            animationEndField.isDelayed = true;
+        }
+        if (movementDistanceField != null) movementDistanceField.isDelayed = true;
+        if (movementStartField != null) movementStartField.isDelayed = true;
+        if (movementEndField != null) movementEndField.isDelayed = true;
+        if (movementTrackRangeField != null) movementTrackRangeField.isDelayed = true;
+        if (effectNormalizedStartField != null) effectNormalizedStartField.isDelayed = true;
+        if (soundNormalizedStartField != null) soundNormalizedStartField.isDelayed = true;
+        if (volumeField != null) volumeField.isDelayed = true;
+        if (hitBoxNormalizedStartField != null) hitBoxNormalizedStartField.isDelayed = true;
+        if (hitBoxNormalizedEndField != null) hitBoxNormalizedEndField.isDelayed = true;
+        if (hitEffectDamageMultiplierField != null) hitEffectDamageMultiplierField.isDelayed = true;
+        if (hitEffectKnockbackForceField != null) hitEffectKnockbackForceField.isDelayed = true;
+        if (hitEffectKnockupForceField != null) hitEffectKnockupForceField.isDelayed = true;
+        if (hitFeedbackShakeIntensityField != null) hitFeedbackShakeIntensityField.isDelayed = true;
+        if (hitFeedbackTimeScaleField != null) hitFeedbackTimeScaleField.isDelayed = true;
+
         // 获取 Movement 字段
         movementEnableField = rightContainer.Q<Toggle>("MovementEnableField");
         movementDistanceField = rightContainer.Q<FloatField>("MovementDistanceField");

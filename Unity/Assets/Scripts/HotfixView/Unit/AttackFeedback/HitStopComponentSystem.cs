@@ -16,6 +16,7 @@ namespace ET
             self.CombatTimeMs = 0;
             self.IsHitStopActive = false;
             self.HitStopEndRealtimeMs = 0;
+            self.FreezeMode = HitStopFreezeMode.FreezeAll;
         }
 
         [EntitySystem]
@@ -66,11 +67,11 @@ namespace ET
         }
 
         /// <summary>
-        /// 请求顿帧（HitStop）。
-        /// - 自动合并：同一帧/多次请求会取 max(endTime)
-        /// - 自动去重：同一 Animancer 只记录一次原 Speed，避免恢复错误
+        /// 请求顿帧（HitStop）并指定“运动域冻结策略”。
+        /// - 时长叠加：取更晚结束点
+        /// - 冻结策略叠加：取更强策略（None < AnimationOnly < FreezeXZOnly < FreezeAll）
         /// </summary>
-        public static void RequestHitStop(this HitStopComponent self, int durationMs, AnimancerComponent animancer)
+        public static void RequestHitStop(this HitStopComponent self, int durationMs, AnimancerComponent animancer, HitStopFreezeMode freezeMode)
         {
             if (self == null || self.IsDisposed)
             {
@@ -91,6 +92,7 @@ namespace ET
             {
                 self.IsHitStopActive = true;
                 self.HitStopEndRealtimeMs = end;
+                self.FreezeMode = freezeMode;
             }
             else
             {
@@ -98,6 +100,12 @@ namespace ET
                 if (end > self.HitStopEndRealtimeMs)
                 {
                     self.HitStopEndRealtimeMs = end;
+                }
+
+                // 叠加：冻结策略取更强
+                if (freezeMode > self.FreezeMode)
+                {
+                    self.FreezeMode = freezeMode;
                 }
             }
         }
@@ -122,6 +130,7 @@ namespace ET
 
             self.IsHitStopActive = false;
             self.HitStopEndRealtimeMs = 0;
+            self.FreezeMode = HitStopFreezeMode.FreezeAll;
 
             if (self.Animancer != null)
             {
@@ -134,6 +143,7 @@ namespace ET
             // 无条件恢复（用于 Destroy/异常情况）
             self.IsHitStopActive = false;
             self.HitStopEndRealtimeMs = 0;
+            self.FreezeMode = HitStopFreezeMode.FreezeAll;
             if (self.Animancer != null)
             {
                 self.Animancer.Graph.UnpauseGraph();

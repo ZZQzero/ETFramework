@@ -39,7 +39,6 @@ namespace ET
             // 预加载基础攻击配置（如未配置则等待命令触发时再报错）
             if (self.AttackCatalog != null && self.AttackCatalog.BasicAttackSkillId > 0)
             {
-                Log.Error($"Attack {self.AttackCatalog.BasicAttackSkillId}");
                 self.LoadConfigAsync(self.AttackCatalog.BasicAttackSkillId).NoContext();
             }
         }
@@ -83,7 +82,12 @@ namespace ET
 
                 if (self.AttackCommand.TryDequeue(out var cmd))
                 {
-                    self.ExecuteAttackCommand(in cmd);
+                    // 核心改进：在执行层增加“最后防线”，如果当前实体不具备攻击能力（如正在受击），则丢弃指令
+                    var intent = self.Unit.GetComponent<LocomotionIntentComponent>();
+                    if (intent == null || intent.Capabilities.HasFlag(ActionCapabilities.Attack))
+                    {
+                        self.ExecuteAttackCommand(in cmd);
+                    }
                 }
             }
 
@@ -137,7 +141,12 @@ namespace ET
             }
             self.IsLoadingConfig = true;
 
-            var skillTable = SkillConfig.Instance.Get(skillId);
+            var skillTable = SkillConfig.Instance.GetOrDefault(skillId);
+            if (skillTable == null)
+            {
+                Log.Error($"{self.Unit.UnitTable.UnitType}  {self.Unit.UnitName}");
+                return;
+            }
             var configAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<AttackConfigAsset>(skillTable.SkillAsset);
             if (configAsset == null)
             {
@@ -1173,7 +1182,7 @@ namespace ET
             int attackerHitStopMs = feedback.ResolveAttackerHitStopMs(self.Config?.DefaultHitStopMs ?? 0);
             if (attackerHitStopMs > 0)
             {
-                self.HitStop.RequestHitStop(attackerHitStopMs, self.AnimatorComponent.Animancer);
+                self.HitStop.RequestHitStop(attackerHitStopMs, self.AnimatorComponent.Animancer, HitStopFreezeMode.FreezeAll);
             }
 
             // 应用屏幕震动

@@ -30,6 +30,16 @@ namespace ET
         
         public HitStopComponent HitStop {get; set;}
 
+        /// <summary>
+        /// 地面检测组件（建议作为“是否落地/地面高度”的唯一事实来源）。
+        /// </summary>
+        public CheckGroundedComponent Ground { get; set; }
+
+        /// <summary>
+        /// 移动意图（用于注入受击冲量）。
+        /// </summary>
+        public LocomotionIntentComponent LocomotionIntent { get; set; }
+
         #region 驱动/配置（可扩展）
 
         /// <summary>
@@ -62,37 +72,14 @@ namespace ET
         public bool HasCachedMovementEnabled { get; set; }
 
         #endregion
-        #region 配置
+        #region 运行时数据
         
-        /// <summary>轻度受击动画</summary>
-        public ITransition LightHitAnimation { get; set; }
-        
-        /// <summary>中度受击动画</summary>
-        public ITransition MediumHitAnimation { get; set; }
-        
-        /// <summary>重度受击动画</summary>
-        public ITransition HeavyHitAnimation { get; set; }
-        
-        /// <summary>击退动画</summary>
-        public ITransition KnockbackAnimation { get; set; }
-        
-        /// <summary>浮空动画</summary>
-        public ITransition AirborneAnimation { get; set; }
-        
-        /// <summary>下落动画</summary>
-        public ITransition FallingAnimation { get; set; }
-        
-        /// <summary>倒地动画</summary>
-        public ITransition KnockdownAnimation { get; set; }
-        
-        /// <summary>起身动画</summary>
-        public ITransition GetUpAnimation { get; set; }
-        
-        /// <summary>重力加速度</summary>
-        public float Gravity { get; set; } = 30f;
-        
-        /// <summary>地面高度</summary>
-        public float GroundHeight { get; set; } = 0f;
+        // 重力/贴地/落地高度由 CharacterControllerComponent + CheckGroundedComponent 统一负责。
+
+        /// <summary>
+        /// 起身(GetUp)兜底超时(ms, combat-time)。
+        /// </summary>
+        public int GetUpTimeoutMs { get; set; } = 1500;
         
         #endregion
 
@@ -100,6 +87,9 @@ namespace ET
         
         /// <summary>当前受击状态</summary>
         public HitState CurrentState { get; set; } = HitState.None;
+
+        /// <summary>当前受击反应类型（用于动画合成）</summary>
+        public HitReactionType CurrentReactionType { get; set; } = HitReactionType.None;
         
         /// <summary>当前动画状态</summary>
         public AnimancerState CurrentAnimState { get; set; }
@@ -113,14 +103,19 @@ namespace ET
         /// <summary>击退速度</summary>
         public float KnockbackSpeed { get; set; }
         
-        /// <summary>垂直速度（用于浮空）</summary>
-        public float VerticalVelocity { get; set; }
-        
         /// <summary>倒地时间</summary>
         public long KnockdownEndTime { get; set; }
         
         /// <summary>倒地持续时间（毫秒）</summary>
         public int KnockdownDurationMs { get; set; } = 1000;
+
+        /// <summary>进入起身状态的时间点（combat-time）。</summary>
+        public long GetUpStartTime { get; set; }
+
+        // ===== 地检临时配置缓存（受击浮空时提升地检频率） =====
+        public bool HasCachedGroundDetectConfig { get; set; }
+        public bool CachedReduceAirborneCheckFrequency { get; set; }
+        public int CachedAirborneCheckInterval { get; set; }
         
         #endregion
 

@@ -30,6 +30,8 @@ namespace ET
             self.Ground = self.Unit.GetComponent<CheckGroundedComponent>();
             self.LocomotionIntent = self.Unit.GetComponent<LocomotionIntentComponent>();
             self.Attack = self.Unit.GetComponent<AttackComponent>();
+            self.HitReaction = self.Unit.GetComponent<HitReactionComponent>();
+            self.HitStop = self.Unit.GetComponent<HitStopComponent>();
 
             // 运动配置：只消费最终参数，不关心来源（玩家/怪物/BUFF/数值）
             var moveConfig = self.Unit.GetComponent<MovementConfigComponent>();
@@ -88,35 +90,120 @@ namespace ET
             {
                 self.Attack = self.Unit?.GetComponent<AttackComponent>();
             }
-            
+            if (self.HitReaction == null)
+            {
+                self.HitReaction = self.Unit?.GetComponent<HitReactionComponent>();
+            }
+            if (self.HitStop == null)
+            {
+                self.HitStop = self.Unit?.GetComponent<HitStopComponent>();
+            }
+
+            // HitStop（顿帧）期间：冻结运动与 RootMotion，避免停顿时“偷偷滑动/掉落”。
+            // - 保留 CurrentVelocity（用于顿帧结束后恢复）
+            // - 强制 Rigidbody 当前速度为 0，确保物理步不继续积分
+            if (self.HitStop != null && self.HitStop.IsHitStopActive)
+            {
+                if (self.Rigidbody != null)
+                {
+                    switch (self.HitStop.FreezeMode)
+                    {
+                        case HitStopFreezeMode.None:
+                        case HitStopFreezeMode.FreezeAnimationOnly:
+                            // 不冻结运动：继续走后续逻辑（移动/攻击/RootMotion等）
+                            break;
+                        case HitStopFreezeMode.FreezeXZOnly:
+                            // 冻结水平：保留 Y（重力/上抛继续），XZ 置 0
+                            self.Rigidbody.linearVelocity = new Vector3(0f, self.CurrentVelocity.y, 0f);
+                            self.CalculateAnimationSpeeds();
+                            self.SyncUnitTransformFromRigidbody();
+                            return;
+                        default:
+                            // FreezeAll：完全冻结
+                            self.Rigidbody.linearVelocity = Vector3.zero;
+                            self.CalculateAnimationSpeeds();
+                            self.SyncUnitTransformFromRigidbody();
+                            return;
+                    }
+                }
+                self.CalculateAnimationSpeeds();
+                self.SyncUnitTransformFromRigidbody();
+            }
+
+            // 1. 基础运动合成 (Locomotion/Attack/Deceleration)
+            bool canMove = self.LocomotionIntent == null || self.LocomotionIntent.Capabilities.HasFlag(ActionCapabilities.Move);
+
             if (self.Attack != null && self.Attack.IsMovementActive)
             {
                 self.UpdateAttackMovement();
+                // 攻击位移期间，水平速度由 UpdateAttackMovement (MovePosition) 控制，
+                // 逻辑速度层只需保留垂直速度用于同步。
                 self.CurrentVelocity = Vector3.up * self.CurrentVelocity.y;
-                self.Rigidbody.linearVelocity = self.CurrentVelocity;
             }
-            else if (!self.EnableMovement || (self.Attack != null && self.Attack.IsInAttack))
+            else if (!self.EnableMovement || !canMove || (self.Attack != null && self.Attack.IsInAttack))
             {
                 self.ApplyDeceleration(deltaTime);
-                self.Rigidbody.linearVelocity = self.CurrentVelocity;
             }
             else
             {
                 self.ApplyMovement(deltaTime);
+            }
+
+            // 2. 叠加外部冲量意图 (External Impulse - 如受击、爆炸推开等)
+            if (self.LocomotionIntent != null && self.LocomotionIntent.ExternalImpulse.sqrMagnitude > 0.0001f)
+            {
+                Vector3 impulse = self.LocomotionIntent.ExternalImpulse;
+
+                // 核心优化：
+                // - 如果处于 DisableMovement 状态（如受击中），受击系统计算的 KnockbackSpeed 是绝对目标速度。
+                //   此时我们直接覆盖 CurrentVelocity.xz，确保逻辑速度与受击配置精确匹配，且不会因帧累加而速度失控。
+                if (!self.EnableMovement)
+                {
+                    self.CurrentVelocity = new Vector3(impulse.x, self.CurrentVelocity.y, impulse.z);
+                }
+                else
+                {
+                    // - 如果移动未禁用（如正常行走时被爆炸推开），冲量作为“瞬时增量”叠加一次。
+                    //   叠加后立即消费掉意图，防止下一帧重复叠加导致“雪球效应”。
+                    Vector3 v = self.CurrentVelocity;
+                    v.x += impulse.x;
+                    v.z += impulse.z;
+                    self.CurrentVelocity = v;
+                    self.LocomotionIntent.ExternalImpulse = Vector3.zero;
+                }
+            }
+
+            // 3. 应用最终速度到物理引擎
+            if (self.Rigidbody != null)
+            {
                 self.Rigidbody.linearVelocity = self.CurrentVelocity;
             }
             
-            // 应用旋转
-            if (self.Attack == null || !self.Attack.IsAttacking)
+            // 4. 应用朝向旋转
+            bool canRotate = self.LocomotionIntent == null || self.LocomotionIntent.Capabilities.HasFlag(ActionCapabilities.Rotate);
+            if (canRotate && (self.Attack == null || !self.Attack.IsAttacking))
             {
                 self.ApplyRotation(deltaTime);
             }
             
-            // 计算动画速度参数
+            // 5. 计算动画速度参数
             self.CalculateAnimationSpeeds();
             
-            // 处理Root Motion
-            if ((self.Attack == null || !self.Attack.IsMovementActive) && self.CurrentVelocity.magnitude <= 0.0001f && 
+            // 6. 处理 Root Motion（手动应用 Animator.deltaPosition）
+            // 关键：某些攻击/技能段依赖 Root Motion 推进位置，否则会出现“播完被拉回原位”。
+            bool allowRootMotionInAttack =
+                self.Attack != null &&
+                self.Attack.IsInAttack &&
+                !self.Attack.IsMovementActive &&
+                self.Attack.CurrentSegment?.Movement != null &&
+                self.Attack.CurrentSegment.Movement.UseRootMotion;
+
+            // Root Motion 门槛只看水平速度：
+            // - 允许空中（有 Y 速度）时仍能应用动画位移，避免“空中突进/空中斩”被误挡导致回弹。
+            float horizontalSpeedSqr = self.CurrentVelocity.x * self.CurrentVelocity.x + self.CurrentVelocity.z * self.CurrentVelocity.z;
+
+            if ((self.Attack == null || (!self.Attack.IsMovementActive && (!self.Attack.IsInAttack || allowRootMotionInAttack))) &&
+                horizontalSpeedSqr <= 0.0001f * 0.0001f &&
                 self.Animator != null && self.Animator.deltaPosition.magnitude > 0.0001f)
             {
                 self.Rigidbody.MovePosition(self.Rigidbody.position + self.Animator.deltaPosition);
@@ -139,8 +226,37 @@ namespace ET
 
             if (self.JumpRequested && (self.Attack == null || !self.Attack.IsInAttack))
             {
-                self.Jump();
+                // 检查能力权限：是否允许跳跃
+                bool canJump = self.LocomotionIntent == null || self.LocomotionIntent.Capabilities.HasFlag(ActionCapabilities.Jump);
+                if (canJump)
+                {
+                    self.Jump();
+                }
                 self.JumpRequested = false;
+            }
+
+            // HitStop（顿帧）期间：不推进重力/不改变速度，确保顿帧期间角色不下坠/不位移。
+            if (self.HitStop != null && self.HitStop.IsHitStopActive)
+            {
+                if (self.Rigidbody != null)
+                {
+                    switch (self.HitStop.FreezeMode)
+                    {
+                        case HitStopFreezeMode.None:
+                        case HitStopFreezeMode.FreezeAnimationOnly:
+                            // 不冻结运动：继续走重力推进
+                            break;
+                        case HitStopFreezeMode.FreezeXZOnly:
+                            // 冻结水平：确保 XZ 为 0，但允许 Y 继续由重力系统推进
+                            self.Rigidbody.linearVelocity = new Vector3(0f, self.Rigidbody.linearVelocity.y, 0f);
+                            break;
+                        default:
+                            // FreezeAll：完全冻结（不推进重力）
+                            self.Rigidbody.linearVelocity = Vector3.zero;
+                            self.SyncUnitTransformFromRigidbody();
+                            return;
+                    }
+                }
             }
 
             self.ApplyGravity(deltaTime);
@@ -257,6 +373,12 @@ namespace ET
         private static void ApplyMovement(this CharacterControllerComponent self, float deltaTime)
         {
             Vector3 inputDirection = self.LocomotionIntent != null ? self.LocomotionIntent.MoveDirection : Vector3.zero;
+            
+            // 斜坡投影：在地面（含稳定斜坡/边缘）时，把移动方向投影到地面法线所在平面，避免“上坡顶不动/下坡漂”。
+            if (self.Ground != null && self.Ground.IsGrounded(self.Ground.State))
+            {
+                inputDirection = self.Ground.GetSlopeDirection(inputDirection);
+            }
             
             // 在地面时才能应用移动（包括稳定斜坡、边缘等状态）
             if (inputDirection.magnitude > 0.01f)

@@ -846,6 +846,9 @@ public partial class SkillEditorWindow : EditorWindow
         if (trackContainer == null) return;
 
         trackContainer.Clear();
+        // 重要：AnimationEnd 黄色竖线挂在 timelineContent 上，不属于 trackContainer。
+        // 仅 Clear 轨道会导致删除 AnimationClip 后竖线残留，因此刷新时先统一清理再按当前数据重建。
+        ClearAllAnimationEndLines();
 
         for (int i = 0; i < trackDataList.Count; i++)
         {
@@ -1449,11 +1452,13 @@ public partial class SkillEditorWindow : EditorWindow
                 clipElement.style.left = newLeft;
 
                 // AnimationClip：拖拽时实时同步更新其子 clip 的 UI 位置（保持归一化语义）
-                if (clipElement.userData is AnimationClipItem)
+                // 同时实时更新黄色 AnimationEnd 竖线（拖拽过程中不写回数据，使用预览 startTime）
+                if (clipElement.userData is AnimationClipItem animClipItem)
                 {
                     float ownerStartTime = newLeft / pixelsPerSecond;
                     ownerStartTime = Mathf.Max(0f, ownerStartTime);
                     UpdateDraggingOwnerChildClipPositions(ownerStartTime);
+                    UpdateAnimationEndLinePositionPreview(animClipItem, ownerStartTime, clipElement.parent);
                 }
 
                 var trackElement = clipElement.parent;
@@ -2032,7 +2037,17 @@ public partial class SkillEditorWindow : EditorWindow
     /// </summary>
     private void UpdateAnimationEndLinePosition(AnimationClipItem clipItem)
     {
-        if (clipItem?.SegmentData == null || !animationEndLineElements.TryGetValue(clipItem, out var lineElement))
+        UpdateAnimationEndLinePositionPreview(clipItem, clipItem != null ? clipItem.StartTime : 0f, FindTrackElementForClipItem(clipItem));
+    }
+
+    /// <summary>
+    /// 更新动画结束时间竖线的位置（支持拖拽过程的“预览 StartTime”）。
+    /// 说明：拖拽 AnimationClip 时 clipItem.StartTime 只在 MouseUp 才会写回，为了让黄色竖线实时跟随，
+    /// 这里允许直接传入预览 startTime（秒）来更新竖线的 X 位置。
+    /// </summary>
+    private void UpdateAnimationEndLinePositionPreview(AnimationClipItem clipItem, float previewStartTimeSeconds, VisualElement trackElement)
+    {
+        if (timelineContent == null || clipItem?.SegmentData == null || !animationEndLineElements.TryGetValue(clipItem, out var lineElement))
         {
             return;
         }
@@ -2040,7 +2055,7 @@ public partial class SkillEditorWindow : EditorWindow
         // 计算动画真正的结束时间：StartTime + AnimationEnd * Duration
         float animationEnd = clipItem.SegmentData.TimeWindow?.AnimationEnd ?? 1f;
         float duration = Mathf.Max(0f, clipItem.Duration);
-        float endTime = clipItem.StartTime + animationEnd * duration;
+        float endTime = Mathf.Max(0f, previewStartTimeSeconds) + animationEnd * duration;
 
         // 计算竖线位置（像素）
         float xPosition = endTime * pixelsPerSecond - ANIMATION_END_HALF_WIDTH;
@@ -2048,11 +2063,9 @@ public partial class SkillEditorWindow : EditorWindow
         // 设置竖线位置
         lineElement.style.left = Mathf.Max(0f, xPosition);
 
-        // 找到AnimationClip所在的轨道元素
-        VisualElement trackElement = FindTrackElementForClipItem(clipItem);
+        // 拖拽时直接用当前轨道（更快），否则使用 FindTrackElementForClipItem 的结果
         if (trackElement != null)
         {
-            // 计算竖线在轨道内的位置和高度
             float trackTop = trackElement.worldBound.yMin - timelineContent.worldBound.yMin;
             float trackHeight = trackElement.layout.height;
 
@@ -2061,7 +2074,6 @@ public partial class SkillEditorWindow : EditorWindow
         }
         else
         {
-            // 如果找不到轨道，使用默认位置
             lineElement.style.top = RULER_HEIGHT;
             lineElement.style.height = TRACK_ITEM_HEIGHT;
         }

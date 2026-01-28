@@ -19,7 +19,7 @@ namespace ET
             go.transform.position = unit.Position;
             go.transform.localScale = Vector3.one;
             UnityEngine.Object.DontDestroyOnLoad(go);
-
+            unit.UnitName = monster.MonsterTable.Name;
             unit.AddComponent<GameObjectComponent>().GameObject = go;
             unit.AddComponent<LocomotionIntentComponent>();
             unit.AddComponent<AttackCommandComponent>();

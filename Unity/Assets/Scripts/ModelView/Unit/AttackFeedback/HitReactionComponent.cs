@@ -48,21 +48,6 @@ namespace ET
         public float AnimationFadeSec { get; set; } = 0.05f;
 
         /// <summary>
-        /// 击退衰减（每帧乘系数，combat-time）。
-        /// </summary>
-        public float KnockbackDamping { get; set; } = 0.90f;
-
-        /// <summary>
-        /// 空中水平衰减（每帧乘系数，combat-time）。
-        /// </summary>
-        public float AirborneHorizontalDamping { get; set; } = 0.95f;
-
-        /// <summary>
-        /// 进入受击时是否禁用角色移动（玩家通常需要）。
-        /// </summary>
-        public bool DisableMovementOnHit { get; set; } = true;
-
-        /// <summary>
         /// 进入受击时是否取消攻击（用于“被打断”）。
         /// </summary>
         public bool CancelAttackOnHit { get; set; } = true;
@@ -70,8 +55,6 @@ namespace ET
         #endregion
         #region 运行时数据
         
-        // 重力/贴地/落地高度由 CharacterControllerComponent + CheckGroundedComponent 统一负责。
-
         /// <summary>
         /// 起身(GetUp)兜底超时(ms, combat-time)。
         /// </summary>
@@ -92,7 +75,12 @@ namespace ET
         #endregion
 
         #region 状态
+
+        public HitReactionRequest HitReaction;
         
+        public HitRulesResult HitRules;
+        
+        public HitRulesProfile HitRulesProfile;
         /// <summary>当前视觉受击状态</summary>
         public HitState CurrentState { get; set; } = HitState.None;
 

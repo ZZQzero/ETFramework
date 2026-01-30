@@ -10,7 +10,6 @@
             acceptMask: HitReactionMask.All,
             priorities: new HitRulesProfile.Priorities(10, 20, 30, 40, 50),
             resistances: HitRulesProfile.Resistances.Default,
-            lowerOrEqualMode: HitRules.ApplyMode.Refresh,
             scales: new HitRulesProfile.Scales(1f, 1f, 1f),
             limits: new HitRulesProfile.Limits(1200, 25f, 18f));
 
@@ -18,7 +17,6 @@
             acceptMask: HitReactionMask.All,
             priorities: new HitRulesProfile.Priorities(10, 20, 30, 40, 50),
             resistances: HitRulesProfile.Resistances.Default,
-            lowerOrEqualMode: HitRules.ApplyMode.Refresh,
             scales: new HitRulesProfile.Scales(1f, 1f, 1f),
             limits: new HitRulesProfile.Limits(1500, 30f, 22f));
 
@@ -27,7 +25,6 @@
             acceptMask: HitReactionMask.Light | HitReactionMask.Medium | HitReactionMask.Heavy,
             priorities: new HitRulesProfile.Priorities(10, 20, 30, 0, 0),
             resistances: new HitRulesProfile.Resistances(25, 45, 55, 65, 85), 
-            lowerOrEqualMode: HitRules.ApplyMode.Refresh,
             scales: new HitRulesProfile.Scales(0.35f, 0.5f, 0.5f),
             limits: new HitRulesProfile.Limits(600, 12f, 10f));
 

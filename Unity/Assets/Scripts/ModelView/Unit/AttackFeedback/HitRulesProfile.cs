@@ -1,5 +1,28 @@
-﻿namespace ET
+﻿using System;
+
+namespace ET
 {
+    /// <summary>
+    /// 受击类型掩码（用于 RulesProfile 的可接受类型集合）。
+    /// </summary>
+    [Flags]
+    public enum HitReactionMask : int
+    {
+        None = 0,
+        /// <summary>轻受击</summary>
+        Light = 1 << 0,
+        /// <summary>中受击</summary>
+        Medium = 1 << 1,
+        /// <summary>重受击</summary>
+        Heavy = 1 << 2,
+        /// <summary>踉跄</summary>
+        Stagger = 1 << 3,
+        /// <summary>眩晕</summary>
+        Stun = 1 << 4,
+        /// <summary>全选</summary>
+        All = Light | Medium | Heavy | Stagger | Stun,
+    }
+    
     /// <summary>
     /// 受击规则 Profile（目标侧 Gameplay 规则）：
     /// - 接受哪些受击类型（Mask）
@@ -95,11 +118,6 @@
         /// <summary>当前状态抵抗力配置。</summary>
         public readonly Resistances Resistance;
 
-        /// <summary>
-        /// Refresh（不重播动画，延长硬直/叠加力度）。
-        /// </summary>
-        public readonly HitRules.ApplyMode LowerOrEqualMode;
-
         /// <summary>数值倍率。</summary>
         public readonly Scales Scale;
 
@@ -110,53 +128,19 @@
             HitReactionMask acceptMask,
             in Priorities priorities,
             in Resistances resistances,
-            HitRules.ApplyMode lowerOrEqualMode,
             in Scales scales,
             in Limits limits)
         {
             this.AcceptMask = acceptMask;
             this.Priority = priorities;
             this.Resistance = resistances;
-            this.LowerOrEqualMode = lowerOrEqualMode;
             this.Scale = scales;
             this.Limit = limits;
         }
 
-        public bool Accepts(HitReactionType type)
-        {
-            return (this.AcceptMask & HitReactionMaskExtensions.ToMask(type)) != 0;
-        }
-
-        public byte GetPriority(HitReactionType type)
-        {
-            switch (type)
-            {
-                case HitReactionType.Light: return this.Priority.Light;
-                case HitReactionType.Medium: return this.Priority.Medium;
-                case HitReactionType.Heavy: return this.Priority.Heavy;
-                case HitReactionType.Stagger: return this.Priority.Stagger;
-                case HitReactionType.Stun: return this.Priority.Stun;
-                default: return 0;
-            }
-        }
-
-        public byte GetResistance(HitState state)
-        {
-            switch (state)
-            {
-                case HitState.GetUp: return this.Resistance.GetUp;
-                case HitState.Knockdown: return this.Resistance.Knockdown;
-                case HitState.Airborne:
-                case HitState.Falling: return this.Resistance.Airborne;
-                case HitState.Knockback: return this.Resistance.Knockback;
-                case HitState.Stun: return this.Resistance.Stun;
-                default: return 0;
-            }
-        }
-
         public override string ToString()
         {
-            return $"受击规则配置(接受类型={this.AcceptMask}, 优先级[轻/中/重/踉跄/眩晕]=[{this.Priority.Light}/{this.Priority.Medium}/{this.Priority.Heavy}/{this.Priority.Stagger}/{this.Priority.Stun}], 抵抗力[眩晕/击退/浮空/倒地/起身]=[{this.Resistance.Stun}/{this.Resistance.Knockback}/{this.Resistance.Airborne}/{this.Resistance.Knockdown}/{this.Resistance.GetUp}], 同级或低级处理={this.LowerOrEqualMode}, 数值缩放[硬直/击退/击飞]=[{this.Scale.Stun:0.###}/{this.Scale.Knockback:0.###}/{this.Scale.Knockup:0.###}], 上限限制[硬直ms/击退力/击飞力]=[{this.Limit.MaxHitStunMs}/{this.Limit.MaxKnockbackForce:0.###}/{this.Limit.MaxKnockupForce:0.###}])";
+            return $"受击规则配置(接受类型={this.AcceptMask}, 优先级[轻/中/重/踉跄/眩晕]=[{this.Priority.Light}/{this.Priority.Medium}/{this.Priority.Heavy}/{this.Priority.Stagger}/{this.Priority.Stun}], 抵抗力[眩晕/击退/浮空/倒地/起身]=[{this.Resistance.Stun}/{this.Resistance.Knockback}/{this.Resistance.Airborne}/{this.Resistance.Knockdown}/{this.Resistance.GetUp}], 数值缩放[硬直/击退/击飞]=[{this.Scale.Stun:0.###}/{this.Scale.Knockback:0.###}/{this.Scale.Knockup:0.###}], 上限限制[硬直ms/击退力/击飞力]=[{this.Limit.MaxHitStunMs}/{this.Limit.MaxKnockbackForce:0.###}/{this.Limit.MaxKnockupForce:0.###}])";
         }
     }
 }

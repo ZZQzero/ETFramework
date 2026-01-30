@@ -1165,7 +1165,7 @@ namespace ET
 
                 int defaultHitStopMs = self.Config?.DefaultHitStopMs ?? 0;
                 // 这里 Effect 内部已经包含了 HitMotionData
-                var req = HitReactionRequest.From(in effect, in feedback, hitDirection, defaultHitStopMs);
+                var req = hitReactionComponent.From(in effect, in feedback, hitDirection, defaultHitStopMs);
                 hitReactionComponent.TryApplyHit(in req);
             }
 

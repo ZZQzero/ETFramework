@@ -126,50 +126,224 @@ namespace ET
             await ETTask.CompletedTask;
         }
 
-        #region 受击类型处理（快捷接口）
+        public static HitReactionRequest From(this HitReactionComponent self, in HitEffectData effect, in HitFeedbackData feedback, Vector3 hitDirection, int defaultHitStopMs)
+        {
+            self.HitReaction = new HitReactionRequest(effect, feedback, hitDirection, defaultHitStopMs);
+            return self.HitReaction;
+        }
+
+        /// <summary>
+        /// - 负责“能否受击/是否通过过滤/受击优先级/参数归一化”等判定
+        /// - 只产出决策，不直接操作动画/位移/组件
+        /// </summary>
+        public static HitRulesResult HitRuleEvaluate(this HitReactionComponent self, in HitReactionRequest incoming, in HitRulesProfile profile)
+        {
+            if (self == null || self.IsDisposed)
+                return new HitRulesResult(HitApplyMode.Reject, incoming);
+
+            if (self.Owner == null || self.OwnerUnit == null)
+                return new HitRulesResult(HitApplyMode.Reject, incoming);
+
+            bool hasVisualOrPhysical = incoming.ReactionType != HitReactionType.None || incoming.MotionData.MotionType != HitMotionType.None;
+            bool hasAnyFeedback =
+                incoming.VictimHitStopMs > 0 ||
+                incoming.ScreenShakeIntensity > 0f ||
+                incoming.ScreenShakeDurationMs > 0 ||
+                (incoming.TimeScale > 0f && !Mathf.Approximately(incoming.TimeScale, 1f)) ||
+                incoming.TimeScaleDurationMs > 0;
+
+            // 允许“仅反馈”的请求（例如格挡成功、护盾命中）：不进入受击状态机
+            // 注意：此分支不参与 AcceptMask/TargetStates/CanBeHit 判定，避免把表现反馈耦合进 gameplay 受击规则。
+            if (!hasVisualOrPhysical)
+            {
+                if (!hasAnyFeedback)
+                {
+                    return new HitRulesResult(HitApplyMode.Reject, incoming);
+                }
+                HitReactionRequest normalizedFeedbackOnly = Normalize(incoming, in profile);
+                return new HitRulesResult(HitApplyMode.FeedbackOnly, normalizedFeedbackOnly);
+            }
+
+            // 状态检查：起身、倒地等状态可能禁止受击
+            if (!self.CanBeHit)
+                return new HitRulesResult(HitApplyMode.Reject, incoming);
+
+            if (!PassTargetStateFilter(self, incoming.TargetStates))
+                return new HitRulesResult(HitApplyMode.Reject, incoming);
+
+            // Profile 过滤：检查是否在接受列表中
+            if (!profile.Accepts(incoming.ReactionType))
+                return new HitRulesResult(HitApplyMode.Reject, incoming);
+
+            // 归一化参数（应用 Scale 和 Limit）
+            HitReactionRequest normalized = Normalize(incoming, in profile);
+
+            // 1. 获取本次攻击强度
+            int incomingPriority = profile.GetPriority(normalized.ReactionType);
+
+            // 2. 如果当前没有受击：直接替换（启动）
+            if (!self.IsInHitReaction)
+                return new HitRulesResult(HitApplyMode.Replace, normalized);
+
+            // 3. 判定应用模式 (Apply Mode Resolve)
+            // 获取上一次命中的招式强度
+            int lastAttackPriority = profile.GetPriority(self.CurrentReactionType);
+
+            HitApplyMode intendedMode = incomingPriority > lastAttackPriority ? HitApplyMode.Replace : profile.LowerOrEqualMode;
+
+            // 4. 核心：状态抵抗力（只限制 Replace；空中连段允许弱招 Refresh 续期）
+            int currentStateResistance = profile.GetResistance(self.CurrentState);
+            if (incomingPriority < currentStateResistance)
+            {
+                // 霸体/抗性：弱招无法打断（Replace 禁止）
+                if (intendedMode == HitApplyMode.Replace)
+                {
+                    return new HitRulesResult(HitApplyMode.Reject, normalized);
+                }
+
+                // 关键：空中连段阶段允许弱招 Refresh（续硬直/续空中时间）
+                if (self.CurrentState == HitState.Airborne || self.CurrentState == HitState.Falling)
+                {
+                    var airCombo = self.OwnerUnit.GetComponent<AirComboComponent>();
+                    if (airCombo != null && airCombo.Active)
+                    {
+                        return new HitRulesResult(HitApplyMode.Refresh, normalized);
+                    }
+                }
+
+                // 倒地/起身等状态仍严格（防无限控）
+                return new HitRulesResult(HitApplyMode.Reject, normalized);
+            }
+
+            return new HitRulesResult(intendedMode, normalized);
+        }
+
+        private static HitReactionRequest Normalize(this HitReactionComponent self, in HitReactionRequest r, in HitRulesProfile profile)
+        {
+            Vector3 dir = r.HitDirection;
+            dir.y = 0f;
+            if (dir.sqrMagnitude > 0.0001f)
+            {
+                dir.Normalize();
+            }
+
+            int stun = Mathf.Max(0, r.HitStunMs);
+            if (profile.Scale.Stun > 0f && !Mathf.Approximately(profile.Scale.Stun, 1f))
+            {
+                stun = Mathf.RoundToInt(stun * profile.Scale.Stun);
+            }
+            if (profile.Limit.MaxHitStunMs > 0 && stun > profile.Limit.MaxHitStunMs)
+            {
+                stun = profile.Limit.MaxHitStunMs;
+            }
+
+            // 物理轨道归一化
+            HitMotionData motion = r.MotionData;
+            motion.Force = Mathf.Max(0f, motion.Force);
+            
+            // 根据 Profile 缩放和限制力
+            if (motion.MotionType == HitMotionType.Push || motion.MotionType == HitMotionType.Pull)
+            {
+                if (profile.Scale.Knockback > 0f && !Mathf.Approximately(profile.Scale.Knockback, 1f)) motion.Force *= profile.Scale.Knockback;
+                if (profile.Limit.MaxKnockbackForce > 0f && motion.Force > profile.Limit.MaxKnockbackForce) motion.Force = profile.Limit.MaxKnockbackForce;
+            }
+            else if (motion.MotionType == HitMotionType.Launch || motion.MotionType == HitMotionType.Slam)
+            {
+                if (profile.Scale.Knockup > 0f && !Mathf.Approximately(profile.Scale.Knockup, 1f)) motion.Force *= profile.Scale.Knockup;
+                if (profile.Limit.MaxKnockupForce >= 0f && motion.Force > profile.Limit.MaxKnockupForce) motion.Force = profile.Limit.MaxKnockupForce;
+            }
+
+            int hitStop = Mathf.Max(0, r.VictimHitStopMs);
+            float shakeIntensity = Mathf.Max(0f, r.ScreenShakeIntensity);
+            int shakeDurationMs = Mathf.Max(0, r.ScreenShakeDurationMs);
+            float timeScale = r.TimeScale <= 0f ? 1f : r.TimeScale;
+            int timeScaleMs = Mathf.Max(0, r.TimeScaleDurationMs);
+
+            HitReactionRequest.FeedbackPayload fp = new HitReactionRequest.FeedbackPayload(
+                victimHitStopMs: hitStop,
+                screenShakeIntensity: shakeIntensity,
+                screenShakeDurationMs: shakeDurationMs,
+                timeScale: timeScale,
+                timeScaleDurationMs: timeScaleMs);
+
+            return new HitReactionRequest(
+                r.ReactionType,
+                motion,
+                r.TargetStates,
+                dir,
+                stun,
+                in fp);
+        }
+
+        private static bool PassTargetStateFilter(this HitReactionComponent self, TargetStateMask filter)
+        {
+            if (filter == TargetStateMask.Any)
+            {
+                return true;
+            }
+
+            TargetStateMask current;
+            if (self.IsKnockdown)
+            {
+                current = TargetStateMask.Knockdown;
+            }
+            else if (self.IsAirborne)
+            {
+                current = TargetStateMask.Airborne;
+            }
+            else
+            {
+                current = TargetStateMask.Grounded;
+            }
+
+            return (filter & current) != 0;
+        }
         
-        public static void PlayLightHit(this HitReactionComponent self, Vector3 direction, int stunMs)
+        public static bool Accepts(this HitReactionComponent self, HitReactionType type)
         {
-            self.TryApplyHit(new HitReactionRequest(
-                HitReactionType.Light,
-                HitMotionData.Default,
-                TargetStateMask.Any,
-                direction,
-                hitStunMs: stunMs));
+            return (AcceptMask & ToMask(type)) != 0;
+        }
+        
+        public static HitReactionMask ToMask(this HitReactionComponent self,HitReactionType type)
+        {
+            switch (type)
+            {
+                case HitReactionType.Light: return HitReactionMask.Light;
+                case HitReactionType.Medium: return HitReactionMask.Medium;
+                case HitReactionType.Heavy: return HitReactionMask.Heavy;
+                case HitReactionType.Stagger: return HitReactionMask.Stagger;
+                case HitReactionType.Stun: return HitReactionMask.Stun;
+                default: return HitReactionMask.None;
+            }
         }
 
-        public static void PlayMediumHit(this HitReactionComponent self, Vector3 direction, int stunMs)
+        public static byte GetPriority(this HitReactionComponent self, HitReactionType type)
         {
-            self.TryApplyHit(new HitReactionRequest(
-                HitReactionType.Medium,
-                HitMotionData.Default,
-                TargetStateMask.Any,
-                direction,
-                hitStunMs: stunMs));
+            switch (type)
+            {
+                case HitReactionType.Light: return HitRulesProfile.Priorities.Light;
+                case HitReactionType.Medium: return this.Priority.Medium;
+                case HitReactionType.Heavy: return this.Priority.Heavy;
+                case HitReactionType.Stagger: return this.Priority.Stagger;
+                case HitReactionType.Stun: return this.Priority.Stun;
+                default: return 0;
+            }
         }
 
-        public static void PlayHeavyHit(this HitReactionComponent self, Vector3 direction, int stunMs)
+        public static byte GetResistance(this HitReactionComponent self, HitState state)
         {
-            self.TryApplyHit(new HitReactionRequest(
-                HitReactionType.Heavy,
-                HitMotionData.Default,
-                TargetStateMask.Any,
-                direction,
-                hitStunMs: stunMs));
+            switch (state)
+            {
+                case HitState.GetUp: return this.Resistance.GetUp;
+                case HitState.Knockdown: return this.Resistance.Knockdown;
+                case HitState.Airborne:
+                case HitState.Falling: return this.Resistance.Airborne;
+                case HitState.Knockback: return this.Resistance.Knockback;
+                case HitState.Stun: return this.Resistance.Stun;
+                default: return 0;
+            }
         }
-
-        public static void PlayKnockback(this HitReactionComponent self, Vector3 direction, float force, int durationMs, int stunMs)
-        {
-            self.TryApplyHit(new HitReactionRequest(
-                HitReactionType.Medium,
-                new HitMotionData { MotionType = HitMotionType.Push, Force = force, DurationMs = durationMs, MotionCurve = AnimationCurve.Linear(0, 1, 1, 0) },
-                TargetStateMask.Any,
-                direction,
-                hitStunMs: stunMs));
-        }
-
-        #endregion
-
+        
         #region 统一入口
 
         /// <summary>
@@ -178,7 +352,7 @@ namespace ET
         public static bool TryApplyHit(this HitReactionComponent self, in HitReactionRequest request)
         {
             HitProfileLibrary.Resolve(self?.OwnerUnit, out var rulesProfile, out var feedbackProfile);
-            var result = HitRules.Evaluate(self, in request, in rulesProfile);
+            var result = HitRules.HitRuleEvaluate(self, in request, in rulesProfile);
             if (!result.Accepted)
             {
                 return false;
@@ -204,17 +378,17 @@ namespace ET
             // 按规则决策执行
             switch (result.Mode)
             {
-                case HitRules.ApplyMode.Replace:
+                case HitRules.HitApplyMode.Replace:
                     // 会话式锁：仅在“从非受击进入受击”时 acquire 一次
                     self.AcquireHitSessionLocksIfNeeded();
                     self.StartHitReaction(in effective);
                     break;
-                case HitRules.ApplyMode.Refresh:
+                case HitRules.HitApplyMode.Refresh:
                     // Refresh 仍处于受击会话内；但如果存在“反馈-only”后立刻进入受击的特殊路径，这里也要兜底 acquire
                     self.AcquireHitSessionLocksIfNeeded();
                     self.RefreshHitReaction(in effective);
                     break;
-                case HitRules.ApplyMode.FeedbackOnly:
+                case HitRules.HitApplyMode.FeedbackOnly:
                     // 仅反馈，不进入受击状态机，也不 acquire 外部能力锁
                     return true;
                 default:

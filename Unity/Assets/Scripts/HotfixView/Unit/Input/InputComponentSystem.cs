@@ -2,12 +2,23 @@ using UnityEngine;
 
 namespace ET
 {
+    [EntitySystemOf(typeof(InputComponent))]
+    [FriendOf(typeof(InputComponent))]
     public static partial class InputComponentSystem
     {
         [EntitySystem]
-        private static void Awake(this InputComponent self,Transform player)
+        private static void Awake(this InputComponent self)
         {
-            self.LastAimDirection = player.forward;
+            // 初始化最后移动方向为角色初始朝向（如果能拿到）或世界正前
+            var gameObjectComponent = self.GetParent<Unit>().GetComponent<GameObjectComponent>();
+            if (gameObjectComponent != null && gameObjectComponent.Transform != null)
+            {
+                self.LastMoveInput = gameObjectComponent.Transform.forward;
+            }
+            else
+            {
+                self.LastMoveInput = Vector3.forward;
+            }
         }
 
         [EntitySystem]
@@ -15,73 +26,83 @@ namespace ET
         {
             if (!self.EnableInput)
             {
+                self.MoveInput = Vector3.zero;
+                self.JumpPending = false;
+                self.AttackPending = false;
                 return;
             }
             
-            // 读取移动输入
+            // 1. 统一轴采样，避免重复调用 Input.GetAxisRaw
             float horizontal = Input.GetAxisRaw("Horizontal");
             float vertical = Input.GetAxisRaw("Vertical");
-            self.MoveDirection = new Vector3(horizontal, 0f, vertical).normalized;
-            self.UpdateAimDirection();
-            // 读取跳跃输入
-            self.JumpPressed = Input.GetKey(self.JumpKey);
-            // 读取攻击输入（鼠标左键按下）
-            self.AttackPressed = Input.GetMouseButtonDown(0);
-        }
+            self.MoveInput = new Vector3(horizontal, 0f, vertical);
 
-        /// <summary>
-        /// 获取当前移动方向
-        /// </summary>
-        public static Vector3 GetMoveDirection(this InputComponent self)
-        {
-            return self.MoveDirection;
-        }
-        
-        public static void UpdateAimDirection(this InputComponent self)
-        {
-            float x = Input.GetAxisRaw("Horizontal");
-            float z = Input.GetAxisRaw("Vertical");
-
-            Vector3 dir = new Vector3(x, 0f, z);
-
-            if (dir.sqrMagnitude > 0.001f)
+            // 2. 更新最后有效移动方向（用于驱动层计算朝向意图）
+            if (self.MoveInput.sqrMagnitude > 0.001f)
             {
-                self.LastAimDirection = dir.normalized;
+                self.LastMoveInput = self.MoveInput.normalized;
+            }
+
+            // 3. 脉冲信号累加（Pending 模式）：
+            // 只要本帧按下了，就标记为 Pending，直到驱动层调用 Consume
+            if (Input.GetKey(self.JumpKey))
+            {
+                self.JumpPending = true;
+            }
+
+            if (Input.GetMouseButtonDown(self.AttackMouseButton))
+            {
+                self.AttackPending = true;
             }
         }
 
-        public static Vector3 GetAimDirection(this InputComponent self, Transform owner)
-        {
-            if (self.LastAimDirection.sqrMagnitude < 0.001f)
-            {
-                return owner.forward;
-            }
+        #region 外部接口（由 Driver 层消费）
 
-            return self.LastAimDirection;
+        /// <summary>
+        /// 获取当前移动输入向量
+        /// </summary>
+        public static Vector3 GetMoveInput(this InputComponent self)
+        {
+            return self.MoveInput;
         }
 
         /// <summary>
-        /// 检查是否有跳跃请求
+        /// 消费跳跃请求
         /// </summary>
-        public static bool HasJumpRequest(this InputComponent self)
+        public static bool ConsumeJumpRequest(this InputComponent self)
         {
-            return self.JumpPressed;
+            if (!self.JumpPending) return false;
+            self.JumpPending = false;
+            return true;
         }
 
         /// <summary>
-        /// 检查是否有移动输入
+        /// 消费攻击请求
         /// </summary>
+        public static bool ConsumeAttackRequest(this InputComponent self)
+        {
+            if (!self.AttackPending) return false;
+            self.AttackPending = false;
+            return true;
+        }
+
+        /// <summary>
+        /// 获取最后一次有效的移动方向（用于朝向/瞄准）
+        /// </summary>
+        public static Vector3 GetLastMoveInput(this InputComponent self)
+        {
+            return self.LastMoveInput;
+        }
+
+        #endregion
+
+        #region 兼容性/状态查询
+
         public static bool HasMoveInput(this InputComponent self)
         {
-            return self.MoveDirection.magnitude > 0.01f;
+            return self.MoveInput.sqrMagnitude > 0.01f;
         }
-        
-        /// <summary>
-        /// 检查是否有攻击请求
-        /// </summary>
-        public static bool HasAttackRequest(this InputComponent self)
-        {
-            return self.AttackPressed;
-        }
+
+        #endregion
     }
 }

@@ -780,25 +780,25 @@ public partial class SkillEditorWindow : EditorWindow
         MarkAssetDirty();
     }
 
-    private void OnHitEffectKnockbackForceChanged(ChangeEvent<float> evt)
+    private void OnHitMotionTypeChanged(ChangeEvent<Enum> evt)
     {
         if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
         {
             return;
         }
 
-        float v = Mathf.Max(0f, evt.newValue);
-        if (hitEffectKnockbackForceField != null && !Mathf.Approximately(v, evt.newValue))
+        if (evt.newValue == null)
         {
-            hitEffectKnockbackForceField.SetValueWithoutNotify(v);
+            return;
         }
+
         var effect = hitBoxClipItem.HitBoxData.Effect;
-        effect.KnockbackForce = v;
+        effect.HitMotion.MotionType = (HitMotionType)evt.newValue;
         hitBoxClipItem.HitBoxData.Effect = effect;
         MarkAssetDirty();
     }
 
-    private void OnHitEffectKnockupForceChanged(ChangeEvent<float> evt)
+    private void OnHitMotionForceChanged(ChangeEvent<float> evt)
     {
         if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
         {
@@ -806,12 +806,43 @@ public partial class SkillEditorWindow : EditorWindow
         }
 
         float v = Mathf.Max(0f, evt.newValue);
-        if (hitEffectKnockupForceField != null && !Mathf.Approximately(v, evt.newValue))
+        if (hitMotionForceField != null && !Mathf.Approximately(v, evt.newValue))
         {
-            hitEffectKnockupForceField.SetValueWithoutNotify(v);
+            hitMotionForceField.SetValueWithoutNotify(v);
         }
         var effect = hitBoxClipItem.HitBoxData.Effect;
-        effect.KnockupForce = v;
+        effect.HitMotion.Force = v;
+        hitBoxClipItem.HitBoxData.Effect = effect;
+        MarkAssetDirty();
+    }
+
+    private void OnHitMotionDurationMsChanged(ChangeEvent<int> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        int v = Mathf.Max(0, evt.newValue);
+        if (hitMotionDurationMsField != null && v != evt.newValue)
+        {
+            hitMotionDurationMsField.SetValueWithoutNotify(v);
+        }
+        var effect = hitBoxClipItem.HitBoxData.Effect;
+        effect.HitMotion.DurationMs = v;
+        hitBoxClipItem.HitBoxData.Effect = effect;
+        MarkAssetDirty();
+    }
+
+    private void OnHitMotionCurveChanged(ChangeEvent<AnimationCurve> evt)
+    {
+        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
+        {
+            return;
+        }
+
+        var effect = hitBoxClipItem.HitBoxData.Effect;
+        effect.HitMotion.MotionCurve = evt.newValue ?? AnimationCurve.Linear(0, 1, 1, 0);
         hitBoxClipItem.HitBoxData.Effect = effect;
         MarkAssetDirty();
     }

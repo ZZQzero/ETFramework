@@ -46,7 +46,7 @@
 
         public override string ToString()
         {
-            return $"HitFeedbackProfile(VictimStop={this.Option.AllowVictimHitStop}x{this.Option.VictimHitStopScale:0.###}, Shake={this.Option.AllowScreenShake}x{this.Option.ScreenShakeScale:0.###}, TimeScale={this.Option.AllowTimeScale}x{this.Option.TimeScaleScale:0.###})";
+            return $"受击反馈配置(受击停顿={this.Option.AllowVictimHitStop}, 缩放={this.Option.VictimHitStopScale:0.###}; 震屏={this.Option.AllowScreenShake}, 缩放={this.Option.ScreenShakeScale:0.###}; 时间缩放={this.Option.AllowTimeScale}, 缩放={this.Option.TimeScaleScale:0.###})";
         }
     }
 }

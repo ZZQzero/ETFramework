@@ -401,13 +401,21 @@ public partial class SkillEditorWindow : EditorWindow
         {
             hitEffectReactionField.SetValueWithoutNotify(effect.HitReaction);
         }
-        if (hitEffectKnockbackForceField != null)
+        if (hitMotionTypeField != null)
         {
-            hitEffectKnockbackForceField.SetValueWithoutNotify(Mathf.Max(0f, effect.KnockbackForce));
+            hitMotionTypeField.SetValueWithoutNotify(effect.HitMotion.MotionType);
         }
-        if (hitEffectKnockupForceField != null)
+        if (hitMotionForceField != null)
         {
-            hitEffectKnockupForceField.SetValueWithoutNotify(Mathf.Max(0f, effect.KnockupForce));
+            hitMotionForceField.SetValueWithoutNotify(Mathf.Max(0f, effect.HitMotion.Force));
+        }
+        if (hitMotionDurationMsField != null)
+        {
+            hitMotionDurationMsField.SetValueWithoutNotify(Mathf.Max(0, effect.HitMotion.DurationMs));
+        }
+        if (hitMotionCurveField != null)
+        {
+            hitMotionCurveField.SetValueWithoutNotify(effect.HitMotion.MotionCurve ?? AnimationCurve.Linear(0, 1, 1, 0));
         }
         if (hitEffectHitStunMsField != null)
         {

@@ -15,14 +15,12 @@ namespace ET
         Medium = 1 << 1,
         /// <summary>重受击</summary>
         Heavy = 1 << 2,
-        /// <summary>击退</summary>
-        Knockback = 1 << 3,
-        /// <summary>击飞</summary>
-        Knockup = 1 << 4,
-        /// <summary>击倒</summary>
-        Knockdown = 1 << 5,
+        /// <summary>踉跄</summary>
+        Stagger = 1 << 3,
+        /// <summary>眩晕</summary>
+        Stun = 1 << 4,
         /// <summary>全选</summary>
-        All = Light | Medium | Heavy | Knockback | Knockup | Knockdown,
+        All = Light | Medium | Heavy | Stagger | Stun,
     }
 
     public static class HitReactionMaskExtensions
@@ -34,9 +32,8 @@ namespace ET
                 case HitReactionType.Light: return HitReactionMask.Light;
                 case HitReactionType.Medium: return HitReactionMask.Medium;
                 case HitReactionType.Heavy: return HitReactionMask.Heavy;
-                case HitReactionType.Knockback: return HitReactionMask.Knockback;
-                case HitReactionType.Knockup: return HitReactionMask.Knockup;
-                case HitReactionType.Knockdown: return HitReactionMask.Knockdown;
+                case HitReactionType.Stagger: return HitReactionMask.Stagger;
+                case HitReactionType.Stun: return HitReactionMask.Stun;
                 default: return HitReactionMask.None;
             }
         }

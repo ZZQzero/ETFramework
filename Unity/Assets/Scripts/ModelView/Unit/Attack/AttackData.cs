@@ -81,7 +81,7 @@ namespace ET
     }
 
     /// <summary>
-    /// 受击反应类型
+    /// 受击表现类型（仅决定视觉/动画/硬直时长）
     /// </summary>
     public enum HitReactionType
     {
@@ -89,9 +89,43 @@ namespace ET
         Light = 1,       // 轻微受击
         Medium = 2,      // 中等受击
         Heavy = 3,       // 重度受击
-        Knockback = 4,   // 击退
-        Knockup = 5,     // 击飞
-        Knockdown = 6,   // 击倒
+        Stagger = 4,     // 踉跄
+        Stun = 5,        // 眩晕/完全瘫痪
+    }
+
+    /// <summary>
+    /// 受击物理运动类型（独立于表现类型）
+    /// </summary>
+    public enum HitMotionType
+    {
+        None = 0,
+        Push = 1,       // 水平击退 (XZ)
+        Launch = 2,     // 击飞 (Up + XZ)
+        Slam = 3,       // 砸地 (Down + XZ)
+        Pull = 4,       // 拉拽 (向攻击者中心靠拢)
+    }
+
+    /// <summary>
+    /// 受击物理运动数据
+    /// </summary>
+    [Serializable]
+    public struct HitMotionData
+    {
+        public HitMotionType MotionType;
+        /// <summary>力度/速度</summary>
+        public float Force;
+        /// <summary>位移持续时间(ms)</summary>
+        public int DurationMs;
+        /// <summary>位移曲线（0-1 对应时间，Value 对应速度倍率）</summary>
+        public AnimationCurve MotionCurve;
+        
+        public static HitMotionData Default => new HitMotionData
+        {
+            MotionType = HitMotionType.None,
+            Force = 0f,
+            DurationMs = 0,
+            MotionCurve = AnimationCurve.Linear(0, 1, 1, 0) // 默认线性衰减
+        };
     }
 
     /// <summary>
@@ -174,14 +208,11 @@ namespace ET
         /// <summary>伤害倍率</summary>
         public float DamageMultiplier;
 
-        /// <summary>受击反应类型</summary>
+        /// <summary>视觉受击反应类型（仅动画）</summary>
         public HitReactionType HitReaction;
 
-        /// <summary>击退力度</summary>
-        public float KnockbackForce;
-
-        /// <summary>击飞力度</summary>
-        public float KnockupForce;
+        /// <summary>物理运动数据（位移/击飞）</summary>
+        public HitMotionData HitMotion;
 
         /// <summary>硬直时间（毫秒）</summary>
         public int HitStunMs;
@@ -195,8 +226,7 @@ namespace ET
         {
             DamageMultiplier = 1f,
             HitReaction = HitReactionType.Light,
-            KnockbackForce = 0f,
-            KnockupForce = 0f,
+            HitMotion = HitMotionData.Default,
             HitStunMs = 200,
             TargetStates = TargetStateMask.Any,
         };

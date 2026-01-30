@@ -32,6 +32,7 @@ namespace ET
             self.Attack = self.Unit.GetComponent<AttackComponent>();
             self.HitReaction = self.Unit.GetComponent<HitReactionComponent>();
             self.HitStop = self.Unit.GetComponent<HitStopComponent>();
+            self.AirCombo = self.Unit.GetComponent<AirComboComponent>();
 
             // 运动配置：只消费最终参数，不关心来源（玩家/怪物/BUFF/数值）
             var moveConfig = self.Unit.GetComponent<MovementConfigComponent>();
@@ -98,6 +99,10 @@ namespace ET
             {
                 self.HitStop = self.Unit?.GetComponent<HitStopComponent>();
             }
+            if (self.AirCombo == null)
+            {
+                self.AirCombo = self.Unit?.GetComponent<AirComboComponent>();
+            }
 
             // HitStop（顿帧）期间：冻结运动与 RootMotion，避免停顿时“偷偷滑动/掉落”。
             // - 保留 CurrentVelocity（用于顿帧结束后恢复）
@@ -110,7 +115,7 @@ namespace ET
                     {
                         case HitStopFreezeMode.None:
                         case HitStopFreezeMode.FreezeAnimationOnly:
-                            // 不冻结运动：继续走后续逻辑（移动/攻击/RootMotion等）
+                            // 不冻结运动：继续走后续逻辑（移动/攻击/RootMotion等），统一在函数末尾计算与同步
                             break;
                         case HitStopFreezeMode.FreezeXZOnly:
                             // 冻结水平：保留 Y（重力/上抛继续），XZ 置 0
@@ -126,21 +131,18 @@ namespace ET
                             return;
                     }
                 }
-                self.CalculateAnimationSpeeds();
-                self.SyncUnitTransformFromRigidbody();
             }
 
             // 1. 基础运动合成 (Locomotion/Attack/Deceleration)
-            bool canMove = self.LocomotionIntent == null || self.LocomotionIntent.Capabilities.HasFlag(ActionCapabilities.Move);
+            bool isMoveAllowed = self.LocomotionIntent != null && self.LocomotionIntent.IsMoveAllowed;
 
             if (self.Attack != null && self.Attack.IsMovementActive)
             {
                 self.UpdateAttackMovement();
-                // 攻击位移期间，水平速度由 UpdateAttackMovement (MovePosition) 控制，
-                // 逻辑速度层只需保留垂直速度用于同步。
+                // 攻击位移期间，水平速度由 UpdateAttackMovement 控制，逻辑速度层只需保留垂直速度
                 self.CurrentVelocity = Vector3.up * self.CurrentVelocity.y;
             }
-            else if (!self.EnableMovement || !canMove || (self.Attack != null && self.Attack.IsInAttack))
+            else if (!isMoveAllowed || (self.Attack != null && self.Attack.IsInAttack))
             {
                 self.ApplyDeceleration(deltaTime);
             }
@@ -149,28 +151,56 @@ namespace ET
                 self.ApplyMovement(deltaTime);
             }
 
-            // 2. 叠加外部冲量意图 (External Impulse - 如受击、爆炸推开等)
+            // 2. 叠加外部水平目标速度 (如受击曲线位移)
+            if (self.LocomotionIntent != null && self.LocomotionIntent.ExternalTargetVelocity.sqrMagnitude > 0.0001f)
+            {
+                Vector2 targetVel = self.LocomotionIntent.ExternalTargetVelocity;
+                
+                // 受击滑行：无论当前是否允许移动，都强制覆盖 XZ 速度（保证位移精度）
+                self.CurrentVelocity = new Vector3(targetVel.x, self.CurrentVelocity.y, targetVel.y);
+            }
+
+            // 3. 消费外部 3D 瞬时冲量 (如爆炸、击飞、砸地等)
+            // 放在目标速度之后处理，确保冲量能叠加在受击位移之上，而不会被覆盖
             if (self.LocomotionIntent != null && self.LocomotionIntent.ExternalImpulse.sqrMagnitude > 0.0001f)
             {
                 Vector3 impulse = self.LocomotionIntent.ExternalImpulse;
-
-                // 核心优化：
-                // - 如果处于 DisableMovement 状态（如受击中），受击系统计算的 KnockbackSpeed 是绝对目标速度。
-                //   此时我们直接覆盖 CurrentVelocity.xz，确保逻辑速度与受击配置精确匹配，且不会因帧累加而速度失控。
-                if (!self.EnableMovement)
+                Vector3 v = self.CurrentVelocity;
+                
+                if (impulse.y > 0.001f) // 向上力：取最大值以支持浮空叠加，XZ 叠加
                 {
-                    self.CurrentVelocity = new Vector3(impulse.x, self.CurrentVelocity.y, impulse.z);
-                }
-                else
-                {
-                    // - 如果移动未禁用（如正常行走时被爆炸推开），冲量作为“瞬时增量”叠加一次。
-                    //   叠加后立即消费掉意图，防止下一帧重复叠加导致“雪球效应”。
-                    Vector3 v = self.CurrentVelocity;
                     v.x += impulse.x;
                     v.z += impulse.z;
-                    self.CurrentVelocity = v;
-                    self.LocomotionIntent.ExternalImpulse = Vector3.zero;
+                    // Y轴权限：空中连段 Active 时，不再通过“不断上抛”维持空中（由 ComboPhysics 接管）
+                    if (self.AirCombo != null && self.AirCombo.Active)
+                    {
+                        // 允许进入空中后仍保持向上速度（例如刚起跳/刚被击飞的上升段），但不再被后续命中抬高
+                        // 因此这里不提升 v.y，只保留原本的 v.y
+                    }
+                    else
+                    {
+                        v.y = Mathf.Max(v.y, impulse.y);
+                    }
+                    
+                    // 强制脱离地面：优先保留受击系统设置的特殊原因（Launched/Juggled/Knockdown）
+                    // 如果当前没有原因或是 WalkOff（掉落），则统一视为被击飞 (Launched)
+                    if (self.Ground != null)
+                    {
+                        var currentReason = self.Ground.AirborneReason;
+                        if (currentReason == AirborneReason.None || currentReason == AirborneReason.WalkOff)
+                        {
+                            currentReason = AirborneReason.Launched;
+                        }
+                        self.Ground.ForceBreakGround(currentReason);
+                    }
                 }
+                else // 纯水平或向下力（砸地）
+                {
+                    v += impulse;
+                }
+                
+                self.CurrentVelocity = v;
+                self.LocomotionIntent.ExternalImpulse = Vector3.zero; // 消费即焚
             }
 
             // 3. 应用最终速度到物理引擎
@@ -180,7 +210,7 @@ namespace ET
             }
             
             // 4. 应用朝向旋转
-            bool canRotate = self.LocomotionIntent == null || self.LocomotionIntent.Capabilities.HasFlag(ActionCapabilities.Rotate);
+            bool canRotate = self.LocomotionIntent == null || self.LocomotionIntent.IsRotateAllowed;
             if (canRotate && (self.Attack == null || !self.Attack.IsAttacking))
             {
                 self.ApplyRotation(deltaTime);
@@ -202,7 +232,12 @@ namespace ET
             // - 允许空中（有 Y 速度）时仍能应用动画位移，避免“空中突进/空中斩”被误挡导致回弹。
             float horizontalSpeedSqr = self.CurrentVelocity.x * self.CurrentVelocity.x + self.CurrentVelocity.z * self.CurrentVelocity.z;
 
-            if ((self.Attack == null || (!self.Attack.IsMovementActive && (!self.Attack.IsInAttack || allowRootMotionInAttack))) &&
+            // RootMotion 与 HitStop 的明确策略：
+            // - FreezeAnimationOnly/FreezeAll：动画图暂停，禁止消费 RootMotion，避免恢复时瞬移/滑步
+            bool blockRootMotion = self.HitStop != null && self.HitStop.IsHitStopActive && self.HitStop.FreezeMode != HitStopFreezeMode.None;
+
+            if (!blockRootMotion &&
+                (self.Attack == null || (!self.Attack.IsMovementActive && (!self.Attack.IsInAttack || allowRootMotionInAttack))) &&
                 horizontalSpeedSqr <= 0.0001f * 0.0001f &&
                 self.Animator != null && self.Animator.deltaPosition.magnitude > 0.0001f)
             {
@@ -216,7 +251,23 @@ namespace ET
         private static void FixedUpdate(this CharacterControllerComponent self)
         {
             float deltaTime = Time.fixedDeltaTime;
-            
+
+            if (self.AirCombo == null)
+            {
+                self.AirCombo = self.Unit?.GetComponent<AirComboComponent>();
+            }
+
+            // HitStop.FreezeAll：冻结窗口内不更新 Ground（Prev/State/timers），避免假落地/状态抖动
+            if (self.HitStop != null && self.HitStop.IsHitStopActive && self.HitStop.FreezeMode == HitStopFreezeMode.FreezeAll)
+            {
+                if (self.Rigidbody != null)
+                {
+                    self.Rigidbody.linearVelocity = Vector3.zero;
+                }
+                self.SyncUnitTransformFromRigidbody();
+                return;
+            }
+
             self.Ground.Detect();
             
             if (self.Attack == null)
@@ -227,7 +278,7 @@ namespace ET
             if (self.JumpRequested && (self.Attack == null || !self.Attack.IsInAttack))
             {
                 // 检查能力权限：是否允许跳跃
-                bool canJump = self.LocomotionIntent == null || self.LocomotionIntent.Capabilities.HasFlag(ActionCapabilities.Jump);
+                bool canJump = self.LocomotionIntent == null || self.LocomotionIntent.IsJumpAllowed;
                 if (canJump)
                 {
                     self.Jump();
@@ -259,7 +310,66 @@ namespace ET
                 }
             }
 
-            self.ApplyGravity(deltaTime);
+            // ComboPhysics：空中连段接管垂直规则（重力/下落速度/高度夹持）
+            if (self.AirCombo != null && self.AirCombo.Active)
+            {
+                // fail-safe：若已回到地面但组件仍 Active，连续数帧后强制结束，避免“永远悬空”
+                if (self.Ground != null)
+                {
+                    self.AirCombo.FailSafeTick(self.Ground.IsGrounded(self.Ground.State));
+                }
+
+                // 延迟捕获 EnteredHeight：确保 ForceBreakGround 生效后再记录，避免地面漂移影响
+                if (self.Ground != null && self.Ground.IsAirborne(self.Ground.State))
+                {
+                    self.AirCombo.CaptureEnteredHeightIfNeeded(self.Rigidbody != null ? self.Rigidbody.position.y : self.Unit.Position.y);
+                }
+
+                long nowCombatMs = self.HitStop != null ? self.HitStop.NowCombatMs() : TimeInfo.Instance.ClientFrameTime();
+                float gScale = self.AirCombo.GetCurrentGravityScale(nowCombatMs);
+                gScale = Mathf.Clamp01(gScale);
+
+                // 应用缩放重力（Y 轴）
+                if (self.CurrentVelocity.y > -1000f) // 防御性
+                {
+                    float g = self.Gravity * self.GravityMultiplier * gScale;
+                    self.CurrentVelocity += Vector3.down * g * deltaTime;
+                }
+
+                // 下落速度下限（不允许无限下落）
+                float minFall = self.AirCombo.MinFallSpeed; // 负数
+                if (self.CurrentVelocity.y < minFall)
+                {
+                    self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, minFall, self.CurrentVelocity.z);
+                }
+
+                // 高度夹持（使用 MovePosition，避免穿模/爆震）
+                if (self.Rigidbody != null)
+                {
+                    Vector3 pos = self.Rigidbody.position;
+                    float clampedY = Mathf.Clamp(pos.y, self.AirCombo.ComboMinHeight, self.AirCombo.ComboMaxHeight);
+                    if (!Mathf.Approximately(pos.y, clampedY))
+                    {
+                        // 触顶：不允许继续向上
+                        if (pos.y > clampedY && self.CurrentVelocity.y > 0f)
+                        {
+                            self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
+                        }
+                        pos.y = clampedY;
+                        self.Rigidbody.MovePosition(pos);
+                    }
+                }
+
+                // 退出完成：不再接管（交给自然重力）
+                if (self.AirCombo.IsExitCompleted(nowCombatMs))
+                {
+                    self.AirCombo.ForceEnd();
+                }
+            }
+            else
+            {
+                self.ApplyGravity(deltaTime);
+            }
 
             // Ground/重力只在 FixedUpdate 推进，这里也同步一次，避免只动 Y 时 Unit 不更新
             self.SyncUnitTransformFromRigidbody();

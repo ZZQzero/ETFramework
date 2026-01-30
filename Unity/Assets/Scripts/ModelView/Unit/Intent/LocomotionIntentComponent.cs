@@ -22,9 +22,21 @@ namespace ET
     public class LocomotionIntentComponent : Entity, IAwake
     {
         /// <summary>
-        /// 当前实体的行为能力权限
+        /// 基础行为能力权限（单位天生能做什么，由配置或初始化设定）
         /// </summary>
-        public ActionCapabilities Capabilities = ActionCapabilities.All;
+        public ActionCapabilities BaseCapabilities = ActionCapabilities.All;
+
+        // --- 屏蔽计数器（引用计数，多源锁定核心） ---
+        public int MoveInhibitors;
+        public int RotateInhibitors;
+        public int AttackInhibitors;
+        public int JumpInhibitors;
+
+        // --- 逻辑判断接口（执行层与驱动层应使用这些接口） ---
+        public bool IsMoveAllowed => BaseCapabilities.HasFlag(ActionCapabilities.Move) && MoveInhibitors == 0;
+        public bool IsRotateAllowed => BaseCapabilities.HasFlag(ActionCapabilities.Rotate) && RotateInhibitors == 0;
+        public bool IsAttackAllowed => BaseCapabilities.HasFlag(ActionCapabilities.Attack) && AttackInhibitors == 0;
+        public bool IsJumpAllowed => BaseCapabilities.HasFlag(ActionCapabilities.Jump) && JumpInhibitors == 0;
 
         /// <summary>
         /// 期望移动方向（世界空间，XZ 平面，已归一化）
@@ -38,9 +50,14 @@ namespace ET
         public Vector3 FaceDirection;
 
         /// <summary>
-        /// 外部冲量速度（由受击、爆炸等注入，由 Motor 每一帧消费合成）。
-        /// 注意：这通常是一个瞬时速度，Motor 消费后不会自动清理，
-        /// 它的生命周期由注入源（如 HitReactionComponent）维护。
+        /// 外部水平目标速度（由受击位移等注入，XZ 平面）。
+        /// 在位移禁用状态下，Motor 会直接跟随此速度以保证位移精确度。
+        /// </summary>
+        public Vector2 ExternalTargetVelocity;
+
+        /// <summary>
+        /// 外部 3D 瞬时冲量（由爆炸、击飞、跳跃等注入）。
+        /// 这是一个“增量”，Motor 消费一次后立即归零。
         /// </summary>
         public Vector3 ExternalImpulse;
 

@@ -60,6 +60,7 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.AttackComponentSystem.ET_AttackComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.AttackComponentSystem.ET_AttackComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.AttackComponentSystem.ET_AttackComponent_FixedUpdateSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.AirComboComponentSystem.ET_AirComboComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HitReactionComponentSystem.ET_HitReactionComponent_UnityEngine_Transform_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HitReactionComponentSystem.ET_HitReactionComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HitReactionComponentSystem.ET_HitReactionComponent_UpdateSystem>();
@@ -70,7 +71,7 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.AIDriverComponentSystem.ET_AIDriverComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.PlayerDriverComponentSystem.ET_PlayerDriverComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.PlayerDriverComponentSystem.ET_PlayerDriverComponent_UpdateSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.InputComponentSystem.ET_InputComponent_UnityEngine_Transform_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.InputComponentSystem.ET_InputComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.InputComponentSystem.ET_InputComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.SimpleMonsterAIComponentSystem.ET_SimpleMonsterAIComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.SimpleMonsterAIComponentSystem.ET_SimpleMonsterAIComponent_UpdateSystem>();

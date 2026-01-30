@@ -67,7 +67,7 @@ namespace ET
         /// </summary>
         public override string ToString()
         {
-            return $"HitStop(Active={this.IsHitStopActive}, Freeze={this.FreezeMode}, EndRealtimeMs={this.HitStopEndRealtimeMs}, CombatMs={this.CombatTimeMs}, CombatDeltaMs={this.CombatDeltaMs})";
+            return $"顿帧组件(激活={this.IsHitStopActive}, 冻结模式={this.FreezeMode}, 结束实时时间={this.HitStopEndRealtimeMs}ms, 当前战斗时间={this.CombatTimeMs}ms, 本帧战斗增量={this.CombatDeltaMs}ms)";
         }
     }
 }

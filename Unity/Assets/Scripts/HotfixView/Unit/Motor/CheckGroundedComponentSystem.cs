@@ -49,6 +49,20 @@ namespace ET
         /// </summary>
         public static void Detect(this CheckGroundedComponent self)
         {
+            self.DetectImpl(freezeTimers: false);
+        }
+
+        /// <summary>
+        /// 主检测入口 - FixedUpdate
+        /// - freezeTimers=true：冻结 timers（TimeLanded/AirborneDuration/LandingBuffer 等不推进），用于 HitStop.FreezeAll 等冻结窗口。
+        /// </summary>
+        public static void Detect(this CheckGroundedComponent self, bool freezeTimers)
+        {
+            self.DetectImpl(freezeTimers);
+        }
+
+        private static void DetectImpl(this CheckGroundedComponent self, bool freezeTimers)
+        {
             if (self.Capsule == null) return;
 
             var config = self.Config;
@@ -58,16 +72,24 @@ namespace ET
             self.UpdateIgnoredPlatform();
 
             // 性能优化：空中降频
-            if (config.ReduceAirborneCheckFrequency && self.IsAirborne(self.State) && self.FrameCounter % config.AirborneCheckInterval != 0)
+            // 核心逻辑：只有在没有抑制器（InhibitReduceFrequencyCount == 0）时，才允许跳帧检测
+            bool allowReduce = config.ReduceAirborneCheckFrequency && self.InhibitReduceFrequencyCount == 0;
+            if (allowReduce && self.IsAirborne(self.State) && self.FrameCounter % config.AirborneCheckInterval != 0)
             {
-                self.UpdateTimers(Time.fixedDeltaTime);
+                if (!freezeTimers)
+                {
+                    self.UpdateTimers(Time.fixedDeltaTime);
+                }
                 return;
             }
 
             self.PrevState = self.State;
             self.PerformGroundCheck();
             self.UpdateGroundState();
-            self.UpdateTimers(Time.fixedDeltaTime);
+            if (!freezeTimers)
+            {
+                self.UpdateTimers(Time.fixedDeltaTime);
+            }
             self.HandleStateTransition();
         }
 
@@ -529,16 +551,24 @@ namespace ET
         }
 
         /// <summary>
+        /// 强制脱离地面（跳过防抖检测）
+        /// </summary>
+        public static void ForceBreakGround(this CheckGroundedComponent self, AirborneReason reason)
+        {
+            self.State = GroundState.Airborne;
+            self.AirborneReason = reason;
+            self.TimeLeftGround = Time.time;
+            self.LastGroundedPosition = self.OwnerTransform.position;
+            self.InCoyoteTime = false;
+        }
+
+        /// <summary>
         /// 跳跃
         /// </summary>
         /// <param name="self"></param>
         public static void Jump(this CheckGroundedComponent self)
         {
-            self.State = GroundState.Airborne;
-            self.AirborneReason = AirborneReason.Jump;
-            self.TimeLeftGround = Time.time;
-            self.LastGroundedPosition = self.OwnerTransform.position;
-            self.InCoyoteTime = false;
+            self.ForceBreakGround(AirborneReason.Jump);
         }
 
         public static void StartDropThrough(this CheckGroundedComponent self)

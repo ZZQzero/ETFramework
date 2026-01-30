@@ -67,10 +67,6 @@ namespace ET
         /// </summary>
         public bool CancelAttackOnHit { get; set; } = true;
 
-        // 运行时：用于恢复移动开关
-        public bool CachedMovementEnabled { get; set; }
-        public bool HasCachedMovementEnabled { get; set; }
-
         #endregion
         #region 运行时数据
         
@@ -80,12 +76,24 @@ namespace ET
         /// 起身(GetUp)兜底超时(ms, combat-time)。
         /// </summary>
         public int GetUpTimeoutMs { get; set; } = 1500;
+
+        /// <summary>
+        /// 受击会话：外部能力锁是否已 acquire。
+        /// 约束：一次“受击会话”（从 None 进入任意受击状态，到回到 None）只允许 acquire 一次，结束时 release 一次。
+        /// </summary>
+        public bool HitSessionLocksAcquired { get; set; }
+
+        /// <summary>
+        /// 受击会话：是否已对 Ground 做过临时配置增强（用于空中落地判定更及时）。
+        /// 同样是会话级别 acquire/release，避免多次受击叠加导致 InhibitReduceFrequencyCount 残留。
+        /// </summary>
+        public bool HitSessionGroundBoosted { get; set; }
         
         #endregion
 
         #region 状态
         
-        /// <summary>当前受击状态</summary>
+        /// <summary>当前视觉受击状态</summary>
         public HitState CurrentState { get; set; } = HitState.None;
 
         /// <summary>当前受击反应类型（用于动画合成）</summary>
@@ -97,11 +105,26 @@ namespace ET
         /// <summary>硬直结束时间</summary>
         public long StunEndTime { get; set; }
         
-        /// <summary>击退方向</summary>
-        public Vector3 KnockbackDirection { get; set; }
+        /// <summary>当前物理运动类型</summary>
+        public HitMotionType CurrentMotionType { get; set; }
         
-        /// <summary>击退速度</summary>
-        public float KnockbackSpeed { get; set; }
+        /// <summary>当前运动力度/速度</summary>
+        public float CurrentMotionSpeed { get; set; }
+
+        /// <summary>运动起始力度（用于曲线缩放基准）</summary>
+        public float MotionBaseForce { get; set; }
+        
+        /// <summary>当前运动曲线</summary>
+        public AnimationCurve CurrentMotionCurve { get; set; }
+        
+        /// <summary>运动方向</summary>
+        public Vector3 MotionDirection { get; set; }
+        
+        /// <summary>运动开始时间 (combat-time)</summary>
+        public long MotionStartTime { get; set; }
+        
+        /// <summary>运动结束时间 (combat-time)</summary>
+        public long MotionEndTime { get; set; }
         
         /// <summary>倒地时间</summary>
         public long KnockdownEndTime { get; set; }
@@ -111,14 +134,9 @@ namespace ET
 
         /// <summary>进入起身状态的时间点（combat-time）。</summary>
         public long GetUpStartTime { get; set; }
-
-        // ===== 地检临时配置缓存（受击浮空时提升地检频率） =====
-        public bool HasCachedGroundDetectConfig { get; set; }
-        public bool CachedReduceAirborneCheckFrequency { get; set; }
-        public int CachedAirborneCheckInterval { get; set; }
         
         #endregion
-
+        
         #region 属性
         
         /// <summary>是否处于受击状态</summary>

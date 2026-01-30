@@ -45,46 +45,42 @@ namespace ET
                 timeScaleDurationMs: 0);
         }
 
-        /// <summary>受击类型（决定规则层优先级/动画选择）。</summary>
+        /// <summary>视觉受击类型（决定规则层优先级/动画选择）。</summary>
         public readonly HitReactionType ReactionType;
+        /// <summary>物理运动数据（推/飞/砸/拉）。</summary>
+        public readonly HitMotionData MotionData;
         /// <summary>目标状态过滤（可多选；Any=都可命中）。</summary>
         public readonly TargetStateMask TargetStates;
 
-        /// <summary>命中方向（通常是 attacker→target 的水平向量，规则层会做归一化/钳制）。</summary>
-        public readonly Vector3 HitDirection;   // 水平为主（建议已做归一化与 y=0）
-        /// <summary>击退力度（仅击退/击倒类反应会用到）。</summary>
-        public readonly float KnockbackForce;
-        /// <summary>击飞力度（仅击飞/击倒类反应会用到）。</summary>
-        public readonly float KnockupForce;
+        /// <summary>命中方向（通常是 attacker→target 的水平向量）。</summary>
+        public readonly Vector3 HitDirection;
         /// <summary>硬直时间(ms)（目标侧受击无法行动的持续时间）。</summary>
         public readonly int HitStunMs;
 
         // ===== 反馈（可选） =====
-        /// <summary>受击者侧顿帧(ms)（是否生效由 <see cref="HitFeedbackProfile"/> 决定）。</summary>
+        /// <summary>受击者侧顿帧(ms)。</summary>
         public readonly int VictimHitStopMs;
-        /// <summary>震屏强度(0-1)（通常由相机/反馈系统消费）。</summary>
+        /// <summary>震屏强度(0-1)。</summary>
         public readonly float ScreenShakeIntensity;
         /// <summary>震屏时长(ms)。</summary>
         public readonly int ScreenShakeDurationMs;
-        /// <summary>慢动作倍率（1=正常，小于1=慢）。</summary>
+        /// <summary>慢动作倍率（1=正常）。</summary>
         public readonly float TimeScale;
         /// <summary>慢动作持续时间(ms)。</summary>
         public readonly int TimeScaleDurationMs;
 
         public HitReactionRequest(
             HitReactionType reactionType,
+            HitMotionData motionData,
             TargetStateMask targetStates,
             Vector3 hitDirection,
-            float knockbackForce,
-            float knockupForce,
             int hitStunMs,
             in FeedbackPayload feedback)
             : this(
                 reactionType,
+                motionData,
                 targetStates,
                 hitDirection,
-                knockbackForce,
-                knockupForce,
                 hitStunMs,
                 victimHitStopMs: feedback.VictimHitStopMs,
                 screenShakeIntensity: feedback.ScreenShakeIntensity,
@@ -96,10 +92,9 @@ namespace ET
 
         public HitReactionRequest(
             HitReactionType reactionType,
+            HitMotionData motionData,
             TargetStateMask targetStates,
             Vector3 hitDirection,
-            float knockbackForce,
-            float knockupForce,
             int hitStunMs,
             int victimHitStopMs = 0,
             float screenShakeIntensity = 0f,
@@ -108,10 +103,9 @@ namespace ET
             int timeScaleDurationMs = 0)
         {
             this.ReactionType = reactionType;
+            this.MotionData = motionData;
             this.TargetStates = targetStates;
             this.HitDirection = hitDirection;
-            this.KnockbackForce = knockbackForce;
-            this.KnockupForce = knockupForce;
             this.HitStunMs = hitStunMs;
 
             this.VictimHitStopMs = victimHitStopMs;
@@ -123,7 +117,6 @@ namespace ET
 
         public static HitReactionRequest From(in HitEffectData effect, in HitFeedbackData feedback, Vector3 hitDirection, int defaultHitStopMs)
         {
-            // 说明：这里只做数据拷贝（含 default 兜底），不做归一化/钳制；归一化由规则层 HitRules 执行。
             FeedbackPayload fp = new FeedbackPayload(
                 victimHitStopMs: feedback.ResolveVictimHitStopMs(defaultHitStopMs),
                 screenShakeIntensity: feedback.ScreenShakeIntensity,
@@ -132,10 +125,9 @@ namespace ET
                 timeScaleDurationMs: feedback.TimeScaleDurationMs);
             return new HitReactionRequest(
                 effect.HitReaction,
+                effect.HitMotion,
                 effect.TargetStates,
                 hitDirection,
-                effect.KnockbackForce,
-                effect.KnockupForce,
                 effect.HitStunMs,
                 in fp
             );
@@ -143,8 +135,7 @@ namespace ET
 
         public override string ToString()
         {
-            // 注：HitDirection 在规则层会归一化/钳制，这里输出的是“请求原始值”
-            return $"HitRequest(Type={this.ReactionType}, States={this.TargetStates}, Dir={this.HitDirection}, KB={this.KnockbackForce:0.###}, KU={this.KnockupForce:0.###}, StunMs={this.HitStunMs}, VictimStopMs={this.VictimHitStopMs}, Shake={this.ScreenShakeIntensity:0.###}@{this.ScreenShakeDurationMs}ms, TimeScale={this.TimeScale:0.###}@{this.TimeScaleDurationMs}ms)";
+            return $"受击请求(类型={this.ReactionType}, 运动={this.MotionData.MotionType}:强度{this.MotionData.Force}, 目标状态过滤={this.TargetStates}, 方向={this.HitDirection}, 硬直时长={this.HitStunMs}ms, 受击停顿={this.VictimHitStopMs}ms)";
         }
     }
 }

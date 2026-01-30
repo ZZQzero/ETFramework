@@ -82,9 +82,9 @@ namespace ET
 
                 if (self.AttackCommand.TryDequeue(out var cmd))
                 {
-                    // 核心改进：在执行层增加“最后防线”，如果当前实体不具备攻击能力（如正在受击），则丢弃指令
+                    // 如果当前实体不具备攻击能力（如正在受击），则丢弃指令
                     var intent = self.Unit.GetComponent<LocomotionIntentComponent>();
-                    if (intent == null || intent.Capabilities.HasFlag(ActionCapabilities.Attack))
+                    if (intent == null || intent.IsAttackAllowed)
                     {
                         self.ExecuteAttackCommand(in cmd);
                     }
@@ -1130,7 +1130,6 @@ namespace ET
                     // 记录命中
                     self.HasHitThisSegment = true;
                     self.TotalHitCount++;
-
                     // 处理命中效果（使用 HitBox 的独立效果配置）
                     self.ProcessHit(target, hitBox);
                 }
@@ -1152,27 +1151,22 @@ namespace ET
             // 计算伤害
             float damage = self.CalculateDamage(target, effect);
 
-            //TODO 应用伤害 
-            /*var targetHealth = target.GetComponent<HealthComponent>();
-            targetHealth?.TakeDamage(damage, attacker);*/
-
-            // 应用受击反应：统一走 HitReactionRequest + HitRules（过滤/优先级/归一化）
+            // 应用受击反应：统一走 HitReactionRequest + HitRules
+            Unit unit = target.GetComponent<UnitReference>().Unit;
+            var hitReactionComponent = unit.GetComponent<HitReactionComponent>();
+            if (hitReactionComponent != null)
             {
-                Unit unit = target.GetComponent<UnitReference>().Unit;
-                var hitReactionComponent = unit.GetComponent<HitReactionComponent>();
-                if (hitReactionComponent != null)
+                Vector3 hitDirection = (target.transform.position - self.OwnerTransform.position);
+                hitDirection.y = 0f;
+                if (hitDirection.sqrMagnitude > 0.0001f)
                 {
-                    Vector3 hitDirection = (target.transform.position - self.OwnerTransform.position);
-                    hitDirection.y = 0f;
-                    if (hitDirection.sqrMagnitude > 0.0001f)
-                    {
-                        hitDirection.Normalize();
-                    }
-
-                    int defaultHitStopMs = self.Config?.DefaultHitStopMs ?? 0;
-                    var req = HitReactionRequest.From(in effect, in feedback, hitDirection, defaultHitStopMs);
-                    hitReactionComponent.TryApplyHit(in req);
+                    hitDirection.Normalize();
                 }
+
+                int defaultHitStopMs = self.Config?.DefaultHitStopMs ?? 0;
+                // 这里 Effect 内部已经包含了 HitMotionData
+                var req = HitReactionRequest.From(in effect, in feedback, hitDirection, defaultHitStopMs);
+                hitReactionComponent.TryApplyHit(in req);
             }
 
             // 播放命中特效和音效

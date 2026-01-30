@@ -57,6 +57,7 @@ namespace ET
             unit.AddComponent<CharacterControllerComponent,GameObject>(go);
             unit.AddComponent<AnimatorComponent>();
             unit.AddComponent<HitStopComponent>();
+            unit.AddComponent<AirComboComponent>();
             unit.AddComponent<AttackComponent>();
             unit.AddComponent<HitReactionComponent,Transform>(go.transform);
             var unitReference = go.GetComponent<UnitReference>();

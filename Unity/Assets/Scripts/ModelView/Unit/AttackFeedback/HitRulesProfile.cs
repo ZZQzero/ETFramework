@@ -16,18 +16,16 @@
             public readonly byte Light;
             public readonly byte Medium;
             public readonly byte Heavy;
-            public readonly byte Knockback;
-            public readonly byte Knockup;
-            public readonly byte Knockdown;
+            public readonly byte Stagger;
+            public readonly byte Stun;
 
-            public Priorities(byte light, byte medium, byte heavy, byte knockback, byte knockup, byte knockdown)
+            public Priorities(byte light, byte medium, byte heavy, byte stagger, byte stun)
             {
                 this.Light = light;
                 this.Medium = medium;
                 this.Heavy = heavy;
-                this.Knockback = knockback;
-                this.Knockup = knockup;
-                this.Knockdown = knockdown;
+                this.Stagger = stagger;
+                this.Stun = stun;
             }
         }
 
@@ -136,16 +134,29 @@
                 case HitReactionType.Light: return this.Priority.Light;
                 case HitReactionType.Medium: return this.Priority.Medium;
                 case HitReactionType.Heavy: return this.Priority.Heavy;
-                case HitReactionType.Knockback: return this.Priority.Knockback;
-                case HitReactionType.Knockup: return this.Priority.Knockup;
-                case HitReactionType.Knockdown: return this.Priority.Knockdown;
+                case HitReactionType.Stagger: return this.Priority.Stagger;
+                case HitReactionType.Stun: return this.Priority.Stun;
+                default: return 0;
+            }
+        }
+
+        public byte GetResistance(HitState state)
+        {
+            switch (state)
+            {
+                case HitState.GetUp: return this.Resistance.GetUp;
+                case HitState.Knockdown: return this.Resistance.Knockdown;
+                case HitState.Airborne:
+                case HitState.Falling: return this.Resistance.Airborne;
+                case HitState.Knockback: return this.Resistance.Knockback;
+                case HitState.Stun: return this.Resistance.Stun;
                 default: return 0;
             }
         }
 
         public override string ToString()
         {
-            return $"HitRulesProfile(Accept={this.AcceptMask}, Pri[L/M/H/KB/KU/KD]=[{this.Priority.Light}/{this.Priority.Medium}/{this.Priority.Heavy}/{this.Priority.Knockback}/{this.Priority.Knockup}/{this.Priority.Knockdown}], Res[S/KB/A/KD/GU]=[{this.Resistance.Stun}/{this.Resistance.Knockback}/{this.Resistance.Airborne}/{this.Resistance.Knockdown}/{this.Resistance.GetUp}], LowerOrEq={this.LowerOrEqualMode}, Scale[Stun/KB/KU]=[{this.Scale.Stun:0.###}/{this.Scale.Knockback:0.###}/{this.Scale.Knockup:0.###}], Max[StunMs/KB/KU]=[{this.Limit.MaxHitStunMs}/{this.Limit.MaxKnockbackForce:0.###}/{this.Limit.MaxKnockupForce:0.###}])";
+            return $"受击规则配置(接受类型={this.AcceptMask}, 优先级[轻/中/重/踉跄/眩晕]=[{this.Priority.Light}/{this.Priority.Medium}/{this.Priority.Heavy}/{this.Priority.Stagger}/{this.Priority.Stun}], 抵抗力[眩晕/击退/浮空/倒地/起身]=[{this.Resistance.Stun}/{this.Resistance.Knockback}/{this.Resistance.Airborne}/{this.Resistance.Knockdown}/{this.Resistance.GetUp}], 同级或低级处理={this.LowerOrEqualMode}, 数值缩放[硬直/击退/击飞]=[{this.Scale.Stun:0.###}/{this.Scale.Knockback:0.###}/{this.Scale.Knockup:0.###}], 上限限制[硬直ms/击退力/击飞力]=[{this.Limit.MaxHitStunMs}/{this.Limit.MaxKnockbackForce:0.###}/{this.Limit.MaxKnockupForce:0.###}])";
         }
     }
 }

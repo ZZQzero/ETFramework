@@ -612,6 +612,13 @@ namespace ET
         public int ConsecutiveGroundedFrames;
 
         /// <summary>
+        /// 抑制地检降频的计数器（引用计数）。
+        /// 只要该值 > 0，即使 Config.ReduceAirborneCheckFrequency 为 true 也会强制每帧检测。
+        /// 用于受击浮空等需要高频响应的场景。
+        /// </summary>
+        public int InhibitReduceFrequencyCount;
+
+        /// <summary>
         /// 边缘检测计数器。
         /// 用于降低边缘检测的调用频率。
         /// </summary>

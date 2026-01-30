@@ -110,8 +110,8 @@ public partial class SkillEditorWindow : EditorWindow
         if (hitBoxNormalizedStartField != null) hitBoxNormalizedStartField.isDelayed = true;
         if (hitBoxNormalizedEndField != null) hitBoxNormalizedEndField.isDelayed = true;
         if (hitEffectDamageMultiplierField != null) hitEffectDamageMultiplierField.isDelayed = true;
-        if (hitEffectKnockbackForceField != null) hitEffectKnockbackForceField.isDelayed = true;
-        if (hitEffectKnockupForceField != null) hitEffectKnockupForceField.isDelayed = true;
+        if (hitMotionForceField != null) hitMotionForceField.isDelayed = true;
+        if (hitMotionDurationMsField != null) hitMotionDurationMsField.isDelayed = true;
         if (hitFeedbackShakeIntensityField != null) hitFeedbackShakeIntensityField.isDelayed = true;
         if (hitFeedbackTimeScaleField != null) hitFeedbackTimeScaleField.isDelayed = true;
 
@@ -186,8 +186,14 @@ public partial class SkillEditorWindow : EditorWindow
         {
             hitEffectReactionField.Init(HitReactionType.Light);
         }
-        hitEffectKnockbackForceField = rightContainer.Q<FloatField>("HitEffectKnockbackForceField");
-        hitEffectKnockupForceField = rightContainer.Q<FloatField>("HitEffectKnockupForceField");
+        hitMotionTypeField = rightContainer.Q<EnumField>("HitMotionTypeField");
+        if (hitMotionTypeField != null)
+        {
+            hitMotionTypeField.Init(HitMotionType.None);
+        }
+        hitMotionForceField = rightContainer.Q<FloatField>("HitMotionForceField");
+        hitMotionDurationMsField = rightContainer.Q<IntegerField>("HitMotionDurationMsField");
+        hitMotionCurveField = rightContainer.Q<CurveField>("HitMotionCurveField");
         hitEffectHitStunMsField = rightContainer.Q<IntegerField>("HitEffectHitStunMsField");
         hitEffectTargetStateField = rightContainer.Q<UnityEditor.UIElements.EnumFlagsField>("HitEffectTargetStateField");
         if (hitEffectTargetStateField != null)
@@ -434,18 +440,28 @@ public partial class SkillEditorWindow : EditorWindow
         }
         if (hitEffectReactionField != null)
         {
-            hitEffectReactionField.tooltip = "受击反应类型：决定目标播放哪种受击/击退/击飞。";
+            hitEffectReactionField.tooltip = "视觉受击反应：决定目标播放哪种受击/硬直动画。";
             hitEffectReactionField.RegisterValueChangedCallback(OnHitEffectReactionChanged);
         }
-        if (hitEffectKnockbackForceField != null)
+        if (hitMotionTypeField != null)
         {
-            hitEffectKnockbackForceField.tooltip = "击退力度：用于击退/击倒类反应。";
-            hitEffectKnockbackForceField.RegisterValueChangedCallback(OnHitEffectKnockbackForceChanged);
+            hitMotionTypeField.tooltip = "物理运动类型：水平击退、击飞、砸地或拉拽。";
+            hitMotionTypeField.RegisterValueChangedCallback(OnHitMotionTypeChanged);
         }
-        if (hitEffectKnockupForceField != null)
+        if (hitMotionForceField != null)
         {
-            hitEffectKnockupForceField.tooltip = "击飞力度：用于击飞类反应。";
-            hitEffectKnockupForceField.RegisterValueChangedCallback(OnHitEffectKnockupForceChanged);
+            hitMotionForceField.tooltip = "物理力度：对应的运动速度或力。";
+            hitMotionForceField.RegisterValueChangedCallback(OnHitMotionForceChanged);
+        }
+        if (hitMotionDurationMsField != null)
+        {
+            hitMotionDurationMsField.tooltip = "物理位移持续时间(ms)。";
+            hitMotionDurationMsField.RegisterValueChangedCallback(OnHitMotionDurationMsChanged);
+        }
+        if (hitMotionCurveField != null)
+        {
+            hitMotionCurveField.tooltip = "物理位移曲线：0-1 时间对应 0-1 速度倍率。";
+            hitMotionCurveField.RegisterValueChangedCallback(OnHitMotionCurveChanged);
         }
         if (hitEffectHitStunMsField != null)
         {

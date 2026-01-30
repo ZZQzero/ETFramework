@@ -263,13 +263,22 @@
                             <ui:Label text="HitReaction:" style="width: 120px;"/>
                             <ui:EnumField name="HitEffectReactionField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
-                        <ui:VisualElement style="flex-direction: row; align-items: center;">
-                            <ui:Label text="KnockbackForce:" style="width: 120px;"/>
-                            <ui:FloatField value="0" name="HitEffectKnockbackForceField" style="flex-grow: 1;"/>
+                        <ui:Label text="&#21629;&#20013;&#20301;&#31227;(HitMotion)" style="font-size: 12px; font-style: italic; margin-left: 10px; margin-top: 4px;"/>
+                        <ui:VisualElement style="flex-direction: row; align-items: center; margin-left: 10px;">
+                            <ui:Label text="MotionType:" style="width: 110px;"/>
+                            <ui:EnumField name="HitMotionTypeField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
-                        <ui:VisualElement style="flex-direction: row; align-items: center;">
-                            <ui:Label text="KnockupForce:" style="width: 120px;"/>
-                            <ui:FloatField value="0" name="HitEffectKnockupForceField" style="flex-grow: 1;"/>
+                        <ui:VisualElement style="flex-direction: row; align-items: center; margin-left: 10px;">
+                            <ui:Label text="Force:" style="width: 110px;"/>
+                            <ui:FloatField value="0" name="HitMotionForceField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center; margin-left: 10px;">
+                            <ui:Label text="Duration(ms):" style="width: 110px;"/>
+                            <ui:IntegerField value="0" name="HitMotionDurationMsField" style="flex-grow: 1;"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-direction: row; align-items: center; margin-left: 10px;">
+                            <ui:Label text="MotionCurve:" style="width: 110px;"/>
+                            <uie:CurveField name="HitMotionCurveField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-direction: row; align-items: center;">
                             <ui:Label text="HitStun(ms):" style="width: 120px;"/>

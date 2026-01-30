@@ -31,6 +31,11 @@ namespace ET
         public HitStopComponent HitStop { get; set; }
 
         /// <summary>
+        /// 空中连段组件：在 Active 时由 ComboPhysics 接管垂直规则（重力/下落速度/高度夹持）。
+        /// </summary>
+        public AirComboComponent AirCombo { get; set; }
+
+        /// <summary>
         /// 移动速度（米/秒）
         /// </summary>
         public float MoveSpeed { get; set; } = 5f;
@@ -51,7 +56,7 @@ namespace ET
         /// </summary>
         public Vector3 CurrentVelocity { get; set; }
         /// <summary>
-        /// 是否启用移动（可以通过设置这个来禁用移动）
+        /// 是否启用移动（[已过时] 请优先使用 LocomotionIntent 的 Inhibitors 控制）
         /// </summary>
         public bool EnableMovement { get; set; } = true;
         // ===== 跳跃相关属性 =====

@@ -21,17 +21,25 @@ namespace ET
                 return;
             }
 
+            // AirCombo（被挂空中）：AI 不推进移动/跳跃/转向，避免寻路/行为树持续写入导致抖动。
+            // 攻击请求是否要允许由上层AI决定；这里默认也禁掉，避免空中时仍尝试发起地面攻击。
+            var unit = self.GetParent<Unit>();
+            var airCombo = unit != null ? unit.GetComponent<AirComboComponent>() : null;
+            if (airCombo != null && airCombo.Active)
+            {
+                self.LocomotionIntent.MoveDirection = Vector3.zero;
+                self.LocomotionIntent.FaceDirection = Vector3.zero;
+                self.LocomotionIntent.JumpRequested = false;
+                self.DesiredJump = false;
+                self.DesiredAttack = false;
+                return;
+            }
+
             Vector3 move = self.DesiredMoveDirection;
             move.y = 0f;
             if (move.sqrMagnitude > 1f)
             {
                 move.Normalize();
-            }
-
-            // 驱动层抑制
-            if (!self.LocomotionIntent.Capabilities.HasFlag(ActionCapabilities.Move))
-            {
-                move = Vector3.zero;
             }
             self.LocomotionIntent.MoveDirection = move;
 
@@ -40,11 +48,7 @@ namespace ET
             if (face.sqrMagnitude > 0.001f)
             {
                 face.Normalize();
-                // 驱动层抑制
-                if (self.LocomotionIntent.Capabilities.HasFlag(ActionCapabilities.Rotate))
-                {
-                    self.LocomotionIntent.FaceDirection = face;
-                }
+                self.LocomotionIntent.FaceDirection = face;
             }
             else
             {
@@ -53,26 +57,18 @@ namespace ET
 
             if (self.DesiredJump)
             {
-                // 驱动层抑制
-                if (self.LocomotionIntent.Capabilities.HasFlag(ActionCapabilities.Jump))
-                {
-                    self.LocomotionIntent.JumpRequested = true;
-                }
+                self.LocomotionIntent.JumpRequested = true;
                 self.DesiredJump = false;
             }
 
             if (self.DesiredAttack)
             {
-                // 驱动层抑制：如果当前不具备攻击能力，则不产生指令
-                if (self.LocomotionIntent.Capabilities.HasFlag(ActionCapabilities.Attack))
+                self.AttackCommand.Enqueue(new AttackCommandComponent.AttackCommand
                 {
-                    self.AttackCommand.Enqueue(new AttackCommandComponent.AttackCommand
-                    {
-                        SkillId = 0,
-                        InputType = ComboInputType.Normal,
-                        TargetUnitId = 0,
-                    });
-                }
+                    SkillId = 0,
+                    InputType = ComboInputType.Normal,
+                    TargetUnitId = 0,
+                });
                 self.DesiredAttack = false;
             }
         }

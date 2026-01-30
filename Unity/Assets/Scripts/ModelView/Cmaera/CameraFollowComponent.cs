@@ -27,6 +27,16 @@ namespace ET
         public GameObject CameraFollowProxy { get; set; }
         
         public float BaseFov { get; set; } = 60f;
+
+        /// <summary>
+        /// 当前运行时累加的 FOV 偏移（用于叠加多个 Tween）
+        /// </summary>
+        public float RuntimeFovOffset { get; set; }
+
+        /// <summary>
+        /// 当前运行时累加的相机坐标偏移（用于叠加多个 Tween）
+        /// </summary>
+        public Vector3 RuntimeCameraOffset { get; set; }
         
         /// <summary>
         /// 相机X轴偏移

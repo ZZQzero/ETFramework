@@ -184,6 +184,8 @@ namespace ET
 					{
 						case HitReactionType.Medium: transition = self.HitMediumTransition; break;
 						case HitReactionType.Heavy:  transition = self.HitHeavyTransition; break;
+						case HitReactionType.Stagger: transition = self.HitMediumTransition; break;
+						case HitReactionType.Stun: transition = self.HitHeavyTransition; break;
 						default:                     transition = self.HitLightTransition; break;
 					}
 					break;
@@ -202,9 +204,31 @@ namespace ET
 
 			if (transition != null)
 			{
-				// Layer 0 播放：受击会打断一切基础移动
-				var state = self.Animancer.Play(transition, 0.05f);
-				hit.CurrentAnimState = state;
+				// 优化：仅在 Transition 改变时调用 Play
+				// 注意：这里使用 Key 比对，AnimancerState.Key 默认通常是 Transition 对象
+				if (self.Animancer.Layers[0].CurrentState?.Key as ITransition != transition)
+				{
+					var state = self.Animancer.Play(transition, hit != null ? hit.AnimationFadeSec : 0.05f);
+
+					// 受击瞬间：如果攻击层仍有权重，根据受击强度快速淡出，确保受击表现清晰
+					if (self.AttackLayer != null && self.AttackLayer.Weight > 0.01f)
+					{
+						// 重度受击、击飞、倒地：瞬间切断攻击层
+						// 轻度/中度受击：快速淡出 (0.1s)
+						bool isHeavyHit = hit.CurrentState == HitState.Airborne || 
+						                  hit.CurrentState == HitState.Knockdown || 
+						                  hit.CurrentReactionType == HitReactionType.Heavy;
+						
+						self.AttackLayer.StartFade(0f, isHeavyHit ? 0f : 0.1f);
+					}
+				}
+			}
+
+			// 单一权威：CurrentAnimState 始终由 Animator 合成侧维护
+			// - 即使 transition 未变化（不触发 Play），也要更新引用，避免受击系统把 CurrentAnimState 置空后无法恢复。
+			if (hit != null)
+			{
+				hit.CurrentAnimState = self.Animancer.Layers[0].CurrentState;
 			}
 		}
 

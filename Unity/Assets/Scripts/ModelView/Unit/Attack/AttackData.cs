@@ -86,11 +86,11 @@ namespace ET
     public enum HitReactionType
     {
         None = 0,
-        Light = 1,       // 轻微受击
-        Medium = 2,      // 中等受击
-        Heavy = 3,       // 重度受击
-        Stagger = 4,     // 踉跄
-        Stun = 5,        // 眩晕/完全瘫痪
+        MinorHit = 1,       // 轻微受击
+        MediumHit = 2,      // 中等受击
+        MajorHit = 3,       // 重度受击
+        StaggerHit = 4,     // 踉跄
+        StunHit = 5,        // 眩晕/完全瘫痪
     }
 
     /// <summary>
@@ -98,11 +98,11 @@ namespace ET
     /// </summary>
     public enum HitMotionType
     {
-        None = 0,
-        Push = 1,       // 水平击退 (XZ)
-        Launch = 2,     // 击飞 (Up + XZ)
-        Slam = 3,       // 砸地 (Down + XZ)
-        Pull = 4,       // 拉拽 (向攻击者中心靠拢)
+        Normal = 0, 
+        Knockback = 1,       // 水平击退 (XZ)
+        Knockup = 2,     // 击飞 (Up + XZ)
+        KnockDown = 3,       // 击倒，砸地 (Down + XZ)
+        PullTowardAttacker = 4,       // 拉拽 (向攻击者中心靠拢)
     }
 
     /// <summary>
@@ -121,7 +121,7 @@ namespace ET
         
         public static HitMotionData Default => new HitMotionData
         {
-            MotionType = HitMotionType.None,
+            MotionType = HitMotionType.Normal,
             Force = 0f,
             DurationMs = 0,
             MotionCurve = AnimationCurve.Linear(0, 1, 1, 0) // 默认线性衰减
@@ -211,6 +211,12 @@ namespace ET
         /// <summary>视觉受击反应类型（仅动画）</summary>
         public HitReactionType HitReaction;
 
+        /// <summary>
+        /// 攻击强度（用于目标侧受击规则判定）。
+        /// - 0：表示“未配置”，运行时会按 <see cref="HitReaction"/> 使用默认映射补齐
+        /// </summary>
+        public byte HitStrength;
+
         /// <summary>物理运动数据（位移/击飞）</summary>
         public HitMotionData HitMotion;
 
@@ -225,7 +231,8 @@ namespace ET
         public static HitEffectData Default => new HitEffectData
         {
             DamageMultiplier = 1f,
-            HitReaction = HitReactionType.Light,
+            HitReaction = HitReactionType.MinorHit,
+            HitStrength = 0, // 0 表示“未配置”，由 Hotfix 层在构造 HitReactionRequest 时补齐默认值
             HitMotion = HitMotionData.Default,
             HitStunMs = 200,
             TargetStates = TargetStateMask.Any,
@@ -250,7 +257,7 @@ namespace ET
         /// 受击者侧顿帧(ms)：
         /// - -1：使用 <see cref="AttackConfig.DefaultHitStopMs"/> 作为兜底
         /// -  0：不顿帧（即使 profile 允许）
-        /// - >0：强制使用该值（最终是否生效仍受 <see cref="HitFeedbackProfile.Options.AllowVictimHitStop"/> 控制）
+        /// - >0：强制使用该值（最终是否生效仍受 <see cref="HitFeedbackConfig.Options.AllowVictimHitStop"/> 控制）
         /// </summary>
         public int VictimHitStopMs;
 
@@ -356,6 +363,15 @@ namespace ET
 
             this.NormalizedStart = start;
             this.NormalizedEnd = end;
+
+            // ===== HitEffect 规范化（仅做数据合法化，不做“规则推导”）=====
+            {
+                HitEffectData e = this.Effect;
+                e.HitStunMs = AttackDataUtil.ClampNonNegative(e.HitStunMs);
+                e.DamageMultiplier = Mathf.Max(0f, e.DamageMultiplier);
+                // 注意：Priority=0 表示未配置；默认值推导放在 HotfixView/Hotfix（避免 ModelView 承载规则逻辑）
+                this.Effect = e;
+            }
         }
 
         public void GetWindow01(float segmentEnd01, out float start, out float end)

@@ -28,6 +28,13 @@ namespace ET
             var animCatalog = unit.AddComponent<AnimationCatalogComponent>();
             animCatalog.Set(AnimationCatalogComponent.AnimKey.Locomotion_Move, monster.MonsterTable.MoveAsset);
             animCatalog.Set(AnimationCatalogComponent.AnimKey.Locomotion_Jump, monster.MonsterTable.JumpAsset);
+            animCatalog.Set(AnimationCatalogComponent.AnimKey.Hit_Light, monster.MonsterTable.Damage);
+            animCatalog.Set(AnimationCatalogComponent.AnimKey.Hit_Medium, monster.MonsterTable.Damage);
+            animCatalog.Set(AnimationCatalogComponent.AnimKey.Hit_Heavy, monster.MonsterTable.Damage);
+            animCatalog.Set(AnimationCatalogComponent.AnimKey.Hit_Knockback, monster.MonsterTable.Damage);
+            animCatalog.Set(AnimationCatalogComponent.AnimKey.Hit_Airborne, monster.MonsterTable.Damage);
+            animCatalog.Set(AnimationCatalogComponent.AnimKey.Hit_Knockdown, monster.MonsterTable.Damage);
+            animCatalog.Set(AnimationCatalogComponent.AnimKey.Hit_GetUp, monster.MonsterTable.Damage);
 
             var attackCatalog = unit.AddComponent<AttackCatalogComponent>();
             attackCatalog.SkillIds.Clear();

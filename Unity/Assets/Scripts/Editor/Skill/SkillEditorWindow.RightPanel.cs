@@ -184,12 +184,15 @@ public partial class SkillEditorWindow : EditorWindow
         hitEffectReactionField = rightContainer.Q<EnumField>("HitEffectReactionField");
         if (hitEffectReactionField != null)
         {
-            hitEffectReactionField.Init(HitReactionType.Light);
+            hitEffectReactionField.Init(HitReactionType.MinorHit);
         }
+        hitEffectPriorityField = rightContainer.Q<IntegerField>("HitEffectPriorityField");
+        hitEffectPriorityAutoButton = rightContainer.Q<Button>("HitEffectPriorityAutoButton");
+        hitEffectPriorityAutoAllButton = rightContainer.Q<Button>("HitEffectPriorityAutoAllButton");
         hitMotionTypeField = rightContainer.Q<EnumField>("HitMotionTypeField");
         if (hitMotionTypeField != null)
         {
-            hitMotionTypeField.Init(HitMotionType.None);
+            hitMotionTypeField.Init(HitMotionType.Normal);
         }
         hitMotionForceField = rightContainer.Q<FloatField>("HitMotionForceField");
         hitMotionDurationMsField = rightContainer.Q<IntegerField>("HitMotionDurationMsField");
@@ -467,6 +470,19 @@ public partial class SkillEditorWindow : EditorWindow
         {
             hitEffectHitStunMsField.tooltip = "硬直时间(ms)：目标受击后无法行动的持续时间。";
             hitEffectHitStunMsField.RegisterValueChangedCallback(OnHitEffectHitStunMsChanged);
+        }
+        if (hitEffectPriorityField != null)
+        {
+            hitEffectPriorityField.tooltip = "攻击强度 HitStrength（0~255）。\n- 0：表示未配置，运行时会按 HitReactionType 使用默认映射兜底。\n- 建议：策划明确填值，避免默认兜底导致预期偏差。";
+            hitEffectPriorityField.RegisterValueChangedCallback(OnHitEffectPriorityChanged);
+        }
+        if (hitEffectPriorityAutoButton != null)
+        {
+            hitEffectPriorityAutoButton.clicked += OnHitEffectPriorityAutoClicked;
+        }
+        if (hitEffectPriorityAutoAllButton != null)
+        {
+            hitEffectPriorityAutoAllButton.clicked += OnHitEffectPriorityAutoAllClicked;
         }
         if (hitEffectTargetStateField != null)
         {

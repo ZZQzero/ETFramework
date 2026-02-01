@@ -381,8 +381,9 @@ public partial class SkillEditorWindow : EditorWindow
 
         // HitEffectData / HitFeedbackData
         if (hitEffectDamageMultiplierField != null) hitEffectDamageMultiplierField.SetValueWithoutNotify(1f);
-        if (hitEffectReactionField != null) hitEffectReactionField.SetValueWithoutNotify(HitReactionType.Light);
-        if (hitMotionTypeField != null) hitMotionTypeField.SetValueWithoutNotify(HitMotionType.None);
+        if (hitEffectReactionField != null) hitEffectReactionField.SetValueWithoutNotify(HitReactionType.MinorHit);
+        if (hitEffectPriorityField != null) hitEffectPriorityField.SetValueWithoutNotify(0);
+        if (hitMotionTypeField != null) hitMotionTypeField.SetValueWithoutNotify(HitMotionType.Normal);
         if (hitMotionForceField != null) hitMotionForceField.SetValueWithoutNotify(0f);
         if (hitMotionDurationMsField != null) hitMotionDurationMsField.SetValueWithoutNotify(0);
         if (hitMotionCurveField != null) hitMotionCurveField.SetValueWithoutNotify(AnimationCurve.Linear(0, 1, 1, 0));

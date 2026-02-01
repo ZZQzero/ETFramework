@@ -29,10 +29,12 @@ namespace ET
         public CheckGroundedComponent Ground { get; set; }
         public HitReactionComponent HitReaction { get; set; }
 
+        public Unit Unit;
         /// <summary>
         /// 是否已完成 Locomotion（Move/Jump）以及受击资源的加载。
         /// </summary>
         public bool LocomotionLoaded { get; set; }
         public bool HitAnimationsLoaded { get; set; }
+
     }
 }

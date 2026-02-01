@@ -48,6 +48,7 @@ namespace ET
             bool wasActive = self.Active;
             self.Active = true;
 
+            Log.Error($"进入空中连击状态: now={nowCombatMs}ms, currentY={currentY}, profile={profile.ToString()}");
             // 进入/再次进入：取消退出（命中续期不应被 ExitLerp 打断）
             self.IsExiting = false;
             self.ExitStartCombatMs = 0;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Animancer;
 using UnityEngine;
 
@@ -10,12 +10,12 @@ namespace ET
 		[EntitySystem]
 		private static void Awake(this AnimatorComponent self)
 		{
-			var unit = self.GetParent<Unit>();
-			var obj = unit.GetComponent<GameObjectComponent>().GameObject;
+			self.Unit = self.GetParent<Unit>();
+			var obj = self.Unit.GetComponent<GameObjectComponent>().GameObject;
 			self.Animancer = obj.GetComponent<AnimancerComponent>();
 			if (self.Animancer == null)
 			{
-				Log.Error($"{unit.UnitName} AnimancerComponent未找到");
+				Log.Error($"{self.Unit.UnitName} AnimancerComponent未找到");
 				return;
 			}
 			
@@ -37,10 +37,10 @@ namespace ET
 				obj.AddComponent<AttackEventReceiver>();
 			}
 
-			self.CharacterController = unit.GetComponent<CharacterControllerComponent>();
+			self.CharacterController = self.Unit.GetComponent<CharacterControllerComponent>();
 			self.CharacterController.Animator = self.Animancer.Animator;
 			self.Ground = self.CharacterController.Ground;
-			self.HitReaction = unit.GetComponent<HitReactionComponent>();
+			self.HitReaction = self.Unit.GetComponent<HitReactionComponent>();
 			
 			self.LoadAnimation().NoContext();
 		}
@@ -158,10 +158,21 @@ namespace ET
 				return;
 			}
 
-			// 1. 优先级：受击状态优先 (Hit Authority)
-			if (self.HitReaction != null && self.HitReaction.IsInHitReaction)
+			if (self.HitReaction == null)
 			{
-				self.SynthesizeHitAnimation();
+				self.HitReaction = self.Unit.GetComponent<HitReactionComponent>();
+				if (self.HitReaction != null)
+				{
+					self.HitReaction.OnHitReactionStart = state =>
+					{
+						OnHitReactionStart(self,state);
+					};
+				}
+			}
+			// 1. 优先级：受击状态优先 (Hit Authority)
+			// 规则上处于受击并不等价于“必须播放受击动画”（可配置禁播/降级表现）
+			if (self.HitReaction != null && self.HitReaction.IsInHitVisual)
+			{
 				return;
 			}
 
@@ -172,26 +183,53 @@ namespace ET
 			}
 		}
 
+		private static void OnHitReactionStart(AnimatorComponent self, HitState state)
+		{
+			SynthesizeHitAnimation(self);
+		}
+
 		private static void SynthesizeHitAnimation(this AnimatorComponent self)
 		{
-			ITransition transition = null;
 			var hit = self.HitReaction;
-
-			switch (hit.CurrentState)
+			AnimancerLayer layer = self.Animancer;
+			// 已切回 locomotion（由 OnEnd 回调触发）：只更新参数，不再播受击
+			if (self.MoveMixer != null && self.JumpMixer != null &&
+			    (layer.CurrentState == self.MoveMixer.State || layer.CurrentState == self.JumpMixer.State))
 			{
-				case HitState.Stun:
-					switch (hit.CurrentReactionType)
+				self.SynthesizeLocomotionAnimation();
+				return;
+			}
+
+			ITransition transition = null;
+			switch (hit.VisualState)
+			{
+				case HitState.Grounded:
+					switch (hit.VisualReactionType)
 					{
-						case HitReactionType.Medium: transition = self.HitMediumTransition; break;
-						case HitReactionType.Heavy:  transition = self.HitHeavyTransition; break;
-						case HitReactionType.Stagger: transition = self.HitMediumTransition; break;
-						case HitReactionType.Stun: transition = self.HitHeavyTransition; break;
+						case HitReactionType.MediumHit: transition = self.HitMediumTransition; break;
+						case HitReactionType.MajorHit:  transition = self.HitHeavyTransition; break;
+						case HitReactionType.StaggerHit: transition = self.HitMediumTransition; break;
+						case HitReactionType.StunHit: transition = self.HitHeavyTransition; break;
 						default:                     transition = self.HitLightTransition; break;
 					}
+					
+					// Grounded 时如存在“击退运动”，优先使用击退受击动画（更贴合表现语义）
+					if (hit.CurrentMotionType == HitMotionType.Knockback || hit.CurrentMotionType == HitMotionType.PullTowardAttacker)
+					{
+						transition = self.HitKnockbackTransition ?? transition;
+					}
 					break;
-				case HitState.Knockback: transition = self.HitKnockbackTransition; break;
-				case HitState.Airborne:  transition = self.HitAirborneTransition; break;
-				case HitState.Falling:   transition = self.HitFallingTransition; break;
+				case HitState.Airborne:
+				{
+					// 仍保留 Falling 资源：用垂直速度做一次选择（不引入额外 HitState）
+					bool isFalling = self.CharacterController != null && self.CharacterController.CurrentVelocity.y < -0.01f;
+					transition = isFalling ? self.HitFallingTransition : self.HitAirborneTransition;
+					break;
+				}
+				case HitState.AirFinisher:
+					// AirStun 若没有专用资源，先回退复用 Airborne/Falling 的资源（后续可接入 Hit_AirStun）
+					transition = self.HitAirborneTransition ?? self.HitFallingTransition ?? self.HitHeavyTransition;
+					break;
 				case HitState.Knockdown: transition = self.HitKnockdownTransition; break;
 				case HitState.GetUp:     transition = self.HitGetUpTransition; break;
 			}
@@ -204,31 +242,25 @@ namespace ET
 
 			if (transition != null)
 			{
-				// 优化：仅在 Transition 改变时调用 Play
-				// 注意：这里使用 Key 比对，AnimancerState.Key 默认通常是 Transition 对象
-				if (self.Animancer.Layers[0].CurrentState?.Key as ITransition != transition)
+				var state = self.Animancer.Play(transition);
+				// 受击动画结束时，通过 OnEnd 回调切回 locomotion（Animancer 淡出时也会触发）
+				state.Events(self).OnEnd = () =>
 				{
-					var state = self.Animancer.Play(transition, hit != null ? hit.AnimationFadeSec : 0.05f);
-
-					// 受击瞬间：如果攻击层仍有权重，根据受击强度快速淡出，确保受击表现清晰
-					if (self.AttackLayer != null && self.AttackLayer.Weight > 0.01f)
-					{
-						// 重度受击、击飞、倒地：瞬间切断攻击层
-						// 轻度/中度受击：快速淡出 (0.1s)
-						bool isHeavyHit = hit.CurrentState == HitState.Airborne || 
-						                  hit.CurrentState == HitState.Knockdown || 
-						                  hit.CurrentReactionType == HitReactionType.Heavy;
+					self.SynthesizeLocomotionAnimation();
+					hit.CurrentAnimEnd = true;
+				};
+				// 受击瞬间：如果攻击层仍有权重，根据受击强度快速淡出，确保受击表现清晰
+				if (self.AttackLayer != null && self.AttackLayer.Weight > 0.01f)
+				{
+					// 重度受击、击飞、倒地：瞬间切断攻击层
+					// 轻度/中度受击：快速淡出 (0.1s)
+					bool isHeavyHit = hit.VisualState == HitState.Airborne || 
+					                  hit.VisualState == HitState.AirFinisher ||
+					                  hit.VisualState == HitState.Knockdown || 
+					                  hit.VisualReactionType == HitReactionType.MajorHit;
 						
-						self.AttackLayer.StartFade(0f, isHeavyHit ? 0f : 0.1f);
-					}
+					self.AttackLayer.StartFade(0f, isHeavyHit ? 0f : 0.1f);
 				}
-			}
-
-			// 单一权威：CurrentAnimState 始终由 Animator 合成侧维护
-			// - 即使 transition 未变化（不触发 Play），也要更新引用，避免受击系统把 CurrentAnimState 置空后无法恢复。
-			if (hit != null)
-			{
-				hit.CurrentAnimState = self.Animancer.Layers[0].CurrentState;
 			}
 		}
 
@@ -258,6 +290,10 @@ namespace ET
 			}
 			else
 			{
+				if (self.JumpMixer == null)
+				{
+					return;
+				}
 				if (layer.CurrentState != self.JumpMixer.State)
 				{
 					// 离地进入空中

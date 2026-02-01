@@ -416,17 +416,7 @@ namespace ET
         /// 数值越大，检测越少，性能越好，但响应稍慢。
         /// </summary>
         [Range(2, 4)] public int AirborneCheckInterval = 2;
-
-
-        // ==================== 2.5D 模式 ====================
-        /// <summary>
-        /// 是否启用 2.5D 模式。
-        /// 启用后，地面检测会忽略 Z 轴变化，
-        /// 适用于横版 3D 动作游戏。
-        /// </summary>
-        public bool Enable2_5DMode = false;
-
-
+        
         // ==================== 预计算数据 ====================
 
         /// <summary>
@@ -629,8 +619,11 @@ namespace ET
         /// 常用于降频检测或调试。
         /// </summary>
         public int FrameCounter;
-
-
+        
+        /// <summary>
+        ///  是否启用地面检测
+        /// </summary>
+        public bool Enable = true;
         // ==================== 预分配缓存（性能） ====================
 
         /// <summary>

@@ -54,7 +54,7 @@ namespace ET
         public int LandingStunMs;
 
         /// <summary>调试：可选开关。</summary>
-        public bool DebugEnabled;
+        public bool DebugEnabled = true;
 
         /// <summary>调试日志最小间隔（combat-time）。</summary>
         public int DebugLogIntervalMs = 200;

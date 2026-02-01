@@ -156,6 +156,9 @@ public partial class SkillEditorWindow : EditorWindow
     
     private FloatField hitEffectDamageMultiplierField;
     private EnumField hitEffectReactionField;
+    private IntegerField hitEffectPriorityField;
+    private Button hitEffectPriorityAutoButton;
+    private Button hitEffectPriorityAutoAllButton;
     private EnumField hitMotionTypeField;
     private FloatField hitMotionForceField;
     private IntegerField hitMotionDurationMsField;

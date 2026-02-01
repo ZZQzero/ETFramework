@@ -5,7 +5,7 @@
     /// - 目标侧 HitStop 是否启用/缩放
     /// - 震屏/慢动作是否启用/缩放（此版本先做数据结构与入口，不强绑定具体相机/时间系统）
     /// </summary>
-    public readonly struct HitFeedbackProfile
+    public readonly struct HitFeedbackConfig
     {
         /// <summary>
         /// 反馈配置分组
@@ -39,7 +39,7 @@
         /// <summary>所有反馈配置选项。</summary>
         public readonly Options Option;
 
-        public HitFeedbackProfile(in Options options)
+        public HitFeedbackConfig(in Options options)
         {
             this.Option = options;
         }

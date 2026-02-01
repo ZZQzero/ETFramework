@@ -11,6 +11,11 @@ namespace ET
     {
         /// <summary>视觉受击类型（决定规则层优先级/动画选择）。</summary>
         public readonly HitReactionType ReactionType;
+        
+        /// <summary>
+        /// 攻击强度（用于目标侧规则判定）。数值越大越“强”。\n        /// </summary>
+        public readonly byte HitStrength;
+
         /// <summary>物理运动数据（推/飞/砸/拉）。</summary>
         public readonly HitMotionData MotionData;
         /// <summary>目标状态过滤（可多选；Any=都可命中）。</summary>
@@ -33,9 +38,40 @@ namespace ET
         /// <summary>慢动作持续时间(ms)。</summary>
         public readonly int TimeScaleDurationMs;
 
+        /// <summary>
+        /// 完整构造（用于规则层 Normalize 后生成“有效请求”）。
+        /// </summary>
+        public HitReactionRequest(
+            HitReactionType reactionType,
+            byte hitStrength,
+            HitMotionData motionData,
+            TargetStateMask targetStates,
+            Vector3 hitDirection,
+            int hitStunMs,
+            int victimHitStopMs = 0,
+            float screenShakeIntensity = 0f,
+            int screenShakeDurationMs = 0,
+            float timeScale = 1f,
+            int timeScaleDurationMs = 0)
+        {
+            this.ReactionType = reactionType;
+            this.HitStrength = hitStrength;
+            this.MotionData = motionData;
+            this.TargetStates = targetStates;
+            this.HitDirection = hitDirection;
+            this.HitStunMs = hitStunMs;
+
+            this.VictimHitStopMs = victimHitStopMs;
+            this.ScreenShakeIntensity = screenShakeIntensity;
+            this.ScreenShakeDurationMs = screenShakeDurationMs;
+            this.TimeScale = timeScale;
+            this.TimeScaleDurationMs = timeScaleDurationMs;
+        }
+
         public HitReactionRequest(in HitEffectData effect, in HitFeedbackData feedback, Vector3 hitDirection, int defaultHitStopMs)
         {
             ReactionType = effect.HitReaction;
+            HitStrength = effect.HitStrength;
             MotionData = effect.HitMotion;
             TargetStates = effect.TargetStates;
             HitDirection = hitDirection;
@@ -50,7 +86,7 @@ namespace ET
 
         public override string ToString()
         {
-            return $"受击请求(类型={this.ReactionType}, 运动={this.MotionData.MotionType}:强度{this.MotionData.Force}, 目标状态过滤={this.TargetStates}, 方向={this.HitDirection}, 硬直时长={this.HitStunMs}ms, 受击停顿={this.VictimHitStopMs}ms)";
+            return $"受击请求(类型={this.ReactionType}, Priority={this.HitStrength}, 运动={this.MotionData.MotionType}:强度{this.MotionData.Force}, 目标状态过滤={this.TargetStates}, 方向={this.HitDirection}, 硬直时长={this.HitStunMs}ms, 受击停顿={this.VictimHitStopMs}ms)";
         }
     }
 }

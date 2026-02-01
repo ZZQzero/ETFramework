@@ -1,4 +1,5 @@
-﻿using Animancer;
+using System;
+using Animancer;
 using UnityEngine;
 
 namespace ET
@@ -13,7 +14,7 @@ namespace ET
             self.HitStop = self.OwnerUnit.GetComponent<HitStopComponent>();
             self.Ground = self.OwnerUnit.GetComponent<CheckGroundedComponent>();
             self.LocomotionIntent = self.OwnerUnit.GetComponent<LocomotionIntentComponent>();
-            self.LoadAnimationsAsync().NoContext();
+            self.AirCombo = self.OwnerUnit.GetComponent<AirComboComponent>();
         }
 
         [EntitySystem]
@@ -21,10 +22,11 @@ namespace ET
         {
             // 兜底：确保会话级别的外部状态全部释放（避免异常残留锁/地检配置）
             self.ReleaseHitSessionLocksIfNeeded();
-            self.ReleaseHitSessionGroundBoostIfNeeded();
 
-            self.CurrentState = HitState.None;
-            self.CurrentAnimState = null;
+            self.CurrentHitState = HitState.None;
+            self.VisualState = HitState.None;
+            self.VisualReactionType = HitReactionType.None;
+            self.CurrentAnimEnd = false;
             self.OnHitReactionStart = null;
             self.OnHitReactionEnd = null;
             self.OnLanded = null;
@@ -35,21 +37,19 @@ namespace ET
         {
             if (!self.IsInHitReaction)
                 return;
-
-            // --- 轨道 A：物理运动处理器 (Hit Motion Processor) ---
+            
             // 无论视觉播什么动画，只要物理轨道有数据（Speed > 0），角色就会产生位移
             self.UpdateHitMotion();
 
             // --- 轨道 B：视觉状态机 (Reaction State Machine) ---
             // 仅处理动画计时、落地判定和状态流转
-            switch (self.CurrentState)
+            switch (self.CurrentHitState)
             {
-                case HitState.Stun:
-                case HitState.Knockback:
+                case HitState.Grounded:
                     self.UpdateGroundedHitState();
                     break;
                 case HitState.Airborne:
-                case HitState.Falling:
+                case HitState.AirFinisher:
                     self.UpdateAirborne();
                     break;
                 case HitState.Knockdown:
@@ -63,16 +63,15 @@ namespace ET
 
         private static void UpdateHitMotion(this HitReactionComponent self)
         {
-            if (self.CurrentMotionType == HitMotionType.None || self.MotionEndTime <= 0) return;
+            if (self.CurrentMotionType == HitMotionType.Normal || self.MotionEndTime <= 0) return;
 
             long now = self.GetCombatNowMs();
             long durationMs = self.MotionEndTime - self.MotionStartTime;
-            
             // 检查运动是否结束
             if (durationMs <= 0 || now >= self.MotionEndTime)
             {
                 self.CurrentMotionSpeed = 0f;
-                self.CurrentMotionType = HitMotionType.None;
+                self.CurrentMotionType = HitMotionType.Normal;
                 
                 // 核心修复：位移结束时必须清理意图，防止怪物无限滑行
                 if (self.LocomotionIntent != null)
@@ -110,7 +109,7 @@ namespace ET
 
         private static void UpdateGroundedHitState(this HitReactionComponent self)
         {
-            // 检查硬直结束 && 物理位移停止（商业级：防止滑行中突然恢复操作带来的瞬移感）
+            // 检查硬直结束 && 物理位移停止
             if (self.GetCombatNowMs() >= self.StunEndTime && self.CurrentMotionSpeed < 0.1f)
             {
                 self.EndHitReaction();
@@ -118,39 +117,30 @@ namespace ET
         }
 
         /// <summary>
-        /// 加载动画资源
+        /// 统一受击入口
+        /// - Resistance 按状态切表（Grounded/Airborne/AirStun/Knockdown/GetUp）
+        /// - 空中禁止二次击飞（Launch 在空中会被降级/忽略）
         /// </summary>
-        private static async ETTask LoadAnimationsAsync(this HitReactionComponent self)
+        public static bool TryApplyHit(this HitReactionComponent self, in HitReactionRequest hitReaction)
         {
-            // 加载受击动画（根据实际资源路径调整）
-            await ETTask.CompletedTask;
-        }
+            if (self == null || self.IsDisposed || self.Owner == null || self.OwnerUnit == null)
+            {
+                return false;
+            }
 
-        public static HitReactionRequest From(this HitReactionComponent self, in HitEffectData effect, in HitFeedbackData feedback, Vector3 hitDirection, int defaultHitStopMs)
-        {
-            self.HitReaction = new HitReactionRequest(effect, feedback, hitDirection, defaultHitStopMs);
-            return self.HitReaction;
-        }
+            HitReactionProfileProvider.ResolveConfig(self.OwnerUnit, out var rulesConfig, out var hitFeedbackConfig);
+            // 缓存本单位的视觉许可（用于帧内/帧间状态流转时同步视觉状态）
+            self.AllowedReactionGroups = rulesConfig.AllowedReactionGroups;
+            self.AllowedStateVisuals = rulesConfig.AllowedStateVisuals;
+            Log.Error($"允许播放的分组 {self.AllowedReactionGroups}   {self.AllowedStateVisuals}  \n");
 
-        /// <summary>
-        /// - 负责“能否受击/是否通过过滤/受击优先级/参数归一化”等判定
-        /// - 只产出决策，不直接操作动画/位移/组件
-        /// </summary>
-        public static HitRulesResult HitRuleEvaluate(this HitReactionComponent self, in HitReactionRequest incoming, in HitRulesProfile profile)
-        {
-            if (self == null || self.IsDisposed)
-                return new HitRulesResult(HitApplyMode.Reject, incoming);
-
-            if (self.Owner == null || self.OwnerUnit == null)
-                return new HitRulesResult(HitApplyMode.Reject, incoming);
-
-            bool hasVisualOrPhysical = incoming.ReactionType != HitReactionType.None || incoming.MotionData.MotionType != HitMotionType.None;
+            bool hasVisualOrPhysical = hitReaction.ReactionType != HitReactionType.None || hitReaction.MotionData.MotionType != HitMotionType.Normal;
             bool hasAnyFeedback =
-                incoming.VictimHitStopMs > 0 ||
-                incoming.ScreenShakeIntensity > 0f ||
-                incoming.ScreenShakeDurationMs > 0 ||
-                (incoming.TimeScale > 0f && !Mathf.Approximately(incoming.TimeScale, 1f)) ||
-                incoming.TimeScaleDurationMs > 0;
+                hitReaction.VictimHitStopMs > 0 ||
+                hitReaction.ScreenShakeIntensity > 0f ||
+                hitReaction.ScreenShakeDurationMs > 0 ||
+                (hitReaction.TimeScale > 0f && !Mathf.Approximately(hitReaction.TimeScale, 1f)) ||
+                hitReaction.TimeScaleDurationMs > 0;
 
             // 允许“仅反馈”的请求（例如格挡成功、护盾命中）：不进入受击状态机
             // 注意：此分支不参与 AcceptMask/TargetStates/CanBeHit 判定，避免把表现反馈耦合进 gameplay 受击规则。
@@ -158,244 +148,333 @@ namespace ET
             {
                 if (!hasAnyFeedback)
                 {
-                    return new HitRulesResult(HitApplyMode.Reject, incoming);
+                    return false;
                 }
-                HitReactionRequest normalizedFeedbackOnly = Normalize(incoming, in profile);
-                return new HitRulesResult(HitApplyMode.FeedbackOnly, normalizedFeedbackOnly);
-            }
-
-            // 状态检查：起身、倒地等状态可能禁止受击
-            if (!self.CanBeHit)
-                return new HitRulesResult(HitApplyMode.Reject, incoming);
-
-            if (!PassTargetStateFilter(self, incoming.TargetStates))
-                return new HitRulesResult(HitApplyMode.Reject, incoming);
-
-            // Profile 过滤：检查是否在接受列表中
-            if (!profile.Accepts(incoming.ReactionType))
-                return new HitRulesResult(HitApplyMode.Reject, incoming);
-
-            // 归一化参数（应用 Scale 和 Limit）
-            HitReactionRequest normalized = Normalize(incoming, in profile);
-
-            // 1. 获取本次攻击强度
-            int incomingPriority = profile.GetPriority(normalized.ReactionType);
-
-            // 2. 如果当前没有受击：直接替换（启动）
-            if (!self.IsInHitReaction)
-                return new HitRulesResult(HitApplyMode.Replace, normalized);
-
-            // 3. 判定应用模式 (Apply Mode Resolve)
-            // 获取上一次命中的招式强度
-            int lastAttackPriority = profile.GetPriority(self.CurrentReactionType);
-
-            HitApplyMode intendedMode = incomingPriority > lastAttackPriority ? HitApplyMode.Replace : profile.LowerOrEqualMode;
-
-            // 4. 核心：状态抵抗力（只限制 Replace；空中连段允许弱招 Refresh 续期）
-            int currentStateResistance = profile.GetResistance(self.CurrentState);
-            if (incomingPriority < currentStateResistance)
-            {
-                // 霸体/抗性：弱招无法打断（Replace 禁止）
-                if (intendedMode == HitApplyMode.Replace)
-                {
-                    return new HitRulesResult(HitApplyMode.Reject, normalized);
-                }
-
-                // 关键：空中连段阶段允许弱招 Refresh（续硬直/续空中时间）
-                if (self.CurrentState == HitState.Airborne || self.CurrentState == HitState.Falling)
-                {
-                    var airCombo = self.OwnerUnit.GetComponent<AirComboComponent>();
-                    if (airCombo != null && airCombo.Active)
-                    {
-                        return new HitRulesResult(HitApplyMode.Refresh, normalized);
-                    }
-                }
-
-                // 倒地/起身等状态仍严格（防无限控）
-                return new HitRulesResult(HitApplyMode.Reject, normalized);
-            }
-
-            return new HitRulesResult(intendedMode, normalized);
-        }
-
-        private static HitReactionRequest Normalize(this HitReactionComponent self, in HitReactionRequest r, in HitRulesProfile profile)
-        {
-            Vector3 dir = r.HitDirection;
-            dir.y = 0f;
-            if (dir.sqrMagnitude > 0.0001f)
-            {
-                dir.Normalize();
-            }
-
-            int stun = Mathf.Max(0, r.HitStunMs);
-            if (profile.Scale.Stun > 0f && !Mathf.Approximately(profile.Scale.Stun, 1f))
-            {
-                stun = Mathf.RoundToInt(stun * profile.Scale.Stun);
-            }
-            if (profile.Limit.MaxHitStunMs > 0 && stun > profile.Limit.MaxHitStunMs)
-            {
-                stun = profile.Limit.MaxHitStunMs;
-            }
-
-            // 物理轨道归一化
-            HitMotionData motion = r.MotionData;
-            motion.Force = Mathf.Max(0f, motion.Force);
-            
-            // 根据 Profile 缩放和限制力
-            if (motion.MotionType == HitMotionType.Push || motion.MotionType == HitMotionType.Pull)
-            {
-                if (profile.Scale.Knockback > 0f && !Mathf.Approximately(profile.Scale.Knockback, 1f)) motion.Force *= profile.Scale.Knockback;
-                if (profile.Limit.MaxKnockbackForce > 0f && motion.Force > profile.Limit.MaxKnockbackForce) motion.Force = profile.Limit.MaxKnockbackForce;
-            }
-            else if (motion.MotionType == HitMotionType.Launch || motion.MotionType == HitMotionType.Slam)
-            {
-                if (profile.Scale.Knockup > 0f && !Mathf.Approximately(profile.Scale.Knockup, 1f)) motion.Force *= profile.Scale.Knockup;
-                if (profile.Limit.MaxKnockupForce >= 0f && motion.Force > profile.Limit.MaxKnockupForce) motion.Force = profile.Limit.MaxKnockupForce;
-            }
-
-            int hitStop = Mathf.Max(0, r.VictimHitStopMs);
-            float shakeIntensity = Mathf.Max(0f, r.ScreenShakeIntensity);
-            int shakeDurationMs = Mathf.Max(0, r.ScreenShakeDurationMs);
-            float timeScale = r.TimeScale <= 0f ? 1f : r.TimeScale;
-            int timeScaleMs = Mathf.Max(0, r.TimeScaleDurationMs);
-
-            HitReactionRequest.FeedbackPayload fp = new HitReactionRequest.FeedbackPayload(
-                victimHitStopMs: hitStop,
-                screenShakeIntensity: shakeIntensity,
-                screenShakeDurationMs: shakeDurationMs,
-                timeScale: timeScale,
-                timeScaleDurationMs: timeScaleMs);
-
-            return new HitReactionRequest(
-                r.ReactionType,
-                motion,
-                r.TargetStates,
-                dir,
-                stun,
-                in fp);
-        }
-
-        private static bool PassTargetStateFilter(this HitReactionComponent self, TargetStateMask filter)
-        {
-            if (filter == TargetStateMask.Any)
-            {
+                // 反馈-only：只按反馈 profile 应用，不进入受击会话
+                self.ApplyFeedback(in hitReaction, in hitFeedbackConfig);
                 return true;
             }
 
-            TargetStateMask current;
-            if (self.IsKnockdown)
-            {
-                current = TargetStateMask.Knockdown;
-            }
-            else if (self.IsAirborne)
-            {
-                current = TargetStateMask.Airborne;
-            }
-            else
-            {
-                current = TargetStateMask.Grounded;
-            }
-
-            return (filter & current) != 0;
-        }
-        
-        public static bool Accepts(this HitReactionComponent self, HitReactionType type)
-        {
-            return (AcceptMask & ToMask(type)) != 0;
-        }
-        
-        public static HitReactionMask ToMask(this HitReactionComponent self,HitReactionType type)
-        {
-            switch (type)
-            {
-                case HitReactionType.Light: return HitReactionMask.Light;
-                case HitReactionType.Medium: return HitReactionMask.Medium;
-                case HitReactionType.Heavy: return HitReactionMask.Heavy;
-                case HitReactionType.Stagger: return HitReactionMask.Stagger;
-                case HitReactionType.Stun: return HitReactionMask.Stun;
-                default: return HitReactionMask.None;
-            }
-        }
-
-        public static byte GetPriority(this HitReactionComponent self, HitReactionType type)
-        {
-            switch (type)
-            {
-                case HitReactionType.Light: return HitRulesProfile.Priorities.Light;
-                case HitReactionType.Medium: return this.Priority.Medium;
-                case HitReactionType.Heavy: return this.Priority.Heavy;
-                case HitReactionType.Stagger: return this.Priority.Stagger;
-                case HitReactionType.Stun: return this.Priority.Stun;
-                default: return 0;
-            }
-        }
-
-        public static byte GetResistance(this HitReactionComponent self, HitState state)
-        {
-            switch (state)
-            {
-                case HitState.GetUp: return this.Resistance.GetUp;
-                case HitState.Knockdown: return this.Resistance.Knockdown;
-                case HitState.Airborne:
-                case HitState.Falling: return this.Resistance.Airborne;
-                case HitState.Knockback: return this.Resistance.Knockback;
-                case HitState.Stun: return this.Resistance.Stun;
-                default: return 0;
-            }
-        }
-        
-        #region 统一入口
-
-        /// <summary>
-        /// 尝试对目标应用一次“受击请求”。
-        /// </summary>
-        public static bool TryApplyHit(this HitReactionComponent self, in HitReactionRequest request)
-        {
-            HitProfileLibrary.Resolve(self?.OwnerUnit, out var rulesProfile, out var feedbackProfile);
-            var result = HitRules.HitRuleEvaluate(self, in request, in rulesProfile);
-            if (!result.Accepted)
-            {
+            if (!self.PassTargetStateFilter( hitReaction.TargetStates))
                 return false;
+
+            // 归一化参数（应用 Scale 和 Limit）
+            HitReactionRequest normalized = self.Normalize(hitReaction, in rulesConfig);
+
+            Log.Error($"归一化参数 {normalized}");
+            // GetUp：起身中，门槛不够直接拒绝（不进入受击会话，也不触发反馈）
+            if (self.CurrentHitState == HitState.GetUp) 
+            {
+                var getUpRes = rulesConfig.hitInterruptThresholds.GetUp;
+                if (normalized.HitStrength < getUpRes.GetUpInterruptThreshold)
+                {
+                    return false;
+                }
+            }
+            
+            // 受击会话：进入会话才 acquire 外部能力锁（规则生效，与是否播放动画无关）
+            self.AcquireHitSessionLocksIfNeeded();
+
+            // 应用受击（状态切表）
+            self.ApplyHit(in normalized, in rulesConfig);
+            
+            // 规则生效后，才做“表现许可/降级/禁播”
+            self.ApplyVisualOutcome(in normalized);
+
+            Log.Error($"视觉许可 {self.VisualReactionType}  {self.IsInHitVisual}");
+
+            // 反馈：默认仍按反馈 profile 执行（可后续进一步纳入 VisualOutcome 细分）
+            self.ApplyFeedback(in normalized, in hitFeedbackConfig);
+            return true;
+        }
+
+        private static void ApplyHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
+        {
+            // 统一更新“当前受击表现类型”和“硬直截止点”
+            self.CurrentReactionType = request.ReactionType;
+            long now = self.GetCombatNowMs();
+            long nextStunEnd = now + Mathf.Max(0, request.HitStunMs);
+            if (nextStunEnd > self.StunEndTime)
+            {
+                self.StunEndTime = nextStunEnd;
             }
 
-            HitReactionRequest effective = result.Request;
-
-            // AirCombo：命中续期（KeepAlive）——只续期，不叠加高度
-            var unit = self.OwnerUnit;
-            if (unit != null)
+            Log.Error($"正式进入受击：  {self.OwnerUnit.UnitName}  {self.CurrentReactionType}  {self.CurrentHitState}");
+            switch (self.CurrentHitState)
             {
-                var airCombo = unit.GetComponent<AirComboComponent>();
-                if (airCombo != null && airCombo.Active)
+                case HitState.None:
+                case HitState.Grounded:
+                    self.HandleGroundedHit(in request, in reactionRulesConfig);
+                    return;
+                case HitState.Airborne:
+                    self.HandleAirborneHit(in request, in reactionRulesConfig);
+                    return;
+                case HitState.AirFinisher:
+                    self.HandleAirStunHit(in request, in reactionRulesConfig);
+                    return;
+                case HitState.Knockdown:
+                    self.HandleKnockdownHit(in request, in reactionRulesConfig);
+                    return;
+                case HitState.GetUp:
+                    self.HandleGetUpHit(in request, in reactionRulesConfig);
+                    return;
+            }
+        }
+
+        private static void SwitchState(this HitReactionComponent self, HitState next)
+        {
+            if (self.CurrentHitState == next)
+            {
+                return;
+            }
+            var prev = self.CurrentHitState;
+            self.CurrentHitState = next;
+            self.UpdateVisualStateForCurrentState();
+            self.OnHitReactionStart?.Invoke(next);
+            Log.Error($"切换状态： {self.CurrentHitState}  {self.VisualState}");
+        }
+
+        private static void UpdateVisualStateForCurrentState(this HitReactionComponent self)
+        {
+            // VisualState 仅受 AllowedStateVisuals 控制，不影响规则 CurrentState。
+            if (self == null)
+            {
+                return;
+            }
+
+            HitState state = self.CurrentHitState;
+            if (!IsStateVisualAllowed(self.AllowedStateVisuals, state))
+            {
+                self.VisualState = HitState.None;
+                // 视觉禁播时也清掉地面 ReactionType，避免误触发
+                self.VisualReactionType = HitReactionType.None;
+                return;
+            }
+
+            self.VisualState = state;
+            // VisualReactionType 由 ApplyVisualOutcome 负责降级；这里只保证状态一致性
+        }
+
+        private static bool IsStateVisualAllowed(HitStateVisualMask allowed, HitState state)
+        {
+            HitStateVisualMask flag = state switch
+            {
+                HitState.Grounded => HitStateVisualMask.Grounded,
+                HitState.Airborne => HitStateVisualMask.Airborne,
+                HitState.AirFinisher => HitStateVisualMask.AirStun,
+                HitState.Knockdown => HitStateVisualMask.Knockdown,
+                HitState.GetUp => HitStateVisualMask.GetUp,
+                _ => HitStateVisualMask.None
+            };
+            return flag != HitStateVisualMask.None && (allowed & flag) != 0;
+        }
+
+        private static void ApplyVisualOutcome(this HitReactionComponent self, in HitReactionRequest request)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            // 1) 状态动画许可：不允许则完全不播受击动画（但规则仍生效）
+            self.UpdateVisualStateForCurrentState();
+            if (self.VisualState == HitState.None)
+            {
+                return;
+            }
+
+            // 2) ReactionType 许可（仅 Grounded 使用；空中/倒地/起身等以状态动画为主）
+            HitReactionType desired = request.ReactionType;
+            HitReactionType visualType = self.DegradeReactionType(desired, self.AllowedReactionGroups);
+            self.VisualReactionType = visualType;
+        }
+
+        private static void HandleGroundedHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
+        {
+            var res = reactionRulesConfig.hitInterruptThresholds.Grounded;
+            long now = self.GetCombatNowMs();
+
+            // Grounded：起身中才允许被门槛打断，否则直接按地面受击处理
+            self.SwitchState(HitState.Grounded);
+            Log.Error($"MotionType {request.MotionData.MotionType}  {request.HitStrength}  {res.KnockbackThreshold}  {res.LightReactionThreshold}  {res.AirborneThreshold}");
+
+            switch (request.MotionData.MotionType)
+            {
+                case HitMotionType.Normal:
+                    //只处理硬值，怪物不会被击退,怪物不往前走
+                    if (request.HitStrength >= res.LightReactionThreshold)
+                    {
+                        self.CurrentMotionType = request.MotionData.MotionType;
+                    }
+                    break;
+                case HitMotionType.Knockback:
+                case HitMotionType.PullTowardAttacker:
+                    //击退或吸过来,拉拽
+                    if (request.HitStrength > res.KnockbackThreshold)
+                    {
+                        self.InitPhysicalMotion(in request);
+                    }
+                    break;
+                case HitMotionType.Knockup:
+                    //从地面击飞
+                    if (request.HitStrength > res.AirborneThreshold)
+                    {
+                        self.EnterAirborneFromGrounded(in request);
+                    }
+                    break;
+                case HitMotionType.KnockDown:
+                    //砸地
+                    self.SwitchState(HitState.Knockdown);
+                    self.KnockdownEndTime = now + self.KnockdownDurationMs;
+                    break;
+            }
+        }
+
+        private static void HandleAirborneHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
+        {
+            var res = reactionRulesConfig.hitInterruptThresholds.Airborne;
+
+            // 空中：高优先级 -> 空中终结
+            if (request.HitStrength >= res.AirborneThreshold)
+            {
+                self.EnterAirStun(in request);
+                return;
+            }
+
+            // 空中：达到门槛 -> 砸地（通过 AirborneReason 驱动落地后倒地）
+            if (request.HitStrength >= res.KnockdownThreshold)
+            {
+                self.BeginAirSlamToKnockdown(in request);
+                return;
+            }
+
+            // 空中：轻/中等命中成立；Knockup 根据 MaxAirborneKnockupForce 允许 capped 二次击飞
+            HitReactionRequest filtered = self.FilterAirborneMotion(in request, allowSecondaryKnockup: true);
+            if (filtered.MotionData.MotionType != HitMotionType.Normal)
+            {
+                self.InitPhysicalMotion(in filtered);
+                if (filtered.MotionData.MotionType == HitMotionType.Knockup)
                 {
-                    HitProfileLibrary.ResolveAirCombo(unit, out var acProfile);
-                    airCombo.OnHit(self.GetCombatNowMs(), in acProfile);
+                    self.ApplyVerticalImpulse(HitMotionType.Knockup, filtered.MotionData.Force);
                 }
             }
 
-            // 反馈：目标侧顿帧
-            self.ApplyFeedback(in effective, in feedbackProfile);
-
-            // 按规则决策执行
-            switch (result.Mode)
+            // AirCombo：命中续期（KeepAlive）——只续期，不叠加高度
+            if (self.AirCombo != null && self.AirCombo.Active)
             {
-                case HitRules.HitApplyMode.Replace:
-                    // 会话式锁：仅在“从非受击进入受击”时 acquire 一次
-                    self.AcquireHitSessionLocksIfNeeded();
-                    self.StartHitReaction(in effective);
-                    break;
-                case HitRules.HitApplyMode.Refresh:
-                    // Refresh 仍处于受击会话内；但如果存在“反馈-only”后立刻进入受击的特殊路径，这里也要兜底 acquire
-                    self.AcquireHitSessionLocksIfNeeded();
-                    self.RefreshHitReaction(in effective);
-                    break;
-                case HitRules.HitApplyMode.FeedbackOnly:
-                    // 仅反馈，不进入受击状态机，也不 acquire 外部能力锁
-                    return true;
-                default:
-                    return false;
+                HitReactionProfileProvider.ResolveAirCombo(self.OwnerUnit, out var acProfile);
+                self.AirCombo.OnHit(self.GetCombatNowMs(), in acProfile);
             }
-            return true;
         }
+
+        private static void HandleAirStunHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
+        {
+            var res = reactionRulesConfig.hitInterruptThresholds.AirFinisher;
+
+            // 允许更强的砸地（或保持终结态）
+            if (request.HitStrength >= res.KnockdownThreshold)
+            {
+                self.BeginAirSlamToKnockdown(in request);
+                return;
+            }
+
+            // 其余命中：只刷新硬直/反馈（不改变状态），完全禁止二次击飞
+            HitReactionRequest filtered = self.FilterAirborneMotion(in request, allowSecondaryKnockup: false);
+            if (filtered.MotionData.MotionType != HitMotionType.Normal)
+            {
+                self.InitPhysicalMotion(in filtered);
+            }
+        }
+
+        private static void HandleKnockdownHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
+        {
+            var res = reactionRulesConfig.hitInterruptThresholds.Knockdown;
+
+            // 倒地：只有达到门槛才允许“续倒地/打断起身”（避免无限压起身）
+            if (request.HitStrength >= res.GetUpInterruptThreshold)
+            {
+                self.KnockdownEndTime = self.GetCombatNowMs() + self.KnockdownDurationMs;
+            }
+        }
+
+        private static void HandleGetUpHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
+        {
+            var res = reactionRulesConfig.hitInterruptThresholds.GetUp;
+
+            // 起身：门槛不够则直接拒绝（不进入受击会话）
+            if (request.HitStrength < res.GetUpInterruptThreshold)
+            {
+                return;
+            }
+
+            // 门槛够：打断起身，按地面受击重新评估（可能击飞）
+            self.SwitchState(HitState.Grounded);
+            self.HandleGroundedHit(in request, in reactionRulesConfig);
+        }
+
+        
+
+        private static void EnterAirStun(this HitReactionComponent self, in HitReactionRequest request)
+        {
+            // 进入终结态：强制结束 AirCombo（防止继续挂空）
+            if (self.OwnerUnit != null)
+            {
+                var airCombo = self.OwnerUnit.GetComponent<AirComboComponent>();
+                if (airCombo != null && airCombo.Active)
+                {
+                    airCombo.ForceEnd();
+                }
+            }
+
+            self.SwitchState(HitState.AirFinisher);
+
+            // 空中终结仍允许 Push/Pull（但完全禁止 Launch）
+            HitReactionRequest filtered = self.FilterAirborneMotion(in request, allowSecondaryKnockup: false);
+            if (filtered.MotionData.MotionType != HitMotionType.Normal)
+            {
+                self.InitPhysicalMotion(in filtered);
+            }
+        }
+
+        private static void BeginAirSlamToKnockdown(this HitReactionComponent self, in HitReactionRequest request)
+        {
+            // Slam：设置落地语义为 Knockdown，并注入向下冲量（不改变为空中二次击飞）
+            self.SwitchState(self.CurrentHitState == HitState.AirFinisher ? HitState.AirFinisher : HitState.Airborne);
+            if (self.Ground != null)
+            {
+                // 已经在空中时不需要 ForceBreakGround，但需要把落地语义改为 Knockdown
+                self.Ground.AirborneReason = AirborneReason.Knockdown;
+            }
+
+            if (request.MotionData.MotionType == HitMotionType.KnockDown)
+            {
+                self.InitPhysicalMotion(in request);
+                self.ApplyVerticalImpulse(HitMotionType.KnockDown, request.MotionData.Force);
+            }
+        }
+
+        private static void EnterAirborneFromGrounded(this HitReactionComponent self, in HitReactionRequest request)
+        {
+            self.SwitchState(HitState.Airborne);
+
+            if (self.AirCombo == null)
+            {
+                self.AirCombo = self.OwnerUnit.GetComponent<AirComboComponent>();
+            }
+            if (self.Ground != null)
+            {
+                self.Ground.Enable = false;
+                var type = HitReactionProfileProvider.ResolveAirborneReasonForRequest(in request);
+                self.Ground.ForceBreakGround(type);
+            }
+            self.InitPhysicalMotion(in request);
+            self.ApplyVerticalImpulse(request.MotionData.MotionType, request.MotionData.Force);
+            HitReactionProfileProvider.ResolveAirCombo(self.OwnerUnit, out var acProfile);
+            self.AirCombo.Enter(self.GetCombatNowMs(), self.OwnerUnit.Position.y, in acProfile);
+            
+        }
+
+        #region 统一入口
 
         /// <summary>
         /// 受击会话：外部能力锁 acquire（一次会话只允许 acquire 一次）。
@@ -464,197 +543,17 @@ namespace ET
             if (intent.JumpInhibitors < 0) intent.JumpInhibitors = 0;
         }
 
-        private static void ApplyFeedback(this HitReactionComponent self, in HitReactionRequest request, in HitFeedbackProfile profile)
+        private static void ApplyFeedback(this HitReactionComponent self, in HitReactionRequest request, in HitFeedbackConfig config)
         {
-            if (profile.Option.AllowVictimHitStop && request.VictimHitStopMs > 0)
+            if (config.Option.AllowVictimHitStop && request.VictimHitStopMs > 0)
             {
-                int ms = Mathf.RoundToInt(request.VictimHitStopMs * Mathf.Max(0f, profile.Option.VictimHitStopScale));
+                int ms = Mathf.RoundToInt(request.VictimHitStopMs * Mathf.Max(0f, config.Option.VictimHitStopScale));
                 var hitStop = self.OwnerUnit?.GetComponent<HitStopComponent>();
                 var anim = self.OwnerUnit?.GetComponent<AnimatorComponent>()?.Animancer;
+                Log.Error($"顿帧 {ms}");
                 if (hitStop != null && anim != null)
                 {
                     hitStop.RequestHitStop(ms, anim, HitStopFreezeMode.FreezeAll);
-                }
-            }
-        }
-
-        #region HitState 映射（单一权威）
-
-        /// <summary>
-        /// 由请求（以及当前状态）决定受击状态机要进入/保持的 <see cref="HitState"/>。
-        /// 约束：
-        /// - <see cref="HitMotionType"/> 负责“运动学怎么做”，<see cref="HitState"/> 负责“状态机与动画怎么播/怎么流转”
-        /// - 两者分离，但“由请求推导状态”的规则必须集中在这里，避免 Start/Refresh 各写一套导致维护分叉
-        /// </summary>
-        private static HitState ResolveHitStateForStart(in HitReactionRequest request)
-        {
-            switch (request.MotionData.MotionType)
-            {
-                case HitMotionType.Launch:
-                case HitMotionType.Slam:
-                    return HitState.Airborne;
-                case HitMotionType.Push:
-                case HitMotionType.Pull:
-                    return HitState.Knockback;
-                default:
-                    return HitState.Stun;
-            }
-        }
-
-        private static HitState ResolveHitStateForRefresh(in HitReactionRequest request, HitState current)
-        {
-            // 处于 Falling 时，不要被 refresh 拉回 Airborne（避免倒序）
-            if (current == HitState.Falling)
-            {
-                return HitState.Falling;
-            }
-
-            bool currentlyAirborne = current == HitState.Airborne || current == HitState.Falling;
-            bool isLaunchOrSlam = request.MotionData.MotionType == HitMotionType.Launch || request.MotionData.MotionType == HitMotionType.Slam;
-
-            if (isLaunchOrSlam || currentlyAirborne)
-            {
-                return HitState.Airborne;
-            }
-
-            switch (request.MotionData.MotionType)
-            {
-                case HitMotionType.Push:
-                case HitMotionType.Pull:
-                    return HitState.Knockback;
-                default:
-                    return HitState.Stun;
-            }
-        }
-
-        private static AirborneReason ResolveAirborneReasonForRequest(in HitReactionRequest request, bool isRefresh)
-        {
-            // Slam 通常意味着“砸地/击倒”语义；Launch 表示击飞；Refresh(空中追击)默认 Juggled
-            if (request.MotionData.MotionType == HitMotionType.Slam)
-            {
-                return AirborneReason.Knockdown;
-            }
-            if (request.MotionData.MotionType == HitMotionType.Launch)
-            {
-                return AirborneReason.Launched;
-            }
-            return isRefresh ? AirborneReason.Juggled : AirborneReason.Launched;
-        }
-
-        #endregion
-
-        private static void StartHitReaction(this HitReactionComponent self, in HitReactionRequest request)
-        {
-            // --- 1. 初始化视觉轨道 ---
-            self.CurrentReactionType = request.ReactionType;
-            self.StunEndTime = self.GetCombatNowMs() + Mathf.Max(0, request.HitStunMs);
-
-            HitState state = ResolveHitStateForStart(in request);
-
-            // --- 2. 初始化物理轨道 ---
-            self.InitPhysicalMotion(in request);
-
-            // --- 3. 物理驱动状态修正 ---
-            if (state == HitState.Airborne)
-            {
-                self.AcquireHitSessionGroundBoostIfNeeded();
-                // Y轴权威：只有 Launch/Slam 才能注入垂直冲量；Push/Pull 的连段维持由 ComboPhysics 接管
-                if (request.MotionData.MotionType == HitMotionType.Launch || request.MotionData.MotionType == HitMotionType.Slam)
-                {
-                    self.ApplyVerticalImpulse(request.MotionData.MotionType, request.MotionData.Force);
-                }
-
-                if (self.Ground != null)
-                {
-                    // 最优：击飞/砸地必须“立刻离地”，不能等待地检防抖窗口，否则会出现“受击已空中但地检仍在地面→假落地→倒地”
-                    self.Ground.ForceBreakGround(ResolveAirborneReasonForRequest(in request, isRefresh: false));
-                }
-
-                // AirCombo：进入空中连段物理模式（由 profile 决定是否启用）
-                if (self.OwnerUnit != null)
-                {
-                    var airCombo = self.OwnerUnit.GetComponent<AirComboComponent>();
-                    if (airCombo != null)
-                    {
-                        HitProfileLibrary.ResolveAirCombo(self.OwnerUnit, out var acProfile);
-                        airCombo.Enter(self.GetCombatNowMs(), self.OwnerUnit.Position.y, in acProfile);
-                    }
-                }
-            }
-
-            self.CurrentState = state;
-            self.OnHitReactionStart?.Invoke(state);
-        }
-
-        private static void RefreshHitReaction(this HitReactionComponent self, in HitReactionRequest request)
-        {
-            // 1. 视觉刷新
-            self.CurrentReactionType = request.ReactionType;
-            long stunEnd = self.GetCombatNowMs() + Mathf.Max(0, request.HitStunMs);
-            if (stunEnd > self.StunEndTime) self.StunEndTime = stunEnd;
-
-            // 2. 物理刷新
-            if (request.MotionData.MotionType != HitMotionType.None)
-            {
-                // 使用 BaseForce 判定覆盖，保证物理表现的连续性
-                if (request.MotionData.Force >= self.MotionBaseForce)
-                {
-                    self.InitPhysicalMotion(in request);
-                }
-
-                HitState resolved = ResolveHitStateForRefresh(in request, self.CurrentState);
-                if (resolved == HitState.Airborne)
-                {
-                    if (!self.IsAirborne)
-                    {
-                        self.CurrentState = HitState.Airborne;
-                        self.OnHitReactionStart?.Invoke(HitState.Airborne);
-                    }
-
-                    self.AcquireHitSessionGroundBoostIfNeeded();
-                    if (request.MotionData.MotionType == HitMotionType.Launch || request.MotionData.MotionType == HitMotionType.Slam)
-                    {
-                        self.ApplyVerticalImpulse(request.MotionData.MotionType, request.MotionData.Force);
-                    }
-
-                    if (self.Ground != null)
-                    {
-                        // 最优：确保地检立刻离地（但只在“当前还被认为在地面”时强制），避免 Refresh 重复重置离地时间/跌落高度基准
-                        if (!self.Ground.IsAirborne(self.Ground.State))
-                        {
-                            self.Ground.ForceBreakGround(ResolveAirborneReasonForRequest(in request, isRefresh: true));
-                        }
-                        else
-                        {
-                            self.Ground.AirborneReason = ResolveAirborneReasonForRequest(in request, isRefresh: true);
-                        }
-                    }
-
-                    // AirCombo：空中刷新也视为 Enter/KeepAlive（Enter 内部会做合并与 fail-safe）
-                    if (self.OwnerUnit != null)
-                    {
-                        var airCombo = self.OwnerUnit.GetComponent<AirComboComponent>();
-                        if (airCombo != null)
-                        {
-                            HitProfileLibrary.ResolveAirCombo(self.OwnerUnit, out var acProfile);
-                            if (!airCombo.Active)
-                            {
-                                airCombo.Enter(self.GetCombatNowMs(), self.OwnerUnit.Position.y, in acProfile);
-                            }
-                            else
-                            {
-                                airCombo.OnHit(self.GetCombatNowMs(), in acProfile);
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    if (self.CurrentState != resolved)
-                    {
-                        self.CurrentState = resolved;
-                        self.OnHitReactionStart?.Invoke(resolved);
-                    }
                 }
             }
         }
@@ -682,8 +581,9 @@ namespace ET
             if (intent != null)
             {
                 // 注入 3D 冲量请求（使用 += 确保多源力叠加）
-                float yImpulse = (motionType == HitMotionType.Slam) ? -force : force;
+                float yImpulse = (motionType == HitMotionType.KnockDown) ? -force : force;
                 intent.ExternalImpulse += new Vector3(0, yImpulse, 0);
+                Log.Error($"ApplyVerticalImpulse  {self.OwnerUnit.UnitName}  {yImpulse}  {intent.ExternalImpulse}");
             }
         }
 
@@ -702,6 +602,7 @@ namespace ET
             // AirCombo：超时后启动退出（重力 lerp 回 1），退出完成后交给自然重力落地
             if (self.OwnerUnit != null)
             {
+                //TODO 检查这里
                 var airCombo = self.OwnerUnit.GetComponent<AirComboComponent>();
                 if (airCombo != null && airCombo.Active)
                 {
@@ -724,17 +625,22 @@ namespace ET
             }
 
             var cc = self.OwnerUnit?.GetComponent<CharacterControllerComponent>();
-            if (cc != null && cc.CurrentVelocity.y < -0.01f && self.CurrentState == HitState.Airborne)
-            {
-                self.CurrentState = HitState.Falling;
-            }
 
-            // 最优：落地必须是“地检从 airborne 类状态切到 grounded 类状态”的跃迁，而不是某一帧 Ground.State 读到 grounded
+            // B) 落地触发：避免在 Landing 过渡态的第一帧就触发受击落地（会导致空中受击会话过早结束）。
+            // 约束：
+            // - PrevState：允许 Airborne 类或 Landing（Landing->Grounded 的收尾帧也要能触发）
+            // - State：必须是稳定地面态（排除 Landing 本身）
             if (self.Ground != null &&
-                self.Ground.IsAirborne(self.Ground.PrevState) &&
+                (self.Ground.IsAirborne(self.Ground.PrevState) || self.Ground.PrevState == GroundState.Landing) &&
+                self.Ground.State != GroundState.Landing &&
                 self.Ground.IsGrounded(self.Ground.State) &&
                 (cc == null || cc.CurrentVelocity.y <= 0.01f))
             {
+                // Debug：落地触发点（定位“击飞后立刻假落地/会话被提前结束”）
+                Log.Info(
+                    $"[HitReaction] LandTrigger unit={self.OwnerUnit?.UnitName} state={self.CurrentHitState} " +
+                    $"ground={self.Ground.PrevState}->{self.Ground.State} reason={self.Ground.AirborneReason} " +
+                    $"vy={(cc != null ? cc.CurrentVelocity.y : 0f):F3} now={self.GetCombatNowMs()}");
                 self.OnLand();
             }
         }
@@ -742,13 +648,13 @@ namespace ET
         private static void OnLand(this HitReactionComponent self)
         {
             self.OnLanded?.Invoke();
-            if (self.CurrentState == HitState.Falling || self.CurrentState == HitState.Airborne)
+            if (self.CurrentHitState == HitState.Airborne || self.CurrentHitState == HitState.AirFinisher)
             {
                 // 落地分流：Launch/Juggled 通常是 LandingStun；Slam/Knockdown 才必倒地
                 var reason = self.Ground != null ? self.Ground.AirborneReason : AirborneReason.None;
                 if (reason == AirborneReason.Knockdown)
                 {
-                    self.CurrentState = HitState.Knockdown;
+                    self.SwitchState(HitState.Knockdown);
                     self.KnockdownEndTime = self.GetCombatNowMs() + self.KnockdownDurationMs;
                 }
                 else
@@ -764,7 +670,7 @@ namespace ET
                         }
                     }
 
-                    self.CurrentState = HitState.Stun;
+                    self.SwitchState(HitState.Grounded);
                     self.StunEndTime = self.GetCombatNowMs() + Mathf.Max(0, landingStunMs);
                 }
             }
@@ -778,7 +684,7 @@ namespace ET
         {
             if (self.GetCombatNowMs() >= self.KnockdownEndTime)
             {
-                self.CurrentState = HitState.GetUp;
+                self.SwitchState(HitState.GetUp);
                 self.GetUpStartTime = self.GetCombatNowMs();
             }
         }
@@ -791,7 +697,7 @@ namespace ET
                 self.EndHitReaction();
                 return;
             }
-            if (self.CurrentAnimState != null && self.CurrentAnimState.NormalizedTime >= 0.9f)
+            if (self.CurrentAnimEnd)
             {
                 self.EndHitReaction();
             }
@@ -799,8 +705,10 @@ namespace ET
 
         private static void EndHitReaction(this HitReactionComponent self)
         {
-            self.CurrentState = HitState.None;
-            self.CurrentAnimState = null;
+            self.CurrentHitState = HitState.None;
+            self.VisualState = HitState.None;
+            self.VisualReactionType = HitReactionType.None;
+            self.CurrentAnimEnd = false;
             self.CurrentMotionSpeed = 0;
             self.GetUpStartTime = 0;
 
@@ -814,48 +722,8 @@ namespace ET
                 intent.ExternalTargetVelocity = Vector2.zero;
                 intent.ExternalImpulse = Vector3.zero;
             }
-
-            self.ReleaseHitSessionGroundBoostIfNeeded();
             self.OnHitReactionEnd?.Invoke();
         }
-
-        #region 地面检测协作
-        private static void AcquireHitSessionGroundBoostIfNeeded(this HitReactionComponent self)
-        {
-            if (self == null)
-            {
-                return;
-            }
-            if (self.HitSessionGroundBoosted)
-            {
-                return;
-            }
-            self.HitSessionGroundBoosted = true;
-
-            if (self.Ground != null)
-            {
-                self.Ground.InhibitReduceFrequencyCount++;
-            }
-        }
-
-        private static void ReleaseHitSessionGroundBoostIfNeeded(this HitReactionComponent self)
-        {
-            if (self == null)
-            {
-                return;
-            }
-            if (!self.HitSessionGroundBoosted)
-            {
-                return;
-            }
-            self.HitSessionGroundBoosted = false;
-
-            if (self.Ground != null && self.Ground.InhibitReduceFrequencyCount > 0)
-            {
-                self.Ground.InhibitReduceFrequencyCount--;
-            }
-        }
-        #endregion
 
         #endregion
 

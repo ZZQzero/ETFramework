@@ -160,49 +160,6 @@ namespace ET
                 self.CurrentVelocity = new Vector3(targetVel.x, self.CurrentVelocity.y, targetVel.y);
             }
 
-            // 3. 消费外部 3D 瞬时冲量 (如爆炸、击飞、砸地等)
-            // 放在目标速度之后处理，确保冲量能叠加在受击位移之上，而不会被覆盖
-            if (self.LocomotionIntent != null && self.LocomotionIntent.ExternalImpulse.sqrMagnitude > 0.0001f)
-            {
-                Vector3 impulse = self.LocomotionIntent.ExternalImpulse;
-                Vector3 v = self.CurrentVelocity;
-                
-                if (impulse.y > 0.001f) // 向上力：取最大值以支持浮空叠加，XZ 叠加
-                {
-                    v.x += impulse.x;
-                    v.z += impulse.z;
-                    // Y轴权限：空中连段 Active 时，不再通过“不断上抛”维持空中（由 ComboPhysics 接管）
-                    if (self.AirCombo != null && self.AirCombo.Active)
-                    {
-                        // 允许进入空中后仍保持向上速度（例如刚起跳/刚被击飞的上升段），但不再被后续命中抬高
-                        // 因此这里不提升 v.y，只保留原本的 v.y
-                    }
-                    else
-                    {
-                        v.y = Mathf.Max(v.y, impulse.y);
-                    }
-                    
-                    // 强制脱离地面：优先保留受击系统设置的特殊原因（Launched/Juggled/Knockdown）
-                    // 如果当前没有原因或是 WalkOff（掉落），则统一视为被击飞 (Launched)
-                    if (self.Ground != null)
-                    {
-                        var currentReason = self.Ground.AirborneReason;
-                        if (currentReason == AirborneReason.None || currentReason == AirborneReason.WalkOff)
-                        {
-                            currentReason = AirborneReason.Launched;
-                        }
-                        self.Ground.ForceBreakGround(currentReason);
-                    }
-                }
-                else // 纯水平或向下力（砸地）
-                {
-                    v += impulse;
-                }
-                
-                self.CurrentVelocity = v;
-                self.LocomotionIntent.ExternalImpulse = Vector3.zero; // 消费即焚
-            }
-
             // 3. 应用最终速度到物理引擎
             if (self.Rigidbody != null)
             {
@@ -256,36 +213,12 @@ namespace ET
             {
                 self.AirCombo = self.Unit?.GetComponent<AirComboComponent>();
             }
-
-            // HitStop.FreezeAll：冻结窗口内不更新 Ground（Prev/State/timers），避免假落地/状态抖动
-            if (self.HitStop != null && self.HitStop.IsHitStopActive && self.HitStop.FreezeMode == HitStopFreezeMode.FreezeAll)
-            {
-                if (self.Rigidbody != null)
-                {
-                    self.Rigidbody.linearVelocity = Vector3.zero;
-                }
-                self.SyncUnitTransformFromRigidbody();
-                return;
-            }
-
-            self.Ground.Detect();
-            
             if (self.Attack == null)
             {
                 self.Attack = self.Unit?.GetComponent<AttackComponent>();
             }
-
-            if (self.JumpRequested && (self.Attack == null || !self.Attack.IsInAttack))
-            {
-                // 检查能力权限：是否允许跳跃
-                bool canJump = self.LocomotionIntent == null || self.LocomotionIntent.IsJumpAllowed;
-                if (canJump)
-                {
-                    self.Jump();
-                }
-                self.JumpRequested = false;
-            }
-
+            
+            
             // HitStop（顿帧）期间：不推进重力/不改变速度，确保顿帧期间角色不下坠/不位移。
             if (self.HitStop != null && self.HitStop.IsHitStopActive)
             {
@@ -298,16 +231,49 @@ namespace ET
                             // 不冻结运动：继续走重力推进
                             break;
                         case HitStopFreezeMode.FreezeXZOnly:
-                            // 冻结水平：确保 XZ 为 0，但允许 Y 继续由重力系统推进
-                            self.Rigidbody.linearVelocity = new Vector3(0f, self.Rigidbody.linearVelocity.y, 0f);
+                            // 冻结水平：仅 Rigidbody XZ 置 0，保留 CurrentVelocity 以便顿帧结束后恢复水平速度
+                            // 允许 Y 继续由重力系统推进
+                            self.Rigidbody.linearVelocity = new Vector3(0f, self.CurrentVelocity.y, 0f);
                             break;
-                        default:
-                            // FreezeAll：完全冻结（不推进重力）
-                            self.Rigidbody.linearVelocity = Vector3.zero;
+                        case HitStopFreezeMode.FreezeAll:
+                            if (self.Rigidbody != null)
+                            {
+                                //只冻结物理，顿帧结束后如果CurrentVelocity有速度则继续运动
+                                self.Rigidbody.linearVelocity = Vector3.zero;
+                            }
                             self.SyncUnitTransformFromRigidbody();
                             return;
                     }
                 }
+            }
+
+            // 物理阶段优先消费外部 3D 瞬时冲量（如爆炸、击飞、砸地等）：
+            // - 命中判定与受击通常发生在 FixedUpdate，此处必须先把冲量写入速度
+            // - 这样 Ground.Detect 才能使用“本物理步”的正确 vy，避免进入 Landing 造成假落地
+            if (self.LocomotionIntent != null && self.LocomotionIntent.ExternalImpulse.sqrMagnitude > 0.0001f)
+            {
+                Vector3 impulse = self.LocomotionIntent.ExternalImpulse;
+                self.CurrentVelocity += impulse;
+                // Ground.Detect 使用 Rigidbody.linearVelocity.y 做 Falling/Airborne 判定，因此这里必须同步到 Rigidbody
+                if (self.Rigidbody != null)
+                {
+                    self.Rigidbody.linearVelocity = self.CurrentVelocity;
+                }
+
+                self.LocomotionIntent.ExternalImpulse = Vector3.zero; // 消费即焚
+            }
+
+            self.Ground.Detect();
+
+            if (self.JumpRequested && (self.Attack == null || !self.Attack.IsInAttack))
+            {
+                // 检查能力权限：是否允许跳跃
+                bool canJump = self.LocomotionIntent == null || self.LocomotionIntent.IsJumpAllowed;
+                if (canJump)
+                {
+                    self.Jump();
+                }
+                self.JumpRequested = false;
             }
 
             // ComboPhysics：空中连段接管垂直规则（重力/下落速度/高度夹持）
@@ -350,6 +316,8 @@ namespace ET
                     float clampedY = Mathf.Clamp(pos.y, self.AirCombo.ComboMinHeight, self.AirCombo.ComboMaxHeight);
                     if (!Mathf.Approximately(pos.y, clampedY))
                     {
+                        Log.Error($"空中组件： {pos.y}  {clampedY}   {self.CurrentVelocity}   {gScale}");
+                        
                         // 触顶：不允许继续向上
                         if (pos.y > clampedY && self.CurrentVelocity.y > 0f)
                         {
@@ -369,6 +337,19 @@ namespace ET
             else
             {
                 self.ApplyGravity(deltaTime);
+            }
+
+            // 最终写入 Rigidbody；FreezeXZOnly 时仅写 Y，保留 CurrentVelocity.XZ 供顿帧结束后恢复
+            if (self.Rigidbody != null)
+            {
+                if (self.HitStop != null && self.HitStop.IsHitStopActive && self.HitStop.FreezeMode == HitStopFreezeMode.FreezeXZOnly)
+                {
+                    self.Rigidbody.linearVelocity = new Vector3(0f, self.CurrentVelocity.y, 0f);
+                }
+                else
+                {
+                    self.Rigidbody.linearVelocity = self.CurrentVelocity;
+                }
             }
 
             // Ground/重力只在 FixedUpdate 推进，这里也同步一次，避免只动 Y 时 Unit 不更新

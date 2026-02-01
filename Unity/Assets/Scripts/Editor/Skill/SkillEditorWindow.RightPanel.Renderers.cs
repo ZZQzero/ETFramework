@@ -401,6 +401,10 @@ public partial class SkillEditorWindow : EditorWindow
         {
             hitEffectReactionField.SetValueWithoutNotify(effect.HitReaction);
         }
+        if (hitEffectPriorityField != null)
+        {
+            hitEffectPriorityField.SetValueWithoutNotify(effect.HitStrength);
+        }
         if (hitMotionTypeField != null)
         {
             hitMotionTypeField.SetValueWithoutNotify(effect.HitMotion.MotionType);
@@ -423,7 +427,14 @@ public partial class SkillEditorWindow : EditorWindow
         }
         if (hitEffectTargetStateField != null)
         {
-            hitEffectTargetStateField.SetValueWithoutNotify(effect.TargetStates);
+            var normalized = (TargetStateMask)((int)effect.TargetStates & (int)TargetStateMask.Any);
+            if (normalized != effect.TargetStates)
+            {
+                effect.TargetStates = normalized;
+                hitBoxData.Effect = effect;
+                MarkAssetDirty();
+            }
+            hitEffectTargetStateField.SetValueWithoutNotify(normalized);
         }
 
         var feedback = hitBoxData.Feedback;

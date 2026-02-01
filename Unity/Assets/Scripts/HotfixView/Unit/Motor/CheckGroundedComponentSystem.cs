@@ -49,49 +49,30 @@ namespace ET
         /// </summary>
         public static void Detect(this CheckGroundedComponent self)
         {
-            self.DetectImpl(freezeTimers: false);
-        }
-
-        /// <summary>
-        /// 主检测入口 - FixedUpdate
-        /// - freezeTimers=true：冻结 timers（TimeLanded/AirborneDuration/LandingBuffer 等不推进），用于 HitStop.FreezeAll 等冻结窗口。
-        /// </summary>
-        public static void Detect(this CheckGroundedComponent self, bool freezeTimers)
-        {
-            self.DetectImpl(freezeTimers);
-        }
-
-        private static void DetectImpl(this CheckGroundedComponent self, bool freezeTimers)
-        {
             if (self.Capsule == null) return;
 
             var config = self.Config;
             self.FrameCounter++;
-
+            
             // 更新忽略平台状态
             self.UpdateIgnoredPlatform();
 
             // 性能优化：空中降频
             // 核心逻辑：只有在没有抑制器（InhibitReduceFrequencyCount == 0）时，才允许跳帧检测
             bool allowReduce = config.ReduceAirborneCheckFrequency && self.InhibitReduceFrequencyCount == 0;
-            if (allowReduce && self.IsAirborne(self.State) && self.FrameCounter % config.AirborneCheckInterval != 0)
+            if (allowReduce && self.IsAirborne(self.State) && self.FrameCounter % config.AirborneCheckInterval != 0 || !self.Enable)
             {
-                if (!freezeTimers)
-                {
-                    self.UpdateTimers(Time.fixedDeltaTime);
-                }
+                self.UpdateTimers(Time.fixedDeltaTime);
+                Log.Error($"{self.GetParent<Unit>().UnitName}  {self.IsAirborne(self.State)}  {allowReduce}  {self.Enable}  [CheckGroundedComponent] Detecting Airborne!");
                 return;
             }
 
             self.PrevState = self.State;
             self.PerformGroundCheck();
             self.UpdateGroundState();
-            if (!freezeTimers)
-            {
-                self.UpdateTimers(Time.fixedDeltaTime);
-            }
             self.HandleStateTransition();
         }
+        
 
         private static void PerformGroundCheck(this CheckGroundedComponent self)
         {

@@ -1,4 +1,6 @@
-﻿namespace ET
+using UnityEngine;
+
+namespace ET
 {
     /// <summary>
     /// 空中连段（Air Combo）Profile：客户端表现域/本地运动规则。
@@ -39,6 +41,12 @@
         /// <summary>落地硬直（非砸地/非倒地语义时使用）。</summary>
         public readonly int LandingStunMs;
 
+        /// <summary>
+        /// 空中二次击飞时允许的最大向上速度 (m/s)。
+        /// 0 表示完全禁止二次击飞；>0 时 Force 会被夹持到此值，实现“比原来高一点”的效果。
+        /// </summary>
+        public readonly float MaxAirborneKnockupForce;
+
         public HitAirComboProfile(
             bool enable,
             int minAirTimeMs,
@@ -48,7 +56,8 @@
             float minHeightOffset,
             float maxHeightOffset,
             int exitLerpMs,
-            int landingStunMs)
+            int landingStunMs,
+            float maxAirborneKnockupForce = 0f)
         {
             this.Enable = enable;
             this.MinAirTimeMs = minAirTimeMs;
@@ -59,6 +68,15 @@
             this.MaxHeightOffset = maxHeightOffset;
             this.ExitLerpMs = exitLerpMs;
             this.LandingStunMs = landingStunMs;
+            this.MaxAirborneKnockupForce = Mathf.Max(0f, maxAirborneKnockupForce);
+        }
+
+        public override string ToString()
+        {
+            return $"HitAirComboProfile(Enable={this.Enable}, MinAirTimeMs={this.MinAirTimeMs}, MaxTotalHangMs={this.MaxTotalHangMs}, " +
+                   $"GravityScaleDuringCombo={this.GravityScaleDuringCombo:0.###}, MinFallSpeedAbs={this.MinFallSpeedAbs:0.###}, " +
+                   $"MinHeightOffset={this.MinHeightOffset:0.###}, MaxHeightOffset={this.MaxHeightOffset:0.###}, " +
+                   $"ExitLerpMs={this.ExitLerpMs}, LandingStunMs={this.LandingStunMs}, MaxAirborneKnockupForce={this.MaxAirborneKnockupForce:0.###})";
         }
     }
 }

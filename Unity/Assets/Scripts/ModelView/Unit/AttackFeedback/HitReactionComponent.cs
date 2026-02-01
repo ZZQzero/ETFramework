@@ -10,12 +10,16 @@ namespace ET
     public enum HitState
     {
         None = 0,
-        Stun = 1,       // 硬直
-        Knockback = 2,  // 击退中
-        Airborne = 3,   // 浮空中
-        Falling = 4,    // 下落中
-        Knockdown = 5,  // 倒地中
-        GetUp = 6,      // 起身中
+        /// <summary>地面受击（站立/行走时被打中）。</summary>
+        Grounded = 1,
+        /// <summary>空中（被击飞/浮空中）。</summary>
+        Airborne = 2,
+        /// <summary>空中硬直/终结（比普通空中更“终结态”）。</summary>
+        AirFinisher = 3,
+        /// <summary>倒地中。</summary>
+        Knockdown = 4,
+        /// <summary>起身中。</summary>
+        GetUp = 5,
     }
 
     /// <summary>
@@ -40,19 +44,12 @@ namespace ET
         /// </summary>
         public LocomotionIntentComponent LocomotionIntent { get; set; }
 
-        #region 驱动/配置（可扩展）
-
-        /// <summary>
-        /// 动画淡入淡出时长（秒）。商业级：统一入口，可由配置覆盖。
-        /// </summary>
-        public float AnimationFadeSec { get; set; } = 0.05f;
-
+        public AirComboComponent  AirCombo { get; set; }
         /// <summary>
         /// 进入受击时是否取消攻击（用于“被打断”）。
         /// </summary>
         public bool CancelAttackOnHit { get; set; } = true;
-
-        #endregion
+        
         #region 运行时数据
         
         /// <summary>
@@ -67,28 +64,47 @@ namespace ET
         public bool HitSessionLocksAcquired { get; set; }
 
         /// <summary>
-        /// 受击会话：是否已对 Ground 做过临时配置增强（用于空中落地判定更及时）。
-        /// 同样是会话级别 acquire/release，避免多次受击叠加导致 InhibitReduceFrequencyCount 残留。
+        /// 本单位当前“允许播放哪些受击表现分组”（运行时缓存，来自 ProfileLibrary/配置）。
         /// </summary>
-        public bool HitSessionGroundBoosted { get; set; }
+        public HitReactionGroup AllowedReactionGroups { get; set; } = HitReactionGroup.All;
+
+        /// <summary>
+        /// 本单位当前“允许播放哪些受击状态动画”（运行时缓存，来自 ProfileLibrary/配置）。
+        /// </summary>
+        public HitStateVisualMask AllowedStateVisuals { get; set; } = HitStateVisualMask.All;
         
         #endregion
 
         #region 状态
 
-        public HitReactionRequest HitReaction;
-        
-        public HitRulesResult HitRules;
-        
-        public HitRulesProfile HitRulesProfile;
-        /// <summary>当前视觉受击状态</summary>
-        public HitState CurrentState { get; set; } = HitState.None;
+        /// <summary>
+        /// 当前受击“规则状态”（Gameplay State）。
+        /// - 规则先算并生效：该状态决定锁定/倒地/起身/空中等逻辑
+        /// - 不等价于“是否播放动画”（见 <see cref="VisualState"/>）
+        /// </summary>
+        public HitState CurrentHitState { get; set; } = HitState.None;
 
-        /// <summary>当前受击反应类型（用于动画合成）</summary>
+        /// <summary>
+        /// 当前受击“原始反应类型”（Desired ReactionType）。
+        /// - 该值代表本次命中希望表达的结果语义
+        /// - 最终是否播放/如何降级由 <see cref="VisualReactionType"/> 决定
+        /// </summary>
         public HitReactionType CurrentReactionType { get; set; } = HitReactionType.None;
+
+        /// <summary>
+        /// 当前受击“视觉状态”（Visual State）。
+        /// - 可能与 <see cref="CurrentHitState"/> 不一致：当配置禁播某些状态动画时，规则继续但视觉不播
+        /// </summary>
+        public HitState VisualState { get; set; } = HitState.None;
+
+        /// <summary>
+        /// 当前受击“视觉反应类型”（Visual ReactionType）。
+        /// - 可能从 <see cref="CurrentReactionType"/> 降级（Control→Major→Minor→None）
+        /// </summary>
+        public HitReactionType VisualReactionType { get; set; } = HitReactionType.None;
         
         /// <summary>当前动画状态</summary>
-        public AnimancerState CurrentAnimState { get; set; }
+        public bool CurrentAnimEnd { get; set; }
         
         /// <summary>硬直结束时间</summary>
         public long StunEndTime { get; set; }
@@ -128,16 +144,25 @@ namespace ET
         #region 属性
         
         /// <summary>是否处于受击状态</summary>
-        public bool IsInHitReaction => CurrentState != HitState.None;
+        public bool IsInHitReaction => CurrentHitState != HitState.None;
+
+        /// <summary>
+        /// 是否需要播放受击动画（视觉层）。
+        /// - VisualState=None：完全不播受击动画
+        /// - Grounded 且 VisualReactionType=None：不播地面受击动画（继续 Locomotion）
+        /// </summary>
+        public bool IsInHitVisual =>
+            this.VisualState != HitState.None &&
+            (this.VisualState != HitState.Grounded || this.VisualReactionType != HitReactionType.None);
         
         /// <summary>是否可以被攻击</summary>
-        public bool CanBeHit => CurrentState != HitState.GetUp;
+        public bool CanBeHit => CurrentHitState != HitState.GetUp;
         
         /// <summary>是否在空中</summary>
-        public bool IsAirborne => CurrentState == HitState.Airborne || CurrentState == HitState.Falling;
+        public bool IsAirborne => CurrentHitState == HitState.Airborne || CurrentHitState == HitState.AirFinisher;
         
         /// <summary>是否倒地</summary>
-        public bool IsKnockdown => CurrentState == HitState.Knockdown;
+        public bool IsKnockdown => CurrentHitState == HitState.Knockdown;
         
         #endregion
 

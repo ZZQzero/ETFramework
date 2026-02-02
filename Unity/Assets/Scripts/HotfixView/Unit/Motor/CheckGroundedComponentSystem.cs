@@ -63,7 +63,6 @@ namespace ET
             if (allowReduce && self.IsAirborne(self.State) && self.FrameCounter % config.AirborneCheckInterval != 0 || !self.Enable)
             {
                 self.UpdateTimers(Time.fixedDeltaTime);
-                Log.Error($"{self.GetParent<Unit>().UnitName}  {self.IsAirborne(self.State)}  {allowReduce}  {self.Enable}  [CheckGroundedComponent] Detecting Airborne!");
                 return;
             }
 

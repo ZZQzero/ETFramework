@@ -350,6 +350,13 @@ namespace ET
             return Mathf.Max(0, total);
         }
         
+        private static int GetCurrentSegmentEndMs(this AttackComponent self)
+        {
+            float durSec = self.CurrentSegment.Duration;
+            var endMs = Mathf.RoundToInt(durSec * self.CurrentSegment.TimeWindow.AnimationEnd * 1000f);
+            return endMs;
+        }
+        
         /// <summary>
         /// 连击超时处理
         /// </summary>
@@ -1164,8 +1171,10 @@ namespace ET
                 }
 
                 int defaultHitStopMs = self.Config?.DefaultHitStopMs ?? 0;
-                // 这里 Effect 内部已经包含了 HitMotionData
-                var req = HitReactionProfileProvider.From(in effect, in feedback, hitDirection, defaultHitStopMs);
+                int attackerSegmentComboTimeoutMs = self.GetCurrentSegmentComboTimeoutMs();
+                float attackRadius = hitBox.GetAttackRadius();
+                Vector3 attackerWorldPos = self.OwnerTransform.position;
+                var req = HitReactionProfileProvider.From(in effect, in feedback, hitDirection, defaultHitStopMs, attackerSegmentComboTimeoutMs, attackRadius, attackerWorldPos);
                 hitReactionComponent.TryApplyHit(in req);
             }
 

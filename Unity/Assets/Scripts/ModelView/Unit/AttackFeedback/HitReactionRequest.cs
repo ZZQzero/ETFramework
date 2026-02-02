@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace ET
 {
@@ -39,6 +39,24 @@ namespace ET
         public readonly int TimeScaleDurationMs;
 
         /// <summary>
+        /// 攻击方当前段的连击超时(ms)。用于受击方 AirCombo 续期对齐：EndCombatMs 至少延续到“攻击方下一段可命中的时间”，
+        /// 避免“攻击动画还没结束（如 400ms）就因 MinAirTimeMs（如 260ms）触发 BeginExit”。
+        /// 0 表示未设置，受击方仅用 profile.MinAirTimeMs。
+        /// </summary>
+        public readonly int AttackerSegmentComboTimeoutMs;
+
+        /// <summary>
+        /// 本次命中的攻击半径（来自 HitBox.Size，与 PhysicsHelper 判定一致）。用于空中连击水平距离限制与拉回。
+        /// 0 表示未设置，受击方使用 profile.MaxAirHorizontalDistance。
+        /// </summary>
+        public readonly float AttackRadius;
+
+        /// <summary>
+        /// 攻击者世界坐标。用于空中连击拉回中心（拉回玩家附近）；(0,0,0) 表示未设置，受击方用受击者位置。
+        /// </summary>
+        public readonly Vector3 AttackerWorldPos;
+
+        /// <summary>
         /// 完整构造（用于规则层 Normalize 后生成“有效请求”）。
         /// </summary>
         public HitReactionRequest(
@@ -52,7 +70,10 @@ namespace ET
             float screenShakeIntensity = 0f,
             int screenShakeDurationMs = 0,
             float timeScale = 1f,
-            int timeScaleDurationMs = 0)
+            int timeScaleDurationMs = 0,
+            int attackerSegmentComboTimeoutMs = 0,
+            float attackRadius = 0f,
+            Vector3 attackerWorldPos = default)
         {
             this.ReactionType = reactionType;
             this.HitStrength = hitStrength;
@@ -66,9 +87,12 @@ namespace ET
             this.ScreenShakeDurationMs = screenShakeDurationMs;
             this.TimeScale = timeScale;
             this.TimeScaleDurationMs = timeScaleDurationMs;
+            this.AttackerSegmentComboTimeoutMs = attackerSegmentComboTimeoutMs;
+            this.AttackRadius = attackRadius;
+            this.AttackerWorldPos = attackerWorldPos;
         }
 
-        public HitReactionRequest(in HitEffectData effect, in HitFeedbackData feedback, Vector3 hitDirection, int defaultHitStopMs)
+        public HitReactionRequest(in HitEffectData effect, in HitFeedbackData feedback, Vector3 hitDirection, int defaultHitStopMs, int attackerSegmentComboTimeoutMs = 0, float attackRadius = 0f, Vector3 attackerWorldPos = default)
         {
             ReactionType = effect.HitReaction;
             HitStrength = effect.HitStrength;
@@ -81,12 +105,15 @@ namespace ET
             ScreenShakeDurationMs = feedback.ScreenShakeDurationMs;
             TimeScale = feedback.TimeScale;
             TimeScaleDurationMs = feedback.TimeScaleDurationMs;
+            AttackerSegmentComboTimeoutMs = attackerSegmentComboTimeoutMs;
+            AttackRadius = attackRadius;
+            AttackerWorldPos = attackerWorldPos;
         }
 
 
         public override string ToString()
         {
-            return $"受击请求(类型={this.ReactionType}, Priority={this.HitStrength}, 运动={this.MotionData.MotionType}:强度{this.MotionData.Force}, 目标状态过滤={this.TargetStates}, 方向={this.HitDirection}, 硬直时长={this.HitStunMs}ms, 受击停顿={this.VictimHitStopMs}ms)";
+            return $"受击请求(类型={this.ReactionType}, Priority={this.HitStrength}, 运动={this.MotionData.MotionType}:强度{this.MotionData.Force}, 目标状态过滤={this.TargetStates}, 方向={this.HitDirection}, 硬直时长={this.HitStunMs}ms, 受击停顿={this.VictimHitStopMs}ms),攻击超时={this.AttackerSegmentComboTimeoutMs}ms";
         }
     }
 }

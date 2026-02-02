@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace ET
@@ -33,7 +33,9 @@ namespace ET
             self.ForceEndAfterGroundedFrames = Mathf.Max(1, self.ForceEndAfterGroundedFrames);
         }
 
-        public static void Enter(this AirComboComponent self, long nowCombatMs, float currentY, in HitAirComboProfile profile)
+        /// <param name="minAirTimeMsOverride">若 > 0，与 profile.MinAirTimeMs 取 max，用于与攻击方段超时(GetCurrentSegmentComboTimeoutMs)对齐。</param>
+        /// <param name="attackRadiusOverride">若 > 0，用 HitBox.Size 推导的半径作为水平距离上限（与 PhysicsHelper 判定一致）；0 表示使用 profile.MaxAirHorizontalDistance。</param>
+        public static void Enter(this AirComboComponent self, long nowCombatMs, Vector3 attackerWorldPos, in HitAirComboProfile profile, int minAirTimeMsOverride = 0, float attackRadiusOverride = 0f)
         {
             if (self == null || self.IsDisposed)
             {
@@ -47,8 +49,6 @@ namespace ET
 
             bool wasActive = self.Active;
             self.Active = true;
-
-            Log.Error($"进入空中连击状态: now={nowCombatMs}ms, currentY={currentY}, profile={profile.ToString()}");
             // 进入/再次进入：取消退出（命中续期不应被 ExitLerp 打断）
             self.IsExiting = false;
             self.ExitStartCombatMs = 0;
@@ -58,12 +58,22 @@ namespace ET
             {
                 self.PendingCaptureEnteredHeight = true;
                 // fallback：先记录当前高度（避免极端情况下永远不捕获）
-                self.EnteredHeight = currentY;
+                self.EnteredHeight = attackerWorldPos.y;
+                
+                // 以攻击者为连段中心（XZ）
+                self.ComboCenterWorldPos = attackerWorldPos;
+
+                // 水平距离上限：优先使用本次命中的 HitBox 半径，否则用 profile
+                self.MaxHorizontalDistance = attackRadiusOverride > 0f ? attackRadiusOverride : profile.MaxAirHorizontalDistance;
+                self.MaxHorizontalSpeed    = profile.MaxAirHorizontalSpeed;
+                self.RecenterStrength      = profile.RecenterStrength;
+                self.RecenterDeadZone      = profile.RecenterDeadZone;
             }
 
-            // KeepAlive（至少维持一段时间）
+            // KeepAlive（至少维持一段时间）；可与攻击方段超时对齐，避免“攻击动画未结束就 BeginExit”
             int minAirMs = Mathf.Max(0, profile.MinAirTimeMs);
-            long nextEnd = nowCombatMs + minAirMs;
+            int effectiveMinAirMs = minAirTimeMsOverride > 0 ? Mathf.Max(minAirMs, minAirTimeMsOverride) : minAirMs;
+            long nextEnd = nowCombatMs + effectiveMinAirMs;
             if (!wasActive || nextEnd > self.EndCombatMs)
             {
                 self.EndCombatMs = nextEnd;
@@ -105,7 +115,9 @@ namespace ET
             self.DebugLog(nowCombatMs, "Enter");
         }
 
-        public static void OnHit(this AirComboComponent self, long nowCombatMs, in HitAirComboProfile profile)
+        /// <param name="minAirTimeMsOverride">若 > 0，与 profile.MinAirTimeMs 取 max，用于与攻击方段超时对齐。</param>
+        /// <param name="attackRadiusOverride">若 > 0，用本次 HitBox 半径收紧水平距离上限（取 min，保证不超出任意一次命中的攻击范围）。</param>
+        public static void OnHit(this AirComboComponent self, long nowCombatMs, in HitAirComboProfile profile, int minAirTimeMsOverride = 0, float attackRadiusOverride = 0f)
         {
             if (self == null || self.IsDisposed)
             {
@@ -123,9 +135,14 @@ namespace ET
                 self.IsExiting = false;
                 self.ExitStartCombatMs = 0;
             }
-
-            // KeepAlive：取更长的结束点，但不得超过绝对上限
-            long next = nowCombatMs + Mathf.Max(0, profile.MinAirTimeMs);
+            if (attackRadiusOverride > 0f)
+            {
+                self.MaxHorizontalDistance = Mathf.Min(self.MaxHorizontalDistance, attackRadiusOverride);
+            }
+            // KeepAlive：取更长的结束点，但不得超过绝对上限；可与攻击方段超时对齐
+            int minAirMs = Mathf.Max(0, profile.MinAirTimeMs);
+            int effectiveMinAirMs = minAirTimeMsOverride > 0 ? Mathf.Max(minAirMs, minAirTimeMsOverride) : minAirMs;
+            long next = nowCombatMs + effectiveMinAirMs;
             if (next > self.EndCombatMs)
             {
                 self.EndCombatMs = next;
@@ -152,6 +169,65 @@ namespace ET
             self.DebugLog(nowCombatMs, "OnHit");
         }
 
+        /// <summary>
+        /// 横向速度上限
+        /// </summary>
+        /// <param name="self"></param>
+        /// <param name="horizontalVelocity"></param>
+        public static void ApplyAirComboHorizontalSpeedClamp(this AirComboComponent self, ref Vector3 horizontalVelocity)
+        {
+            if (!self.Active || self.IsExiting)
+                return;
+
+            float maxSpeed = self.MaxHorizontalSpeed;
+            if (maxSpeed <= 0f)
+                return;
+
+            float speed = horizontalVelocity.magnitude;
+            if (speed > maxSpeed)
+            {
+                horizontalVelocity = horizontalVelocity.normalized * maxSpeed;
+            }
+        }
+        
+        /// <summary>
+        /// 回拉机制
+        /// </summary>
+        /// <param name="self"></param>
+        /// <param name="currentWorldPos"></param>
+        /// <param name="horizontalVelocity"></param>
+        /// <param name="deltaTime"></param>
+        public static void ApplyAirComboHorizontalRecenter(this AirComboComponent self, Vector3 currentWorldPos, ref Vector3 horizontalVelocity, float deltaTime)
+        {
+            if (!self.Active || self.IsExiting)
+                return;
+
+            Vector3 center = self.ComboCenterWorldPos;
+
+            Vector3 offset = currentWorldPos - center;
+            offset.y = 0f;
+
+            float dist = offset.magnitude;
+            if (dist <= self.RecenterDeadZone)
+                return;
+
+            float maxDist = self.MaxHorizontalDistance * 0.7f;
+            if (maxDist <= 0f)
+                return;
+
+            float excess = dist - maxDist;
+            if (excess <= 0f)
+                return;
+
+            Vector3 dirToCenter = -offset.normalized;
+
+            // 回拉速度与超出距离成正比（单位 m/s，直接叠加到目标速度，不乘 deltaTime）
+            float pullSpeed = excess * self.RecenterStrength;
+
+            horizontalVelocity += dirToCenter * pullSpeed;
+        }
+
+
         public static void BeginExit(this AirComboComponent self, long nowCombatMs)
         {
             if (self == null || self.IsDisposed)
@@ -169,6 +245,7 @@ namespace ET
                 return;
             }
 
+            Log.Error("退出空中BeginExit");
             self.IsExiting = true;
             self.ExitStartCombatMs = nowCombatMs;
             self.ExitFromGravityScale = self.GravityScaleTarget;
@@ -184,14 +261,32 @@ namespace ET
 
             self.Active = false;
             self.IsExiting = false;
-            self.PendingCaptureEnteredHeight = false;
+            // 会话结束必须清理“会话级别”的所有运行时参数：
+            // - 否则下一段空中连段会继承上一段的 clamp/偏移/落地硬直等，出现越打越夹紧、悬空异常等问题
             self.EndCombatMs = 0;
             self.AbsoluteEndCombatMs = 0;
+
+            self.PendingCaptureEnteredHeight = false;
+            self.EnteredHeight = 0f;
+            self.ComboMinHeight = 0f;
+            self.ComboMaxHeight = 0f;
+
             self.GravityScaleTarget = 1f;
             self.ExitFromGravityScale = 1f;
             self.ExitStartCombatMs = 0;
+
+            self.MinFallSpeed = -1f;
+            self.MinHeightOffset = 0f;
+            self.MaxHeightOffset = 0f;
+            self.LandingStunMs = 0;
+
             self.ConsecutiveGroundedFrames = 0;
             self.LastDebugLogCombatMs = 0;
+            self.ComboCenterWorldPos = Vector3.zero;
+            self.MaxHorizontalDistance = 0f;
+            self.MaxHorizontalSpeed = 0f;
+            self.RecenterStrength = 0f;
+            self.RecenterDeadZone = 0f;
         }
 
         public static void CaptureEnteredHeightIfNeeded(this AirComboComponent self, float rigidbodyY)
@@ -279,7 +374,6 @@ namespace ET
             }
 
             self.LastDebugLogCombatMs = nowCombatMs;
-            Log.Info($"[AirCombo] {reason} @ {nowCombatMs}ms :: {self}");
         }
 
         private static void RecalculateHeightClampFromEnteredHeight(this AirComboComponent self)

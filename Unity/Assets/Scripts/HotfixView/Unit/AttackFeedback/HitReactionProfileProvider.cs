@@ -88,7 +88,11 @@ namespace ET
             maxHeightOffset: 2.2f,
             exitLerpMs: 160,
             landingStunMs: 180,
-            maxAirborneKnockupForce: 2.5f);
+            maxAirborneKnockupForce: 2.5f,
+            maxHorizontalDistance:3,
+            maxHorizontalSpeed: 2.5f,
+            recenterStrength:2.5f,
+            recenterDeadZone: 1.5f);
 
         public static readonly HitAirComboProfile MonsterAirCombo = new HitAirComboProfile(
             enable: true,
@@ -100,7 +104,11 @@ namespace ET
             maxHeightOffset: 2.5f,
             exitLerpMs: 170,
             landingStunMs: 200,
-            maxAirborneKnockupForce: 2.5f);
+            maxAirborneKnockupForce: 2.5f,
+            maxHorizontalDistance:3,
+            maxHorizontalSpeed: 2.5f,
+            recenterStrength:4.5f,
+            recenterDeadZone: 1.5f);
 
         public static readonly HitAirComboProfile BossAirCombo = new HitAirComboProfile(
             enable: false,
@@ -112,7 +120,11 @@ namespace ET
             maxHeightOffset: 0f,
             exitLerpMs: 0,
             landingStunMs: 0,
-            maxAirborneKnockupForce: 0f);
+            maxAirborneKnockupForce: 0f,
+            maxHorizontalDistance:3,
+            maxHorizontalSpeed: 2.5f,
+            recenterStrength:2.5f,
+            recenterDeadZone: 1.5f);
 
         public static void ResolveConfig(Unit unit, out HitReactionRulesConfig reactionRules, out HitFeedbackConfig feedback)
         {
@@ -200,23 +212,12 @@ namespace ET
             return type;
         }
         
-        public static HitReactionRequest From(in HitEffectData effect, in HitFeedbackData feedback, Vector3 hitDirection, int defaultHitStopMs)
+        public static HitReactionRequest From(in HitEffectData effect, in HitFeedbackData feedback, Vector3 hitDirection, int defaultHitStopMs, int attackerSegmentComboTimeoutMs = 0, float attackRadius = 0f, Vector3 attackerWorldPos = default)
         {
             // ModelView 只存数据：Priority=0 表示未配置。
             byte priority = effect.HitStrength != 0 ? effect.HitStrength : GetDefaultPriority(effect.HitReaction);
 
-            return new HitReactionRequest(
-                reactionType: effect.HitReaction,
-                hitStrength: priority,
-                motionData: effect.HitMotion,
-                targetStates: effect.TargetStates,
-                hitDirection: hitDirection,
-                hitStunMs: effect.HitStunMs,
-                victimHitStopMs: feedback.ResolveVictimHitStopMs(defaultHitStopMs),
-                screenShakeIntensity: feedback.ScreenShakeIntensity,
-                screenShakeDurationMs: feedback.ScreenShakeDurationMs,
-                timeScale: feedback.TimeScale,
-                timeScaleDurationMs: feedback.TimeScaleDurationMs);
+            return new HitReactionRequest(effect, feedback, hitDirection, defaultHitStopMs, attackerSegmentComboTimeoutMs, attackRadius, attackerWorldPos);
         }
         
         private static byte GetDefaultPriority(HitReactionType type)
@@ -285,7 +286,10 @@ namespace ET
                 screenShakeIntensity: shakeIntensity,
                 screenShakeDurationMs: shakeDurationMs,
                 timeScale: timeScale,
-                timeScaleDurationMs: timeScaleMs);
+                timeScaleDurationMs: timeScaleMs,
+                attackerSegmentComboTimeoutMs: r.AttackerSegmentComboTimeoutMs,
+                attackRadius: r.AttackRadius,
+                attackerWorldPos: r.AttackerWorldPos);
         }
         
         public static bool PassTargetStateFilter(this HitReactionComponent self, TargetStateMask filter)
@@ -363,7 +367,10 @@ namespace ET
                 screenShakeIntensity: request.ScreenShakeIntensity,
                 screenShakeDurationMs: request.ScreenShakeDurationMs,
                 timeScale: request.TimeScale,
-                timeScaleDurationMs: request.TimeScaleDurationMs);
+                timeScaleDurationMs: request.TimeScaleDurationMs,
+                attackerSegmentComboTimeoutMs: request.AttackerSegmentComboTimeoutMs,
+                attackRadius: request.AttackRadius,
+                attackerWorldPos: request.AttackerWorldPos);
         }
         
         private static HitReactionGroup ToGroup(HitReactionType type)

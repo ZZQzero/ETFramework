@@ -46,6 +46,19 @@ namespace ET
         /// 0 表示完全禁止二次击飞；>0 时 Force 会被夹持到此值，实现“比原来高一点”的效果。
         /// </summary>
         public readonly float MaxAirborneKnockupForce;
+        
+        // ===== 空中连击横向控制 =====
+        // 最大允许的横向偏移半径
+        public readonly float MaxAirHorizontalDistance;
+
+        // 最大横向速度（XZ）
+        public readonly float MaxAirHorizontalSpeed;
+
+        // 回拉强度（速度 = 超出距离 * Strength）
+        public readonly float RecenterStrength;
+
+        // 回拉死区（小于该距离不拉）
+        public readonly float RecenterDeadZone;
 
         public HitAirComboProfile(
             bool enable,
@@ -57,7 +70,11 @@ namespace ET
             float maxHeightOffset,
             int exitLerpMs,
             int landingStunMs,
-            float maxAirborneKnockupForce = 0f)
+            float maxAirborneKnockupForce,
+            float maxHorizontalDistance,
+            float maxHorizontalSpeed,
+            float recenterStrength,
+            float recenterDeadZone)
         {
             this.Enable = enable;
             this.MinAirTimeMs = minAirTimeMs;
@@ -69,6 +86,10 @@ namespace ET
             this.ExitLerpMs = exitLerpMs;
             this.LandingStunMs = landingStunMs;
             this.MaxAirborneKnockupForce = Mathf.Max(0f, maxAirborneKnockupForce);
+            this.MaxAirHorizontalDistance = maxHorizontalDistance;
+            this.MaxAirHorizontalSpeed = maxHorizontalSpeed;
+            this.RecenterStrength = recenterStrength;
+            this.RecenterDeadZone = recenterDeadZone;
         }
 
         public override string ToString()

@@ -11,8 +11,7 @@ namespace ET
         [EntitySystem]
         private static void Awake(this HitStopComponent self)
         {
-            long now = RealtimeMs();
-            self.LastRealtimeMs = now;
+            self.LastRealtimeMs = 0;
             self.CombatTimeMs = 0;
             self.IsHitStopActive = false;
             self.HitStopEndRealtimeMs = 0;
@@ -23,9 +22,9 @@ namespace ET
         private static void Update(this HitStopComponent self)
         {
             long now = RealtimeMs();
-            if (now < self.LastRealtimeMs)
+            
+            if (self.LastRealtimeMs <= 0 || now < self.LastRealtimeMs)
             {
-                // 极端情况（系统时间回拨/异常）：避免倒退导致负 delta
                 self.LastRealtimeMs = now;
                 self.CombatDeltaMs = 0;
                 return;

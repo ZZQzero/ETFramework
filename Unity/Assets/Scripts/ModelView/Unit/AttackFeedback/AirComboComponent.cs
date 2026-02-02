@@ -67,7 +67,24 @@ namespace ET
 
         /// <summary>fail-safe：连续地面帧达到该阈值后强制结束（避免状态机卡死）。</summary>
         public int ForceEndAfterGroundedFrames = 3;
+        
+        // ===== 空中连击横向控制 =====
 
+        // 连段中心（世界坐标，XZ 锚点）
+        public Vector3 ComboCenterWorldPos;
+
+        // 最大允许的横向偏移半径
+        public float MaxHorizontalDistance;
+
+        // 最大横向速度（XZ）
+        public float MaxHorizontalSpeed;
+
+        // 回拉强度（速度 = 超出距离 * Strength）
+        public float RecenterStrength;
+
+        // 回拉死区（小于该距离不拉）
+        public float RecenterDeadZone;
+        
         public override string ToString()
         {
             return

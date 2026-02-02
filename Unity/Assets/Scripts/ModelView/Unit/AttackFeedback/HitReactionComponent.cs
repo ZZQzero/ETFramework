@@ -23,6 +23,20 @@ namespace ET
     }
 
     /// <summary>
+    /// 空中受击会话的落地分流语义（不依赖 Ground.AirborneReason）。
+    /// 说明：
+    /// - Ground.AirborneReason 在落地事件触发后会被重置为 None（FixedUpdate 内），
+    ///   用它在 Update 中做落地分流会产生时序竞态与不稳定表现。
+    /// - 因此落地分流语义必须在“语义产生点”（击飞/砸地）固化，并在落地时单次消费。
+    /// </summary>
+    public enum PendingLandOutcome : byte
+    {
+        None = 0,
+        Grounded = 1,
+        Knockdown = 2,
+    }
+
+    /// <summary>
     /// 受击反应组件
     /// </summary>
     [ComponentOf(typeof(Unit))]
@@ -51,6 +65,48 @@ namespace ET
         public bool CancelAttackOnHit { get; set; } = true;
         
         #region 运行时数据
+
+        #region 空中受击落地语义（会话级）
+
+        /// <summary>
+        /// 本次空中受击会话的落地分流语义。
+        /// - 在 EnterAirborne/BeginAirSlam 等“语义产生点”写入
+        /// - 在落地时单次消费（避免重复触发）
+        /// </summary>
+        public PendingLandOutcome PendingLandOutcome;
+
+        /// <summary>
+        /// 普通落地硬直（ms, combat-time）。
+        /// 默认由 <see cref="AirComboComponent.LandingStunMs"/> 提供；此字段用于做会话级缓存/覆写（可选）。
+        /// </summary>
+        public int PendingLandingStunMs;
+
+        /// <summary>
+        /// 落地事实已到达（由 Ground.OnLanded 事件置位）。
+        /// </summary>
+        public bool LandQueued;
+
+        /// <summary>
+        /// 本次落地已被消费处理（确保只处理一次）。
+        /// </summary>
+        public bool LandHandled;
+
+        /// <summary>
+        /// 落地发生时刻（combat-time），用于调试与一致性校验。
+        /// </summary>
+        public long LandCombatMs;
+
+        /// <summary>
+        /// Ground.OnLanded 订阅回调句柄（用于 Destroy 退订）。
+        /// </summary>
+        public Action GroundOnLandedHandler;
+
+        /// <summary>
+        /// 退出/下落期临时强制地检高频（引用计数）是否已加持。
+        /// </summary>
+        public bool GroundDetectBoosted;
+
+        #endregion
         
         /// <summary>
         /// 起身(GetUp)兜底超时(ms, combat-time)。

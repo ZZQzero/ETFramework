@@ -316,8 +316,6 @@ namespace ET
                     float clampedY = Mathf.Clamp(pos.y, self.AirCombo.ComboMinHeight, self.AirCombo.ComboMaxHeight);
                     if (!Mathf.Approximately(pos.y, clampedY))
                     {
-                        Log.Error($"空中组件： {pos.y}  {clampedY}   {self.CurrentVelocity}   {gScale}");
-                        
                         // 触顶：不允许继续向上
                         if (pos.y > clampedY && self.CurrentVelocity.y > 0f)
                         {
@@ -332,6 +330,11 @@ namespace ET
                 if (self.AirCombo.IsExitCompleted(nowCombatMs))
                 {
                     self.AirCombo.ForceEnd();
+                }
+
+                if (self.AirCombo.IsExiting)
+                {
+                    self.ApplyGravity(deltaTime);
                 }
             }
             else

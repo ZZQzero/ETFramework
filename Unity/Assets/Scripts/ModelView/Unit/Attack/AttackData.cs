@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Animancer;
 using UnityEngine;
@@ -333,7 +333,32 @@ namespace ET
         /// - Capsule: x 为半径、y 为高度（参见运行时 OverlapCapsule）
         /// </summary>
         public Vector3 Size = new Vector3(1f, 1f, 2f);
-        
+
+        /// <summary>
+        /// 根据 <see cref="ShapeType"/> 从 Size 取“攻击半径”（与 PhysicsHelper 判定一致，用于空中连击水平距离限制等）。
+        /// 四种类型语义不同，必须按类型取值：
+        /// - Box: 半长轴最大值（halfExtents 最大值，包络球半径）
+        /// - Sphere: Size.x 为半径
+        /// - Fan: Size.x 为扇形半径
+        /// - Capsule: Size.x 为胶囊半径
+        /// </summary>
+        public float GetAttackRadius()
+        {
+            switch (this.ShapeType)
+            {
+                case HitShapeType.Box:
+                    return Mathf.Max(this.Size.x, this.Size.y, this.Size.z) * 0.5f;
+                case HitShapeType.Sphere:
+                    return this.Size.x;
+                case HitShapeType.Fan:
+                    return this.Size.x;
+                case HitShapeType.Capsule:
+                    return this.Size.x;
+                default:
+                    return this.Size.x;
+            }
+        }
+
         /// <summary>判定开始时间（归一化 0-1）</summary>
         public float NormalizedStart = 0.2f;
 

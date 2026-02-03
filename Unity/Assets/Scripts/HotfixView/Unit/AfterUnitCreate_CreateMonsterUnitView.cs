@@ -21,6 +21,8 @@ namespace ET
             UnityEngine.Object.DontDestroyOnLoad(go);
             unit.UnitName = monster.MonsterTable.Name;
             unit.AddComponent<GameObjectComponent>().GameObject = go;
+            unit.AddComponent<CombatContextComponent>();
+            unit.AddComponent<MovementContextComponent>();
             unit.AddComponent<LocomotionIntentComponent>();
             unit.AddComponent<AttackCommandComponent>();
             unit.AddComponent<AIDriverComponent>();

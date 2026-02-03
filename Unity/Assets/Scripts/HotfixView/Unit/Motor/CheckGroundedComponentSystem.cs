@@ -27,8 +27,8 @@ namespace ET
                 self.CapsuleRadius = 0.5f;
                 self.CapsuleHeight = 2f;
             }
-            self.State = GroundState.Airborne;
-            self.PrevState = GroundState.Airborne;
+            self.StateContext.State = GroundState.Airborne;
+            self.StateContext.PrevState = GroundState.Airborne;
             self.GroundHit.Reset();
         }
 
@@ -60,13 +60,13 @@ namespace ET
             // 性能优化：空中降频
             // 核心逻辑：只有在没有抑制器（InhibitReduceFrequencyCount == 0）时，才允许跳帧检测
             bool allowReduce = config.ReduceAirborneCheckFrequency && self.InhibitReduceFrequencyCount == 0;
-            if (allowReduce && self.IsAirborne(self.State) && self.FrameCounter % config.AirborneCheckInterval != 0 || !self.Enable)
+            if (allowReduce && self.IsAirborne(self.StateContext.State) && self.FrameCounter % config.AirborneCheckInterval != 0 || !self.Enable)
             {
                 self.UpdateTimers(Time.fixedDeltaTime);
                 return;
             }
 
-            self.PrevState = self.State;
+            self.StateContext.PrevState = self.StateContext.State;
             self.PerformGroundCheck();
             self.UpdateGroundState();
             self.HandleStateTransition();
@@ -84,7 +84,7 @@ namespace ET
             float skinWidth = config.SkinWidth;
 
             // 自适应检测距离
-            float checkDistance = self.IsGrounded(self.State)
+            float checkDistance = self.IsGrounded(self.StateContext.State)
                 ? config.GroundCheckDistance
                 : config.AirborneCheckDistance;
 
@@ -123,14 +123,14 @@ namespace ET
             }
 
             // 阶段2: Raycast 精修
-            if (self.GroundHit.HasGround || self.IsGrounded(self.State))
+            if (self.GroundHit.HasGround || self.IsGrounded(self.StateContext.State))
             {
                 self.RaycastRefine(position, checkDistance + skinWidth, combinedMask);
             }
 
             // 阶段3: 边缘检测（降频）
             self.EdgeCheckCounter++;
-            bool forceCheck = self.State == GroundState.OnEdge;
+            bool forceCheck = self.StateContext.State == GroundState.OnEdge;
             bool intervalCheck = self.EdgeCheckCounter >= config.EdgeCheckInterval;
             if (forceCheck || intervalCheck)
             {
@@ -374,80 +374,80 @@ namespace ET
             GroundState newState,
             GroundDetectorConfig config)
         {
-            if (newState == self.State)
+            if (newState == self.StateContext.State)
             {
                 if (self.IsAirborne(newState))
                 {
-                    self.ConsecutiveAirborneFrames++;
-                    self.ConsecutiveGroundedFrames = 0;
+                    self.StateContext.ConsecutiveAirborneFrames++;
+                    self.StateContext.ConsecutiveGroundedFrames = 0;
                 }
                 else
                 {
-                    self.ConsecutiveGroundedFrames++;
-                    self.ConsecutiveAirborneFrames = 0;
+                    self.StateContext.ConsecutiveGroundedFrames++;
+                    self.StateContext.ConsecutiveAirborneFrames = 0;
                 }
                 return;
             }
 
             bool toAirborne = self.IsAirborne(newState);
-            bool fromAirborne = self.IsAirborne(self.State);
+            bool fromAirborne = self.IsAirborne(self.StateContext.State);
 
             if (toAirborne && !fromAirborne)
             {
                 // 地面 -> 空中
-                self.ConsecutiveAirborneFrames++;
-                self.ConsecutiveGroundedFrames = 0;
+                self.StateContext.ConsecutiveAirborneFrames++;
+                self.StateContext.ConsecutiveGroundedFrames = 0;
 
-                if (self.ConsecutiveAirborneFrames >= config.StateChangeFrameThreshold)
+                if (self.StateContext.ConsecutiveAirborneFrames >= config.StateChangeFrameThreshold)
                 {
-                    self.State = newState;
-                    self.AirborneReason = AirborneReason.WalkOff;
+                    self.StateContext.State = newState;
+                    self.StateContext.AirborneReason = AirborneReason.WalkOff;
                 }
             }
             else if (!toAirborne && fromAirborne)
             {
                 // 空中 -> 地面
-                self.ConsecutiveGroundedFrames++;
-                self.ConsecutiveAirborneFrames = 0;
+                self.StateContext.ConsecutiveGroundedFrames++;
+                self.StateContext.ConsecutiveAirborneFrames = 0;
 
-                if (self.ConsecutiveGroundedFrames >= config.StateChangeFrameThreshold)
+                if (self.StateContext.ConsecutiveGroundedFrames >= config.StateChangeFrameThreshold)
                 {
-                    self.State = GroundState.Landing;
-                    self.TimeLanded = Time.time;
+                    self.StateContext.State = GroundState.Landing;
+                    self.TimingContext.TimeLanded = Time.time;
                 }
             }
             else
             {
                 // 同类状态切换（如 Grounded -> OnSlope）
-                self.State = newState;
+                self.StateContext.State = newState;
             }
 
             // Landing 过渡
-            if (self.State == GroundState.Landing &&
-                Time.time - self.TimeLanded > config.LandingBufferTime)
+            if (self.StateContext.State == GroundState.Landing &&
+                Time.time - self.TimingContext.TimeLanded > config.LandingBufferTime)
             {
-                self.State = newState;
+                self.StateContext.State = newState;
             }
         }
 
         private static void UpdateTimers(this CheckGroundedComponent self, float deltaTime)
         {
-            if (self.IsGrounded(self.State))
+            if (self.IsGrounded(self.StateContext.State))
             {
-                self.GroundedDuration += deltaTime;
-                self.AirborneDuration = 0;
+                self.TimingContext.GroundedDuration += deltaTime;
+                self.TimingContext.AirborneDuration = 0;
                 self.LastGroundedPosition = self.OwnerTransform.position;
             }
             else
             {
-                self.AirborneDuration += deltaTime;
-                self.GroundedDuration = 0;
+                self.TimingContext.AirborneDuration += deltaTime;
+                self.TimingContext.GroundedDuration = 0;
             }
 
             // Coyote Time: 从地面状态离开，且不是下落状态
-            self.InCoyoteTime = self.IsAirborne(self.State) &&
-                               self.AirborneDuration < self.Config.CoyoteTime &&
-                               self.AirborneReason == AirborneReason.WalkOff;
+            self.TimingContext.InCoyoteTime = self.IsAirborne(self.StateContext.State) &&
+                               self.TimingContext.AirborneDuration < self.Config.CoyoteTime &&
+                               self.StateContext.AirborneReason == AirborneReason.WalkOff;
         }
 
         /// <summary>
@@ -462,12 +462,12 @@ namespace ET
         /// </remarks>
         private static void HandleStateTransition(this CheckGroundedComponent self)
         {
-            bool wasGrounded = self.IsGrounded(self.PrevState);
-            bool isGrounded = self.IsGrounded(self.State);
+            bool wasGrounded = self.IsGrounded(self.StateContext.PrevState);
+            bool isGrounded = self.IsGrounded(self.StateContext.State);
 
             if (wasGrounded && !isGrounded)
             {
-                self.TimeLeftGround = Time.time;
+                self.TimingContext.TimeLeftGround = Time.time;
                 self.InvokeLeftGround();
             }
 
@@ -475,7 +475,7 @@ namespace ET
             {
                 float fallHeight = self.LastGroundedPosition.y - self.OwnerTransform.position.y;
                 self.InvokeLanded();
-                self.AirborneReason = AirborneReason.None;
+                self.StateContext.AirborneReason = AirborneReason.None;
             }
         }
 
@@ -527,7 +527,7 @@ namespace ET
         /// <returns></returns>
         public static bool CanJump(this CheckGroundedComponent self)
         {
-            return self.IsGrounded(self.State) || self.InCoyoteTime;
+            return self.IsGrounded(self.StateContext.State) || self.TimingContext.InCoyoteTime;
         }
 
         /// <summary>
@@ -535,11 +535,11 @@ namespace ET
         /// </summary>
         public static void ForceBreakGround(this CheckGroundedComponent self, AirborneReason reason)
         {
-            self.State = GroundState.Airborne;
-            self.AirborneReason = reason;
-            self.TimeLeftGround = Time.time;
+            self.StateContext.State = GroundState.Airborne;
+            self.StateContext.AirborneReason = reason;
+            self.TimingContext.TimeLeftGround = Time.time;
             self.LastGroundedPosition = self.OwnerTransform.position;
-            self.InCoyoteTime = false;
+            self.TimingContext.InCoyoteTime = false;
         }
 
         /// <summary>

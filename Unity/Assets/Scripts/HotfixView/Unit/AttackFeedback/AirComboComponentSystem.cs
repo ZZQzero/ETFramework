@@ -29,8 +29,7 @@ namespace ET
             self.LandingStunMs = 0;
             self.DebugLogIntervalMs = Mathf.Max(0, self.DebugLogIntervalMs);
             self.LastDebugLogCombatMs = 0;
-            self.ConsecutiveGroundedFrames = 0;
-            self.ForceEndAfterGroundedFrames = Mathf.Max(1, self.ForceEndAfterGroundedFrames);
+            self.ForceEndGroundedFramesThreshold = Mathf.Max(1, self.ForceEndGroundedFramesThreshold);
         }
 
         /// <param name="minAirTimeMsOverride">若 > 0，与 profile.MinAirTimeMs 取 max，用于与攻击方段超时(GetCurrentSegmentComboTimeoutMs)对齐。</param>
@@ -60,6 +59,9 @@ namespace ET
                 // fallback：先记录当前高度（避免极端情况下永远不捕获）
                 self.EnteredHeight = attackerWorldPos.y;
                 
+                // 进入空中连段：请求关闭地检（由 HitReaction 统一处理）
+                self.OnGroundDetectRequested?.Invoke(false);
+
                 // 以攻击者为连段中心（XZ）
                 self.ComboCenterWorldPos = attackerWorldPos;
 
@@ -245,6 +247,9 @@ namespace ET
                 return;
             }
 
+            // 进入退出阶段：请求开启地检
+            self.OnGroundDetectRequested?.Invoke(true);
+
             Log.Error("退出空中BeginExit");
             self.IsExiting = true;
             self.ExitStartCombatMs = nowCombatMs;
@@ -255,6 +260,12 @@ namespace ET
         public static void ForceEnd(this AirComboComponent self)
         {
             if (self == null || self.IsDisposed)
+            {
+                return;
+            }
+
+            // 已经结束，直接返回（防止与 OnLand 竞态导致重复清理）
+            if (!self.Active)
             {
                 return;
             }
@@ -280,13 +291,14 @@ namespace ET
             self.MaxHeightOffset = 0f;
             self.LandingStunMs = 0;
 
-            self.ConsecutiveGroundedFrames = 0;
             self.LastDebugLogCombatMs = 0;
             self.ComboCenterWorldPos = Vector3.zero;
             self.MaxHorizontalDistance = 0f;
             self.MaxHorizontalSpeed = 0f;
             self.RecenterStrength = 0f;
             self.RecenterDeadZone = 0f;
+
+            self.OnExitCompleted?.Invoke();
         }
 
         public static void CaptureEnteredHeightIfNeeded(this AirComboComponent self, float rigidbodyY)
@@ -331,33 +343,6 @@ namespace ET
             }
 
             return self.ExitLerpMs <= 0 || nowCombatMs - self.ExitStartCombatMs >= self.ExitLerpMs;
-        }
-
-        public static void FailSafeTick(this AirComboComponent self, bool isGrounded)
-        {
-            if (self == null || self.IsDisposed)
-            {
-                return;
-            }
-
-            if (!self.Active)
-            {
-                self.ConsecutiveGroundedFrames = 0;
-                return;
-            }
-
-            if (isGrounded)
-            {
-                self.ConsecutiveGroundedFrames++;
-                if (self.ConsecutiveGroundedFrames >= Mathf.Max(1, self.ForceEndAfterGroundedFrames))
-                {
-                    self.ForceEnd();
-                }
-            }
-            else
-            {
-                self.ConsecutiveGroundedFrames = 0;
-            }
         }
 
         private static void DebugLog(this AirComboComponent self, long nowCombatMs, string reason)

@@ -37,6 +37,62 @@ namespace ET
     }
 
     /// <summary>
+    /// 空中受击落地会话数据结构，封装落地语义相关字段。
+    /// 职责：管理"空中→落地"的状态流转语义，避免多个分散字段导致的状态管理复杂度。
+    /// </summary>
+    public struct AirborneLandSession
+    {
+        /// <summary>本次空中会话的落地分流语义。</summary>
+        public PendingLandOutcome Outcome;
+        
+        /// <summary>普通落地硬直（ms, combat-time）。</summary>
+        public int LandingStunMs;
+        
+        /// <summary>落地事实已到达（由 Ground.OnLanded 事件置位）。</summary>
+        public bool LandQueued;
+        
+        /// <summary>本次落地已被消费处理（确保只处理一次）。</summary>
+        public bool LandHandled;
+        
+        /// <summary>落地发生时刻（combat-time），用于调试与一致性校验。</summary>
+        public long LandCombatMs;
+        
+        /// <summary>重置会话状态。</summary>
+        public void Reset()
+        {
+            this.Outcome = PendingLandOutcome.None;
+            this.LandingStunMs = 0;
+            this.LandQueued = false;
+            this.LandHandled = false;
+            this.LandCombatMs = 0;
+        }
+        
+        /// <summary>
+        /// 尝试消费落地事件。
+        /// </summary>
+        /// <returns>如果成功消费返回 true，否则返回 false。</returns>
+        public bool TryConsumeLanding(out PendingLandOutcome outcome)
+        {
+            if (!this.LandQueued || this.LandHandled)
+            {
+                outcome = PendingLandOutcome.None;
+                return false;
+            }
+            this.LandHandled = true;
+            outcome = this.Outcome;
+            return true;
+        }
+        
+        /// <summary>落地已消费后清理语义（保留 LandHandled=true）。</summary>
+        public void ClearAfterConsumed()
+        {
+            this.Outcome = PendingLandOutcome.None;
+            this.LandingStunMs = 0;
+            this.LandCombatMs = 0;
+        }
+    }
+
+    /// <summary>
     /// 受击反应组件
     /// </summary>
     [ComponentOf(typeof(Unit))]
@@ -46,19 +102,19 @@ namespace ET
         
         public Unit OwnerUnit {get; set;}
         
-        public HitStopComponent HitStop {get; set;}
+        private ComponentRef<CombatContextComponent> combatContextRef;
+        private ComponentRef<MovementContextComponent> movementContextRef;
 
-        /// <summary>
-        /// 地面检测组件（建议作为“是否落地/地面高度”的唯一事实来源）。
-        /// </summary>
-        public CheckGroundedComponent Ground { get; set; }
+        public void InitComponentRefs(Unit unit)
+        {
+            this.combatContextRef = new ComponentRef<CombatContextComponent>(unit);
+            this.movementContextRef = new ComponentRef<MovementContextComponent>(unit);
+        }
 
-        /// <summary>
-        /// 移动意图（用于注入受击冲量）。
-        /// </summary>
-        public LocomotionIntentComponent LocomotionIntent { get; set; }
-
-        public AirComboComponent  AirCombo { get; set; }
+        public HitStopComponent HitStop => this.combatContextRef.Get()?.HitStop;
+        public CheckGroundedComponent Ground => this.movementContextRef.Get()?.Ground;
+        public LocomotionIntentComponent LocomotionIntent => this.movementContextRef.Get()?.LocomotionIntent;
+        public AirComboComponent AirCombo => this.combatContextRef.Get()?.AirCombo;
         /// <summary>
         /// 进入受击时是否取消攻击（用于“被打断”）。
         /// </summary>
@@ -73,33 +129,21 @@ namespace ET
         /// - 在 EnterAirborne/BeginAirSlam 等“语义产生点”写入
         /// - 在落地时单次消费（避免重复触发）
         /// </summary>
-        public PendingLandOutcome PendingLandOutcome;
-
-        /// <summary>
-        /// 普通落地硬直（ms, combat-time）。
-        /// 默认由 <see cref="AirComboComponent.LandingStunMs"/> 提供；此字段用于做会话级缓存/覆写（可选）。
-        /// </summary>
-        public int PendingLandingStunMs;
-
-        /// <summary>
-        /// 落地事实已到达（由 Ground.OnLanded 事件置位）。
-        /// </summary>
-        public bool LandQueued;
-
-        /// <summary>
-        /// 本次落地已被消费处理（确保只处理一次）。
-        /// </summary>
-        public bool LandHandled;
-
-        /// <summary>
-        /// 落地发生时刻（combat-time），用于调试与一致性校验。
-        /// </summary>
-        public long LandCombatMs;
+        public AirborneLandSession LandSession;
 
         /// <summary>
         /// Ground.OnLanded 订阅回调句柄（用于 Destroy 退订）。
         /// </summary>
         public Action GroundOnLandedHandler;
+
+        /// <summary>
+        /// AirCombo 事件订阅句柄（用于 Destroy 退订）。
+        /// </summary>
+        public Action<bool> AirComboGroundDetectHandler;
+
+        public Action AirComboExitCompletedHandler;
+
+        public bool AirComboEventsBound;
 
         /// <summary>
         /// 退出/下落期临时强制地检高频（引用计数）是否已加持。

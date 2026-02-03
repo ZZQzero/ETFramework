@@ -63,6 +63,11 @@ namespace ET
         public long LastRealtimeMs { get; set; }
 
         /// <summary>
+        /// 上一次更新的帧号，用于确保在同一帧内多次访问 CombatTimeMs 时只更新一次。
+        /// </summary>
+        public int LastUpdateFrame { get; set; }
+
+        /// <summary>
         /// 便于日志查看的快照字符串（调试用）。
         /// </summary>
         public override string ToString()

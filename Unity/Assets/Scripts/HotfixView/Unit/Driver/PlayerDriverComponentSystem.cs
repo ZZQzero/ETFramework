@@ -10,8 +10,10 @@ namespace ET
         {
             Unit unit = self.GetParent<Unit>();
             self.Input = unit.GetComponent<InputComponent>();
-            self.LocomotionIntent = unit.GetComponent<LocomotionIntentComponent>();
-            self.AttackCommand = unit.GetComponent<AttackCommandComponent>();
+            self.LocomotionIntent = unit.GetComponent<MovementContextComponent>()?.LocomotionIntent
+                ?? unit.GetComponent<LocomotionIntentComponent>();
+            self.AttackCommand = unit.GetComponent<CombatContextComponent>()?.AttackCommand
+                ?? unit.GetComponent<AttackCommandComponent>();
         }
 
         [EntitySystem]
@@ -25,7 +27,9 @@ namespace ET
             // AirCombo（被挂空中）：Driver 不再写入 Move/Face/Jump，避免AI/输入与Motor接管垂直规则产生抖动。
             // AttackCommand 仍允许入队（最终是否执行由 AttackComponent/受击锁裁决）。
             var unit = self.GetParent<Unit>();
-            var airCombo = unit != null ? unit.GetComponent<AirComboComponent>() : null;
+            var airCombo = unit != null
+                ? (unit.GetComponent<CombatContextComponent>()?.AirCombo ?? unit.GetComponent<AirComboComponent>())
+                : null;
             if (airCombo != null && airCombo.Active)
             {
                 self.LocomotionIntent.MoveDirection = Vector3.zero;

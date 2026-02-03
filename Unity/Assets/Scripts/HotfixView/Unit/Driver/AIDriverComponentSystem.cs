@@ -9,8 +9,10 @@ namespace ET
         private static void Awake(this AIDriverComponent self)
         {
             Unit unit = self.GetParent<Unit>();
-            self.LocomotionIntent = unit.GetComponent<LocomotionIntentComponent>();
-            self.AttackCommand = unit.GetComponent<AttackCommandComponent>();
+            self.LocomotionIntent = unit.GetComponent<MovementContextComponent>()?.LocomotionIntent
+                ?? unit.GetComponent<LocomotionIntentComponent>();
+            self.AttackCommand = unit.GetComponent<CombatContextComponent>()?.AttackCommand
+                ?? unit.GetComponent<AttackCommandComponent>();
         }
 
         [EntitySystem]
@@ -24,7 +26,9 @@ namespace ET
             // AirCombo（被挂空中）：AI 不推进移动/跳跃/转向，避免寻路/行为树持续写入导致抖动。
             // 攻击请求是否要允许由上层AI决定；这里默认也禁掉，避免空中时仍尝试发起地面攻击。
             var unit = self.GetParent<Unit>();
-            var airCombo = unit != null ? unit.GetComponent<AirComboComponent>() : null;
+            var airCombo = unit != null
+                ? (unit.GetComponent<CombatContextComponent>()?.AirCombo ?? unit.GetComponent<AirComboComponent>())
+                : null;
             if (airCombo != null && airCombo.Active)
             {
                 self.LocomotionIntent.MoveDirection = Vector3.zero;

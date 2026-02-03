@@ -19,6 +19,8 @@ namespace ET
             UnityEngine.Object.DontDestroyOnLoad(go);
             unit.UnitName = roleComponent.RoleTable.Name;
             unit.AddComponent<GameObjectComponent>().GameObject = go;
+            unit.AddComponent<CombatContextComponent>();
+            unit.AddComponent<MovementContextComponent>();
             unit.AddComponent<InputComponent>();
             unit.AddComponent<LocomotionIntentComponent>();
             unit.AddComponent<AttackCommandComponent>();

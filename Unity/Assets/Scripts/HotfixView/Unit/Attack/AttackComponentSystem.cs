@@ -20,12 +20,13 @@ namespace ET
             self.ResetState();
             self.Unit = self.GetParent<Unit>();
             self.AnimatorComponent = self.Unit.GetComponent<AnimatorComponent>();
-            self.AttackCommand = self.Unit.GetComponent<AttackCommandComponent>();
-            self.AttackCatalog = self.Unit.GetComponent<AttackCatalogComponent>();
+            var combat = self.Unit.GetComponent<CombatContextComponent>();
+            self.AttackCommand = combat?.AttackCommand ?? self.Unit.GetComponent<AttackCommandComponent>();
+            self.AttackCatalog = combat?.AttackCatalog ?? self.Unit.GetComponent<AttackCatalogComponent>();
             self.OwnerTransform = self.Unit.GetComponent<GameObjectComponent>().Transform;
             self.CameraFollow = self.Root().GetComponent<CameraFollowComponent>();
             self.TimerComponent = self.Root().GetComponent<TimerComponent>();
-            self.HitStop = self.Unit.GetComponent<HitStopComponent>();
+            self.HitStop = combat?.HitStop ?? self.Unit.GetComponent<HitStopComponent>();
             self.EffectRoot = new GameObject("EffectRoot");
             // CameraFollow 只对“玩家表现”有意义，怪物没有也正常
             if (self.CameraFollow == null && self.Unit.UnitType() == UnitType.Player)
@@ -83,7 +84,8 @@ namespace ET
                 if (self.AttackCommand.TryDequeue(out var cmd))
                 {
                     // 如果当前实体不具备攻击能力（如正在受击），则丢弃指令
-                    var intent = self.Unit.GetComponent<LocomotionIntentComponent>();
+                    var intent = self.Unit.GetComponent<MovementContextComponent>()?.LocomotionIntent
+                        ?? self.Unit.GetComponent<LocomotionIntentComponent>();
                     if (intent == null || intent.IsAttackAllowed)
                     {
                         self.ExecuteAttackCommand(in cmd);
@@ -126,7 +128,7 @@ namespace ET
         #region 配置加载
         
         /// <summary>
-        /// 异步加载攻击配置
+        /// 异步加载攻击配置（带超时保护）
         /// </summary>
         private static async ETTask LoadConfigAsync(this AttackComponent self, int skillId)
         {
@@ -141,25 +143,41 @@ namespace ET
             }
             self.IsLoadingConfig = true;
 
-            var skillTable = SkillConfig.Instance.GetOrDefault(skillId);
-            if (skillTable == null)
+            try
             {
-                Log.Error($"{self.Unit.UnitTable.UnitType}  {self.Unit.UnitName}");
-                return;
-            }
-            var configAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<AttackConfigAsset>(skillTable.SkillAsset);
-            if (configAsset == null)
-            {
-                self.IsLoadingConfig = false;
-                Log.Error($"AttackComponent: Failed to load config from {skillTable.SkillAsset}  {skillId}");
-                return;
-            }
+                var skillTable = SkillConfig.Instance.GetOrDefault(skillId);
+                if (skillTable == null)
+                {
+                    Log.Error($"AttackComponent: SkillConfig 未找到 skillId={skillId}, Unit={self.Unit.UnitTable.UnitType} {self.Unit.UnitName}");
+                    return;
+                }
+                
+                var configAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<AttackConfigAsset>(skillTable.SkillAsset);
+                
+                if (self == null || self.IsDisposed)
+                {
+                    return;
+                }
+                
+                if (configAsset == null)
+                {
+                    Log.Error($"AttackComponent: Failed to load config from {skillTable.SkillAsset}, skillId={skillId}");
+                    return;
+                }
 
-            self.Config = configAsset.Config;
-            self.LoadedSkillId = skillId;
-            self.IsLoadingConfig = false;
-            // 运行时加载后统一规范化（保证窗口/子事件不越界，避免各处自行 Clamp 导致不一致）
-            self.Config?.ValidateAndNormalize();
+                self.Config = configAsset.Config;
+                self.LoadedSkillId = skillId;
+                // 运行时加载后统一规范化（保证窗口/子事件不越界，避免各处自行 Clamp 导致不一致）
+                self.Config?.ValidateAndNormalize();
+            }
+            finally
+            {
+                // 确保无论成功失败都重置加载状态
+                if (self != null && !self.IsDisposed)
+                {
+                    self.IsLoadingConfig = false;
+                }
+            }
         }
 
         private static void ExecuteAttackCommand(this AttackComponent self, in AttackCommandComponent.AttackCommand cmd)
@@ -1160,7 +1178,8 @@ namespace ET
 
             // 应用受击反应：统一走 HitReactionRequest + HitRules
             Unit unit = target.GetComponent<UnitReference>().Unit;
-            var hitReactionComponent = unit.GetComponent<HitReactionComponent>();
+            var hitReactionComponent = unit.GetComponent<CombatContextComponent>()?.HitReaction
+                ?? unit.GetComponent<HitReactionComponent>();
             if (hitReactionComponent != null)
             {
                 Vector3 hitDirection = (target.transform.position - self.OwnerTransform.position);
@@ -1317,6 +1336,7 @@ namespace ET
             self.State = AttackState.Idle;
             self.CurrentSegmentIndex = -1;
             self.CurrentSegment = null;
+            self.HitBoxActiveMask = 0UL; // 清理 HitBox 激活状态，防止软退出后立即重起手时旧段 HitBox 残留
             self.HasBufferedInput = false;
             self.BufferedInputType = ComboInputType.None;
             self.BufferedInputTime = 0;

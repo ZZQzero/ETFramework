@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace ET
 {
@@ -11,6 +12,17 @@ namespace ET
     [ComponentOf(typeof(Unit))]
     public sealed class AirComboComponent : Entity, IAwake
     {
+        /// <summary>
+        /// 地检请求事件：true=启用，false=禁用。
+        /// 由 HitReaction 统一处理 Ground.Enable。
+        /// </summary>
+        public Action<bool> OnGroundDetectRequested;
+
+        /// <summary>
+        /// 空中连段退出完成事件。
+        /// </summary>
+        public Action OnExitCompleted;
+
         // ===== 状态 =====
         public bool Active;
         public bool IsExiting;
@@ -62,11 +74,11 @@ namespace ET
         /// <summary>上一次输出调试日志的 combat-time。</summary>
         public long LastDebugLogCombatMs;
 
-        /// <summary>fail-safe：Active 期间连续判定为地面的帧数。</summary>
-        public int ConsecutiveGroundedFrames;
-
-        /// <summary>fail-safe：连续地面帧达到该阈值后强制结束（避免状态机卡死）。</summary>
-        public int ForceEndAfterGroundedFrames = 3;
+        /// <summary>
+        /// fail-safe：连续地面帧阈值（达到该值后强制结束，避免状态机卡死）。
+        /// 实际帧数由 CheckGroundedComponent.ConsecutiveGroundedFrames 提供，避免重复计数。
+        /// </summary>
+        public int ForceEndGroundedFramesThreshold = 3;
         
         // ===== 空中连击横向控制 =====
 

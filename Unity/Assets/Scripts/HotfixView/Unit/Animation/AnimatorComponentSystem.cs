@@ -40,7 +40,8 @@ namespace ET
 			self.CharacterController = self.Unit.GetComponent<CharacterControllerComponent>();
 			self.CharacterController.Animator = self.Animancer.Animator;
 			self.Ground = self.CharacterController.Ground;
-			self.HitReaction = self.Unit.GetComponent<HitReactionComponent>();
+			self.HitReaction = self.Unit.GetComponent<CombatContextComponent>()?.HitReaction
+				?? self.Unit.GetComponent<HitReactionComponent>();
 			
 			self.LoadAnimation().NoContext();
 		}
@@ -160,7 +161,8 @@ namespace ET
 
 			if (self.HitReaction == null)
 			{
-				self.HitReaction = self.Unit.GetComponent<HitReactionComponent>();
+				self.HitReaction = self.Unit.GetComponent<CombatContextComponent>()?.HitReaction
+					?? self.Unit.GetComponent<HitReactionComponent>();
 				if (self.HitReaction != null)
 				{
 					self.HitReaction.OnHitReactionStart = state =>
@@ -268,15 +270,15 @@ namespace ET
 		private static void SynthesizeLocomotionAnimation(this AnimatorComponent self)
 		{
 			AnimancerLayer layer = self.Animancer; // 隐式转换到 Layer 0
-			if (self.Ground.IsGrounded(self.Ground.State))
+			if (self.Ground.IsGrounded(self.Ground.StateContext.State))
 			{
 				if (layer.CurrentState != self.MoveMixer.State)
 				{
 					// 落地回到 Locomotion：击飞/连段落地通常希望更快衔接
 					float fade = 0.2f;
-					if (self.Ground != null && self.Ground.IsAirborne(self.Ground.PrevState))
+					if (self.Ground != null && self.Ground.IsAirborne(self.Ground.StateContext.PrevState))
 					{
-						switch (self.Ground.AirborneReason)
+						switch (self.Ground.StateContext.AirborneReason)
 						{
 							case AirborneReason.Launched:
 							case AirborneReason.Juggled:
@@ -301,7 +303,7 @@ namespace ET
 					float fade = 0.2f;
 					if (self.Ground != null)
 					{
-						switch (self.Ground.AirborneReason)
+						switch (self.Ground.StateContext.AirborneReason)
 						{
 							case AirborneReason.Launched:
 							case AirborneReason.Juggled:
@@ -319,8 +321,19 @@ namespace ET
 		[EntitySystem]
 		private static void Destroy(this AnimatorComponent self)
 		{
+			// 清理事件订阅，防止内存泄漏
+			if (self.HitReaction != null)
+			{
+				self.HitReaction.OnHitReactionStart = null;
+			}
+			
 			self.MoveMixer = null;
 			self.JumpMixer = null;
+			self.HitReaction = null;
+			self.CharacterController = null;
+			self.Ground = null;
+			self.Animancer = null;
+			self.AttackLayer = null;
 		}
 
 	}

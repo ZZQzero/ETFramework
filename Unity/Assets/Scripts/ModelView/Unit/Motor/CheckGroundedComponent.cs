@@ -455,6 +455,32 @@ namespace ET
     #region 组件
 
     /// <summary>
+    /// 地面状态上下文（按状态分组）。
+    /// </summary>
+    [Serializable]
+    public struct GroundStateContext
+    {
+        public GroundState State;
+        public GroundState PrevState;
+        public AirborneReason AirborneReason;
+        public int ConsecutiveAirborneFrames;
+        public int ConsecutiveGroundedFrames;
+    }
+
+    /// <summary>
+    /// 地面时间上下文（按时间分组）。
+    /// </summary>
+    [Serializable]
+    public struct GroundTimingContext
+    {
+        public float TimeLeftGround;
+        public float TimeLanded;
+        public float GroundedDuration;
+        public float AirborneDuration;
+        public bool InCoyoteTime;
+    }
+
+    /// <summary>
     /// 地面检测组件（Grounded Check）。
     /// 
     /// 职责：
@@ -499,23 +525,7 @@ namespace ET
 
         // ==================== 状态 ====================
 
-        /// <summary>
-        /// 当前地面状态。
-        /// 例如：Grounded / Falling / OnEdge 等。
-        /// </summary>
-        public GroundState State;
-
-        /// <summary>
-        /// 上一帧的地面状态。
-        /// 用于状态切换检测（落地 / 离地）。
-        /// </summary>
-        public GroundState PrevState;
-
-        /// <summary>
-        /// 离地原因。
-        /// 用于区分跳跃、走出平台、被击飞等情况。
-        /// </summary>
-        public AirborneReason AirborneReason;
+        public GroundStateContext StateContext;
 
         /// <summary>
         /// 当前帧的地面命中信息。
@@ -526,34 +536,7 @@ namespace ET
 
         // ==================== 时间相关 ====================
 
-        /// <summary>
-        /// 最近一次离开地面的时间点。
-        /// 常用于 Coyote Time 或容错跳跃。
-        /// </summary>
-        public float TimeLeftGround;
-
-        /// <summary>
-        /// 最近一次落地的时间点。
-        /// 用于 Landing 缓冲或落地动画控制。
-        /// </summary>
-        public float TimeLanded;
-
-        /// <summary>
-        /// 连续处于地面状态的持续时间。
-        /// 可用于触发“站立一段时间后”的逻辑。
-        /// </summary>
-        public float GroundedDuration;
-
-        /// <summary>
-        /// 连续处于空中状态的持续时间。
-        /// 常用于下落伤害或空中技能限制。
-        /// </summary>
-        public float AirborneDuration;
-
-        /// <summary>
-        /// 是否处于 Coyote Time（离地容错时间）内。
-        /// </summary>
-        public bool InCoyoteTime;
+        public GroundTimingContext TimingContext;
 
 
         // ==================== 下跳 / 穿透平台 ====================
@@ -588,18 +571,6 @@ namespace ET
         /// 用于计算跌落高度。
         /// </summary>
         public Vector3 LastGroundedPosition;
-
-        /// <summary>
-        /// 连续判定为空中的帧数。
-        /// 用于状态防抖。
-        /// </summary>
-        public int ConsecutiveAirborneFrames;
-
-        /// <summary>
-        /// 连续判定为地面的帧数。
-        /// 用于状态防抖。
-        /// </summary>
-        public int ConsecutiveGroundedFrames;
 
         /// <summary>
         /// 抑制地检降频的计数器（引用计数）。
@@ -685,6 +656,7 @@ namespace ET
             OnLeftGround = null;
             OnFallDamage = null;
         }
+
     }
 
     #endregion

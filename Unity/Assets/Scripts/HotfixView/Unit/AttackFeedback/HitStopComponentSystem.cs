@@ -11,7 +11,8 @@ namespace ET
         [EntitySystem]
         private static void Awake(this HitStopComponent self)
         {
-            self.LastRealtimeMs = 0;
+            long now = RealtimeMs();
+            self.LastRealtimeMs = now;
             self.CombatTimeMs = 0;
             self.IsHitStopActive = false;
             self.HitStopEndRealtimeMs = 0;
@@ -21,6 +22,22 @@ namespace ET
         [EntitySystem]
         private static void Update(this HitStopComponent self)
         {
+            self.EnsureUpdatedThisFrame();
+        }
+
+        /// <summary>
+        /// 确保当前帧的 CombatTimeMs 已更新。
+        /// 解决 EntitySystem 执行顺序不确定导致其他组件读取到旧值的问题。
+        /// </summary>
+        private static void EnsureUpdatedThisFrame(this HitStopComponent self)
+        {
+            int currentFrame = Time.frameCount;
+            if (self.LastUpdateFrame == currentFrame)
+            {
+                return; // 本帧已更新，无需重复
+            }
+            self.LastUpdateFrame = currentFrame;
+
             long now = RealtimeMs();
             
             if (self.LastRealtimeMs <= 0 || now < self.LastRealtimeMs)
@@ -149,9 +166,19 @@ namespace ET
             }
         }
 
+        /// <summary>
+        /// 获取当前战斗时间（毫秒）。
+        /// 会确保本帧的 CombatTimeMs 已更新，解决 EntitySystem 执行顺序问题。
+        /// </summary>
         public static long NowCombatMs(this HitStopComponent self)
         {
-            return self?.CombatTimeMs ?? 0;
+            if (self == null)
+            {
+                return 0;
+            }
+            // 确保本帧已更新，解决执行顺序不确定的问题
+            self.EnsureUpdatedThisFrame();
+            return self.CombatTimeMs;
         }
         private static long RealtimeMs()
         {

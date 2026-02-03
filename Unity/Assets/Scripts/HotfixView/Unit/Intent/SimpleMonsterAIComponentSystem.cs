@@ -10,7 +10,8 @@ namespace ET
         {
             Unit unit = self.GetParent<Unit>();
             self.Driver = unit.GetComponent<AIDriverComponent>();
-            self.Attack = unit.GetComponent<AttackComponent>();
+            self.Attack = unit.GetComponent<CombatContextComponent>()?.Attack
+                ?? unit.GetComponent<AttackComponent>();
         }
 
         [EntitySystem]

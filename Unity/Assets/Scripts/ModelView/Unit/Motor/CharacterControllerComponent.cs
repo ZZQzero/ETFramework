@@ -15,25 +15,25 @@ namespace ET
         /// </summary>
         public Rigidbody Rigidbody { get; set; }
         public CapsuleCollider CapsuleCollider { get; set; }
-        public CheckGroundedComponent  Ground { get; set; }
-        public LocomotionIntentComponent LocomotionIntent { get; set; }
+        private ComponentRef<MovementContextComponent> movementContextRef;
         public Unit Unit { get; set; }
         public Animator Animator { get; set; }
-        public AttackComponent Attack { get; set; }
+        private ComponentRef<CombatContextComponent> combatContextRef;
         /// <summary>
         /// 受击系统引用：用于在受击期间由受击系统接管速度（避免 Motor 自己减速/改写速度）。
         /// </summary>
-        public HitReactionComponent HitReaction { get; set; }
-        
-        /// <summary>
-        /// 顿帧组件：用于在 HitStop 期间冻结运动/重力推进（战斗手感一致）。
-        /// </summary>
-        public HitStopComponent HitStop { get; set; }
+        public void InitComponentRefs(Unit unit)
+        {
+            this.movementContextRef = new ComponentRef<MovementContextComponent>(unit);
+            this.combatContextRef = new ComponentRef<CombatContextComponent>(unit);
+        }
 
-        /// <summary>
-        /// 空中连段组件：在 Active 时由 ComboPhysics 接管垂直规则（重力/下落速度/高度夹持）。
-        /// </summary>
-        public AirComboComponent AirCombo { get; set; }
+        public CheckGroundedComponent Ground => this.movementContextRef.Get()?.Ground;
+        public LocomotionIntentComponent LocomotionIntent => this.movementContextRef.Get()?.LocomotionIntent;
+        public AttackComponent Attack => this.combatContextRef.Get()?.Attack;
+        public HitReactionComponent HitReaction => this.combatContextRef.Get()?.HitReaction;
+        public HitStopComponent HitStop => this.combatContextRef.Get()?.HitStop;
+        public AirComboComponent AirCombo => this.combatContextRef.Get()?.AirCombo;
 
         /// <summary>
         /// 移动速度（米/秒）

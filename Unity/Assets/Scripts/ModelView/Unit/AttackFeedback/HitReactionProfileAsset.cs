@@ -1,7 +1,10 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ET
 {
+
     /// <summary>
     /// 受击配置资产（ScriptableObject）。
     /// 用于将硬编码的受击配置迁移到可编辑的资产文件。
@@ -20,10 +23,8 @@ namespace ET
         [Header("空中连段配置")]
         [Tooltip("空中连段数据")]
         public HitAirComboData AirCombo;
-
-        // 运行时转换逻辑后续接入时放在 Hotfix 层处理
     }
-
+    
     /// <summary>
     /// 受击规则数据（可序列化版本）
     /// </summary>
@@ -45,6 +46,19 @@ namespace ET
         [Header("上限限制")]
         public HitReactionLimitsData Limits;
 
+        public HitReactionRulesData(
+            HitReactionGroup allowedReactionGroups = HitReactionGroup.All,
+            HitStateVisualMask allowedStateVisuals = HitStateVisualMask.All,
+            HitInterruptThresholdsData interruptThresholds = default,
+            HitReactionScalesData scales = default,
+            HitReactionLimitsData limits = default)
+        {
+            this.AllowedReactionGroups = allowedReactionGroups;
+            this.AllowedStateVisuals = allowedStateVisuals;
+            this.InterruptThresholds = interruptThresholds;
+            this.Scales = scales;
+            this.Limits = limits;
+        }
     }
 
     /// <summary>
@@ -85,6 +99,20 @@ namespace ET
         [Tooltip("击飞门槛")]
         public byte AirborneThreshold;
 
+        [Tooltip("砸地门槛")]
+        public byte KnockdownThreshold;
+        
+        public GroundedThresholdData(
+            byte lightReactionThreshold = 20,
+            byte knockbackThreshold = 30,
+            byte airborneThreshold = 50,
+            byte knockdownThreshold = 60)
+        {
+            this.LightReactionThreshold = lightReactionThreshold;
+            this.KnockbackThreshold = knockbackThreshold;
+            this.AirborneThreshold = airborneThreshold;
+            this.KnockdownThreshold = knockdownThreshold;
+        }
     }
 
     /// <summary>
@@ -99,6 +127,13 @@ namespace ET
         [Tooltip("砸地门槛")]
         public byte KnockdownThreshold;
 
+        public AirborneThresholdData(
+            byte airborneThreshold = 70,
+            byte knockdownThreshold = 60)
+        {
+            this.AirborneThreshold = airborneThreshold;
+            this.KnockdownThreshold = knockdownThreshold;
+        }
     }
 
     /// <summary>
@@ -107,9 +142,14 @@ namespace ET
     [System.Serializable]
     public struct AirFinisherThresholdData
     {
+
         [Tooltip("砸地门槛")]
         public byte KnockdownThreshold;
 
+        public AirFinisherThresholdData(byte knockdownThreshold = 65)
+        {
+            this.KnockdownThreshold = knockdownThreshold;
+        }
     }
 
     /// <summary>
@@ -118,9 +158,13 @@ namespace ET
     [System.Serializable]
     public struct KnockdownThresholdData
     {
-        [Tooltip("打断起身门槛")]
-        public byte GetUpInterruptThreshold;
+        [Tooltip("打断倒地门槛/从倒地状态拉起")]
+        public byte KnockdownThreshold;
 
+        public KnockdownThresholdData(byte knockdownThreshold = 80)
+        {
+            this.KnockdownThreshold = knockdownThreshold;
+        }
     }
 
     /// <summary>
@@ -132,6 +176,10 @@ namespace ET
         [Tooltip("打断起身门槛")]
         public byte GetUpInterruptThreshold;
 
+        public GetUpThresholdData(byte getUpInterruptThreshold = 80)
+        {
+            this.GetUpInterruptThreshold = getUpInterruptThreshold;
+        }
     }
 
     /// <summary>
@@ -141,13 +189,20 @@ namespace ET
     public struct HitReactionScalesData
     {
         [Tooltip("硬直倍率")]
-        public float Stun;
+        [Min(0f)] public float Stun;
 
         [Tooltip("击退倍率")]
-        public float Knockback;
+        [Min(0f)] public float Knockback;
 
         [Tooltip("击飞倍率")]
-        public float Knockup;
+        [Min(0f)] public float Knockup;
+
+        public HitReactionScalesData(float stun = 1f, float knockback = 1f, float knockup = 1f)
+        {
+            this.Stun = stun;
+            this.Knockback = knockback;
+            this.Knockup = knockup;
+        }
     }
 
     /// <summary>
@@ -157,13 +212,20 @@ namespace ET
     public struct HitReactionLimitsData
     {
         [Tooltip("最大硬直时长(ms)")]
-        public int MaxHitStunMs;
+        [Min(0)] public int MaxHitStunMs;
 
         [Tooltip("最大击退力")]
-        public float MaxKnockbackForce;
+        [Min(0f)] public float MaxKnockbackForce;
 
         [Tooltip("最大击飞力")]
-        public float MaxKnockupForce;
+        [Min(0f)] public float MaxKnockupForce;
+
+        public HitReactionLimitsData(int maxHitStunMs = 1200, float maxKnockbackForce = 25f, float maxKnockupForce = 18f)
+        {
+            this.MaxHitStunMs = maxHitStunMs;
+            this.MaxKnockbackForce = maxKnockbackForce;
+            this.MaxKnockupForce = maxKnockupForce;
+        }
     }
 
     /// <summary>
@@ -204,6 +266,21 @@ namespace ET
         [Range(0f, 2f)]
         public float TimeScaleScale;
 
+        public HitFeedbackOptionData(
+            bool allowVictimHitStop = false,
+            float victimHitStopScale = 0f,
+            bool allowScreenShake = true,
+            float screenShakeScale = 1f,
+            bool allowTimeScale = false,
+            float timeScaleScale = 0f)
+        {
+            this.AllowVictimHitStop = allowVictimHitStop;
+            this.VictimHitStopScale = victimHitStopScale;
+            this.AllowScreenShake = allowScreenShake;
+            this.ScreenShakeScale = screenShakeScale;
+            this.AllowTimeScale = allowTimeScale;
+            this.TimeScaleScale = timeScaleScale;
+        }
     }
 
     /// <summary>
@@ -217,19 +294,19 @@ namespace ET
 
         [Header("时间配置")]
         [Tooltip("最小空中时间（毫秒）")]
-        public int MinAirTimeMs;
+        [Min(0)] public int MinAirTimeMs;
 
         [Tooltip("最大悬空时间（毫秒）")]
-        public int MaxTotalHangMs;
+        [Min(0)] public int MaxTotalHangMs;
 
         [Tooltip("退出渐变时间（毫秒）")]
-        public int ExitLerpMs;
+        [Min(0)] public int ExitLerpMs;
 
         [Tooltip("落地硬直时间（毫秒）")]
-        public int LandingStunMs;
+        [Min(0)] public int LandingStunMs;
 
         [Tooltip("空中二次击飞允许的最大向上速度")]
-        public float MaxAirborneKnockupForce;
+        [Min(0f)] public float MaxAirborneKnockupForce;
 
         [Header("物理配置")]
         [Tooltip("空中重力缩放")]
@@ -237,7 +314,7 @@ namespace ET
         public float GravityScaleDuringCombo;
 
         [Tooltip("最小下落速度（绝对值）")]
-        public float MinFallSpeedAbs;
+        [Min(0f)] public float MinFallSpeedAbs;
 
         [Tooltip("最小高度偏移")]
         public float MinHeightOffset;
@@ -247,16 +324,47 @@ namespace ET
 
         [Header("水平运动配置")]
         [Tooltip("最大水平距离")]
-        public float MaxAirHorizontalDistance;
+        [Min(0f)] public float MaxAirHorizontalDistance;
 
         [Tooltip("最大水平速度")]
-        public float MaxAirHorizontalSpeed;
+        [Min(0f)] public float MaxAirHorizontalSpeed;
 
         [Tooltip("回拉强度")]
-        public float RecenterStrength;
+        [Min(0f)] public float RecenterStrength;
 
         [Tooltip("回拉死区")]
-        public float RecenterDeadZone;
+        [Min(0f)] public float RecenterDeadZone;
 
+        public HitAirComboData(
+            bool enable = true,
+            int minAirTimeMs = 250,
+            int maxTotalHangMs = 3500,
+            int exitLerpMs = 160,
+            int landingStunMs = 180,
+            float maxAirborneKnockupForce = 2.5f,
+            float gravityScaleDuringCombo = 0.12f,
+            float minFallSpeedAbs = 0.8f,
+            float minHeightOffset = 0f,
+            float maxHeightOffset = 2.2f,
+            float maxAirHorizontalDistance = 3f,
+            float maxAirHorizontalSpeed = 2.5f,
+            float recenterStrength = 2.5f,
+            float recenterDeadZone = 1.5f)
+        {
+            this.Enable = enable;
+            this.MinAirTimeMs = minAirTimeMs;
+            this.MaxTotalHangMs = maxTotalHangMs;
+            this.ExitLerpMs = exitLerpMs;
+            this.LandingStunMs = landingStunMs;
+            this.MaxAirborneKnockupForce = maxAirborneKnockupForce;
+            this.GravityScaleDuringCombo = gravityScaleDuringCombo;
+            this.MinFallSpeedAbs = minFallSpeedAbs;
+            this.MinHeightOffset = minHeightOffset;
+            this.MaxHeightOffset = maxHeightOffset;
+            this.MaxAirHorizontalDistance = maxAirHorizontalDistance;
+            this.MaxAirHorizontalSpeed = maxAirHorizontalSpeed;
+            this.RecenterStrength = recenterStrength;
+            this.RecenterDeadZone = recenterDeadZone;
+        }
     }
 }

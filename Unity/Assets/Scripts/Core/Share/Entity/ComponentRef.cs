@@ -7,11 +7,11 @@
     /// <typeparam name="T">组件类型，必须继承自 Entity</typeparam>
     public struct ComponentRef<T> where T : Entity
     {
-        private Unit _unit;
+        private Entity _unit;
         private T _cached;
         private bool _resolved;
 
-        public ComponentRef(Unit unit)
+        public ComponentRef(Entity unit)
         {
             _unit = unit;
             _cached = null;
@@ -21,7 +21,7 @@
         /// <summary>
         /// 重设归属 Unit（会清空缓存）。
         /// </summary>
-        public void SetOwner(Unit unit)
+        public void SetOwner(Entity unit)
         {
             _unit = unit;
             _cached = null;

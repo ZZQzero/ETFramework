@@ -11,10 +11,21 @@ namespace ET
             self.Capsule = go.GetComponent<CapsuleCollider>();
             self.Rigidbody = go.GetComponent<Rigidbody>();
 
-            // 配置初始化
-            self.Config ??= new GroundDetectorConfig();
-            self.Config.Initialize();
-            self.Config.GroundMask = LayerMask.GetMask("Map");
+            // 配置初始化：优先使用 MovementConfig 上的资产配置
+            var unit = self.GetParent<Unit>();
+            var moveConfig = unit?.GetComponent<MovementConfigComponent>();
+            if (moveConfig != null && moveConfig.GroundConfigAsset != null && moveConfig.GroundConfigAsset.Config != null)
+            {
+                self.Config = moveConfig.GroundConfigAsset.Config.Clone();
+                self.Config.Initialize();
+            }
+            else
+            {
+                self.Config ??= new GroundDetectorConfig();
+                self.Config.Initialize();
+                // 兜底：未配置时保持 Map 层
+                self.Config.GroundMask = LayerMask.GetMask("Map");
+            }
 
             if (self.Capsule != null)
             {

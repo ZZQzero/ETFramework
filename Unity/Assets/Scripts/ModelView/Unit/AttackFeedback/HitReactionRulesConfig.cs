@@ -49,62 +49,24 @@ namespace ET
         /// </summary>
         public readonly struct HitInterruptThresholds
         {
-            public readonly byte LightReactionThreshold;//硬直门槛
-            public readonly byte KnockbackThreshold; //击退门槛
-            public readonly byte AirborneThreshold; //（地面→空中门槛）
-            public readonly byte KnockdownThreshold;//（空中→砸地/倒地门槛）
-            public readonly byte GetUpInterruptThreshold;//（打断起身门槛）
-
-            public HitInterruptThresholds(byte lightReactionThreshold, byte knockbackThreshold, byte airborneThreshold, byte knockdownThreshold, byte getUpInterruptThreshold)
-            {
-                this.LightReactionThreshold = lightReactionThreshold;
-                this.KnockbackThreshold = knockbackThreshold;
-                this.AirborneThreshold = airborneThreshold;
-                this.KnockdownThreshold = knockdownThreshold;
-                this.GetUpInterruptThreshold = getUpInterruptThreshold;
-            }
-
-            public static readonly HitInterruptThresholds Default = new HitInterruptThresholds(20, 40, 50, 60, 80);
-        }
-
-        /// <summary>
-        /// 抵抗力切表：不同受击状态下，使用不同的抵抗力阈值。
-        /// </summary>
-        public readonly struct HitInterruptThresholdsTable
-        {
-            public readonly HitInterruptThresholds Grounded;
-            public readonly HitInterruptThresholds Airborne;
-            public readonly HitInterruptThresholds AirFinisher;
-            public readonly HitInterruptThresholds Knockdown;
-            public readonly HitInterruptThresholds GetUp;
-
-            public HitInterruptThresholdsTable(
-                in HitInterruptThresholds grounded,
-                in HitInterruptThresholds airborne,
-                in HitInterruptThresholds airFinisher,
-                in HitInterruptThresholds knockdown,
-                in HitInterruptThresholds getUp)
+            public readonly GroundedThresholdData Grounded;
+            public readonly AirborneThresholdData Airborne;
+            public readonly AirFinisherThresholdData AirFinisher;
+            public readonly KnockdownThresholdData Knockdown;
+            public readonly GetUpThresholdData GetUp;
+            
+            public HitInterruptThresholds(
+                GroundedThresholdData grounded,
+                AirborneThresholdData airborne,
+                AirFinisherThresholdData airFinisher,
+                KnockdownThresholdData knockdown,
+                GetUpThresholdData getUp)
             {
                 this.Grounded = grounded;
                 this.Airborne = airborne;
                 this.AirFinisher = airFinisher;
                 this.Knockdown = knockdown;
                 this.GetUp = getUp;
-            }
-
-            public HitInterruptThresholds GetByState(HitState state)
-            {
-                switch (state)
-                {
-                    case HitState.Airborne: return this.Airborne;
-                    case HitState.AirFinisher: return this.AirFinisher;
-                    case HitState.Knockdown: return this.Knockdown;
-                    case HitState.GetUp: return this.GetUp;
-                    case HitState.Grounded:
-                    case HitState.None:
-                    default:
-                        return this.Grounded;
-                }
             }
         }
 
@@ -153,8 +115,7 @@ namespace ET
         public readonly HitStateVisualMask AllowedStateVisuals;
 
         /// <summary>抵抗力：按状态切表。</summary>
-        public readonly HitInterruptThresholdsTable hitInterruptThresholds;
-
+        public readonly HitInterruptThresholds HitInterrupt;
         /// <summary>数值倍率。</summary>
         public readonly Scales Scale;
 
@@ -164,30 +125,30 @@ namespace ET
         public HitReactionRulesConfig(
             HitReactionGroup allowedReactionGroups,
             HitStateVisualMask allowedStateVisuals,
-            in HitInterruptThresholdsTable hitInterruptThresholdsTable,
+            in HitInterruptThresholds hitInterrupt,
             in Scales scales,
             in Limits limits)
         {
             this.AllowedReactionGroups = allowedReactionGroups;
             this.AllowedStateVisuals = allowedStateVisuals;
-            this.hitInterruptThresholds = hitInterruptThresholdsTable;
+            this.HitInterrupt = hitInterrupt;
             this.Scale = scales;
             this.Limit = limits;
         }
 
         public override string ToString()
         {
-            var g = this.hitInterruptThresholds.Grounded;
-            var a = this.hitInterruptThresholds.Airborne;
-            var s = this.hitInterruptThresholds.AirFinisher;
-            var k = this.hitInterruptThresholds.Knockdown;
-            var u = this.hitInterruptThresholds.GetUp;
-            return $"受击规则配置(允许表现组={this.AllowedReactionGroups}, 允许状态动画={this.AllowedStateVisuals}, 抵抗力表[Grounded/Airborne/AirStun/Knockdown/GetUp]=[" +
-                   $"[{g.LightReactionThreshold}/{g.KnockbackThreshold}/{g.AirborneThreshold}/{g.KnockdownThreshold}/{g.GetUpInterruptThreshold}]/" +
-                   $"[{a.LightReactionThreshold}/{a.KnockbackThreshold}/{a.AirborneThreshold}/{a.KnockdownThreshold}/{a.GetUpInterruptThreshold}]/" +
-                   $"[{s.LightReactionThreshold}/{s.KnockbackThreshold}/{s.AirborneThreshold}/{s.KnockdownThreshold}/{s.GetUpInterruptThreshold}]/" +
-                   $"[{k.LightReactionThreshold}/{k.KnockbackThreshold}/{k.AirborneThreshold}/{k.KnockdownThreshold}/{k.GetUpInterruptThreshold}]/" +
-                   $"[{u.LightReactionThreshold}/{u.KnockbackThreshold}/{u.AirborneThreshold}/{u.KnockdownThreshold}/{u.GetUpInterruptThreshold}]], " +
+            var g = this.HitInterrupt.Grounded;
+            var a = this.HitInterrupt.Airborne;
+            var s = this.HitInterrupt.AirFinisher;
+            var k = this.HitInterrupt.Knockdown;
+            var u = this.HitInterrupt.GetUp;
+            return $"受击规则配置(允许表现组={this.AllowedReactionGroups}, 允许状态动画={this.AllowedStateVisuals}, " +
+                   $"抵抗力表[Grounded(Light/Knockback/Airborne/Knockdown)]=[{g.LightReactionThreshold}/{g.KnockbackThreshold}/{g.AirborneThreshold}/{g.KnockdownThreshold}], " +
+                   $"[Airborne(AirFinisher/Knockdown)]=[{a.AirborneThreshold}/{a.KnockdownThreshold}], " +
+                   $"[AirFinisher(Knockdown)]=[{s.KnockdownThreshold}], " +
+                   $"[Knockdown(GetUpInterrupt)]=[{k.KnockdownThreshold}], " +
+                   $"[GetUp(GetUpInterrupt)]=[{u.GetUpInterruptThreshold}], " +
                    $"数值缩放[硬直/击退/击飞]=[{this.Scale.Stun:0.###}/{this.Scale.Knockback:0.###}/{this.Scale.Knockup:0.###}], " +
                    $"上限限制[硬直ms/击退力/击飞力]=[{this.Limit.MaxHitStunMs}/{this.Limit.MaxKnockbackForce:0.###}/{this.Limit.MaxKnockupForce:0.###}])";
         }

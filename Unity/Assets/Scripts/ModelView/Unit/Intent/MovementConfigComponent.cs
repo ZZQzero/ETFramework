@@ -1,4 +1,6 @@
-﻿namespace ET
+﻿using UnityEngine;
+
+namespace ET
 {
     /// <summary>
     /// 运动配置（最终执行参数）
@@ -6,7 +8,7 @@
     /// - Motor（CharacterControllerComponentSystem）只消费，不关心数据来源
     /// </summary>
     [ComponentOf(typeof(Unit))]
-    public sealed class MovementConfigComponent : Entity, IAwake
+    public sealed class MovementConfigComponent : Entity, IAwake<string>
     {
         /// <summary>水平移动速度（m/s，XZ）</summary>
         public float MoveSpeed = 5f;
@@ -28,5 +30,8 @@
 
         /// <summary>重力倍率：最终重力 = Gravity * GravityMultiplier</summary>
         public float GravityMultiplier = 1.5f;
+
+        /// <summary>地面检测配置资产（可选，优先使用）。</summary>
+        public GroundDetectorConfigAsset GroundConfigAsset;
     }
 }

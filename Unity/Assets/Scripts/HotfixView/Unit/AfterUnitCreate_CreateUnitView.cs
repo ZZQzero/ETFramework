@@ -21,6 +21,7 @@ namespace ET
             unit.AddComponent<GameObjectComponent>().GameObject = go;
             unit.AddComponent<CombatContextComponent>();
             unit.AddComponent<MovementContextComponent>();
+            unit.AddComponent<CombatConfigComponent,string>("HitReactionProfile");
             unit.AddComponent<InputComponent>();
             unit.AddComponent<LocomotionIntentComponent>();
             unit.AddComponent<AttackCommandComponent>();
@@ -40,7 +41,7 @@ namespace ET
             attackCatalog.TargetLayerMask = LayerMask.GetMask("Enemy");
             
             // MovementConfig：玩家可后续接 Numeric/装备/BUFF 合成，这里先使用默认值（商业级：执行层不读表）
-            unit.AddComponent<MovementConfigComponent>();
+            unit.AddComponent<MovementConfigComponent,string>("GroundConfig");
             unit.AddComponent<CheckGroundedComponent,GameObject>(go);
             unit.AddComponent<CharacterControllerComponent,GameObject>(go);
             unit.AddComponent<AnimatorComponent>();

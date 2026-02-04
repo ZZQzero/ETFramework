@@ -170,7 +170,6 @@ namespace ET
         /// <summary>
         /// 统一受击入口
         /// - Resistance 按状态切表（Grounded/Airborne/AirStun/Knockdown/GetUp）
-        /// - 空中禁止二次击飞（Launch 在空中会被降级/忽略）
         /// </summary>
         public static bool TryApplyHit(this HitReactionComponent self, in HitReactionRequest hitReaction)
         {
@@ -184,13 +183,13 @@ namespace ET
             self.AllowedReactionGroups = rulesConfig.AllowedReactionGroups;
             self.AllowedStateVisuals = rulesConfig.AllowedStateVisuals;
 
-            bool hasVisualOrPhysical = hitReaction.ReactionType != HitReactionType.None || hitReaction.MotionData.MotionType != HitMotionType.Normal;
+            bool hasVisualOrPhysical = hitReaction.Rule.ReactionType != HitReactionType.None || hitReaction.Rule.MotionData.MotionType != HitMotionType.Normal;
             bool hasAnyFeedback =
-                hitReaction.VictimHitStopMs > 0 ||
-                hitReaction.ScreenShakeIntensity > 0f ||
-                hitReaction.ScreenShakeDurationMs > 0 ||
-                (hitReaction.TimeScale > 0f && !Mathf.Approximately(hitReaction.TimeScale, 1f)) ||
-                hitReaction.TimeScaleDurationMs > 0;
+                hitReaction.Feedback.VictimHitStopMs > 0 ||
+                hitReaction.Feedback.ScreenShakeIntensity > 0f ||
+                hitReaction.Feedback.ScreenShakeDurationMs > 0 ||
+                (hitReaction.Feedback.TimeScale > 0f && !Mathf.Approximately(hitReaction.Feedback.TimeScale, 1f)) ||
+                hitReaction.Feedback.TimeScaleDurationMs > 0;
 
             // 允许“仅反馈”的请求（例如格挡成功、护盾命中）：不进入受击状态机
             // 注意：此分支不参与 AcceptMask/TargetStates/CanBeHit 判定，避免把表现反馈耦合进 gameplay 受击规则。
@@ -205,18 +204,17 @@ namespace ET
                 return true;
             }
 
-            if (!self.PassTargetStateFilter( hitReaction.TargetStates))
+            if (!self.PassTargetStateFilter(hitReaction.Rule.TargetStates))
                 return false;
 
             // 归一化参数（应用 Scale 和 Limit）
             HitReactionRequest normalized = self.Normalize(hitReaction, in rulesConfig);
 
-            Log.Error($"Hit  {normalized}");
             // GetUp：起身中，门槛不够直接拒绝（不进入受击会话，也不触发反馈）
             if (self.CurrentHitState == HitState.GetUp) 
             {
-                var getUpRes = rulesConfig.hitInterruptThresholds.GetUp;
-                if (normalized.HitStrength < getUpRes.GetUpInterruptThreshold)
+                var getUpRes = rulesConfig.HitInterrupt.GetUp;
+                if (normalized.Rule.HitStrength < getUpRes.GetUpInterruptThreshold)
                 {
                     return false;
                 }
@@ -230,11 +228,11 @@ namespace ET
                 // 应用受击（状态切表）
                 self.ApplyHit(in normalized, in rulesConfig);
             
-            // 规则生效后，才做“表现许可/降级/禁播”
-            self.ApplyVisualOutcome(in normalized);
+                // 规则生效后，才做“表现许可/降级/禁播”
+                self.ApplyVisualOutcome(in normalized);
 
-            // 反馈：默认仍按反馈 profile 执行（可后续进一步纳入 VisualOutcome 细分）
-            self.ApplyFeedback(in normalized, in hitFeedbackConfig);
+                // 反馈：默认仍按反馈 profile 执行（可后续进一步纳入 VisualOutcome 细分）
+                self.ApplyFeedback(in normalized, in hitFeedbackConfig);
                 return true;
             }
             catch (Exception e)
@@ -249,9 +247,9 @@ namespace ET
         private static void ApplyHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
         {
             // 统一更新“当前受击表现类型”和“硬直截止点”
-            self.CurrentReactionType = request.ReactionType;
+            self.CurrentReactionType = request.Rule.ReactionType;
             long now = self.GetCombatNowMs();
-            long nextStunEnd = now + Mathf.Max(0, request.HitStunMs);
+            long nextStunEnd = now + Mathf.Max(0, request.Rule.HitStunMs);
             if (nextStunEnd > self.StunEndTime)
             {
                 self.StunEndTime = nextStunEnd;
@@ -340,39 +338,39 @@ namespace ET
             }
 
             // 2) ReactionType 许可（仅 Grounded 使用；空中/倒地/起身等以状态动画为主）
-            HitReactionType desired = request.ReactionType;
+            HitReactionType desired = request.Rule.ReactionType;
             HitReactionType visualType = self.DegradeReactionType(desired, self.AllowedReactionGroups);
             self.VisualReactionType = visualType;
         }
 
         private static void HandleGroundedHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
         {
-            var res = reactionRulesConfig.hitInterruptThresholds.Grounded;
+            var res = reactionRulesConfig.HitInterrupt.Grounded;
             long now = self.GetCombatNowMs();
 
             // Grounded：起身中才允许被门槛打断，否则直接按地面受击处理
             self.SwitchState(HitState.Grounded);
            
-            switch (request.MotionData.MotionType)
+            switch (request.Rule.MotionData.MotionType)
             {
                 case HitMotionType.Normal:
                     //只处理硬值，怪物不会被击退,怪物不往前走
-                    if (request.HitStrength >= res.LightReactionThreshold)
+                    if (request.Rule.HitStrength >= res.LightReactionThreshold)
                     {
-                        self.CurrentMotionType = request.MotionData.MotionType;
+                        self.CurrentMotionType = request.Rule.MotionData.MotionType;
                     }
                     break;
                 case HitMotionType.Knockback:
                 case HitMotionType.PullTowardAttacker:
                     //击退或吸过来,拉拽
-                    if (request.HitStrength > res.KnockbackThreshold)
+                    if (request.Rule.HitStrength > res.KnockbackThreshold)
                     {
                         self.InitPhysicalMotion(in request);
                     }
                     break;
                 case HitMotionType.Knockup:
                     //从地面击飞
-                    if (request.HitStrength > res.AirborneThreshold)
+                    if (request.Rule.HitStrength > res.AirborneThreshold)
                     {
                         self.EnterAirborneFromGrounded(in request);
                     }
@@ -387,17 +385,17 @@ namespace ET
 
         private static void HandleAirborneHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
         {
-            var res = reactionRulesConfig.hitInterruptThresholds.Airborne;
+            var res = reactionRulesConfig.HitInterrupt.Airborne;
 
             // 空中：高优先级 -> 空中终结
-            if (request.HitStrength >= res.AirborneThreshold)
+            if (request.Rule.HitStrength >= res.AirborneThreshold)
             {
                 self.EnterAirStun(in request);
                 return;
             }
 
             // 空中：达到门槛 -> 砸地（通过 AirborneReason 驱动落地后倒地）
-            if (request.HitStrength >= res.KnockdownThreshold)
+            if (request.Rule.HitStrength >= res.KnockdownThreshold)
             {
                 self.BeginAirSlamToKnockdown(in request);
                 return;
@@ -405,12 +403,12 @@ namespace ET
 
             // 空中：轻/中等命中成立；Knockup 根据 MaxAirborneKnockupForce 允许 capped 二次击飞
             HitReactionRequest filtered = self.FilterAirborneMotion(in request, allowSecondaryKnockup: true);
-            if (filtered.MotionData.MotionType != HitMotionType.Normal)
+            if (filtered.Rule.MotionData.MotionType != HitMotionType.Normal)
             {
                 self.InitPhysicalMotion(in filtered);
-                if (filtered.MotionData.MotionType == HitMotionType.Knockup)
+                if (filtered.Rule.MotionData.MotionType == HitMotionType.Knockup)
                 {
-                    self.ApplyVerticalImpulse(HitMotionType.Knockup, filtered.MotionData.Force);
+                    self.ApplyVerticalImpulse(HitMotionType.Knockup, filtered.Rule.MotionData.Force);
                 }
             }
 
@@ -418,7 +416,7 @@ namespace ET
             if (self.AirCombo != null && self.AirCombo.Active)
             {
                 HitReactionProfileProvider.ResolveAirCombo(self.OwnerUnit, out var acProfile);
-                self.AirCombo.OnHit(self.GetCombatNowMs(), in acProfile, request.AttackerSegmentComboTimeoutMs, request.AttackRadius);
+                self.AirCombo.OnHit(self.GetCombatNowMs(), in acProfile, request.AirCombo.AttackerSegmentComboTimeoutMs, request.AirCombo.AttackRadius);
                 
                 if (!self.AirCombo.IsExiting)
                 {
@@ -441,10 +439,10 @@ namespace ET
 
         private static void HandleAirStunHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
         {
-            var res = reactionRulesConfig.hitInterruptThresholds.AirFinisher;
+            var res = reactionRulesConfig.HitInterrupt.AirFinisher;
 
             // 允许更强的砸地（或保持终结态）
-            if (request.HitStrength >= res.KnockdownThreshold)
+            if (request.Rule.HitStrength >= res.KnockdownThreshold)
             {
                 self.BeginAirSlamToKnockdown(in request);
                 return;
@@ -452,7 +450,7 @@ namespace ET
 
             // 其余命中：只刷新硬直/反馈（不改变状态），完全禁止二次击飞
             HitReactionRequest filtered = self.FilterAirborneMotion(in request, allowSecondaryKnockup: false);
-            if (filtered.MotionData.MotionType != HitMotionType.Normal)
+            if (filtered.Rule.MotionData.MotionType != HitMotionType.Normal)
             {
                 self.InitPhysicalMotion(in filtered);
             }
@@ -460,10 +458,10 @@ namespace ET
 
         private static void HandleKnockdownHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
         {
-            var res = reactionRulesConfig.hitInterruptThresholds.Knockdown;
+            var res = reactionRulesConfig.HitInterrupt.Knockdown;
 
             // 倒地：只有达到门槛才允许“续倒地/打断起身”（避免无限压起身）
-            if (request.HitStrength >= res.GetUpInterruptThreshold)
+            if (request.Rule.HitStrength >= res.KnockdownThreshold)
             {
                 self.KnockdownEndTime = self.GetCombatNowMs() + self.KnockdownDurationMs;
             }
@@ -471,10 +469,10 @@ namespace ET
 
         private static void HandleGetUpHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
         {
-            var res = reactionRulesConfig.hitInterruptThresholds.GetUp;
+            var res = reactionRulesConfig.HitInterrupt.GetUp;
 
             // 起身：门槛不够则直接拒绝（不进入受击会话）
-            if (request.HitStrength < res.GetUpInterruptThreshold)
+            if (request.Rule.HitStrength < res.GetUpInterruptThreshold)
             {
                 return;
             }
@@ -504,7 +502,7 @@ namespace ET
 
             // 空中终结仍允许 Push/Pull（但完全禁止 Launch）
             HitReactionRequest filtered = self.FilterAirborneMotion(in request, allowSecondaryKnockup: false);
-            if (filtered.MotionData.MotionType != HitMotionType.Normal)
+            if (filtered.Rule.MotionData.MotionType != HitMotionType.Normal)
             {
                 self.InitPhysicalMotion(in filtered);
             }
@@ -527,10 +525,10 @@ namespace ET
                 self.Ground.StateContext.AirborneReason = AirborneReason.Knockdown;
             }
 
-            if (request.MotionData.MotionType == HitMotionType.KnockDown)
+            if (request.Rule.MotionData.MotionType == HitMotionType.KnockDown)
             {
                 self.InitPhysicalMotion(in request);
-                self.ApplyVerticalImpulse(HitMotionType.KnockDown, request.MotionData.Force);
+                self.ApplyVerticalImpulse(HitMotionType.KnockDown, request.Rule.MotionData.Force);
             }
         }
 
@@ -555,11 +553,11 @@ namespace ET
             }
             self.EnsureAirComboEventBindings();
             self.InitPhysicalMotion(in request);
-            self.ApplyVerticalImpulse(request.MotionData.MotionType, request.MotionData.Force);
+            self.ApplyVerticalImpulse(request.Rule.MotionData.MotionType, request.Rule.MotionData.Force);
             HitReactionProfileProvider.ResolveAirCombo(self.OwnerUnit, out var acProfile);
             // 连段中心：优先使用攻击者位置，未设置时 fallback 到受击者位置
-            Vector3 comboCenterPos = request.AttackerWorldPos != default ? request.AttackerWorldPos : self.Owner.position;
-            self.AirCombo.Enter(self.GetCombatNowMs(), comboCenterPos, in acProfile, request.AttackerSegmentComboTimeoutMs, request.AttackRadius);
+            Vector3 comboCenterPos = request.AirCombo.HasAttackerWorldPos ? request.AirCombo.AttackerWorldPos : self.Owner.position;
+            self.AirCombo.Enter(self.GetCombatNowMs(), comboCenterPos, in acProfile, request.AirCombo.AttackerSegmentComboTimeoutMs, request.AirCombo.AttackRadius);
             
         }
 
@@ -635,9 +633,9 @@ namespace ET
 
         private static void ApplyFeedback(this HitReactionComponent self, in HitReactionRequest request, in HitFeedbackConfig config)
         {
-            if (config.Option.AllowVictimHitStop && request.VictimHitStopMs > 0)
+            if (config.Option.AllowVictimHitStop && request.Feedback.VictimHitStopMs > 0)
             {
-                int ms = Mathf.RoundToInt(request.VictimHitStopMs * Mathf.Max(0f, config.Option.VictimHitStopScale));
+                int ms = Mathf.RoundToInt(request.Feedback.VictimHitStopMs * Mathf.Max(0f, config.Option.VictimHitStopScale));
                 var hitStop = self.OwnerUnit?.GetComponent<CombatContextComponent>()?.HitStop;
                 var anim = self.OwnerUnit?.GetComponent<AnimatorComponent>()?.Animancer;
                 if (hitStop != null && anim != null)
@@ -652,13 +650,13 @@ namespace ET
         /// </summary>
         private static void InitPhysicalMotion(this HitReactionComponent self, in HitReactionRequest request)
         {
-            self.CurrentMotionType = request.MotionData.MotionType;
-            self.MotionDirection = request.HitDirection.sqrMagnitude > 0.0001f ? request.HitDirection.normalized : Vector3.zero;
-            self.MotionBaseForce = Mathf.Max(0f, request.MotionData.Force);
+            self.CurrentMotionType = request.Rule.MotionData.MotionType;
+            self.MotionDirection = request.Rule.HitDirection.sqrMagnitude > 0.0001f ? request.Rule.HitDirection.normalized : Vector3.zero;
+            self.MotionBaseForce = Mathf.Max(0f, request.Rule.MotionData.Force);
             self.CurrentMotionSpeed = self.MotionBaseForce;
-            self.CurrentMotionCurve = request.MotionData.MotionCurve;
+            self.CurrentMotionCurve = request.Rule.MotionData.MotionCurve;
             self.MotionStartTime = self.GetCombatNowMs();
-            self.MotionEndTime = self.MotionStartTime + Mathf.Max(0, request.MotionData.DurationMs);
+            self.MotionEndTime = self.MotionStartTime + Mathf.Max(0, request.Rule.MotionData.DurationMs);
         }
 
         /// <summary>

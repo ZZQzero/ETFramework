@@ -7,110 +7,120 @@ namespace ET
     /// </summary>
     public static class HitReactionProfileProvider
     {
-        // ===== 默认 Rules =====
-        public static readonly HitReactionRulesConfig PlayerReactionRules = new HitReactionRulesConfig(
-            allowedReactionGroups: HitReactionGroup.All,
-            allowedStateVisuals: HitStateVisualMask.All,
-            hitInterruptThresholdsTable: new HitReactionRulesConfig.HitInterruptThresholdsTable(
-                grounded: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 20, knockbackThreshold: 30, airborneThreshold: 50, knockdownThreshold: 60, getUpInterruptThreshold: 255),
-                airborne: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 10, knockbackThreshold: 20, airborneThreshold: 255, knockdownThreshold: 40, getUpInterruptThreshold: 255),
-                airFinisher: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 255, knockbackThreshold: 255, airborneThreshold: 255, knockdownThreshold: 20, getUpInterruptThreshold: 255),
-                knockdown: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 255, knockbackThreshold: 255, airborneThreshold: 255, knockdownThreshold: 255, getUpInterruptThreshold: 80),
-                getUp: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 255, knockbackThreshold: 255, airborneThreshold: 255, knockdownThreshold: 255, getUpInterruptThreshold: 80)),
-            scales: new HitReactionRulesConfig.Scales(1f, 1f, 1f),
-            limits: new HitReactionRulesConfig.Limits(1200, 25f, 18f));
+        public static void ResolveConfig(Unit unit, out HitReactionRulesConfig reactionRules, out HitFeedbackConfig feedback)
+        {
+            if (TryGetProfile(unit, out var profile))
+            {
+                reactionRules = BuildRules(in profile.Rules);
+                feedback = BuildFeedback(in profile.Feedback);
+                return;
+            }
 
-        public static readonly HitReactionRulesConfig MonsterReactionRules = new HitReactionRulesConfig(
-            allowedReactionGroups: HitReactionGroup.All,
-            allowedStateVisuals: HitStateVisualMask.All,
-            hitInterruptThresholdsTable: new HitReactionRulesConfig.HitInterruptThresholdsTable(
-                grounded: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 20, knockbackThreshold: 30, airborneThreshold: 50, knockdownThreshold: 60, getUpInterruptThreshold: 255),
-                airborne: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 10, knockbackThreshold: 20, airborneThreshold: 70, knockdownThreshold: 60, getUpInterruptThreshold: 255),
-                airFinisher: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 255, knockbackThreshold: 255, airborneThreshold: 255, knockdownThreshold: 65, getUpInterruptThreshold: 255),
-                knockdown: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 255, knockbackThreshold: 255, airborneThreshold: 255, knockdownThreshold: 255, getUpInterruptThreshold: 80),
-                getUp: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 255, knockbackThreshold: 255, airborneThreshold: 255, knockdownThreshold: 255, getUpInterruptThreshold: 80)),
-            scales: new HitReactionRulesConfig.Scales(1f, 1f, 1f),
-            limits: new HitReactionRulesConfig.Limits(1500, 30f, 22f));
+            Log.Error($"[HitReactionProfileProvider] 未找到 HitReactionProfileAsset, Unit={unit?.UnitName}");
+            reactionRules = DefaultRules;
+            feedback = DefaultFeedback;
+        }
 
-        // Boss：默认不吃 Stagger/Stun，硬直缩放更低，避免被无限控制
-        public static readonly HitReactionRulesConfig BossReactionRules = new HitReactionRulesConfig(
-            allowedReactionGroups: HitReactionGroup.Minor | HitReactionGroup.Major, // 禁播 Control 表现（但规则仍可生效/会降级表现）
-            allowedStateVisuals: HitStateVisualMask.All,
-            hitInterruptThresholdsTable: new HitReactionRulesConfig.HitInterruptThresholdsTable(
-                grounded: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 25, knockbackThreshold: 45, airborneThreshold: 55, knockdownThreshold: 65, getUpInterruptThreshold: 255),
-                airborne: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 255, knockbackThreshold: 255, airborneThreshold: 255, knockdownThreshold: 255, getUpInterruptThreshold: 255),
-                airFinisher: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 255, knockbackThreshold: 255, airborneThreshold: 255, knockdownThreshold: 255, getUpInterruptThreshold: 255),
-                knockdown: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 255, knockbackThreshold: 255, airborneThreshold: 255, knockdownThreshold: 255, getUpInterruptThreshold: 255),
-                getUp: new HitReactionRulesConfig.HitInterruptThresholds(lightReactionThreshold: 255, knockbackThreshold: 255, airborneThreshold: 255, knockdownThreshold: 255, getUpInterruptThreshold: 255)),
-            scales: new HitReactionRulesConfig.Scales(0.35f, 0.5f, 0.5f),
-            limits: new HitReactionRulesConfig.Limits(600, 12f, 10f));
+        public static void ResolveAirCombo(Unit unit, out HitAirComboProfile airCombo)
+        {
+            if (TryGetProfile(unit, out var profile))
+            {
+                airCombo = BuildAirCombo(in profile.AirCombo);
+                return;
+            }
 
-        // ===== 默认 Feedback =====
-        // 玩家：目标侧 HitStop 通常不启用（避免被打时自己也顿帧割裂输入），更多应由“攻击者侧/镜头侧”产生反馈
-        public static readonly HitFeedbackConfig PlayerFeedback = new HitFeedbackConfig(
+            Log.Error($"[HitReactionProfileProvider] 未找到 HitReactionProfileAsset, Unit={unit?.UnitName}");
+            airCombo = DefaultAirCombo;
+        }
+
+        private static bool TryGetProfile(Unit unit, out HitReactionProfileAsset profile)
+        {
+            profile = unit?.GetComponent<CombatConfigComponent>()?.HitReactionAsset;
+            return profile != null;
+        }
+
+        private static HitReactionRulesConfig BuildRules(in HitReactionRulesData data)
+        {
+            var thresholds = data.InterruptThresholds;
+
+            HitReactionRulesConfig.HitInterruptThresholds hitInterrupt =
+                new HitReactionRulesConfig.HitInterruptThresholds(
+                    thresholds.Grounded,
+                    thresholds.Airborne,
+                    thresholds.AirFinisher,
+                    thresholds.Knockdown,
+                    thresholds.GetUp);
+
+            var scales = new HitReactionRulesConfig.Scales(
+                data.Scales.Stun,
+                data.Scales.Knockback,
+                data.Scales.Knockup);
+
+            var limits = new HitReactionRulesConfig.Limits(
+                data.Limits.MaxHitStunMs,
+                data.Limits.MaxKnockbackForce,
+                data.Limits.MaxKnockupForce);
+
+            return new HitReactionRulesConfig(
+                data.AllowedReactionGroups,
+                data.AllowedStateVisuals,
+                hitInterrupt,
+                scales,
+                limits);
+        }
+
+        private static HitFeedbackConfig BuildFeedback(in HitReactionFeedbackData data)
+        {
+            return new HitFeedbackConfig(new HitFeedbackConfig.Options(
+                data.Option.AllowVictimHitStop,
+                data.Option.VictimHitStopScale,
+                data.Option.AllowScreenShake,
+                data.Option.ScreenShakeScale,
+                data.Option.AllowTimeScale,
+                data.Option.TimeScaleScale));
+        }
+
+        private static HitAirComboProfile BuildAirCombo(in HitAirComboData data)
+        {
+            return new HitAirComboProfile(
+                data.Enable,
+                data.MinAirTimeMs,
+                data.MaxTotalHangMs,
+                data.GravityScaleDuringCombo,
+                data.MinFallSpeedAbs,
+                data.MinHeightOffset,
+                data.MaxHeightOffset,
+                data.ExitLerpMs,
+                data.LandingStunMs,
+                data.MaxAirborneKnockupForce,
+                data.MaxAirHorizontalDistance,
+                data.MaxAirHorizontalSpeed,
+                data.RecenterStrength,
+                data.RecenterDeadZone);
+        }
+
+        private static readonly HitReactionRulesConfig DefaultRules = new HitReactionRulesConfig(
+            HitReactionGroup.All,
+            HitStateVisualMask.All,
+            new HitReactionRulesConfig.HitInterruptThresholds(
+                new GroundedThresholdData(20, 30, 50, 60),
+                new AirborneThresholdData(70, 60),
+                new AirFinisherThresholdData(65),
+                new KnockdownThresholdData(80),
+                new GetUpThresholdData(80)),
+            new HitReactionRulesConfig.Scales(1f, 1f, 1f),
+            new HitReactionRulesConfig.Limits(int.MaxValue, float.MaxValue, float.MaxValue));
+
+        private static readonly HitFeedbackConfig DefaultFeedback = new HitFeedbackConfig(
             new HitFeedbackConfig.Options(
                 allowVictimHitStop: false,
                 victimHitStopScale: 0f,
-                allowScreenShake: true,
-                screenShakeScale: 1f,
-                allowTimeScale: false,
-                timeScaleScale: 0f));
-
-        public static readonly HitFeedbackConfig MonsterFeedback = new HitFeedbackConfig(
-            new HitFeedbackConfig.Options(
-                allowVictimHitStop: true,
-                victimHitStopScale: 1f,
                 allowScreenShake: false,
                 screenShakeScale: 0f,
                 allowTimeScale: false,
                 timeScaleScale: 0f));
 
-        public static readonly HitFeedbackConfig BossFeedback = new HitFeedbackConfig(
-            new HitFeedbackConfig.Options(
-                allowVictimHitStop: false,
-                victimHitStopScale: 0f,
-                allowScreenShake: true,
-                screenShakeScale: 1.25f,
-                allowTimeScale: false,
-                timeScaleScale: 0f));
-
-        // ===== 默认 AirCombo（Combo Physics） =====
-        // 说明：
-        // - Player/Monster 默认启用（由用户选择 monster_and_player）
-        // - Boss 默认禁用或更短/更重（避免被无限挂空）
-        public static readonly HitAirComboProfile PlayerAirCombo = new HitAirComboProfile(
-            enable: true,
-            minAirTimeMs: 250,
-            maxTotalHangMs: 3500,
-            gravityScaleDuringCombo: 0.12f,
-            minFallSpeedAbs: 0.8f,
-            minHeightOffset: 0f,
-            maxHeightOffset: 2.2f,
-            exitLerpMs: 160,
-            landingStunMs: 180,
-            maxAirborneKnockupForce: 2.5f,
-            maxHorizontalDistance:3,
-            maxHorizontalSpeed: 2.5f,
-            recenterStrength:2.5f,
-            recenterDeadZone: 1.5f);
-
-        public static readonly HitAirComboProfile MonsterAirCombo = new HitAirComboProfile(
-            enable: true,
-            minAirTimeMs: 260,
-            maxTotalHangMs: 4500,
-            gravityScaleDuringCombo: 0.10f,
-            minFallSpeedAbs: 0.7f,
-            minHeightOffset: 0f,
-            maxHeightOffset: 2.5f,
-            exitLerpMs: 170,
-            landingStunMs: 200,
-            maxAirborneKnockupForce: 2.5f,
-            maxHorizontalDistance:3,
-            maxHorizontalSpeed: 2.5f,
-            recenterStrength:4.5f,
-            recenterDeadZone: 1.5f);
-
-        public static readonly HitAirComboProfile BossAirCombo = new HitAirComboProfile(
+        private static readonly HitAirComboProfile DefaultAirCombo = new HitAirComboProfile(
             enable: false,
             minAirTimeMs: 0,
             maxTotalHangMs: 0,
@@ -121,80 +131,17 @@ namespace ET
             exitLerpMs: 0,
             landingStunMs: 0,
             maxAirborneKnockupForce: 0f,
-            maxHorizontalDistance:3,
-            maxHorizontalSpeed: 2.5f,
-            recenterStrength:2.5f,
-            recenterDeadZone: 1.5f);
-
-        public static void ResolveConfig(Unit unit, out HitReactionRulesConfig reactionRules, out HitFeedbackConfig feedback)
-        {
-            reactionRules = MonsterReactionRules;
-            feedback = MonsterFeedback;
-
-            if (unit == null)
-            {
-                return;
-            }
-
-            switch (unit.UnitType())
-            {
-                case UnitType.Player:
-                    reactionRules = PlayerReactionRules;
-                    feedback = PlayerFeedback;
-                    return;
-                case UnitType.Monster:
-                {
-                    var mi = unit.GetComponent<MonsterIdentityComponent>();
-                    if (mi != null && mi.IsBoss)
-                    {
-                        reactionRules = BossReactionRules;
-                        feedback = BossFeedback;
-                        return;
-                    }
-                    reactionRules = MonsterReactionRules;
-                    feedback = MonsterFeedback;
-                    return;
-                }
-                default:
-                    return;
-            }
-        }
-
-        public static void ResolveAirCombo(Unit unit, out HitAirComboProfile airCombo)
-        {
-            airCombo = MonsterAirCombo;
-            if (unit == null)
-            {
-                return;
-            }
-
-            switch (unit.UnitType())
-            {
-                case UnitType.Player:
-                    airCombo = PlayerAirCombo;
-                    return;
-                case UnitType.Monster:
-                {
-                    var mi = unit.GetComponent<MonsterIdentityComponent>();
-                    if (mi != null && mi.IsBoss)
-                    {
-                        airCombo = BossAirCombo;
-                        return;
-                    }
-                    airCombo = MonsterAirCombo;
-                    return;
-                }
-                default:
-                    return;
-            }
-        }
+            maxHorizontalDistance: 0f,
+            maxHorizontalSpeed: 0f,
+            recenterStrength: 0f,
+            recenterDeadZone: 0f);
         
         public static AirborneReason ResolveAirborneReasonForRequest(in HitReactionRequest request)
         {
             // Slam 通常意味着“砸地/击倒”语义；Launch 表示击飞；Refresh(空中追击)默认 Juggled
 
             AirborneReason type = AirborneReason.None;
-            switch (request.MotionData.MotionType)
+            switch (request.Rule.MotionData.MotionType)
             {
                 case HitMotionType.Normal:
                 case HitMotionType.Knockback:
@@ -212,12 +159,22 @@ namespace ET
             return type;
         }
         
-        public static HitReactionRequest From(in HitEffectData effect, in HitFeedbackData feedback, Vector3 hitDirection, int defaultHitStopMs, int attackerSegmentComboTimeoutMs = 0, float attackRadius = 0f, Vector3 attackerWorldPos = default)
+        public static HitReactionRequest From(
+            in HitEffectData effect,
+            in HitFeedbackData feedback,
+            Vector3 hitDirection,
+            int defaultHitStopMs,
+            int attackerSegmentComboTimeoutMs = 0,
+            float attackRadius = 0f,
+            Vector3 attackerWorldPos = default,
+            bool hasAttackerWorldPos = false)
         {
-            // ModelView 只存数据：Priority=0 表示未配置。
-            byte priority = effect.HitStrength != 0 ? effect.HitStrength : GetDefaultPriority(effect.HitReaction);
-
-            return new HitReactionRequest(effect, feedback, hitDirection, defaultHitStopMs, attackerSegmentComboTimeoutMs, attackRadius, attackerWorldPos);
+            var airCombo = new HitReactionRequest.AirComboHint(
+                attackerSegmentComboTimeoutMs,
+                attackRadius,
+                attackerWorldPos,
+                hasAttackerWorldPos: hasAttackerWorldPos);
+            return new HitReactionRequest(effect, feedback, hitDirection, defaultHitStopMs, airCombo);
         }
         
         private static byte GetDefaultPriority(HitReactionType type)
@@ -236,14 +193,14 @@ namespace ET
         
         public static HitReactionRequest Normalize(this HitReactionComponent self, in HitReactionRequest r, in HitReactionRulesConfig config)
         {
-            Vector3 dir = r.HitDirection;
+            Vector3 dir = r.Rule.HitDirection;
             dir.y = 0f;
             if (dir.sqrMagnitude > 0.0001f)
             {
                 dir.Normalize();
             }
 
-            int stun = Mathf.Max(0, r.HitStunMs);
+            int stun = Mathf.Max(0, r.Rule.HitStunMs);
             if (config.Scale.Stun > 0f && !Mathf.Approximately(config.Scale.Stun, 1f))
             {
                 stun = Mathf.RoundToInt(stun * config.Scale.Stun);
@@ -254,7 +211,7 @@ namespace ET
             }
 
             // 物理轨道归一化
-            HitMotionData motion = r.MotionData;
+            HitMotionData motion = r.Rule.MotionData;
             motion.Force = Mathf.Max(0f, motion.Force);
             
             // 根据 Profile 缩放和限制力
@@ -269,27 +226,29 @@ namespace ET
                 if (config.Limit.MaxKnockupForce >= 0f && motion.Force > config.Limit.MaxKnockupForce) motion.Force = config.Limit.MaxKnockupForce;
             }
 
-            int hitStop = Mathf.Max(0, r.VictimHitStopMs);
-            float shakeIntensity = Mathf.Max(0f, r.ScreenShakeIntensity);
-            int shakeDurationMs = Mathf.Max(0, r.ScreenShakeDurationMs);
-            float timeScale = r.TimeScale <= 0f ? 1f : r.TimeScale;
-            int timeScaleMs = Mathf.Max(0, r.TimeScaleDurationMs);
+            int hitStop = Mathf.Max(0, r.Feedback.VictimHitStopMs);
+            float shakeIntensity = Mathf.Max(0f, r.Feedback.ScreenShakeIntensity);
+            int shakeDurationMs = Mathf.Max(0, r.Feedback.ScreenShakeDurationMs);
+            float timeScale = r.Feedback.TimeScale <= 0f ? 1f : r.Feedback.TimeScale;
+            int timeScaleMs = Mathf.Max(0, r.Feedback.TimeScaleDurationMs);
 
-            return new HitReactionRequest(
-                reactionType: r.ReactionType,
-                hitStrength: r.HitStrength,
-                motionData: motion,
-                targetStates: r.TargetStates,
-                hitDirection: dir,
-                hitStunMs: stun,
-                victimHitStopMs: hitStop,
-                screenShakeIntensity: shakeIntensity,
-                screenShakeDurationMs: shakeDurationMs,
-                timeScale: timeScale,
-                timeScaleDurationMs: timeScaleMs,
-                attackerSegmentComboTimeoutMs: r.AttackerSegmentComboTimeoutMs,
-                attackRadius: r.AttackRadius,
-                attackerWorldPos: r.AttackerWorldPos);
+            byte hitStrength = r.Rule.HasHitStrength ? r.Rule.HitStrength : GetDefaultPriority(r.Rule.ReactionType);
+            var normalizedRule = new HitReactionRequest.HitRuleData(
+                r.Rule.ReactionType,
+                hitStrength,
+                true,
+                motion,
+                r.Rule.TargetStates,
+                dir,
+                stun);
+            var normalizedFeedback = new HitReactionRequest.HitFeedbackRequestData(
+                hitStop,
+                shakeIntensity,
+                shakeDurationMs,
+                timeScale,
+                timeScaleMs);
+
+            return new HitReactionRequest(normalizedRule, normalizedFeedback, r.AirCombo);
         }
         
         public static bool PassTargetStateFilter(this HitReactionComponent self, TargetStateMask filter)
@@ -322,7 +281,7 @@ namespace ET
         /// <param name="allowSecondaryKnockup">Airborne 时为 true 允许 capped 二次击飞；AirFinisher 时为 false 完全禁止。</param>
         public static HitReactionRequest FilterAirborneMotion(this HitReactionComponent self, in HitReactionRequest request, bool allowSecondaryKnockup = true)
         {
-            if (request.MotionData.MotionType != HitMotionType.Knockup)
+            if (request.Rule.MotionData.MotionType != HitMotionType.Knockup)
             {
                 return request;
             }
@@ -330,7 +289,7 @@ namespace ET
             if (!allowSecondaryKnockup)
             {
                 // 完全禁止二次击飞
-                HitMotionData m = request.MotionData;
+                HitMotionData m = request.Rule.MotionData;
                 m.MotionType = HitMotionType.Normal;
                 m.Force = 0f;
                 m.DurationMs = 0;
@@ -341,7 +300,7 @@ namespace ET
             if (profile.MaxAirborneKnockupForce <= 0f)
             {
                 // 配置为 0：禁止
-                HitMotionData m = request.MotionData;
+                HitMotionData m = request.Rule.MotionData;
                 m.MotionType = HitMotionType.Normal;
                 m.Force = 0f;
                 m.DurationMs = 0;
@@ -349,28 +308,22 @@ namespace ET
             }
 
             // 允许二次击飞，夹持力上限
-            HitMotionData capped = request.MotionData;
+            HitMotionData capped = request.Rule.MotionData;
             capped.Force = Mathf.Min(capped.Force, profile.MaxAirborneKnockupForce);
             return BuildFilteredRequest(in request, capped);
         }
 
         private static HitReactionRequest BuildFilteredRequest(in HitReactionRequest request, HitMotionData motionData)
         {
-            return new HitReactionRequest(
-                reactionType: request.ReactionType,
-                hitStrength: request.HitStrength,
-                motionData: motionData,
-                targetStates: request.TargetStates,
-                hitDirection: request.HitDirection,
-                hitStunMs: request.HitStunMs,
-                victimHitStopMs: request.VictimHitStopMs,
-                screenShakeIntensity: request.ScreenShakeIntensity,
-                screenShakeDurationMs: request.ScreenShakeDurationMs,
-                timeScale: request.TimeScale,
-                timeScaleDurationMs: request.TimeScaleDurationMs,
-                attackerSegmentComboTimeoutMs: request.AttackerSegmentComboTimeoutMs,
-                attackRadius: request.AttackRadius,
-                attackerWorldPos: request.AttackerWorldPos);
+            var rule = new HitReactionRequest.HitRuleData(
+                request.Rule.ReactionType,
+                request.Rule.HitStrength,
+                request.Rule.HasHitStrength,
+                motionData,
+                request.Rule.TargetStates,
+                request.Rule.HitDirection,
+                request.Rule.HitStunMs);
+            return new HitReactionRequest(rule, request.Feedback, request.AirCombo);
         }
         
         private static HitReactionGroup ToGroup(HitReactionType type)

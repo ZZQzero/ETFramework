@@ -1193,7 +1193,8 @@ namespace ET
                 int attackerSegmentComboTimeoutMs = self.GetCurrentSegmentComboTimeoutMs();
                 float attackRadius = hitBox.GetAttackRadius();
                 Vector3 attackerWorldPos = self.OwnerTransform.position;
-                var req = HitReactionProfileProvider.From(in effect, in feedback, hitDirection, defaultHitStopMs, attackerSegmentComboTimeoutMs, attackRadius, attackerWorldPos);
+                var req = HitReactionProfileProvider.From(in effect, in feedback, hitDirection,
+                    defaultHitStopMs, attackerSegmentComboTimeoutMs, attackRadius, attackerWorldPos, hasAttackerWorldPos: true);
                 hitReactionComponent.TryApplyHit(in req);
             }
 

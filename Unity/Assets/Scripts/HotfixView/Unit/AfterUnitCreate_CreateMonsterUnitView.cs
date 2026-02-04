@@ -23,6 +23,7 @@ namespace ET
             unit.AddComponent<GameObjectComponent>().GameObject = go;
             unit.AddComponent<CombatContextComponent>();
             unit.AddComponent<MovementContextComponent>();
+            unit.AddComponent<CombatConfigComponent,string>("HitReactionProfile");
             unit.AddComponent<LocomotionIntentComponent>();
             unit.AddComponent<AttackCommandComponent>();
             unit.AddComponent<AIDriverComponent>();
@@ -57,7 +58,7 @@ namespace ET
             attackCatalog.TargetLayerMask = LayerMask.GetMask("Player");
 
             // MovementConfig：把怪物表里的 Speed 合成到最终执行参数
-            var moveConfig = unit.AddComponent<MovementConfigComponent>();
+            var moveConfig = unit.AddComponent<MovementConfigComponent,string>("GroundConfig");
             if (monster.MonsterTable.Speed > 0.01f)
             {
                 moveConfig.MoveSpeed = monster.MonsterTable.Speed;

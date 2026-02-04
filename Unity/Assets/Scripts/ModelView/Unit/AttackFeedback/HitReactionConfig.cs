@@ -42,8 +42,34 @@ namespace ET
     /// - 抵抗力（按状态切表）
     /// - 数值修正与钳制（stun/knockback/knockup）
     /// </summary>
-    public readonly struct HitReactionRulesConfig
+    public readonly struct HitReactionConfig
     {
+        public readonly struct HitRuleConfig
+        {
+            public readonly HitInterruptThresholds HitInterrupt;
+            public readonly Scales Scale;
+            public readonly Limits Limit;
+
+            public HitRuleConfig(in HitInterruptThresholds hitInterrupt, in Scales scale, in Limits limit)
+            {
+                this.HitInterrupt = hitInterrupt;
+                this.Scale = scale;
+                this.Limit = limit;
+            }
+        }
+
+        public readonly struct HitVisualPolicy
+        {
+            public readonly HitReactionGroup AllowedReactionGroups;
+            public readonly HitStateVisualMask AllowedStateVisuals;
+
+            public HitVisualPolicy(HitReactionGroup allowedReactionGroups, HitStateVisualMask allowedStateVisuals)
+            {
+                this.AllowedReactionGroups = allowedReactionGroups;
+                this.AllowedStateVisuals = allowedStateVisuals;
+            }
+        }
+
         /// <summary>
         /// 状态抵抗力分组（处于该状态时，需要多强的 Priority 才能打断）。
         /// </summary>
@@ -104,53 +130,38 @@ namespace ET
             }
         }
 
-        /// <summary>
-        /// 允许播放哪些“受击表现分组”（只影响动画/表现，命中规则仍会生效）。
-        /// </summary>
-        public readonly HitReactionGroup AllowedReactionGroups;
+        /// <summary>规则配置（门槛/缩放/上限）。</summary>
+        public readonly HitRuleConfig Rule;
 
-        /// <summary>
-        /// 允许播放哪些“受击状态动画”（只影响动画；规则状态流转仍会发生）。
-        /// </summary>
-        public readonly HitStateVisualMask AllowedStateVisuals;
+        /// <summary>表现策略（允许哪些动画/表现）。</summary>
+        public readonly HitVisualPolicy Visual;
 
-        /// <summary>抵抗力：按状态切表。</summary>
-        public readonly HitInterruptThresholds HitInterrupt;
-        /// <summary>数值倍率。</summary>
-        public readonly Scales Scale;
-
-        /// <summary>上限限制。</summary>
-        public readonly Limits Limit;
-
-        public HitReactionRulesConfig(
+        public HitReactionConfig(
             HitReactionGroup allowedReactionGroups,
             HitStateVisualMask allowedStateVisuals,
             in HitInterruptThresholds hitInterrupt,
             in Scales scales,
             in Limits limits)
         {
-            this.AllowedReactionGroups = allowedReactionGroups;
-            this.AllowedStateVisuals = allowedStateVisuals;
-            this.HitInterrupt = hitInterrupt;
-            this.Scale = scales;
-            this.Limit = limits;
+            this.Rule = new HitRuleConfig(hitInterrupt, scales, limits);
+            this.Visual = new HitVisualPolicy(allowedReactionGroups, allowedStateVisuals);
         }
 
         public override string ToString()
         {
-            var g = this.HitInterrupt.Grounded;
-            var a = this.HitInterrupt.Airborne;
-            var s = this.HitInterrupt.AirFinisher;
-            var k = this.HitInterrupt.Knockdown;
-            var u = this.HitInterrupt.GetUp;
-            return $"受击规则配置(允许表现组={this.AllowedReactionGroups}, 允许状态动画={this.AllowedStateVisuals}, " +
+            var g = this.Rule.HitInterrupt.Grounded;
+            var a = this.Rule.HitInterrupt.Airborne;
+            var s = this.Rule.HitInterrupt.AirFinisher;
+            var k = this.Rule.HitInterrupt.Knockdown;
+            var u = this.Rule.HitInterrupt.GetUp;
+            return $"受击规则配置(允许表现组={this.Visual.AllowedReactionGroups}, 允许状态动画={this.Visual.AllowedStateVisuals}, " +
                    $"抵抗力表[Grounded(Light/Knockback/Airborne/Knockdown)]=[{g.LightReactionThreshold}/{g.KnockbackThreshold}/{g.AirborneThreshold}/{g.KnockdownThreshold}], " +
                    $"[Airborne(AirFinisher/Knockdown)]=[{a.AirborneThreshold}/{a.KnockdownThreshold}], " +
                    $"[AirFinisher(Knockdown)]=[{s.KnockdownThreshold}], " +
                    $"[Knockdown(GetUpInterrupt)]=[{k.KnockdownThreshold}], " +
                    $"[GetUp(GetUpInterrupt)]=[{u.GetUpInterruptThreshold}], " +
-                   $"数值缩放[硬直/击退/击飞]=[{this.Scale.Stun:0.###}/{this.Scale.Knockback:0.###}/{this.Scale.Knockup:0.###}], " +
-                   $"上限限制[硬直ms/击退力/击飞力]=[{this.Limit.MaxHitStunMs}/{this.Limit.MaxKnockbackForce:0.###}/{this.Limit.MaxKnockupForce:0.###}])";
+                   $"数值缩放[硬直/击退/击飞]=[{this.Rule.Scale.Stun:0.###}/{this.Rule.Scale.Knockback:0.###}/{this.Rule.Scale.Knockup:0.###}], " +
+                   $"上限限制[硬直ms/击退力/击飞力]=[{this.Rule.Limit.MaxHitStunMs}/{this.Rule.Limit.MaxKnockbackForce:0.###}/{this.Rule.Limit.MaxKnockupForce:0.###}])";
         }
     }
 }

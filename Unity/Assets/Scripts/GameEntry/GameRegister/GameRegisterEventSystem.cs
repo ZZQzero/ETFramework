@@ -61,6 +61,7 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.AttackComponentSystem.ET_AttackComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.AttackComponentSystem.ET_AttackComponent_FixedUpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.AirComboComponentSystem.ET_AirComboComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.CombatConfigComponentSystem.ET_CombatConfigComponent_string_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HitReactionComponentSystem.ET_HitReactionComponent_UnityEngine_Transform_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HitReactionComponentSystem.ET_HitReactionComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.HitReactionComponentSystem.ET_HitReactionComponent_UpdateSystem>();
@@ -86,6 +87,7 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.CheckGroundedComponentSystem.ET_CheckGroundedComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.GameObjectComponentSystem.ET_GameObjectComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.GameObjectComponentSystem.ET_GameObjectComponent_AwakeSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.MovementConfigComponentSystem.ET_MovementConfigComponent_string_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ResourcesLoaderComponentSystem.ET_ResourcesLoaderComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ResourcesLoaderComponentSystem.ET_ResourcesLoaderComponent_string_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.ResourcesLoaderComponentSystem.ET_ResourcesLoaderComponent_DestroySystem>();

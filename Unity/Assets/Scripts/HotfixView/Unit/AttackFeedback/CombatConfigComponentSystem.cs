@@ -14,6 +14,10 @@
             if (asset != null)
             {
                 self.HitReactionAsset = asset;
+                self.cached = HitReactionProfileProvider.BuildRules(asset.Rules);
+                self.CachedFeedback = HitReactionProfileProvider.BuildFeedback(asset.Feedback);
+                self.CachedAirCombo = HitReactionProfileProvider.BuildAirCombo(asset.AirCombo);
+                self.CacheReady = true;
             }
             await ETTask.CompletedTask;
         }

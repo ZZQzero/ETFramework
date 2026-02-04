@@ -10,5 +10,20 @@
     {
         /// <summary>受击配置资产（规则/反馈/空连）</summary>
         public HitReactionProfileAsset HitReactionAsset;
+
+        /// <summary>运行时缓存：规则</summary>
+        public HitReactionConfig cached;
+
+        /// <summary>运行时缓存：反馈</summary>
+        public HitFeedbackConfig CachedFeedback;
+
+        /// <summary>运行时缓存：空连</summary>
+        public HitAirComboProfile CachedAirCombo;
+
+        /// <summary>缓存是否已构建</summary>
+        public bool CacheReady;
+
+        /// <summary>缺失配置是否已告警</summary>
+        public bool MissingProfileLogged;
     }
 }

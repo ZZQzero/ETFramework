@@ -104,17 +104,20 @@ namespace ET
         
         private ComponentRef<CombatContextComponent> combatContextRef;
         private ComponentRef<MovementContextComponent> movementContextRef;
+        private ComponentRef<CombatConfigComponent> combatConfigRef;
 
         public void InitComponentRefs(Unit unit)
         {
             this.combatContextRef = new ComponentRef<CombatContextComponent>(unit);
             this.movementContextRef = new ComponentRef<MovementContextComponent>(unit);
+            this.combatConfigRef = new ComponentRef<CombatConfigComponent>(unit);
         }
 
         public HitStopComponent HitStop => this.combatContextRef.Get()?.HitStop;
         public CheckGroundedComponent Ground => this.movementContextRef.Get()?.Ground;
         public LocomotionIntentComponent LocomotionIntent => this.movementContextRef.Get()?.LocomotionIntent;
         public AirComboComponent AirCombo => this.combatContextRef.Get()?.AirCombo;
+        public CombatConfigComponent CombatConfig => this.combatConfigRef.Get();
         /// <summary>
         /// 进入受击时是否取消攻击（用于“被打断”）。
         /// </summary>

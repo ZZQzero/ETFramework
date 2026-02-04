@@ -7,61 +7,74 @@ namespace ET
     /// </summary>
     public static class HitReactionProfileProvider
     {
-        public static void ResolveConfig(Unit unit, out HitReactionRulesConfig reactionRules, out HitFeedbackConfig feedback)
+        public static void ResolveConfig(Unit unit, out HitReactionConfig reaction, out HitFeedbackConfig feedback)
         {
-            if (TryGetProfile(unit, out var profile))
+            ResolveConfig(unit, null, out reaction, out feedback);
+        }
+
+        public static void ResolveConfig(Unit unit, CombatConfigComponent combat, out HitReactionConfig reaction, out HitFeedbackConfig feedback)
+        {
+            if (TryGetProfile(unit, combat, out combat, out var profile))
             {
-                reactionRules = BuildRules(in profile.Rules);
-                feedback = BuildFeedback(in profile.Feedback);
+                EnsureCache(combat, profile);
+                reaction = combat.cached;
+                feedback = combat.CachedFeedback;
                 return;
             }
 
-            Log.Error($"[HitReactionProfileProvider] 未找到 HitReactionProfileAsset, Unit={unit?.UnitName}");
-            reactionRules = DefaultRules;
+            LogMissingProfileOnce(unit, combat);
+            reaction = Default;
             feedback = DefaultFeedback;
         }
 
         public static void ResolveAirCombo(Unit unit, out HitAirComboProfile airCombo)
         {
-            if (TryGetProfile(unit, out var profile))
+            ResolveAirCombo(unit, null, out airCombo);
+        }
+
+        public static void ResolveAirCombo(Unit unit, CombatConfigComponent combat, out HitAirComboProfile airCombo)
+        {
+            if (TryGetProfile(unit, combat, out combat, out var profile))
             {
-                airCombo = BuildAirCombo(in profile.AirCombo);
+                EnsureCache(combat, profile);
+                airCombo = combat.CachedAirCombo;
                 return;
             }
 
-            Log.Error($"[HitReactionProfileProvider] 未找到 HitReactionProfileAsset, Unit={unit?.UnitName}");
+            LogMissingProfileOnce(unit, combat);
             airCombo = DefaultAirCombo;
         }
 
-        private static bool TryGetProfile(Unit unit, out HitReactionProfileAsset profile)
+        private static bool TryGetProfile(Unit unit, CombatConfigComponent combat, out CombatConfigComponent resolvedCombat, out HitReactionProfileAsset profile)
         {
-            profile = unit?.GetComponent<CombatConfigComponent>()?.HitReactionAsset;
-            return profile != null;
+            resolvedCombat = combat ?? unit?.GetComponent<CombatConfigComponent>();
+            profile = resolvedCombat?.HitReactionAsset;
+            return resolvedCombat != null && profile != null;
         }
 
-        private static HitReactionRulesConfig BuildRules(in HitReactionRulesData data)
+        internal static HitReactionConfig BuildRules(in HitReactionRulesData data)
         {
             var thresholds = data.InterruptThresholds;
 
-            HitReactionRulesConfig.HitInterruptThresholds hitInterrupt =
-                new HitReactionRulesConfig.HitInterruptThresholds(
+            HitReactionConfig.HitInterruptThresholds hitInterrupt =
+                new HitReactionConfig.HitInterruptThresholds(
                     thresholds.Grounded,
                     thresholds.Airborne,
                     thresholds.AirFinisher,
                     thresholds.Knockdown,
                     thresholds.GetUp);
 
-            var scales = new HitReactionRulesConfig.Scales(
+            var scales = new HitReactionConfig.Scales(
                 data.Scales.Stun,
                 data.Scales.Knockback,
                 data.Scales.Knockup);
 
-            var limits = new HitReactionRulesConfig.Limits(
+            var limits = new HitReactionConfig.Limits(
                 data.Limits.MaxHitStunMs,
                 data.Limits.MaxKnockbackForce,
                 data.Limits.MaxKnockupForce);
 
-            return new HitReactionRulesConfig(
+            return new HitReactionConfig(
                 data.AllowedReactionGroups,
                 data.AllowedStateVisuals,
                 hitInterrupt,
@@ -69,7 +82,7 @@ namespace ET
                 limits);
         }
 
-        private static HitFeedbackConfig BuildFeedback(in HitReactionFeedbackData data)
+        internal static HitFeedbackConfig BuildFeedback(in HitReactionFeedbackData data)
         {
             return new HitFeedbackConfig(new HitFeedbackConfig.Options(
                 data.Option.AllowVictimHitStop,
@@ -80,7 +93,7 @@ namespace ET
                 data.Option.TimeScaleScale));
         }
 
-        private static HitAirComboProfile BuildAirCombo(in HitAirComboData data)
+        internal static HitAirComboProfile BuildAirCombo(in HitAirComboData data)
         {
             return new HitAirComboProfile(
                 data.Enable,
@@ -99,17 +112,17 @@ namespace ET
                 data.RecenterDeadZone);
         }
 
-        private static readonly HitReactionRulesConfig DefaultRules = new HitReactionRulesConfig(
+        private static readonly HitReactionConfig Default = new HitReactionConfig(
             HitReactionGroup.All,
             HitStateVisualMask.All,
-            new HitReactionRulesConfig.HitInterruptThresholds(
+            new HitReactionConfig.HitInterruptThresholds(
                 new GroundedThresholdData(20, 30, 50, 60),
                 new AirborneThresholdData(70, 60),
                 new AirFinisherThresholdData(65),
                 new KnockdownThresholdData(80),
                 new GetUpThresholdData(80)),
-            new HitReactionRulesConfig.Scales(1f, 1f, 1f),
-            new HitReactionRulesConfig.Limits(int.MaxValue, float.MaxValue, float.MaxValue));
+            new HitReactionConfig.Scales(1f, 1f, 1f),
+            new HitReactionConfig.Limits(int.MaxValue, float.MaxValue, float.MaxValue));
 
         private static readonly HitFeedbackConfig DefaultFeedback = new HitFeedbackConfig(
             new HitFeedbackConfig.Options(
@@ -135,6 +148,29 @@ namespace ET
             maxHorizontalSpeed: 0f,
             recenterStrength: 0f,
             recenterDeadZone: 0f);
+
+        private static void EnsureCache(CombatConfigComponent combat, HitReactionProfileAsset profile)
+        {
+            if (combat.CacheReady)
+            {
+                return;
+            }
+            combat.cached = BuildRules(profile.Rules);
+            combat.CachedFeedback = BuildFeedback(profile.Feedback);
+            combat.CachedAirCombo = BuildAirCombo(profile.AirCombo);
+            combat.CacheReady = true;
+        }
+
+        private static void LogMissingProfileOnce(Unit unit, CombatConfigComponent combat)
+        {
+            var resolvedCombat = combat ?? unit?.GetComponent<CombatConfigComponent>();
+            if (resolvedCombat == null || resolvedCombat.MissingProfileLogged)
+            {
+                return;
+            }
+            resolvedCombat.MissingProfileLogged = true;
+            Log.Error($"[HitReactionProfileProvider] 未找到 HitReactionProfileAsset, Unit={unit?.UnitName}");
+        }
         
         public static AirborneReason ResolveAirborneReasonForRequest(in HitReactionRequest request)
         {
@@ -191,7 +227,7 @@ namespace ET
             }
         }
         
-        public static HitReactionRequest Normalize(this HitReactionComponent self, in HitReactionRequest r, in HitReactionRulesConfig config)
+        public static HitReactionRequest Normalize(this HitReactionComponent self, in HitReactionRequest r, in HitReactionConfig config)
         {
             Vector3 dir = r.Rule.HitDirection;
             dir.y = 0f;
@@ -201,13 +237,13 @@ namespace ET
             }
 
             int stun = Mathf.Max(0, r.Rule.HitStunMs);
-            if (config.Scale.Stun > 0f && !Mathf.Approximately(config.Scale.Stun, 1f))
+            if (config.Rule.Scale.Stun > 0f && !Mathf.Approximately(config.Rule.Scale.Stun, 1f))
             {
-                stun = Mathf.RoundToInt(stun * config.Scale.Stun);
+                stun = Mathf.RoundToInt(stun * config.Rule.Scale.Stun);
             }
-            if (config.Limit.MaxHitStunMs > 0 && stun > config.Limit.MaxHitStunMs)
+            if (config.Rule.Limit.MaxHitStunMs > 0 && stun > config.Rule.Limit.MaxHitStunMs)
             {
-                stun = config.Limit.MaxHitStunMs;
+                stun = config.Rule.Limit.MaxHitStunMs;
             }
 
             // 物理轨道归一化
@@ -217,13 +253,13 @@ namespace ET
             // 根据 Profile 缩放和限制力
             if (motion.MotionType == HitMotionType.Knockback || motion.MotionType == HitMotionType.PullTowardAttacker)
             {
-                if (config.Scale.Knockback > 0f && !Mathf.Approximately(config.Scale.Knockback, 1f)) motion.Force *= config.Scale.Knockback;
-                if (config.Limit.MaxKnockbackForce > 0f && motion.Force > config.Limit.MaxKnockbackForce) motion.Force = config.Limit.MaxKnockbackForce;
+                if (config.Rule.Scale.Knockback > 0f && !Mathf.Approximately(config.Rule.Scale.Knockback, 1f)) motion.Force *= config.Rule.Scale.Knockback;
+                if (config.Rule.Limit.MaxKnockbackForce > 0f && motion.Force > config.Rule.Limit.MaxKnockbackForce) motion.Force = config.Rule.Limit.MaxKnockbackForce;
             }
             else if (motion.MotionType == HitMotionType.Knockup || motion.MotionType == HitMotionType.KnockDown)
             {
-                if (config.Scale.Knockup > 0f && !Mathf.Approximately(config.Scale.Knockup, 1f)) motion.Force *= config.Scale.Knockup;
-                if (config.Limit.MaxKnockupForce >= 0f && motion.Force > config.Limit.MaxKnockupForce) motion.Force = config.Limit.MaxKnockupForce;
+                if (config.Rule.Scale.Knockup > 0f && !Mathf.Approximately(config.Rule.Scale.Knockup, 1f)) motion.Force *= config.Rule.Scale.Knockup;
+                if (config.Rule.Limit.MaxKnockupForce >= 0f && motion.Force > config.Rule.Limit.MaxKnockupForce) motion.Force = config.Rule.Limit.MaxKnockupForce;
             }
 
             int hitStop = Mathf.Max(0, r.Feedback.VictimHitStopMs);

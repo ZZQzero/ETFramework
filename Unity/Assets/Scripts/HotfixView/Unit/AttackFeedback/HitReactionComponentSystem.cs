@@ -178,10 +178,10 @@ namespace ET
                 return false;
             }
 
-            HitReactionProfileProvider.ResolveConfig(self.OwnerUnit, out var rulesConfig, out var hitFeedbackConfig);
+            HitReactionProfileProvider.ResolveConfig(self.OwnerUnit, self.CombatConfig, out var rulesConfig, out var hitFeedbackConfig);
             // 缓存本单位的视觉许可（用于帧内/帧间状态流转时同步视觉状态）
-            self.AllowedReactionGroups = rulesConfig.AllowedReactionGroups;
-            self.AllowedStateVisuals = rulesConfig.AllowedStateVisuals;
+            self.AllowedReactionGroups = rulesConfig.Visual.AllowedReactionGroups;
+            self.AllowedStateVisuals = rulesConfig.Visual.AllowedStateVisuals;
 
             bool hasVisualOrPhysical = hitReaction.Rule.ReactionType != HitReactionType.None || hitReaction.Rule.MotionData.MotionType != HitMotionType.Normal;
             bool hasAnyFeedback =
@@ -213,7 +213,7 @@ namespace ET
             // GetUp：起身中，门槛不够直接拒绝（不进入受击会话，也不触发反馈）
             if (self.CurrentHitState == HitState.GetUp) 
             {
-                var getUpRes = rulesConfig.HitInterrupt.GetUp;
+                var getUpRes = rulesConfig.Rule.HitInterrupt.GetUp;
                 if (normalized.Rule.HitStrength < getUpRes.GetUpInterruptThreshold)
                 {
                     return false;
@@ -244,7 +244,7 @@ namespace ET
             }
         }
 
-        private static void ApplyHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
+        private static void ApplyHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionConfig reactionConfig)
         {
             // 统一更新“当前受击表现类型”和“硬直截止点”
             self.CurrentReactionType = request.Rule.ReactionType;
@@ -259,19 +259,19 @@ namespace ET
             {
                 case HitState.None:
                 case HitState.Grounded:
-                    self.HandleGroundedHit(in request, in reactionRulesConfig);
+                    self.HandleGroundedHit(in request, in reactionConfig);
                     return;
                 case HitState.Airborne:
-                    self.HandleAirborneHit(in request, in reactionRulesConfig);
+                    self.HandleAirborneHit(in request, in reactionConfig);
                     return;
                 case HitState.AirFinisher:
-                    self.HandleAirStunHit(in request, in reactionRulesConfig);
+                    self.HandleAirStunHit(in request, in reactionConfig);
                     return;
                 case HitState.Knockdown:
-                    self.HandleKnockdownHit(in request, in reactionRulesConfig);
+                    self.HandleKnockdownHit(in request, in reactionConfig);
                     return;
                 case HitState.GetUp:
-                    self.HandleGetUpHit(in request, in reactionRulesConfig);
+                    self.HandleGetUpHit(in request, in reactionConfig);
                     return;
             }
         }
@@ -343,9 +343,9 @@ namespace ET
             self.VisualReactionType = visualType;
         }
 
-        private static void HandleGroundedHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
+        private static void HandleGroundedHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionConfig reactionConfig)
         {
-            var res = reactionRulesConfig.HitInterrupt.Grounded;
+            var res = reactionConfig.Rule.HitInterrupt.Grounded;
             long now = self.GetCombatNowMs();
 
             // Grounded：起身中才允许被门槛打断，否则直接按地面受击处理
@@ -383,9 +383,9 @@ namespace ET
             }
         }
 
-        private static void HandleAirborneHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
+        private static void HandleAirborneHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionConfig reactionConfig)
         {
-            var res = reactionRulesConfig.HitInterrupt.Airborne;
+            var res = reactionConfig.Rule.HitInterrupt.Airborne;
 
             // 空中：高优先级 -> 空中终结
             if (request.Rule.HitStrength >= res.AirborneThreshold)
@@ -415,7 +415,7 @@ namespace ET
             // AirCombo：命中续期（KeepAlive）——只续期，不叠加高度
             if (self.AirCombo != null && self.AirCombo.Active)
             {
-                HitReactionProfileProvider.ResolveAirCombo(self.OwnerUnit, out var acProfile);
+                HitReactionProfileProvider.ResolveAirCombo(self.OwnerUnit, self.CombatConfig, out var acProfile);
                 self.AirCombo.OnHit(self.GetCombatNowMs(), in acProfile, request.AirCombo.AttackerSegmentComboTimeoutMs, request.AirCombo.AttackRadius);
                 
                 if (!self.AirCombo.IsExiting)
@@ -437,9 +437,9 @@ namespace ET
             }
         }
 
-        private static void HandleAirStunHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
+        private static void HandleAirStunHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionConfig reactionConfig)
         {
-            var res = reactionRulesConfig.HitInterrupt.AirFinisher;
+            var res = reactionConfig.Rule.HitInterrupt.AirFinisher;
 
             // 允许更强的砸地（或保持终结态）
             if (request.Rule.HitStrength >= res.KnockdownThreshold)
@@ -456,9 +456,9 @@ namespace ET
             }
         }
 
-        private static void HandleKnockdownHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
+        private static void HandleKnockdownHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionConfig reactionConfig)
         {
-            var res = reactionRulesConfig.HitInterrupt.Knockdown;
+            var res = reactionConfig.Rule.HitInterrupt.Knockdown;
 
             // 倒地：只有达到门槛才允许“续倒地/打断起身”（避免无限压起身）
             if (request.Rule.HitStrength >= res.KnockdownThreshold)
@@ -467,9 +467,9 @@ namespace ET
             }
         }
 
-        private static void HandleGetUpHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionRulesConfig reactionRulesConfig)
+        private static void HandleGetUpHit(this HitReactionComponent self, in HitReactionRequest request, in HitReactionConfig reactionConfig)
         {
-            var res = reactionRulesConfig.HitInterrupt.GetUp;
+            var res = reactionConfig.Rule.HitInterrupt.GetUp;
 
             // 起身：门槛不够则直接拒绝（不进入受击会话）
             if (request.Rule.HitStrength < res.GetUpInterruptThreshold)
@@ -479,7 +479,7 @@ namespace ET
 
             // 门槛够：打断起身，按地面受击重新评估（可能击飞）
             self.SwitchState(HitState.Grounded);
-            self.HandleGroundedHit(in request, in reactionRulesConfig);
+            self.HandleGroundedHit(in request, in reactionConfig);
         }
 
         
@@ -554,7 +554,7 @@ namespace ET
             self.EnsureAirComboEventBindings();
             self.InitPhysicalMotion(in request);
             self.ApplyVerticalImpulse(request.Rule.MotionData.MotionType, request.Rule.MotionData.Force);
-            HitReactionProfileProvider.ResolveAirCombo(self.OwnerUnit, out var acProfile);
+            HitReactionProfileProvider.ResolveAirCombo(self.OwnerUnit, self.CombatConfig, out var acProfile);
             // 连段中心：优先使用攻击者位置，未设置时 fallback 到受击者位置
             Vector3 comboCenterPos = request.AirCombo.HasAttackerWorldPos ? request.AirCombo.AttackerWorldPos : self.Owner.position;
             self.AirCombo.Enter(self.GetCombatNowMs(), comboCenterPos, in acProfile, request.AirCombo.AttackerSegmentComboTimeoutMs, request.AirCombo.AttackRadius);

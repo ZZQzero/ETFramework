@@ -3,11 +3,11 @@ using UnityEngine;
 namespace ET
 {
     /// <summary>
-    /// 一次命中对“目标侧”的受击请求
+    /// 一次命中对“目标侧”的数据
     /// - Effect：影响目标的 gameplay effect（受击类型/控制/击退/击飞/硬直/过滤）
     /// - Feedback：命中反馈（受击者侧顿帧、以及可选的镜头/时间反馈参数）
     /// </summary>
-    public readonly struct HitReactionRequest
+    public readonly struct HitImpactData
     {
         public readonly struct HitRuleData
         {
@@ -90,17 +90,20 @@ namespace ET
             /// 用于受击方空连续期对齐，避免提前 BeginExit。
             /// </summary>
             public readonly int AttackerSegmentComboTimeoutMs;
+            public readonly int AttackSegmentTotalTimeoutMs;
             public readonly float AttackRadius;
             public readonly bool HasAttackerWorldPos;
             public readonly Vector3 AttackerWorldPos;
 
             public AirComboHint(
                 int attackerSegmentComboTimeoutMs,
+                int attackSegmentTotalTimeoutMs,
                 float attackRadius,
                 Vector3 attackerWorldPos,
                 bool hasAttackerWorldPos)
             {
                 this.AttackerSegmentComboTimeoutMs = attackerSegmentComboTimeoutMs;
+                AttackSegmentTotalTimeoutMs = attackSegmentTotalTimeoutMs;
                 this.AttackRadius = attackRadius;
                 this.AttackerWorldPos = attackerWorldPos;
                 this.HasAttackerWorldPos = hasAttackerWorldPos;
@@ -119,7 +122,7 @@ namespace ET
         /// <summary>
         /// 完整构造（用于规则层 Normalize 后生成“有效请求”）。
         /// </summary>
-        public HitReactionRequest(
+        public HitImpactData(
             in HitRuleData rule,
             in HitFeedbackRequestData feedback,
             in AirComboHint airCombo)
@@ -129,7 +132,7 @@ namespace ET
             this.AirCombo = airCombo;
         }
 
-        public HitReactionRequest(in HitEffectData effect, in HitFeedbackData feedback, Vector3 hitDirection, int defaultHitStopMs, AirComboHint airCombo = default)
+        public HitImpactData(in HitEffectData effect, in HitFeedbackData feedback, Vector3 hitDirection, int defaultHitStopMs, AirComboHint airCombo = default)
         {
             Rule = new HitRuleData(
                 effect.HitReaction,

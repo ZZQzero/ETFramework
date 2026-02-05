@@ -96,13 +96,14 @@ namespace ET
     /// <summary>
     /// 受击物理运动类型（独立于表现类型）
     /// </summary>
-    public enum HitMotionType
+    public enum HitMotionType : byte
     {
         Normal = 0, 
-        Knockback = 1,       // 水平击退 (XZ)
-        Knockup = 2,     // 击飞 (Up + XZ)
-        KnockDown = 3,       // 击倒，砸地 (Down + XZ)
-        PullTowardAttacker = 4,       // 拉拽 (向攻击者中心靠拢)
+        Knockback = 1,          // 水平击退 (XZ)
+        Knockup = 2,            // 击飞 (Up + XZ)
+        KnockFinish = 3,        // 空中结束
+        KnockDown = 4,          // 击倒或者空中砸地 (Down + XZ)
+        PullTowardAttacker = 5, // 拉拽 (向攻击者中心靠拢)
     }
 
     /// <summary>

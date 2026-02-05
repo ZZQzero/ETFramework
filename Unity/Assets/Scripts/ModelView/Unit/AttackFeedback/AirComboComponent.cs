@@ -16,12 +16,12 @@ namespace ET
         /// 地检请求事件：true=启用，false=禁用。
         /// 由 HitReaction 统一处理 Ground.Enable。
         /// </summary>
-        public Action<bool> OnGroundDetectRequested;
+        public EventHook<bool> OnGroundDetectRequested;
 
         /// <summary>
         /// 空中连段退出完成事件。
         /// </summary>
-        public Action OnExitCompleted;
+        public EventHook OnExitCompleted;
 
         // ===== 状态 =====
         public bool Active;

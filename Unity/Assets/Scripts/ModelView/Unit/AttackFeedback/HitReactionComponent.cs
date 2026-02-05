@@ -118,6 +118,7 @@ namespace ET
         public LocomotionIntentComponent LocomotionIntent => this.movementContextRef.Get()?.LocomotionIntent;
         public AirComboComponent AirCombo => this.combatContextRef.Get()?.AirCombo;
         public CombatConfigComponent CombatConfig => this.combatConfigRef.Get();
+        public AttackComponent Attack => this.combatContextRef.Get()?.Attack;
         /// <summary>
         /// 进入受击时是否取消攻击（用于“被打断”）。
         /// </summary>
@@ -149,9 +150,14 @@ namespace ET
         public bool AirComboEventsBound;
 
         /// <summary>
-        /// 退出/下落期临时强制地检高频（引用计数）是否已加持。
+        /// 退出/下落期临时强制地检高频（token）。
         /// </summary>
-        public bool GroundDetectBoosted;
+        public long GroundDetectBoostToken;
+
+        /// <summary>
+        /// 空连等来源请求禁用地检（token）。
+        /// </summary>
+        public long GroundDetectDisableToken;
 
         #endregion
         
@@ -193,7 +199,8 @@ namespace ET
         /// - 最终是否播放/如何降级由 <see cref="VisualReactionType"/> 决定
         /// </summary>
         public HitReactionType CurrentReactionType { get; set; } = HitReactionType.None;
-
+        /// <summary>当前物理运动类型</summary>
+        public HitMotionType CurrentMotionType { get; set; }
         /// <summary>
         /// 当前受击“视觉状态”（Visual State）。
         /// - 可能与 <see cref="CurrentHitState"/> 不一致：当配置禁播某些状态动画时，规则继续但视觉不播
@@ -211,9 +218,6 @@ namespace ET
         
         /// <summary>硬直结束时间</summary>
         public long StunEndTime { get; set; }
-        
-        /// <summary>当前物理运动类型</summary>
-        public HitMotionType CurrentMotionType { get; set; }
         
         /// <summary>当前运动力度/速度</summary>
         public float CurrentMotionSpeed { get; set; }

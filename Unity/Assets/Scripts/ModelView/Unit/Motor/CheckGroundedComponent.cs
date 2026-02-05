@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ET
@@ -319,6 +320,13 @@ namespace ET
     /// </summary>
     public class CheckGroundedComponent : Entity, IAwake<GameObject>, IDestroy
     {
+        /// <summary>
+        /// 地检外部请求类型（token kind）。
+        /// 约定：仅由 <see cref="ET.CheckGroundedComponentSystem"/> 写入/读取。
+        /// </summary>
+        public const byte GroundDetectRequest_Disable = 1;
+        public const byte GroundDetectRequest_Boost = 2;
+
         // ==================== 引用组件 ====================
 
         /// <summary>
@@ -404,6 +412,25 @@ namespace ET
         /// 用于受击浮空等需要高频响应的场景。
         /// </summary>
         public int InhibitReduceFrequencyCount;
+
+        // ==================== 外部请求（地检开关/频率） ====================
+        //
+        // 设计目标：
+        // - 多来源可叠加（受击、空连、技能、Buff...）
+        // - 由 Ground 自己维护引用计数与状态计算，调用方只持有 token 负责归还
+        // - 避免多个系统直接写 Enable / InhibitReduceFrequencyCount 造成竞态与泄漏
+
+        /// <summary>地检被外部请求“禁用”的引用计数。</summary>
+        public int GroundDetectDisableCount;
+
+        /// <summary>地检请求 token 自增序号。</summary>
+        public long GroundDetectRequestSeq;
+
+        /// <summary>
+        /// 活跃请求表：token -> kind（1=Disable, 2=Boost）。
+        /// 用于防止重复释放/错误释放造成计数错乱。
+        /// </summary>
+        public Dictionary<long, byte> GroundDetectRequests;
 
         /// <summary>
         /// 边缘检测计数器。

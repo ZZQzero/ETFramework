@@ -41,17 +41,102 @@ namespace ET
             self.StateContext.State = GroundState.Airborne;
             self.StateContext.PrevState = GroundState.Airborne;
             self.GroundHit.Reset();
+
+            // 外部请求相关字段初始化（组件可能来自对象池，必须在 Awake 兜底清理）
+            self.GroundDetectDisableCount = 0;
+            self.GroundDetectRequestSeq = 0;
+            self.GroundDetectRequests?.Clear();
+            self.InhibitReduceFrequencyCount = 0;
+            self.Enable = true;
         }
 
         [EntitySystem]
         private static void Destroy(this CheckGroundedComponent self)
         {
             self.ClearEvents();
+            self.GroundDetectRequests?.Clear();
             
             // 恢复忽略的碰撞
             if (self.IgnoredPlatform != null && self.Capsule != null)
             {
                 Physics.IgnoreCollision(self.Capsule, self.IgnoredPlatform, false);
+            }
+        }
+
+        /// <summary>
+        /// 请求禁用地检（多来源引用计数）。
+        /// 返回 token：调用方必须在结束时归还（<see cref="ReleaseGroundDetectRequest"/>）。
+        /// </summary>
+        public static long AcquireGroundDetectDisable(this CheckGroundedComponent self)
+        {
+            if (self == null || self.IsDisposed)
+            {
+                return 0;
+            }
+
+            long token = ++self.GroundDetectRequestSeq;
+            self.GroundDetectRequests ??= new System.Collections.Generic.Dictionary<long, byte>(4);
+            self.GroundDetectRequests[token] = CheckGroundedComponent.GroundDetectRequest_Disable;
+
+            self.GroundDetectDisableCount++;
+
+            // 任意 disable 请求存在时，强制禁用地检
+            self.Enable = false;
+            return token;
+        }
+
+        /// <summary>
+        /// 请求提升地检频率（抑制空中降频，多来源引用计数）。
+        /// 返回 token：调用方必须在结束时归还（<see cref="ReleaseGroundDetectRequest"/>）。
+        /// </summary>
+        public static long AcquireGroundDetectBoost(this CheckGroundedComponent self)
+        {
+            if (self == null || self.IsDisposed)
+            {
+                return 0;
+            }
+
+            long token = ++self.GroundDetectRequestSeq;
+            self.GroundDetectRequests ??= new System.Collections.Generic.Dictionary<long, byte>(4);
+            self.GroundDetectRequests[token] = CheckGroundedComponent.GroundDetectRequest_Boost;
+
+            self.InhibitReduceFrequencyCount++;
+            return token;
+        }
+
+        /// <summary>
+        /// 归还一次地检请求（Disable/Boost）。
+        /// 允许重复调用（无效 token 将被忽略），用于兜底释放路径。
+        /// </summary>
+        public static void ReleaseGroundDetectRequest(this CheckGroundedComponent self, long token)
+        {
+            if (self == null || self.IsDisposed || token <= 0)
+            {
+                return;
+            }
+
+            var map = self.GroundDetectRequests;
+            if (map == null || !map.Remove(token, out byte kind))
+            {
+                return;
+            }
+
+            switch (kind)
+            {
+                case CheckGroundedComponent.GroundDetectRequest_Disable:
+                    self.GroundDetectDisableCount--;
+                    if (self.GroundDetectDisableCount <= 0)
+                    {
+                        self.GroundDetectDisableCount = 0;
+                    }
+                    // 仅当所有 disable 请求释放后才恢复 enable
+                    self.Enable = self.GroundDetectDisableCount == 0;
+                    break;
+
+                case CheckGroundedComponent.GroundDetectRequest_Boost:
+                    self.InhibitReduceFrequencyCount--;
+                    if (self.InhibitReduceFrequencyCount < 0) self.InhibitReduceFrequencyCount = 0;
+                    break;
             }
         }
 

@@ -325,6 +325,10 @@ namespace ET
         [Header("水平运动配置")]
         [Tooltip("最大水平距离")]
         [Min(0f)] public float MaxAirHorizontalDistance;
+        
+        [Tooltip("空中最大水平距离缩放")]
+        [Range(0f, 1f)]
+        public float MaxAirHorizontalScale;
 
         [Tooltip("最大水平速度")]
         [Min(0f)] public float MaxAirHorizontalSpeed;
@@ -347,6 +351,7 @@ namespace ET
             float minHeightOffset = 0f,
             float maxHeightOffset = 2.2f,
             float maxAirHorizontalDistance = 3f,
+            float maxAirHorizontalScale = 0.75f,
             float maxAirHorizontalSpeed = 2.5f,
             float recenterStrength = 2.5f,
             float recenterDeadZone = 1.5f)
@@ -362,6 +367,7 @@ namespace ET
             this.MinHeightOffset = minHeightOffset;
             this.MaxHeightOffset = maxHeightOffset;
             this.MaxAirHorizontalDistance = maxAirHorizontalDistance;
+            this.MaxAirHorizontalScale = maxAirHorizontalScale;
             this.MaxAirHorizontalSpeed = maxAirHorizontalSpeed;
             this.RecenterStrength = recenterStrength;
             this.RecenterDeadZone = recenterDeadZone;

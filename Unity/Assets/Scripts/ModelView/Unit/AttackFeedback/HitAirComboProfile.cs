@@ -50,6 +50,8 @@ namespace ET
         // ===== 空中连击横向控制 =====
         // 最大允许的横向偏移半径
         public readonly float MaxAirHorizontalDistance;
+        // 最大横向缩放（距离 = 原始距离 * Scale）
+        public readonly float MaxAirHorizontalScale;
 
         // 最大横向速度（XZ）
         public readonly float MaxAirHorizontalSpeed;
@@ -72,6 +74,7 @@ namespace ET
             int landingStunMs,
             float maxAirborneKnockupForce,
             float maxHorizontalDistance,
+            float maxHorizontalScale,
             float maxHorizontalSpeed,
             float recenterStrength,
             float recenterDeadZone)
@@ -87,6 +90,7 @@ namespace ET
             this.LandingStunMs = landingStunMs;
             this.MaxAirborneKnockupForce = Mathf.Max(0f, maxAirborneKnockupForce);
             this.MaxAirHorizontalDistance = maxHorizontalDistance;
+            this.MaxAirHorizontalScale = maxHorizontalScale;
             this.MaxAirHorizontalSpeed = maxHorizontalSpeed;
             this.RecenterStrength = recenterStrength;
             this.RecenterDeadZone = recenterDeadZone;

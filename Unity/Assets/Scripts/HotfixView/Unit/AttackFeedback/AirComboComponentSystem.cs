@@ -34,7 +34,7 @@ namespace ET
 
         /// <param name="minAirTimeMsOverride">若 > 0，与 profile.MinAirTimeMs 取 max，用于与攻击方段超时(GetCurrentSegmentComboTimeoutMs)对齐。</param>
         /// <param name="attackRadiusOverride">若 > 0，用 HitBox.Size 推导的半径作为水平距离上限（与 PhysicsHelper 判定一致）；0 表示使用 profile.MaxAirHorizontalDistance。</param>
-        public static void Enter(this AirComboComponent self, long nowCombatMs, Vector3 attackerWorldPos, in HitAirComboProfile profile, int minAirTimeMsOverride = 0, float attackRadiusOverride = 0f)
+        public static void Enter(this AirComboComponent self, long nowCombatMs, Vector3 attackerWorldPos, in HitAirComboProfile profile, int minAirTimeMsOverride = 0,int totalAirTimeMs = 0, float attackRadiusOverride = 0f)
         {
             if (self == null || self.IsDisposed)
             {
@@ -60,13 +60,14 @@ namespace ET
                 self.EnteredHeight = attackerWorldPos.y;
                 
                 // 进入空中连段：请求关闭地检（由 HitReaction 统一处理）
-                self.OnGroundDetectRequested?.Invoke(false);
+                self.OnGroundDetectRequested.Invoke(false);
 
                 // 以攻击者为连段中心（XZ）
                 self.ComboCenterWorldPos = attackerWorldPos;
 
                 // 水平距离上限：优先使用本次命中的 HitBox 半径，否则用 profile
-                self.MaxHorizontalDistance = attackRadiusOverride > 0f ? attackRadiusOverride : profile.MaxAirHorizontalDistance;
+                var distance = attackRadiusOverride > 0f ? attackRadiusOverride : profile.MaxAirHorizontalDistance;
+                self.MaxHorizontalDistance = distance * profile.MaxAirHorizontalScale;
                 self.MaxHorizontalSpeed    = profile.MaxAirHorizontalSpeed;
                 self.RecenterStrength      = profile.RecenterStrength;
                 self.RecenterDeadZone      = profile.RecenterDeadZone;
@@ -82,7 +83,12 @@ namespace ET
             }
 
             // fail-safe：绝对上限只会变得更严格，不允许被不断延长
-            int maxHangMs = Mathf.Max(minAirMs, profile.MaxTotalHangMs);
+            // totalAirTimeMs：攻击方本次攻击的“总时长上限”（若提供则优先使用）；否则使用 profile.MaxTotalHangMs。
+            // 注意：绝对上限必须 >= effectiveMinAirMs，否则会把 EndCombatMs 夹短，导致“攻击动画未结束就 BeginExit”。
+            int totalMs = totalAirTimeMs > 0 ? totalAirTimeMs : profile.MaxTotalHangMs;
+            totalMs = Mathf.Max(0, totalMs);
+            int maxHangMs = Mathf.Max(effectiveMinAirMs, totalMs);
+            
             long nextAbsEnd = nowCombatMs + maxHangMs;
             if (self.AbsoluteEndCombatMs <= 0)
             {
@@ -248,7 +254,7 @@ namespace ET
             }
 
             // 进入退出阶段：请求开启地检
-            self.OnGroundDetectRequested?.Invoke(true);
+            self.OnGroundDetectRequested.Invoke(true);
 
             Log.Error("退出空中BeginExit");
             self.IsExiting = true;
@@ -298,7 +304,7 @@ namespace ET
             self.RecenterStrength = 0f;
             self.RecenterDeadZone = 0f;
 
-            self.OnExitCompleted?.Invoke();
+            self.OnExitCompleted.Invoke();
         }
 
         public static void CaptureEnteredHeightIfNeeded(this AirComboComponent self, float rigidbodyY)

@@ -19,14 +19,12 @@ namespace ET
         {
             self.ResetState();
             self.Unit = self.GetParent<Unit>();
-            self.AnimatorComponent = self.Unit.GetComponent<AnimatorComponent>();
-            var combat = self.Unit.GetComponent<CombatContextComponent>();
-            self.AttackCommand = combat?.AttackCommand ?? self.Unit.GetComponent<AttackCommandComponent>();
-            self.AttackCatalog = combat?.AttackCatalog ?? self.Unit.GetComponent<AttackCatalogComponent>();
-            self.OwnerTransform = self.Unit.GetComponent<GameObjectComponent>().Transform;
-            self.CameraFollow = self.Root().GetComponent<CameraFollowComponent>();
-            self.TimerComponent = self.Root().GetComponent<TimerComponent>();
-            self.HitStop = combat?.HitStop ?? self.Unit.GetComponent<HitStopComponent>();
+            Entity root = self.Root();
+            self.InitComponentRefs(self.Unit, root);
+            
+            // OwnerTransform：以 Unit 的 GameObjectComponent 为准
+            self.OwnerTransform = self.GameObjectComponent?.Transform;
+
             self.EffectRoot = new GameObject("EffectRoot");
             // CameraFollow 只对“玩家表现”有意义，怪物没有也正常
             if (self.CameraFollow == null && self.Unit.UnitType() == UnitType.Player)
@@ -84,8 +82,7 @@ namespace ET
                 if (self.AttackCommand.TryDequeue(out var cmd))
                 {
                     // 如果当前实体不具备攻击能力（如正在受击），则丢弃指令
-                    var intent = self.Unit.GetComponent<MovementContextComponent>()?.LocomotionIntent
-                        ?? self.Unit.GetComponent<LocomotionIntentComponent>();
+                    var intent = self.LocomotionIntent;
                     if (intent == null || intent.IsAttackAllowed)
                     {
                         self.ExecuteAttackCommand(in cmd);
@@ -182,11 +179,8 @@ namespace ET
 
         private static void ExecuteAttackCommand(this AttackComponent self, in AttackCommandComponent.AttackCommand cmd)
         {
-            if (self.AnimatorComponent == null)
-            {
-                self.AnimatorComponent = self.Unit.GetComponent<AnimatorComponent>();
-            }
-            if (self.AnimatorComponent == null)
+            var animator = self.AnimatorComponent;
+            if (animator == null)
             {
                 Log.Error("AttackComponent: AnimatorComponent 未就绪，无法执行攻击命令");
                 return;
@@ -216,7 +210,7 @@ namespace ET
             }
 
             // 目前命令只影响连段分支（InputType），目标/指向性留作后续扩展
-            self.HandleAttackInput(self.AnimatorComponent, cmd.InputType);
+            self.HandleAttackInput(cmd.InputType);
         }
         #endregion
 
@@ -289,7 +283,7 @@ namespace ET
         /// </summary>
         private static long GetCombatNowMs(this AttackComponent self)
         {
-            return self.HitStop.NowCombatMs();
+            return self.HitStop?.NowCombatMs() ?? TimeInfo.Instance.ClientFrameTime();
         }
 
         #region 输入缓冲过期
@@ -368,11 +362,18 @@ namespace ET
             return Mathf.Max(0, total);
         }
         
-        private static int GetCurrentSegmentEndMs(this AttackComponent self)
+        private static int GetTotalSegmentEndMs(this AttackComponent self)
         {
-            float durSec = self.CurrentSegment.Duration;
-            var endMs = Mathf.RoundToInt(durSec * self.CurrentSegment.TimeWindow.AnimationEnd * 1000f);
-            return endMs;
+            int totalMs = 0;
+            if (self.Config != null)
+            {
+                foreach (var segment in self.Config.Segments)
+                {
+                    var endMs = Mathf.RoundToInt(segment.Duration * segment.TimeWindow.AnimationEnd * 1000f);
+                    totalMs += endMs;
+                }
+            }
+            return totalMs;
         }
         
         /// <summary>
@@ -446,7 +447,7 @@ namespace ET
         /// </summary>
         /// <param name="inputType">输入类型</param>
         /// <returns>是否成功处理输入</returns>
-        public static bool HandleAttackInput(this AttackComponent self,AnimatorComponent animatorComponent,ComboInputType inputType = ComboInputType.Normal)
+        public static bool HandleAttackInput(this AttackComponent self,ComboInputType inputType = ComboInputType.Normal)
         {
             if (self.Config == null || self.Config.Segments.Count == 0)
             {
@@ -454,10 +455,6 @@ namespace ET
                 return false;
             }
 
-            if (self.AnimatorComponent == null)
-            {
-                self.AnimatorComponent = animatorComponent;
-            }
             // 记录输入时间
             long nowCombatMs = self.GetCombatNowMs();
             self.LastInputTime = nowCombatMs;
@@ -469,7 +466,7 @@ namespace ET
             }
 
             // 若处于 HitStop（顿帧）中：继续收输入，但不推进攻击段（保证“停顿中也能搓招”的手感）
-            if (self.HitStop.IsHitStopActive)
+            if (self.HitStop != null && self.HitStop.IsHitStopActive)
             {
                 self.BufferInput(inputType, nowCombatMs);
                 return true;
@@ -1191,10 +1188,12 @@ namespace ET
 
                 int defaultHitStopMs = self.Config?.DefaultHitStopMs ?? 0;
                 int attackerSegmentComboTimeoutMs = self.GetCurrentSegmentComboTimeoutMs();
+                int totalTimes = self.GetTotalSegmentEndMs();
                 float attackRadius = hitBox.GetAttackRadius();
                 Vector3 attackerWorldPos = self.OwnerTransform.position;
-                var req = HitReactionProfileProvider.From(in effect, in feedback, hitDirection,
-                    defaultHitStopMs, attackerSegmentComboTimeoutMs, attackRadius, attackerWorldPos, hasAttackerWorldPos: true);
+                var req = BuildHitReactionRequest(in effect, in feedback, hitDirection,
+                    defaultHitStopMs, attackerSegmentComboTimeoutMs, totalTimes,
+                    attackRadius, attackerWorldPos, hasAttackerWorldPos: true);
                 hitReactionComponent.TryApplyHit(in req);
             }
 
@@ -1238,6 +1237,26 @@ namespace ET
             damage = Mathf.Max(1, damage - defense);*/
             float damage = 100 * effect.DamageMultiplier;
             return damage;
+        }
+
+        private static HitImpactData BuildHitReactionRequest(
+            in HitEffectData effect,
+            in HitFeedbackData feedback,
+            Vector3 hitDirection,
+            int defaultHitStopMs,
+            int attackerSegmentComboTimeoutMs = 0,
+            int attackerTotalSegmentComboTimeoutMs = 0,
+            float attackRadius = 0f,
+            Vector3 attackerWorldPos = default,
+            bool hasAttackerWorldPos = false)
+        {
+            var airCombo = new HitImpactData.AirComboHint(
+                attackerSegmentComboTimeoutMs,
+                attackerTotalSegmentComboTimeoutMs,
+                attackRadius,
+                attackerWorldPos,
+                hasAttackerWorldPos: hasAttackerWorldPos);
+            return new HitImpactData(effect, feedback, hitDirection, defaultHitStopMs, airCombo);
         }
 
         /// <summary>

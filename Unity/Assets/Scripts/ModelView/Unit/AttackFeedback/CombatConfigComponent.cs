@@ -12,10 +12,10 @@
         public HitReactionProfileAsset HitReactionAsset;
 
         /// <summary>运行时缓存：规则</summary>
-        public HitReactionConfig cached;
+        public HitReactionConfig HitReactionConfig;
 
         /// <summary>运行时缓存：反馈</summary>
-        public HitFeedbackConfig CachedFeedback;
+        public HitFeedbackConfig Feedback;
 
         /// <summary>运行时缓存：空连</summary>
         public HitAirComboProfile CachedAirCombo;

@@ -11,17 +11,44 @@ namespace ET
     [ComponentOf(typeof(Unit))]
     public class AttackComponent : Entity, IAwake, IDestroy, IUpdate, IFixedUpdate
     {
-        public AnimatorComponent AnimatorComponent { get; set; }
-        
-        public AttackCommandComponent AttackCommand { get; set; }
-        
-        public AttackCatalogComponent AttackCatalog { get; set; }
-        
-        public CameraFollowComponent CameraFollow { get; set; }
-        
-        public HitStopComponent HitStop { get; set; }
-        
-        public TimerComponent TimerComponent { get; set; }
+        private ComponentRef<CombatContextComponent> combatContextRef;
+        private ComponentRef<MovementContextComponent> movementContextRef;
+        private ComponentRef<LocomotionIntentComponent> locomotionIntentRef;
+        private ComponentRef<GameObjectComponent> gameObjectRef;
+        private ComponentRef<AnimatorComponent> animatorRef;
+        private ComponentRef<AttackCommandComponent> attackCommandRef;
+        private ComponentRef<AttackCatalogComponent> attackCatalogRef;
+        private ComponentRef<HitStopComponent> hitStopRef;
+        private ComponentRef<CameraFollowComponent> cameraFollowRef;
+        private ComponentRef<TimerComponent> timerRef;
+
+        public void InitComponentRefs(Unit unit, Entity root)
+        {
+            this.combatContextRef = new ComponentRef<CombatContextComponent>(unit);
+            this.movementContextRef = new ComponentRef<MovementContextComponent>(unit);
+            this.locomotionIntentRef = new ComponentRef<LocomotionIntentComponent>(unit);
+            this.gameObjectRef = new ComponentRef<GameObjectComponent>(unit);
+            this.animatorRef = new ComponentRef<AnimatorComponent>(unit);
+            this.attackCommandRef = new ComponentRef<AttackCommandComponent>(unit);
+            this.attackCatalogRef = new ComponentRef<AttackCatalogComponent>(unit);
+            this.hitStopRef = new ComponentRef<HitStopComponent>(unit);
+            this.cameraFollowRef = new ComponentRef<CameraFollowComponent>(root);
+            this.timerRef = new ComponentRef<TimerComponent>(root);
+        }
+
+        public CombatContextComponent CombatContext => this.combatContextRef.Get();
+        public MovementContextComponent MovementContext => this.movementContextRef.Get();
+        public LocomotionIntentComponent LocomotionIntent => this.MovementContext?.LocomotionIntent ?? this.locomotionIntentRef.Get();
+
+        public GameObjectComponent GameObjectComponent => this.gameObjectRef.Get();
+        public AnimatorComponent AnimatorComponent => this.animatorRef.Get();
+
+        public AttackCommandComponent AttackCommand => this.CombatContext?.AttackCommand ?? this.attackCommandRef.Get();
+        public AttackCatalogComponent AttackCatalog => this.CombatContext?.AttackCatalog ?? this.attackCatalogRef.Get();
+        public HitStopComponent HitStop => this.CombatContext?.HitStop ?? this.hitStopRef.Get();
+        public CameraFollowComponent CameraFollow => this.cameraFollowRef.Get();
+        public TimerComponent TimerComponent => this.timerRef.Get();
+
         public GameObject EffectRoot { get; set; }
         
         public Unit Unit { get; set; }

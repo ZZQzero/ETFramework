@@ -187,7 +187,6 @@ namespace ET
 
 		private static void OnHitReactionStart(AnimatorComponent self, HitState state)
 		{
-			Log.Error("开始受击动画：" + state);
 			SynthesizeHitAnimation(self);
 		}
 

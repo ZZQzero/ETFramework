@@ -636,6 +636,9 @@ namespace ET
             self.TimingContext.TimeLeftGround = Time.time;
             self.LastGroundedPosition = self.OwnerTransform.position;
             self.TimingContext.InCoyoteTime = false;
+            // 重置连续帧计数器，避免下一次 Detect 立即跳回 Landing
+            self.StateContext.ConsecutiveGroundedFrames = 0;
+            self.StateContext.ConsecutiveAirborneFrames = 0;
         }
 
         /// <summary>

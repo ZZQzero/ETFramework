@@ -75,6 +75,12 @@ namespace ET
         /// </summary>
         public bool JumpRequested { get; set; }
 
+        /// <summary>
+        /// 上一帧是否由 ExternalTargetVelocity 驱动 XZ 速度。
+        /// 用于在外部驱动结束时立即清零 CurrentVelocity 的 XZ，避免残留速度导致减速滑行。
+        /// </summary>
+        public bool WasDrivenByExternalVelocity { get; set; }
+
         // ===== 动画速度相关属性 =====
 
         /// <summary>

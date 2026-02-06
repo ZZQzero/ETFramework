@@ -73,9 +73,6 @@ namespace ET
         [Header("空中状态门槛")]
         public AirborneThresholdData Airborne;
 
-        [Header("空中终结状态门槛")]
-        public AirFinisherThresholdData AirFinisher;
-
         [Header("倒地状态门槛")]
         public KnockdownThresholdData Knockdown;
 
@@ -124,31 +121,9 @@ namespace ET
         [Tooltip("空中终结门槛")]
         public byte AirborneThreshold;
 
-        [Tooltip("砸地门槛")]
-        public byte KnockdownThreshold;
-
-        public AirborneThresholdData(
-            byte airborneThreshold = 70,
-            byte knockdownThreshold = 60)
+        public AirborneThresholdData(byte airborneThreshold = 70)
         {
             this.AirborneThreshold = airborneThreshold;
-            this.KnockdownThreshold = knockdownThreshold;
-        }
-    }
-
-    /// <summary>
-    /// 空中终结状态门槛数据
-    /// </summary>
-    [System.Serializable]
-    public struct AirFinisherThresholdData
-    {
-
-        [Tooltip("砸地门槛")]
-        public byte KnockdownThreshold;
-
-        public AirFinisherThresholdData(byte knockdownThreshold = 65)
-        {
-            this.KnockdownThreshold = knockdownThreshold;
         }
     }
 

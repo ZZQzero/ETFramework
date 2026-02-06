@@ -7,19 +7,17 @@ namespace ET
     /// <summary>
     /// 受击状态
     /// </summary>
-    public enum HitState
+    public enum HitState : byte
     {
         None = 0,
         /// <summary>地面受击（站立/行走时被打中）。</summary>
-        Grounded = 1,
-        /// <summary>空中（被击飞/浮空中）。</summary>
-        Airborne = 2,
-        /// <summary>空中硬直/终结（比普通空中更“终结态”）。</summary>
-        AirFinisher = 3,
-        /// <summary>倒地中。</summary>
-        Knockdown = 4,
-        /// <summary>起身中。</summary>
-        GetUp = 5,
+        GroundedHit = 1,
+        /// <summary>空中受击（被击飞/浮空中）。</summary>
+        AirborneHit = 2,
+        /// <summary>倒地中受击。</summary>
+        KnockdownHit = 3,
+        /// <summary>起身中受击。</summary>
+        GetUpHit = 4,
     }
 
     /// <summary>
@@ -38,7 +36,8 @@ namespace ET
 
     /// <summary>
     /// 空中受击落地会话数据结构，封装落地语义相关字段。
-    /// 职责：管理"空中→落地"的状态流转语义，避免多个分散字段导致的状态管理复杂度。
+    /// 职责：管理"空中→落地"的状态流转语义。
+    /// 落地判定由 UpdateAirborne 轮询 Ground.IsGrounded 实现，不再依赖事件队列。
     /// </summary>
     public struct AirborneLandSession
     {
@@ -48,47 +47,15 @@ namespace ET
         /// <summary>普通落地硬直（ms, combat-time）。</summary>
         public int LandingStunMs;
         
-        /// <summary>落地事实已到达（由 Ground.OnLanded 事件置位）。</summary>
-        public bool LandQueued;
-        
-        /// <summary>本次落地已被消费处理（确保只处理一次）。</summary>
+        /// <summary>本会话是否已消费过落地（防止同会话重复触发）。</summary>
         public bool LandHandled;
-        
-        /// <summary>落地发生时刻（combat-time），用于调试与一致性校验。</summary>
-        public long LandCombatMs;
         
         /// <summary>重置会话状态。</summary>
         public void Reset()
         {
             this.Outcome = PendingLandOutcome.None;
             this.LandingStunMs = 0;
-            this.LandQueued = false;
             this.LandHandled = false;
-            this.LandCombatMs = 0;
-        }
-        
-        /// <summary>
-        /// 尝试消费落地事件。
-        /// </summary>
-        /// <returns>如果成功消费返回 true，否则返回 false。</returns>
-        public bool TryConsumeLanding(out PendingLandOutcome outcome)
-        {
-            if (!this.LandQueued || this.LandHandled)
-            {
-                outcome = PendingLandOutcome.None;
-                return false;
-            }
-            this.LandHandled = true;
-            outcome = this.Outcome;
-            return true;
-        }
-        
-        /// <summary>落地已消费后清理语义（保留 LandHandled=true）。</summary>
-        public void ClearAfterConsumed()
-        {
-            this.Outcome = PendingLandOutcome.None;
-            this.LandingStunMs = 0;
-            this.LandCombatMs = 0;
         }
     }
 
@@ -136,28 +103,11 @@ namespace ET
         public AirborneLandSession LandSession;
 
         /// <summary>
-        /// Ground.OnLanded 订阅回调句柄（用于 Destroy 退订）。
+        /// AirCombo 退出完成事件订阅句柄（用于 Destroy 退订）。
         /// </summary>
-        public Action GroundOnLandedHandler;
-
-        /// <summary>
-        /// AirCombo 事件订阅句柄（用于 Destroy 退订）。
-        /// </summary>
-        public Action<bool> AirComboGroundDetectHandler;
-
         public Action AirComboExitCompletedHandler;
 
         public bool AirComboEventsBound;
-
-        /// <summary>
-        /// 退出/下落期临时强制地检高频（token）。
-        /// </summary>
-        public long GroundDetectBoostToken;
-
-        /// <summary>
-        /// 空连等来源请求禁用地检（token）。
-        /// </summary>
-        public long GroundDetectDisableToken;
 
         #endregion
         
@@ -171,6 +121,11 @@ namespace ET
         /// 约束：一次“受击会话”（从 None 进入任意受击状态，到回到 None）只允许 acquire 一次，结束时 release 一次。
         /// </summary>
         public bool HitSessionLocksAcquired { get; set; }
+
+        /// <summary>
+        /// 是否已抑制地检空中降频，保证空中受击期间每帧检测。
+        /// </summary>
+        public bool GroundFrequencyInhibited { get; set; }
 
         /// <summary>
         /// 本单位当前“允许播放哪些受击表现分组”（运行时缓存，来自 ProfileLibrary/配置）。
@@ -245,6 +200,12 @@ namespace ET
 
         /// <summary>进入起身状态的时间点（combat-time）。</summary>
         public long GetUpStartTime { get; set; }
+
+        /// <summary>首次击飞时的地面高度（世界 Y），用于计算空中绝对高度上限。</summary>
+        public float AirborneOriginHeight { get; set; }
+
+        /// <summary>空中绝对高度上限（世界 Y），超过此高度时抑制向上冲量。</summary>
+        public float MaxAirborneHeight { get; set; }
         
         #endregion
         
@@ -260,16 +221,13 @@ namespace ET
         /// </summary>
         public bool IsInHitVisual =>
             this.VisualState != HitState.None &&
-            (this.VisualState != HitState.Grounded || this.VisualReactionType != HitReactionType.None);
-        
-        /// <summary>是否可以被攻击</summary>
-        public bool CanBeHit => CurrentHitState != HitState.GetUp;
+            (this.VisualState != HitState.GroundedHit || this.VisualReactionType != HitReactionType.None);
         
         /// <summary>是否在空中</summary>
-        public bool IsAirborne => CurrentHitState == HitState.Airborne || CurrentHitState == HitState.AirFinisher;
+        public bool IsAirborne => CurrentHitState == HitState.AirborneHit;
         
         /// <summary>是否倒地</summary>
-        public bool IsKnockdown => CurrentHitState == HitState.Knockdown;
+        public bool IsKnockdown => CurrentHitState == HitState.KnockdownHit;
         
         #endregion
 

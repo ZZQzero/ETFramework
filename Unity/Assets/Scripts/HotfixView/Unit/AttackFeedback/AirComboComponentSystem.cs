@@ -15,10 +15,10 @@ namespace ET
             self.IsExiting = false;
             self.EndCombatMs = 0;
             self.AbsoluteEndCombatMs = 0;
-            self.PendingCaptureEnteredHeight = false;
             self.EnteredHeight = 0f;
             self.ComboMinHeight = 0f;
             self.ComboMaxHeight = 0f;
+            self.HeightClampInitialized = false;
             self.GravityScaleTarget = 1f;
             self.ExitFromGravityScale = 1f;
             self.ExitStartCombatMs = 0;
@@ -52,15 +52,12 @@ namespace ET
             self.IsExiting = false;
             self.ExitStartCombatMs = 0;
 
-            // EnteredHeight：首次进入开启延迟捕获；再次进入不重置锚点，避免高度漂移导致 clamp 抖动
+            // EnteredHeight 使用攻击者 Y 作为锚点：高度夹持的目的是"不让怪物飞得比攻击者高太多"，
+            // 锚点必须是攻击者高度而非受击者高度，否则二次击飞时锚点跟着怪物升高导致天花板失效。
+            // 首次进入直接计算 clamp；再次进入不重置锚点，避免抖动。
             if (!wasActive)
             {
-                self.PendingCaptureEnteredHeight = true;
-                // fallback：先记录当前高度（避免极端情况下永远不捕获）
                 self.EnteredHeight = attackerWorldPos.y;
-                
-                // 进入空中连段：请求关闭地检（由 HitReaction 统一处理）
-                self.OnGroundDetectRequested.Invoke(false);
 
                 // 以攻击者为连段中心（XZ）
                 self.ComboCenterWorldPos = attackerWorldPos;
@@ -199,13 +196,10 @@ namespace ET
         }
         
         /// <summary>
-        /// 回拉机制
+        /// 回拉机制：当怪物超出连段中心的最大水平距离时，施加朝向中心的回拉速度，防止怪物被打出攻击范围。
+        /// 回拉速度与超出距离成正比，直接叠加到目标速度（单位 m/s）。
         /// </summary>
-        /// <param name="self"></param>
-        /// <param name="currentWorldPos"></param>
-        /// <param name="horizontalVelocity"></param>
-        /// <param name="deltaTime"></param>
-        public static void ApplyAirComboHorizontalRecenter(this AirComboComponent self, Vector3 currentWorldPos, ref Vector3 horizontalVelocity, float deltaTime)
+        public static void ApplyAirComboHorizontalRecenter(this AirComboComponent self, Vector3 currentWorldPos, ref Vector3 horizontalVelocity)
         {
             if (!self.Active || self.IsExiting)
                 return;
@@ -219,7 +213,7 @@ namespace ET
             if (dist <= self.RecenterDeadZone)
                 return;
 
-            float maxDist = self.MaxHorizontalDistance * 0.7f;
+            float maxDist = self.MaxHorizontalDistance;
             if (maxDist <= 0f)
                 return;
 
@@ -253,10 +247,6 @@ namespace ET
                 return;
             }
 
-            // 进入退出阶段：请求开启地检
-            self.OnGroundDetectRequested.Invoke(true);
-
-            Log.Error("退出空中BeginExit");
             self.IsExiting = true;
             self.ExitStartCombatMs = nowCombatMs;
             self.ExitFromGravityScale = self.GravityScaleTarget;
@@ -283,10 +273,10 @@ namespace ET
             self.EndCombatMs = 0;
             self.AbsoluteEndCombatMs = 0;
 
-            self.PendingCaptureEnteredHeight = false;
             self.EnteredHeight = 0f;
             self.ComboMinHeight = 0f;
             self.ComboMaxHeight = 0f;
+            self.HeightClampInitialized = false;
 
             self.GravityScaleTarget = 1f;
             self.ExitFromGravityScale = 1f;
@@ -305,23 +295,6 @@ namespace ET
             self.RecenterDeadZone = 0f;
 
             self.OnExitCompleted.Invoke();
-        }
-
-        public static void CaptureEnteredHeightIfNeeded(this AirComboComponent self, float rigidbodyY)
-        {
-            if (self == null || self.IsDisposed)
-            {
-                return;
-            }
-
-            if (!self.Active || !self.PendingCaptureEnteredHeight)
-            {
-                return;
-            }
-
-            self.PendingCaptureEnteredHeight = false;
-            self.EnteredHeight = rigidbodyY;
-            self.RecalculateHeightClampFromEnteredHeight();
         }
 
         public static float GetCurrentGravityScale(this AirComboComponent self, long nowCombatMs)
@@ -367,6 +340,11 @@ namespace ET
             self.LastDebugLogCombatMs = nowCombatMs;
         }
 
+        /// <summary>
+        /// 根据当前 EnteredHeight 和 Offset 直接计算高度夹持区间（覆盖写入，不做增量合并）。
+        /// offset 参数本身已在 Enter/OnHit 中按"地板取更高、天花板取更低"策略合并，
+        /// 此处只需将最终 offset 转为绝对高度，避免 offset 合并 + clamp 合并双重收紧导致区间退化。
+        /// </summary>
         private static void RecalculateHeightClampFromEnteredHeight(this AirComboComponent self)
         {
             float minY = self.EnteredHeight + self.MinHeightOffset;
@@ -374,34 +352,12 @@ namespace ET
 
             if (maxY < minY)
             {
-                float tmp = minY;
-                minY = maxY;
-                maxY = tmp;
+                (minY, maxY) = (maxY, minY);
             }
 
-            // 合并：地板取更高，天花板取更低
-            if (self.ComboMinHeight <= 0f)
-            {
-                self.ComboMinHeight = minY;
-            }
-            else
-            {
-                self.ComboMinHeight = Mathf.Max(self.ComboMinHeight, minY);
-            }
-
-            if (self.ComboMaxHeight <= 0f)
-            {
-                self.ComboMaxHeight = maxY;
-            }
-            else
-            {
-                self.ComboMaxHeight = Mathf.Min(self.ComboMaxHeight, maxY);
-            }
-
-            if (self.ComboMaxHeight < self.ComboMinHeight)
-            {
-                self.ComboMaxHeight = self.ComboMinHeight;
-            }
+            self.ComboMinHeight = minY;
+            self.ComboMaxHeight = maxY;
+            self.HeightClampInitialized = true;
         }
     }
 }

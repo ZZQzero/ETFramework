@@ -131,12 +131,21 @@ namespace ET
             }
 
             // 2. 外部目标速度覆盖
-            if (self.LocomotionIntent != null && self.LocomotionIntent.ExternalTargetVelocity.sqrMagnitude > 0.0001f)
+            if (self.LocomotionIntent != null)
             {
                 Vector2 targetVel = self.LocomotionIntent.ExternalTargetVelocity;
-                
-                // 覆盖 XZ 速度
-                self.CurrentVelocity = new Vector3(targetVel.x, self.CurrentVelocity.y, targetVel.y);
+                if (targetVel.sqrMagnitude > 0.0001f)
+                {
+                    // 外部驱动中：直接覆盖 XZ 速度
+                    self.CurrentVelocity = new Vector3(targetVel.x, self.CurrentVelocity.y, targetVel.y);
+                    self.WasDrivenByExternalVelocity = true;
+                }
+                else if (self.WasDrivenByExternalVelocity)
+                {
+                    // 外部驱动刚结束：立即清零 XZ，避免残留速度导致减速滑行
+                    self.WasDrivenByExternalVelocity = false;
+                    self.CurrentVelocity = new Vector3(0f, self.CurrentVelocity.y, 0f);
+                }
             }
 
             // 3. 同步速度到 Rigidbody
@@ -245,13 +254,6 @@ namespace ET
             // 空连物理
             if (self.AirCombo != null && self.AirCombo.Active)
             {
-                // 进入空连首帧捕获高度
-                // 依赖 Ground 状态保证在空中
-                if (self.Ground != null && self.Ground.IsAirborne(self.Ground.StateContext.State))
-                {
-                    self.AirCombo.CaptureEnteredHeightIfNeeded(self.Rigidbody != null ? self.Rigidbody.position.y : self.Unit.Position.y);
-                }
-
                 long nowCombatMs = self.HitStop != null ? self.HitStop.NowCombatMs() : TimeInfo.Instance.ClientFrameTime();
                 float gScale = self.AirCombo.GetCurrentGravityScale(nowCombatMs);
                 gScale = Mathf.Clamp01(gScale);
@@ -270,8 +272,8 @@ namespace ET
                     self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, minFall, self.CurrentVelocity.z);
                 }
 
-                // 高度夹持
-                if (self.Rigidbody != null)
+                // 高度夹持：仅在维持期生效，退出期重力已恢复，应允许自然下落
+                if (self.Rigidbody != null && !self.AirCombo.IsExiting && self.AirCombo.HeightClampInitialized)
                 {
                     Vector3 pos = self.Rigidbody.position;
                     float clampedY = Mathf.Clamp(pos.y, self.AirCombo.ComboMinHeight, self.AirCombo.ComboMaxHeight);

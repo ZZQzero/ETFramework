@@ -8,7 +8,7 @@ namespace ET
     /// - 不表达“规则能不能生效”（免疫击飞/免疫眩晕应由规则层处理）
     /// </summary>
     [Flags]
-    public enum HitReactionGroup : int
+    public enum HitReactionGroup : byte
     {
         None = 0,
         /// <summary>轻/中受击（连击主力）</summary>
@@ -24,15 +24,14 @@ namespace ET
     /// 状态动画可视化许可（只影响“播不播动画”，不影响规则状态流转）。
     /// </summary>
     [Flags]
-    public enum HitStateVisualMask : int
+    public enum HitStateVisualMask : byte
     {
         None = 0,
         Grounded = 1 << 0,
         Airborne = 1 << 1,
-        AirStun = 1 << 2,
-        Knockdown = 1 << 3,
-        GetUp = 1 << 4,
-        All = Grounded | Airborne | AirStun | Knockdown | GetUp,
+        Knockdown = 1 << 2,
+        GetUp = 1 << 3,
+        All = Grounded | Airborne | Knockdown | GetUp,
     }
     
     /// <summary>
@@ -77,20 +76,17 @@ namespace ET
         {
             public readonly GroundedThresholdData Grounded;
             public readonly AirborneThresholdData Airborne;
-            public readonly AirFinisherThresholdData AirFinisher;
             public readonly KnockdownThresholdData Knockdown;
             public readonly GetUpThresholdData GetUp;
             
             public HitInterruptThresholds(
                 GroundedThresholdData grounded,
                 AirborneThresholdData airborne,
-                AirFinisherThresholdData airFinisher,
                 KnockdownThresholdData knockdown,
                 GetUpThresholdData getUp)
             {
                 this.Grounded = grounded;
                 this.Airborne = airborne;
-                this.AirFinisher = airFinisher;
                 this.Knockdown = knockdown;
                 this.GetUp = getUp;
             }
@@ -151,13 +147,10 @@ namespace ET
         {
             var g = this.Rule.HitInterrupt.Grounded;
             var a = this.Rule.HitInterrupt.Airborne;
-            var s = this.Rule.HitInterrupt.AirFinisher;
             var k = this.Rule.HitInterrupt.Knockdown;
             var u = this.Rule.HitInterrupt.GetUp;
             return $"受击规则配置(允许表现组={this.Visual.AllowedReactionGroups}, 允许状态动画={this.Visual.AllowedStateVisuals}, " +
                    $"抵抗力表[Grounded(Light/Knockback/Airborne/Knockdown)]=[{g.LightReactionThreshold}/{g.KnockbackThreshold}/{g.AirborneThreshold}/{g.KnockdownThreshold}], " +
-                   $"[Airborne(AirFinisher/Knockdown)]=[{a.AirborneThreshold}/{a.KnockdownThreshold}], " +
-                   $"[AirFinisher(Knockdown)]=[{s.KnockdownThreshold}], " +
                    $"[Knockdown(GetUpInterrupt)]=[{k.KnockdownThreshold}], " +
                    $"[GetUp(GetUpInterrupt)]=[{u.GetUpInterruptThreshold}], " +
                    $"数值缩放[硬直/击退/击飞]=[{this.Rule.Scale.Stun:0.###}/{this.Rule.Scale.Knockback:0.###}/{this.Rule.Scale.Knockup:0.###}], " +

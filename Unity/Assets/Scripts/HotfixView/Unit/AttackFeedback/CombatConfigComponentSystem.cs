@@ -31,7 +31,6 @@
                 new HitReactionConfig.HitInterruptThresholds(
                     thresholds.Grounded,
                     thresholds.Airborne,
-                    thresholds.AirFinisher,
                     thresholds.Knockdown,
                     thresholds.GetUp);
 
@@ -89,8 +88,7 @@
             HitStateVisualMask.All,
             new HitReactionConfig.HitInterruptThresholds(
                 new GroundedThresholdData(20, 30, 50, 60),
-                new AirborneThresholdData(70, 60),
-                new AirFinisherThresholdData(65),
+                new AirborneThresholdData(70),
                 new KnockdownThresholdData(80),
                 new GetUpThresholdData(80)),
             new HitReactionConfig.Scales(1f, 1f, 1f),

@@ -184,7 +184,7 @@ public partial class SkillEditorWindow : EditorWindow
         hitEffectReactionField = rightContainer.Q<EnumField>("HitEffectReactionField");
         if (hitEffectReactionField != null)
         {
-            hitEffectReactionField.Init(HitReactionType.MinorHit);
+            hitEffectReactionField.Init(HitReactionType.LightHit);
         }
         hitEffectPriorityField = rightContainer.Q<IntegerField>("HitEffectPriorityField");
         hitEffectPriorityAutoButton = rightContainer.Q<Button>("HitEffectPriorityAutoButton");
@@ -192,7 +192,7 @@ public partial class SkillEditorWindow : EditorWindow
         hitMotionTypeField = rightContainer.Q<EnumField>("HitMotionTypeField");
         if (hitMotionTypeField != null)
         {
-            hitMotionTypeField.Init(HitMotionType.Normal);
+            hitMotionTypeField.Init(HitMotionType.None);
         }
         hitMotionForceField = rightContainer.Q<FloatField>("HitMotionForceField");
         hitMotionDurationMsField = rightContainer.Q<IntegerField>("HitMotionDurationMsField");

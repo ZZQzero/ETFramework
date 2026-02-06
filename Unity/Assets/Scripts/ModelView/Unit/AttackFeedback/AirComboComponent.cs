@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace ET
 {
@@ -12,12 +11,6 @@ namespace ET
     [ComponentOf(typeof(Unit))]
     public sealed class AirComboComponent : Entity, IAwake
     {
-        /// <summary>
-        /// 地检请求事件：true=启用，false=禁用。
-        /// 由 HitReaction 统一处理 Ground.Enable。
-        /// </summary>
-        public EventHook<bool> OnGroundDetectRequested;
-
         /// <summary>
         /// 空中连段退出完成事件。
         /// </summary>
@@ -33,15 +26,15 @@ namespace ET
         /// <summary>fail-safe：悬空总时长上限（combat-time）。</summary>
         public long AbsoluteEndCombatMs;
 
-        /// <summary>进入空中连段后第一帧（GroundBreak 生效后）捕获进入高度。</summary>
-        public bool PendingCaptureEnteredHeight;
-
-        /// <summary>进入时高度（用于 min/max clamp 的锚）。</summary>
+        /// <summary>高度夹持锚点（攻击者 Y），用于 min/max clamp 计算。</summary>
         public float EnteredHeight;
 
         /// <summary>高度夹持下限/上限（世界 Y）。</summary>
         public float ComboMinHeight;
         public float ComboMaxHeight;
+        
+        /// <summary>高度夹持是否已初始化（避免 Y<=0 场景下的误判）。</summary>
+        public bool HeightClampInitialized;
 
         /// <summary>空中连段目标重力缩放（0~1）。</summary>
         public float GravityScaleTarget = 1f;

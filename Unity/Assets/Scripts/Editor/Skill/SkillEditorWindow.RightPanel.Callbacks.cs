@@ -958,11 +958,11 @@ public partial class SkillEditorWindow : EditorWindow
         // 与运行时 HotfixView 的默认映射保持一致（0 表示不配置；此处用于编辑器一键补齐）
         switch (type)
         {
-            case HitReactionType.MinorHit: return 10;
-            case HitReactionType.MediumHit: return 20;
-            case HitReactionType.MajorHit: return 40;
-            case HitReactionType.StaggerHit: return 60;
-            case HitReactionType.StunHit: return 80;
+            case HitReactionType.LightHit: return 10;
+            case HitReactionType.HeavyHit: return 20;
+            case HitReactionType.Launch: return 40;
+            case HitReactionType.AirCombo: return 60;
+            case HitReactionType.SlamDown: return 80;
             default: return 0;
         }
     }

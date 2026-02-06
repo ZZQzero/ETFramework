@@ -13,11 +13,11 @@ namespace ET
             // 仅作为“未配置 HitStrength 的兜底规则”，数值可以后续完全由策划配置覆盖。
             switch (type)
             {
-                case HitReactionType.MinorHit: return 10;
-                case HitReactionType.MediumHit: return 20;
-                case HitReactionType.MajorHit: return 40;
-                case HitReactionType.StaggerHit: return 60;
-                case HitReactionType.StunHit: return 80;
+                case HitReactionType.LightHit: return 10;
+                case HitReactionType.HeavyHit: return 20;
+                case HitReactionType.Launch: return 40;
+                case HitReactionType.AirCombo: return 60;
+                case HitReactionType.SlamDown: return 80;
                 default: return 0;
             }
         }
@@ -46,12 +46,13 @@ namespace ET
             motion.Force = Mathf.Max(0f, motion.Force);
 
             // 根据 Profile 缩放和限制力
-            if (motion.MotionType == HitMotionType.Knockback || motion.MotionType == HitMotionType.PullTowardAttacker)
+            if (motion.MotionType == HitMotionType.HorizontalImpulse || motion.MotionType == HitMotionType.CustomCurve || motion.MotionType == HitMotionType.TowardAttacker)
             {
+                // 水平类运动（击退、拉拽、自定义曲线）使用 Knockback 缩放
                 if (config.Rule.Scale.Knockback > 0f && !Mathf.Approximately(config.Rule.Scale.Knockback, 1f)) motion.Force *= config.Rule.Scale.Knockback;
                 if (config.Rule.Limit.MaxKnockbackForce > 0f && motion.Force > config.Rule.Limit.MaxKnockbackForce) motion.Force = config.Rule.Limit.MaxKnockbackForce;
             }
-            else if (motion.MotionType == HitMotionType.Knockup || motion.MotionType == HitMotionType.KnockDown)
+            else if (motion.MotionType == HitMotionType.UpwardImpulse)
             {
                 if (config.Rule.Scale.Knockup > 0f && !Mathf.Approximately(config.Rule.Scale.Knockup, 1f))
                 {
@@ -119,7 +120,7 @@ namespace ET
         /// <param name="allowSecondaryKnockup">Airborne 时 true 允许 capped 二次击飞；AirFinisher 时 false 完全禁止。</param>
         public static HitImpactData FilterAirborneMotion(this HitReactionComponent self, in HitImpactData request, bool allowSecondaryKnockup = true)
         {
-            if (request.Rule.MotionData.MotionType != HitMotionType.Knockup)
+            if (request.Rule.MotionData.MotionType != HitMotionType.UpwardImpulse)
             {
                 return request;
             }
@@ -128,7 +129,7 @@ namespace ET
             {
                 // 完全禁止二次击飞
                 HitMotionData m = request.Rule.MotionData;
-                m.MotionType = HitMotionType.Normal;
+                m.MotionType = HitMotionType.None;
                 m.Force = 0f;
                 m.DurationMs = 0;
                 return BuildFilteredRequest(in request, m);
@@ -138,7 +139,7 @@ namespace ET
             {
                 // 配置为 0：禁止
                 HitMotionData m = request.Rule.MotionData;
-                m.MotionType = HitMotionType.Normal;
+                m.MotionType = HitMotionType.None;
                 m.Force = 0f;
                 m.DurationMs = 0;
                 return BuildFilteredRequest(in request, m);
@@ -167,11 +168,11 @@ namespace ET
         {
             return type switch
             {
-                HitReactionType.MinorHit => HitReactionGroup.Minor,
-                HitReactionType.MediumHit => HitReactionGroup.Minor,
-                HitReactionType.MajorHit => HitReactionGroup.Major,
-                HitReactionType.StaggerHit => HitReactionGroup.Control,
-                HitReactionType.StunHit => HitReactionGroup.Control,
+                HitReactionType.LightHit => HitReactionGroup.Minor,
+                HitReactionType.HeavyHit => HitReactionGroup.Minor,
+                HitReactionType.Launch => HitReactionGroup.Major,
+                HitReactionType.AirCombo => HitReactionGroup.Control,
+                HitReactionType.SlamDown => HitReactionGroup.Control,
                 _ => HitReactionGroup.None
             };
         }
@@ -192,11 +193,11 @@ namespace ET
             // 降级链：Control → Major → Minor → None
             if (g == HitReactionGroup.Control)
             {
-                return self.DegradeReactionType(HitReactionType.MajorHit, allowed);
+                return self.DegradeReactionType(HitReactionType.Launch, allowed);
             }
             if (g == HitReactionGroup.Major)
             {
-                return self.DegradeReactionType(HitReactionType.MediumHit, allowed);
+                return self.DegradeReactionType(HitReactionType.HeavyHit, allowed);
             }
             if (g == HitReactionGroup.Minor)
             {
@@ -212,15 +213,15 @@ namespace ET
             AirborneReason type = AirborneReason.None;
             switch (request.Rule.MotionData.MotionType)
             {
-                case HitMotionType.Normal:
-                case HitMotionType.Knockback:
-                case HitMotionType.PullTowardAttacker:
+                case HitMotionType.None:
+                case HitMotionType.HorizontalImpulse:
+                case HitMotionType.CustomCurve:
                     type = AirborneReason.Juggled;
                     break;
-                case HitMotionType.Knockup:
+                case HitMotionType.UpwardImpulse:
                     type = AirborneReason.Launched;
                     break;
-                case HitMotionType.KnockDown:
+                case HitMotionType.TowardAttacker:
                     type = AirborneReason.Knockdown;
                     break;
             }

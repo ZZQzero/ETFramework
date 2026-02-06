@@ -205,35 +205,31 @@ namespace ET
 			ITransition transition = null;
 			switch (hit.VisualState)
 			{
-				case HitState.Grounded:
+				case HitState.GroundedHit:
 					switch (hit.VisualReactionType)
 					{
-						case HitReactionType.MediumHit: transition = self.HitMediumTransition; break;
-						case HitReactionType.MajorHit:  transition = self.HitHeavyTransition; break;
-						case HitReactionType.StaggerHit: transition = self.HitMediumTransition; break;
-						case HitReactionType.StunHit: transition = self.HitHeavyTransition; break;
+						case HitReactionType.HeavyHit: transition = self.HitMediumTransition; break;
+						case HitReactionType.Launch:  transition = self.HitHeavyTransition; break;
+						case HitReactionType.AirCombo: transition = self.HitMediumTransition; break;
+						case HitReactionType.SlamDown: transition = self.HitHeavyTransition; break;
 						default:                     transition = self.HitLightTransition; break;
 					}
 					
 					// Grounded 时如存在“击退运动”，优先使用击退受击动画（更贴合表现语义）
-					if (hit.CurrentMotionType == HitMotionType.Knockback || hit.CurrentMotionType == HitMotionType.PullTowardAttacker)
+					if (hit.CurrentMotionType == HitMotionType.HorizontalImpulse || hit.CurrentMotionType == HitMotionType.CustomCurve)
 					{
 						transition = self.HitKnockbackTransition ?? transition;
 					}
 					break;
-				case HitState.Airborne:
+				case HitState.AirborneHit:
 				{
 					// 仍保留 Falling 资源：用垂直速度做一次选择（不引入额外 HitState）
 					bool isFalling = self.CharacterController != null && self.CharacterController.CurrentVelocity.y < -0.01f;
 					transition = isFalling ? self.HitFallingTransition : self.HitAirborneTransition;
 					break;
 				}
-				case HitState.AirFinisher:
-					// AirStun 若没有专用资源，先回退复用 Airborne/Falling 的资源（后续可接入 Hit_AirStun）
-					transition = self.HitAirborneTransition ?? self.HitFallingTransition ?? self.HitHeavyTransition;
-					break;
-				case HitState.Knockdown: transition = self.HitKnockdownTransition; break;
-				case HitState.GetUp:     transition = self.HitGetUpTransition; break;
+				case HitState.KnockdownHit: transition = self.HitKnockdownTransition; break;
+				case HitState.GetUpHit:     transition = self.HitGetUpTransition; break;
 			}
 
 			// 回退逻辑：如果没有配置对应的受击动画，尝试播放最基础的轻度受击
@@ -256,10 +252,9 @@ namespace ET
 				{
 					// 重度受击、击飞、倒地：瞬间切断攻击层
 					// 轻度/中度受击：快速淡出 (0.1s)
-					bool isHeavyHit = hit.VisualState == HitState.Airborne || 
-					                  hit.VisualState == HitState.AirFinisher ||
-					                  hit.VisualState == HitState.Knockdown || 
-					                  hit.VisualReactionType == HitReactionType.MajorHit;
+					bool isHeavyHit = hit.VisualState == HitState.AirborneHit || 
+					                  hit.VisualState == HitState.KnockdownHit || 
+					                  hit.VisualReactionType == HitReactionType.Launch;
 						
 					self.AttackLayer.StartFade(0f, isHeavyHit ? 0f : 0.1f);
 				}

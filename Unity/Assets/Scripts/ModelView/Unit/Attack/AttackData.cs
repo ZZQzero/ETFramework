@@ -83,27 +83,32 @@ namespace ET
     /// <summary>
     /// 受击表现类型（仅决定视觉/动画/硬直时长）
     /// </summary>
-    public enum HitReactionType
+    public enum HitReactionType : byte
     {
         None = 0,
-        MinorHit = 1,       // 轻微受击
-        MediumHit = 2,      // 中等受击
-        MajorHit = 3,       // 重度受击
-        StaggerHit = 4,     // 踉跄
-        StunHit = 5,        // 眩晕/完全瘫痪
+
+        LightHit,    // 轻击（地面）
+        HeavyHit,    // 重击（地面）
+        Launch,     // 击飞表现（进入空中）
+        AirCombo,   // 空中受击（非终结）
+        SlamDown,   // 砸地表现
+        Knockdown,  // 躺地
+        Pull,       // 拉拽
     }
+
 
     /// <summary>
     /// 受击物理运动类型（独立于表现类型）
     /// </summary>
     public enum HitMotionType : byte
     {
-        Normal = 0, 
-        Knockback = 1,          // 水平击退 (XZ)
-        Knockup = 2,            // 击飞 (Up + XZ)
-        KnockFinish = 3,        // 空中结束
-        KnockDown = 4,          // 击倒或者空中砸地 (Down + XZ)
-        PullTowardAttacker = 5, // 拉拽 (向攻击者中心靠拢)
+        None = 0,
+
+        HorizontalImpulse,   // 纯水平冲量（XZ）
+        UpwardImpulse,       // 向上冲量（可带XZ）
+        DownwardImpulse,     // 向下冲量（砸地）
+        TowardAttacker,      // 向攻击者中心拉
+        CustomCurve,         // 曲线运动 / 特殊技能
     }
 
     /// <summary>
@@ -122,7 +127,7 @@ namespace ET
         
         public static HitMotionData Default => new HitMotionData
         {
-            MotionType = HitMotionType.Normal,
+            MotionType = HitMotionType.None,
             Force = 0f,
             DurationMs = 0,
             MotionCurve = AnimationCurve.Linear(0, 1, 1, 0) // 默认线性衰减
@@ -232,7 +237,7 @@ namespace ET
         public static HitEffectData Default => new HitEffectData
         {
             DamageMultiplier = 1f,
-            HitReaction = HitReactionType.MinorHit,
+            HitReaction = HitReactionType.LightHit,
             HitStrength = 0, // 0 表示“未配置”，由 Hotfix 层在构造 HitReactionRequest 时补齐默认值
             HitMotion = HitMotionData.Default,
             HitStunMs = 200,

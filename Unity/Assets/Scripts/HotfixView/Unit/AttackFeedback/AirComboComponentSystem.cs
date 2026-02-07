@@ -3,8 +3,6 @@ using UnityEngine;
 
 namespace ET
 {
-    [EntitySystemOf(typeof(AirComboComponent))]
-    [FriendOf(typeof(AirComboComponent))]
     public static partial class AirComboComponentSystem
     {
         [EntitySystem]
@@ -13,8 +11,6 @@ namespace ET
             // 数据组件默认值兜底（避免未初始化导致的 NaN/0 陷阱）
             self.Active = false;
             self.IsExiting = false;
-            self.EndCombatMs = 0;
-            self.AbsoluteEndCombatMs = 0;
             self.EnteredHeight = 0f;
             self.ComboMinHeight = 0f;
             self.ComboMaxHeight = 0f;
@@ -26,22 +22,21 @@ namespace ET
             self.MinFallSpeed = self.MinFallSpeed == 0f ? -1f : self.MinFallSpeed;
             self.MinHeightOffset = 0f;
             self.MaxHeightOffset = 0f;
-            self.LandingStunMs = 0;
-            self.DebugLogIntervalMs = Mathf.Max(0, self.DebugLogIntervalMs);
-            self.LastDebugLogCombatMs = 0;
-            self.ForceEndGroundedFramesThreshold = Mathf.Max(1, self.ForceEndGroundedFramesThreshold);
         }
-
-        /// <param name="minAirTimeMsOverride">若 > 0，与 profile.MinAirTimeMs 取 max，用于与攻击方段超时(GetCurrentSegmentComboTimeoutMs)对齐。</param>
-        /// <param name="attackRadiusOverride">若 > 0，用 HitBox.Size 推导的半径作为水平距离上限（与 PhysicsHelper 判定一致）；0 表示使用 profile.MaxAirHorizontalDistance。</param>
-        public static void Enter(this AirComboComponent self, long nowCombatMs, Vector3 attackerWorldPos, in HitAirComboProfile profile, int minAirTimeMsOverride = 0,int totalAirTimeMs = 0, float attackRadiusOverride = 0f)
+        
+        public static void Enter(
+            this AirComboComponent self, 
+            long hitStunEndTimeMs, 
+            Vector3 attackerWorldPos, 
+            in HitAirComboProfile comboProfile,
+            float attackRadiusOverride = 0f)
         {
             if (self == null || self.IsDisposed)
             {
                 return;
             }
 
-            if (!profile.Enable)
+            if (!comboProfile.Enable)
             {
                 return;
             }
@@ -51,10 +46,7 @@ namespace ET
             // 进入/再次进入：取消退出（命中续期不应被 ExitLerp 打断）
             self.IsExiting = false;
             self.ExitStartCombatMs = 0;
-
-            // EnteredHeight 使用攻击者 Y 作为锚点：高度夹持的目的是"不让怪物飞得比攻击者高太多"，
-            // 锚点必须是攻击者高度而非受击者高度，否则二次击飞时锚点跟着怪物升高导致天花板失效。
-            // 首次进入直接计算 clamp；再次进入不重置锚点，避免抖动。
+            
             if (!wasActive)
             {
                 self.EnteredHeight = attackerWorldPos.y;
@@ -63,66 +55,39 @@ namespace ET
                 self.ComboCenterWorldPos = attackerWorldPos;
 
                 // 水平距离上限：优先使用本次命中的 HitBox 半径，否则用 profile
-                var distance = attackRadiusOverride > 0f ? attackRadiusOverride : profile.MaxAirHorizontalDistance;
-                self.MaxHorizontalDistance = distance * profile.MaxAirHorizontalScale;
-                self.MaxHorizontalSpeed    = profile.MaxAirHorizontalSpeed;
-                self.RecenterStrength      = profile.RecenterStrength;
-                self.RecenterDeadZone      = profile.RecenterDeadZone;
+                var distance = attackRadiusOverride > 0f ? attackRadiusOverride : comboProfile.MaxAirHorizontalDistance;
+                self.MaxHorizontalDistance = distance * comboProfile.MaxAirHorizontalScale;
+                self.MaxHorizontalSpeed    = comboProfile.MaxAirHorizontalSpeed;
+                self.RecenterStrength      = comboProfile.RecenterStrength;
+                self.RecenterDeadZone      = comboProfile.RecenterDeadZone;
             }
 
-            // KeepAlive（至少维持一段时间）；可与攻击方段超时对齐，避免“攻击动画未结束就 BeginExit”
-            int minAirMs = Mathf.Max(0, profile.MinAirTimeMs);
-            int effectiveMinAirMs = minAirTimeMsOverride > 0 ? Mathf.Max(minAirMs, minAirTimeMsOverride) : minAirMs;
-            long nextEnd = nowCombatMs + effectiveMinAirMs;
-            if (!wasActive || nextEnd > self.EndCombatMs)
-            {
-                self.EndCombatMs = nextEnd;
-            }
-
-            // fail-safe：绝对上限只会变得更严格，不允许被不断延长
-            // totalAirTimeMs：攻击方本次攻击的“总时长上限”（若提供则优先使用）；否则使用 profile.MaxTotalHangMs。
-            // 注意：绝对上限必须 >= effectiveMinAirMs，否则会把 EndCombatMs 夹短，导致“攻击动画未结束就 BeginExit”。
-            int totalMs = totalAirTimeMs > 0 ? totalAirTimeMs : profile.MaxTotalHangMs;
-            totalMs = Mathf.Max(0, totalMs);
-            int maxHangMs = Mathf.Max(effectiveMinAirMs, totalMs);
+            // KeepAlive：攻击段超时 + MaxAirTimeMs 偏移，确保空连维持到下一段命中
+            self.AirEndCombatMs = hitStunEndTimeMs + comboProfile.MaxAirOffsetMs;
             
-            long nextAbsEnd = nowCombatMs + maxHangMs;
-            if (self.AbsoluteEndCombatMs <= 0)
-            {
-                self.AbsoluteEndCombatMs = nextAbsEnd;
-            }
-            else
-            {
-                self.AbsoluteEndCombatMs = Math.Min(self.AbsoluteEndCombatMs, nextAbsEnd);
-            }
-            if (self.EndCombatMs > self.AbsoluteEndCombatMs)
-            {
-                self.EndCombatMs = self.AbsoluteEndCombatMs;
-            }
-
             // 合并参数（保守）
-            float g = Mathf.Clamp01(profile.GravityScaleDuringCombo);
+            float g = Mathf.Clamp01(comboProfile.GravityScaleDuringCombo);
             self.GravityScaleTarget = wasActive ? Mathf.Min(self.GravityScaleTarget, g) : g;
 
-            self.ExitLerpMs = wasActive ? Mathf.Max(self.ExitLerpMs, profile.ExitLerpMs) : Mathf.Max(0, profile.ExitLerpMs);
-            self.LandingStunMs = wasActive ? Mathf.Max(self.LandingStunMs, profile.LandingStunMs) : Mathf.Max(0, profile.LandingStunMs);
-
+            self.ExitLerpMs = wasActive ? Mathf.Max(self.ExitLerpMs, comboProfile.ExitLerpMs) : Mathf.Max(0, comboProfile.ExitLerpMs);
+           
             // 高度偏移合并：地板取更高、天花板取更低
-            self.MinHeightOffset = wasActive ? Mathf.Max(self.MinHeightOffset, profile.MinHeightOffset) : profile.MinHeightOffset;
-            self.MaxHeightOffset = wasActive ? Mathf.Min(self.MaxHeightOffset, profile.MaxHeightOffset) : profile.MaxHeightOffset;
+            self.MinHeightOffset = wasActive ? Mathf.Max(self.MinHeightOffset, comboProfile.MinHeightOffset) : comboProfile.MinHeightOffset;
+            self.MaxHeightOffset = wasActive ? Mathf.Min(self.MaxHeightOffset, comboProfile.MaxHeightOffset) : comboProfile.MaxHeightOffset;
 
             // 下落速度下限：abs 越小越“挂住”（最终 MinFallSpeed 越接近 0）
-            float minFallAbs = Mathf.Max(0f, profile.MinFallSpeedAbs);
+            float minFallAbs = Mathf.Max(0f, comboProfile.MinFallSpeedAbs);
             float nextMinFall = -minFallAbs;
             self.MinFallSpeed = wasActive ? Mathf.Max(self.MinFallSpeed, nextMinFall) : nextMinFall;
 
             self.RecalculateHeightClampFromEnteredHeight();
-            self.DebugLog(nowCombatMs, "Enter");
         }
-
-        /// <param name="minAirTimeMsOverride">若 > 0，与 profile.MinAirTimeMs 取 max，用于与攻击方段超时对齐。</param>
-        /// <param name="attackRadiusOverride">若 > 0，用本次 HitBox 半径收紧水平距离上限（取 min，保证不超出任意一次命中的攻击范围）。</param>
-        public static void OnHit(this AirComboComponent self, long nowCombatMs, in HitAirComboProfile profile, int minAirTimeMsOverride = 0, float attackRadiusOverride = 0f)
+        
+        public static void OnHit(
+            this AirComboComponent self, 
+            long hitStunEndTimeMs, 
+            in HitAirComboProfile comboProfile,
+            float attackRadiusOverride = 0f)
         {
             if (self == null || self.IsDisposed)
             {
@@ -140,38 +105,26 @@ namespace ET
                 self.IsExiting = false;
                 self.ExitStartCombatMs = 0;
             }
-            if (attackRadiusOverride > 0f)
-            {
-                self.MaxHorizontalDistance = Mathf.Min(self.MaxHorizontalDistance, attackRadiusOverride);
-            }
-            // KeepAlive：取更长的结束点，但不得超过绝对上限；可与攻击方段超时对齐
-            int minAirMs = Mathf.Max(0, profile.MinAirTimeMs);
-            int effectiveMinAirMs = minAirTimeMsOverride > 0 ? Mathf.Max(minAirMs, minAirTimeMsOverride) : minAirMs;
-            long next = nowCombatMs + effectiveMinAirMs;
-            if (next > self.EndCombatMs)
-            {
-                self.EndCombatMs = next;
-            }
-            if (self.EndCombatMs > self.AbsoluteEndCombatMs)
-            {
-                self.EndCombatMs = self.AbsoluteEndCombatMs;
-            }
-
+            
+            var distance = attackRadiusOverride > 0f ? attackRadiusOverride : comboProfile.MaxAirHorizontalDistance;
+            self.MaxHorizontalDistance = distance * comboProfile.MaxAirHorizontalScale;
+            
+            // KeepAlive：攻击段超时 + MaxAirTimeMs 偏移，确保空连维持到下一段命中
+            self.AirEndCombatMs = hitStunEndTimeMs + comboProfile.MaxAirOffsetMs;
+            
             // 参数合并（同 Enter 的保守策略）
-            float g = Mathf.Clamp01(profile.GravityScaleDuringCombo);
+            float g = Mathf.Clamp01(comboProfile.GravityScaleDuringCombo);
             self.GravityScaleTarget = Mathf.Min(self.GravityScaleTarget, g);
 
-            self.ExitLerpMs = Mathf.Max(self.ExitLerpMs, profile.ExitLerpMs);
-            self.LandingStunMs = Mathf.Max(self.LandingStunMs, profile.LandingStunMs);
+            self.ExitLerpMs = Mathf.Max(self.ExitLerpMs, comboProfile.ExitLerpMs);
 
-            self.MinHeightOffset = Mathf.Max(self.MinHeightOffset, profile.MinHeightOffset);
-            self.MaxHeightOffset = Mathf.Min(self.MaxHeightOffset, profile.MaxHeightOffset);
+            self.MinHeightOffset = Mathf.Max(self.MinHeightOffset, comboProfile.MinHeightOffset);
+            self.MaxHeightOffset = Mathf.Min(self.MaxHeightOffset, comboProfile.MaxHeightOffset);
 
-            float minFallAbs = Mathf.Max(0f, profile.MinFallSpeedAbs);
+            float minFallAbs = Mathf.Max(0f, comboProfile.MinFallSpeedAbs);
             self.MinFallSpeed = Mathf.Max(self.MinFallSpeed, -minFallAbs);
 
             self.RecalculateHeightClampFromEnteredHeight();
-            self.DebugLog(nowCombatMs, "OnHit");
         }
 
         /// <summary>
@@ -250,7 +203,6 @@ namespace ET
             self.IsExiting = true;
             self.ExitStartCombatMs = nowCombatMs;
             self.ExitFromGravityScale = self.GravityScaleTarget;
-            self.DebugLog(nowCombatMs, "BeginExit");
         }
 
         public static void ForceEnd(this AirComboComponent self)
@@ -270,8 +222,6 @@ namespace ET
             self.IsExiting = false;
             // 会话结束必须清理“会话级别”的所有运行时参数：
             // - 否则下一段空中连段会继承上一段的 clamp/偏移/落地硬直等，出现越打越夹紧、悬空异常等问题
-            self.EndCombatMs = 0;
-            self.AbsoluteEndCombatMs = 0;
 
             self.EnteredHeight = 0f;
             self.ComboMinHeight = 0f;
@@ -285,9 +235,7 @@ namespace ET
             self.MinFallSpeed = -1f;
             self.MinHeightOffset = 0f;
             self.MaxHeightOffset = 0f;
-            self.LandingStunMs = 0;
 
-            self.LastDebugLogCombatMs = 0;
             self.ComboCenterWorldPos = Vector3.zero;
             self.MaxHorizontalDistance = 0f;
             self.MaxHorizontalSpeed = 0f;
@@ -320,26 +268,9 @@ namespace ET
             {
                 return false;
             }
-
             return self.ExitLerpMs <= 0 || nowCombatMs - self.ExitStartCombatMs >= self.ExitLerpMs;
         }
-
-        private static void DebugLog(this AirComboComponent self, long nowCombatMs, string reason)
-        {
-            if (!self.DebugEnabled)
-            {
-                return;
-            }
-
-            int interval = Mathf.Max(0, self.DebugLogIntervalMs);
-            if (interval > 0 && nowCombatMs - self.LastDebugLogCombatMs < interval)
-            {
-                return;
-            }
-
-            self.LastDebugLogCombatMs = nowCombatMs;
-        }
-
+        
         /// <summary>
         /// 根据当前 EnteredHeight 和 Offset 直接计算高度夹持区间（覆盖写入，不做增量合并）。
         /// offset 参数本身已在 Enter/OnHit 中按"地板取更高、天花板取更低"策略合并，

@@ -7,13 +7,13 @@
     /// <typeparam name="T">组件类型，必须继承自 Entity</typeparam>
     public struct ComponentRef<T> where T : Entity
     {
-        private Entity _unit;
+        private Entity _entity;
         private T _cached;
         private bool _resolved;
 
-        public ComponentRef(Entity unit)
+        public ComponentRef(Entity entity)
         {
-            _unit = unit;
+            _entity = entity;
             _cached = null;
             _resolved = false;
         }
@@ -21,9 +21,9 @@
         /// <summary>
         /// 重设归属 Unit（会清空缓存）。
         /// </summary>
-        public void SetOwner(Entity unit)
+        public void SetOwner(Entity entity)
         {
-            _unit = unit;
+            _entity = entity;
             _cached = null;
             _resolved = false;
         }
@@ -51,7 +51,7 @@
             // 缓存为空时，允许重试解析：
             // - 解决 Awake/添加组件时序导致的“首次解析为 null 后永久卡死”问题
             // - 对于不存在的可选组件，Get() 可能会重复查询；调用方应避免在热路径频繁读取可选组件
-            _cached = _unit?.GetComponent<T>();
+            _cached = _entity?.GetComponent<T>();
             _resolved = true;
             return _cached;
         }

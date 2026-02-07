@@ -97,13 +97,11 @@ namespace ET
         /// </summary>
         public readonly struct Scales
         {
-            public readonly float Stun;
             public readonly float Knockback;
             public readonly float Knockup;
 
-            public Scales(float stun, float knockback, float knockup)
+            public Scales(float knockback, float knockup)
             {
-                this.Stun = stun;
                 this.Knockback = knockback;
                 this.Knockup = knockup;
             }
@@ -153,7 +151,7 @@ namespace ET
                    $"抵抗力表[Grounded(Light/Knockback/Airborne/Knockdown)]=[{g.LightReactionThreshold}/{g.KnockbackThreshold}/{g.AirborneThreshold}/{g.KnockdownThreshold}], " +
                    $"[Knockdown(GetUpInterrupt)]=[{k.KnockdownThreshold}], " +
                    $"[GetUp(GetUpInterrupt)]=[{u.GetUpInterruptThreshold}], " +
-                   $"数值缩放[硬直/击退/击飞]=[{this.Rule.Scale.Stun:0.###}/{this.Rule.Scale.Knockback:0.###}/{this.Rule.Scale.Knockup:0.###}], " +
+                   $"数值缩放[击退/击飞]=[{this.Rule.Scale.Knockback:0.###}/{this.Rule.Scale.Knockup:0.###}], " +
                    $"上限限制[硬直ms/击退力/击飞力]=[{this.Rule.Limit.MaxHitStunMs}/{this.Rule.Limit.MaxKnockbackForce:0.###}/{this.Rule.Limit.MaxKnockupForce:0.###}])";
         }
     }

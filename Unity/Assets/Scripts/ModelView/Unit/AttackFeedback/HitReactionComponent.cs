@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Animancer;
 using UnityEngine;
 
@@ -18,45 +18,6 @@ namespace ET
         KnockdownHit = 3,
         /// <summary>起身中受击。</summary>
         GetUpHit = 4,
-    }
-
-    /// <summary>
-    /// 空中受击会话的落地分流语义（不依赖 Ground.AirborneReason）。
-    /// 说明：
-    /// - Ground.AirborneReason 在落地事件触发后会被重置为 None（FixedUpdate 内），
-    ///   用它在 Update 中做落地分流会产生时序竞态与不稳定表现。
-    /// - 因此落地分流语义必须在“语义产生点”（击飞/砸地）固化，并在落地时单次消费。
-    /// </summary>
-    public enum PendingLandOutcome : byte
-    {
-        None = 0,
-        Grounded = 1,
-        Knockdown = 2,
-    }
-
-    /// <summary>
-    /// 空中受击落地会话数据结构，封装落地语义相关字段。
-    /// 职责：管理"空中→落地"的状态流转语义。
-    /// 落地判定由 UpdateAirborne 轮询 Ground.IsGrounded 实现，不再依赖事件队列。
-    /// </summary>
-    public struct AirborneLandSession
-    {
-        /// <summary>本次空中会话的落地分流语义。</summary>
-        public PendingLandOutcome Outcome;
-        
-        /// <summary>普通落地硬直（ms, combat-time）。</summary>
-        public int LandingStunMs;
-        
-        /// <summary>本会话是否已消费过落地（防止同会话重复触发）。</summary>
-        public bool LandHandled;
-        
-        /// <summary>重置会话状态。</summary>
-        public void Reset()
-        {
-            this.Outcome = PendingLandOutcome.None;
-            this.LandingStunMs = 0;
-            this.LandHandled = false;
-        }
     }
 
     /// <summary>
@@ -96,19 +57,11 @@ namespace ET
         #region 空中受击落地语义（会话级）
 
         /// <summary>
-        /// 本次空中受击会话的落地分流语义。
-        /// - 在 EnterAirborne/BeginAirSlam 等“语义产生点”写入
-        /// - 在落地时单次消费（避免重复触发）
-        /// </summary>
-        public AirborneLandSession LandSession;
-
-        /// <summary>
         /// AirCombo 退出完成事件订阅句柄（用于 Destroy 退订）。
         /// </summary>
         public Action AirComboExitCompletedHandler;
 
         public bool AirComboEventsBound;
-
         #endregion
         
         /// <summary>
@@ -171,8 +124,8 @@ namespace ET
         /// <summary>当前动画状态</summary>
         public bool CurrentAnimEnd { get; set; }
         
-        /// <summary>硬直结束时间</summary>
-        public long StunEndTime { get; set; }
+        /// <summary>硬直结束时间，==>当前时间 + 攻击时间 + 硬值时间</summary>
+        public long HitStunEndTimeMs { get; set; }
         
         /// <summary>当前运动力度/速度</summary>
         public float CurrentMotionSpeed { get; set; }

@@ -19,16 +19,14 @@ namespace ET
         // ===== 状态 =====
         public bool Active;
         public bool IsExiting;
-
-        /// <summary>本次空中连段预计结束时间（combat-time）。</summary>
-        public long EndCombatMs;
-
-        /// <summary>fail-safe：悬空总时长上限（combat-time）。</summary>
-        public long AbsoluteEndCombatMs;
-
         /// <summary>高度夹持锚点（攻击者 Y），用于 min/max clamp 计算。</summary>
         public float EnteredHeight;
 
+        /// <summary>
+        /// 空中结束时间 => 地面硬值时间 + offset
+        /// </summary>
+        public long AirEndCombatMs;
+        
         /// <summary>高度夹持下限/上限（世界 Y）。</summary>
         public float ComboMinHeight;
         public float ComboMaxHeight;
@@ -54,24 +52,6 @@ namespace ET
         /// <summary>进入时使用的高度偏移（相对 EnteredHeight），用于延迟捕获后计算 clamp。</summary>
         public float MinHeightOffset;
         public float MaxHeightOffset;
-
-        /// <summary>落地硬直（非砸地/倒地语义）。</summary>
-        public int LandingStunMs;
-
-        /// <summary>调试：可选开关。</summary>
-        public bool DebugEnabled = true;
-
-        /// <summary>调试日志最小间隔（combat-time）。</summary>
-        public int DebugLogIntervalMs = 200;
-
-        /// <summary>上一次输出调试日志的 combat-time。</summary>
-        public long LastDebugLogCombatMs;
-
-        /// <summary>
-        /// fail-safe：连续地面帧阈值（达到该值后强制结束，避免状态机卡死）。
-        /// 实际帧数由 CheckGroundedComponent.ConsecutiveGroundedFrames 提供，避免重复计数。
-        /// </summary>
-        public int ForceEndGroundedFramesThreshold = 3;
         
         // ===== 空中连击横向控制 =====
 
@@ -93,7 +73,7 @@ namespace ET
         public override string ToString()
         {
             return
-                $"AirCombo(Active={Active}, Exiting={IsExiting}, End={EndCombatMs}, AbsEnd={AbsoluteEndCombatMs}, " +
+                $"AirCombo(Active={Active}, Exiting={IsExiting}, " +
                 $"EnteredY={EnteredHeight:0.###}, MinY={ComboMinHeight:0.###}, MaxY={ComboMaxHeight:0.###}, " +
                 $"gTarget={GravityScaleTarget:0.###}, minFall={MinFallSpeed:0.###}, ExitLerpMs={ExitLerpMs})";
         }

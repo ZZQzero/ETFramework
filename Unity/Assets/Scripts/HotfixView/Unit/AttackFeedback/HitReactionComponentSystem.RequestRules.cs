@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using System;
+using UnityEngine;
 
 namespace ET
 {
@@ -22,63 +23,50 @@ namespace ET
             }
         }
 
-        public static HitImpactData Normalize(this HitReactionComponent self, in HitImpactData r, in HitReactionConfig config)
+        public static HitImpactData Normalize(this HitReactionComponent self, in HitImpactData impactData, in HitReactionConfig reaction)
         {
-            Vector3 dir = r.Rule.HitDirection;
-            dir.y = 0f;
-            if (dir.sqrMagnitude > 0.0001f)
-            {
-                dir.Normalize();
-            }
-
-            int stun = Mathf.Max(0, r.Rule.HitStunMs);
-            if (config.Rule.Scale.Stun > 0f && !Mathf.Approximately(config.Rule.Scale.Stun, 1f))
-            {
-                stun = Mathf.RoundToInt(stun * config.Rule.Scale.Stun);
-            }
-            if (config.Rule.Limit.MaxHitStunMs > 0 && stun > config.Rule.Limit.MaxHitStunMs)
-            {
-                stun = config.Rule.Limit.MaxHitStunMs;
-            }
+            int stun = Mathf.Min(impactData.Rule.HitStunMs, reaction.Rule.Limit.MaxHitStunMs);
 
             // 物理轨道归一化
-            HitMotionData motion = r.Rule.MotionData;
-            motion.Force = Mathf.Max(0f, motion.Force);
+            HitMotionData motion = impactData.Rule.MotionData;
 
-            // 根据 Profile 缩放和限制力
-            if (motion.MotionType == HitMotionType.HorizontalImpulse || motion.MotionType == HitMotionType.CustomCurve || motion.MotionType == HitMotionType.TowardAttacker)
+            switch (motion.MotionType)
             {
-                // 水平类运动（击退、拉拽、自定义曲线）使用 Knockback 缩放
-                if (config.Rule.Scale.Knockback > 0f && !Mathf.Approximately(config.Rule.Scale.Knockback, 1f)) motion.Force *= config.Rule.Scale.Knockback;
-                if (config.Rule.Limit.MaxKnockbackForce > 0f && motion.Force > config.Rule.Limit.MaxKnockbackForce) motion.Force = config.Rule.Limit.MaxKnockbackForce;
-            }
-            else if (motion.MotionType == HitMotionType.UpwardImpulse)
-            {
-                if (config.Rule.Scale.Knockup > 0f && !Mathf.Approximately(config.Rule.Scale.Knockup, 1f))
-                {
-                    motion.Force *= config.Rule.Scale.Knockup;
-                }
-                if (config.Rule.Limit.MaxKnockupForce >= 0f && motion.Force > config.Rule.Limit.MaxKnockupForce)
-                {
-                    motion.Force = config.Rule.Limit.MaxKnockupForce;
-                }
+                case HitMotionType.HorizontalImpulse:
+                case HitMotionType.TowardAttacker:
+                case HitMotionType.CustomCurve:
+                    // 水平类运动（击退、拉拽、自定义曲线）使用 Knockback 缩放
+                    motion.Force *= reaction.Rule.Scale.Knockback;
+                    motion.Force = Mathf.Min(motion.Force, reaction.Rule.Limit.MaxKnockbackForce);
+                    break;
+                case HitMotionType.UpwardImpulse:
+                case HitMotionType.DownwardImpulse:
+                    motion.Force *= reaction.Rule.Scale.Knockup;
+                    motion.Force = Mathf.Min(motion.Force, reaction.Rule.Limit.MaxKnockbackForce);
+                    break;
+
             }
 
-            int hitStop = Mathf.Max(0, r.Feedback.VictimHitStopMs);
-            float shakeIntensity = Mathf.Max(0f, r.Feedback.ScreenShakeIntensity);
-            int shakeDurationMs = Mathf.Max(0, r.Feedback.ScreenShakeDurationMs);
-            float timeScale = r.Feedback.TimeScale <= 0f ? 1f : r.Feedback.TimeScale;
-            int timeScaleMs = Mathf.Max(0, r.Feedback.TimeScaleDurationMs);
+            int hitStop = Mathf.Max(0, impactData.Feedback.VictimHitStopMs);
+            float shakeIntensity = Mathf.Max(0f, impactData.Feedback.ScreenShakeIntensity);
+            int shakeDurationMs = Mathf.Max(0, impactData.Feedback.ScreenShakeDurationMs);
+            float timeScale = impactData.Feedback.TimeScale <= 0f ? 1f : impactData.Feedback.TimeScale;
+            int timeScaleMs = Mathf.Max(0, impactData.Feedback.TimeScaleDurationMs);
 
-            byte hitStrength = r.Rule.HasHitStrength ? r.Rule.HitStrength : GetDefaultPriority(r.Rule.ReactionType);
+            byte hitStrength = impactData.Rule.HasHitStrength ? impactData.Rule.HitStrength : GetDefaultPriority(impactData.Rule.ReactionType);
             var normalizedRule = new HitImpactData.HitRuleData(
-                r.Rule.ReactionType,
+                impactData.Rule.ReactionType,
                 hitStrength,
                 true,
                 motion,
-                r.Rule.TargetStates,
-                dir,
-                stun);
+                impactData.Rule.TargetStates,
+                impactData.Rule.HitDirection,
+                impactData.Rule.AttackRadius,
+                impactData.Rule.AttackerWorldPos,
+                impactData.Rule.HasAttackerWorldPos,
+                stun,
+                impactData.Rule.AttackerSegmentTimeoutMs,
+                impactData.Rule.AttackTotalTimeoutMs);
             var normalizedFeedback = new HitImpactData.HitFeedbackRequestData(
                 hitStop,
                 shakeIntensity,
@@ -86,7 +74,7 @@ namespace ET
                 timeScale,
                 timeScaleMs);
 
-            return new HitImpactData(normalizedRule, normalizedFeedback, r.AirCombo);
+            return new HitImpactData(normalizedRule, normalizedFeedback);
         }
 
         public static bool PassTargetStateFilter(this HitReactionComponent self, TargetStateMask filter)
@@ -111,57 +99,6 @@ namespace ET
             }
 
             return (filter & current) != 0;
-        }
-
-        /// <summary>
-        /// 过滤空中受击时的运动类型。
-        /// - Knockup：根据 allowSecondaryKnockup + MaxAirborneKnockupForce 决定是否允许，以及力上限。
-        /// </summary>
-        /// <param name="allowSecondaryKnockup">Airborne 时 true 允许 capped 二次击飞；AirFinisher 时 false 完全禁止。</param>
-        public static HitImpactData FilterAirborneMotion(this HitReactionComponent self, in HitImpactData request, bool allowSecondaryKnockup = true)
-        {
-            if (request.Rule.MotionData.MotionType != HitMotionType.UpwardImpulse)
-            {
-                return request;
-            }
-
-            if (!allowSecondaryKnockup)
-            {
-                // 完全禁止二次击飞
-                HitMotionData m = request.Rule.MotionData;
-                m.MotionType = HitMotionType.None;
-                m.Force = 0f;
-                m.DurationMs = 0;
-                return BuildFilteredRequest(in request, m);
-            }
-            
-            if (self.CombatConfig.CachedAirCombo.MaxAirborneKnockupForce <= 0f)
-            {
-                // 配置为 0：禁止
-                HitMotionData m = request.Rule.MotionData;
-                m.MotionType = HitMotionType.None;
-                m.Force = 0f;
-                m.DurationMs = 0;
-                return BuildFilteredRequest(in request, m);
-            }
-
-            // 允许二次击飞，夹持力上限
-            HitMotionData capped = request.Rule.MotionData;
-            capped.Force = Mathf.Min(capped.Force, self.CombatConfig.CachedAirCombo.MaxAirborneKnockupForce);
-            return BuildFilteredRequest(in request, capped);
-        }
-
-        private static HitImpactData BuildFilteredRequest(in HitImpactData request, HitMotionData motionData)
-        {
-            var rule = new HitImpactData.HitRuleData(
-                request.Rule.ReactionType,
-                request.Rule.HitStrength,
-                request.Rule.HasHitStrength,
-                motionData,
-                request.Rule.TargetStates,
-                request.Rule.HitDirection,
-                request.Rule.HitStunMs);
-            return new HitImpactData(rule, request.Feedback, request.AirCombo);
         }
 
         private static HitReactionGroup ToGroup(HitReactionType type)

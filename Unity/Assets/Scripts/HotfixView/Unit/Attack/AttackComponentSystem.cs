@@ -1191,9 +1191,16 @@ namespace ET
                 int totalTimes = self.GetTotalSegmentEndMs();
                 float attackRadius = hitBox.GetAttackRadius();
                 Vector3 attackerWorldPos = self.OwnerTransform.position;
-                var req = BuildHitReactionRequest(in effect, in feedback, hitDirection,
-                    defaultHitStopMs, attackerSegmentComboTimeoutMs, totalTimes,
-                    attackRadius, attackerWorldPos, hasAttackerWorldPos: true);
+                var req = BuildHitReactionRequest(
+                    in effect, 
+                    in feedback, 
+                    hitDirection,
+                    defaultHitStopMs, 
+                    attackerSegmentComboTimeoutMs, 
+                    totalTimes,
+                    attackRadius, 
+                    attackerWorldPos, 
+                    true);
                 hitReactionComponent.TryApplyHit(in req);
             }
 
@@ -1244,19 +1251,21 @@ namespace ET
             in HitFeedbackData feedback,
             Vector3 hitDirection,
             int defaultHitStopMs,
-            int attackerSegmentComboTimeoutMs = 0,
-            int attackerTotalSegmentComboTimeoutMs = 0,
+            int attackerSegmentTimeoutMs = 0,
+            int attackerTotalTimeoutMs = 0,
             float attackRadius = 0f,
             Vector3 attackerWorldPos = default,
             bool hasAttackerWorldPos = false)
         {
-            var airCombo = new HitImpactData.AirComboHint(
-                attackerSegmentComboTimeoutMs,
-                attackerTotalSegmentComboTimeoutMs,
+            return new HitImpactData(effect, 
+                feedback, 
+                hitDirection,
+                defaultHitStopMs,
+                attackerSegmentTimeoutMs,
+                attackerTotalTimeoutMs, 
                 attackRadius,
                 attackerWorldPos,
-                hasAttackerWorldPos: hasAttackerWorldPos);
-            return new HitImpactData(effect, feedback, hitDirection, defaultHitStopMs, airCombo);
+                hasAttackerWorldPos);
         }
 
         /// <summary>

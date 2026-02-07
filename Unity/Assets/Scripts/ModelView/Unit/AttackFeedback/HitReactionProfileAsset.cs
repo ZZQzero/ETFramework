@@ -163,18 +163,14 @@ namespace ET
     [System.Serializable]
     public struct HitReactionScalesData
     {
-        [Tooltip("硬直倍率")]
-        [Min(0f)] public float Stun;
-
         [Tooltip("击退倍率")]
-        [Min(0f)] public float Knockback;
+        [Min(0.1f)] public float Knockback;
 
         [Tooltip("击飞倍率")]
-        [Min(0f)] public float Knockup;
+        [Min(0.1f)] public float Knockup;
 
-        public HitReactionScalesData(float stun = 1f, float knockback = 1f, float knockup = 1f)
+        public HitReactionScalesData(float knockback = 1f, float knockup = 1f)
         {
-            this.Stun = stun;
             this.Knockback = knockback;
             this.Knockup = knockup;
         }
@@ -187,13 +183,13 @@ namespace ET
     public struct HitReactionLimitsData
     {
         [Tooltip("最大硬直时长(ms)")]
-        [Min(0)] public int MaxHitStunMs;
+        [Min(1)] public int MaxHitStunMs;
 
         [Tooltip("最大击退力")]
-        [Min(0f)] public float MaxKnockbackForce;
+        [Min(1f)] public float MaxKnockbackForce;
 
         [Tooltip("最大击飞力")]
-        [Min(0f)] public float MaxKnockupForce;
+        [Min(1f)] public float MaxKnockupForce;
 
         public HitReactionLimitsData(int maxHitStunMs = 1200, float maxKnockbackForce = 25f, float maxKnockupForce = 18f)
         {
@@ -268,20 +264,11 @@ namespace ET
         public bool Enable;
 
         [Header("时间配置")]
-        [Tooltip("最小空中时间（毫秒）")]
-        [Min(0)] public int MinAirTimeMs;
-
-        [Tooltip("最大悬空时间（毫秒）")]
-        [Min(0)] public int MaxTotalHangMs;
+        [Tooltip("最大空中时间偏移（毫秒）")]
+        [Min(0)] public int MaxAirOffsetMs;
 
         [Tooltip("退出渐变时间（毫秒）")]
         [Min(0)] public int ExitLerpMs;
-
-        [Tooltip("落地硬直时间（毫秒）")]
-        [Min(0)] public int LandingStunMs;
-
-        [Tooltip("空中二次击飞允许的最大向上速度")]
-        [Min(0f)] public float MaxAirborneKnockupForce;
 
         [Header("物理配置")]
         [Tooltip("空中重力缩放")]
@@ -316,11 +303,8 @@ namespace ET
 
         public HitAirComboData(
             bool enable = true,
-            int minAirTimeMs = 250,
-            int maxTotalHangMs = 3500,
+            int maxAirOffsetMs = 250,
             int exitLerpMs = 160,
-            int landingStunMs = 180,
-            float maxAirborneKnockupForce = 2.5f,
             float gravityScaleDuringCombo = 0.12f,
             float minFallSpeedAbs = 0.8f,
             float minHeightOffset = 0f,
@@ -332,11 +316,8 @@ namespace ET
             float recenterDeadZone = 1.5f)
         {
             this.Enable = enable;
-            this.MinAirTimeMs = minAirTimeMs;
-            this.MaxTotalHangMs = maxTotalHangMs;
+            this.MaxAirOffsetMs = maxAirOffsetMs;
             this.ExitLerpMs = exitLerpMs;
-            this.LandingStunMs = landingStunMs;
-            this.MaxAirborneKnockupForce = maxAirborneKnockupForce;
             this.GravityScaleDuringCombo = gravityScaleDuringCombo;
             this.MinFallSpeedAbs = minFallSpeedAbs;
             this.MinHeightOffset = minHeightOffset;

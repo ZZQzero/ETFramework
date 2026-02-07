@@ -252,12 +252,12 @@ namespace ET
             }
 
             // 空连物理
-            if (self.AirCombo != null && self.AirCombo.Active)
+            if (self.AirCombo != null && self.AirCombo.Active && !self.AirCombo.IsExiting)
             {
                 long nowCombatMs = self.HitStop != null ? self.HitStop.NowCombatMs() : TimeInfo.Instance.ClientFrameTime();
                 float gScale = self.AirCombo.GetCurrentGravityScale(nowCombatMs);
                 gScale = Mathf.Clamp01(gScale);
-
+                
                 // 应用空连重力
                 if (self.CurrentVelocity.y > -1000f) 
                 {
@@ -288,14 +288,6 @@ namespace ET
                         self.Rigidbody.MovePosition(pos);
                     }
                 }
-
-                // 退出完成结束空连
-                if (self.AirCombo.IsExitCompleted(nowCombatMs))
-                {
-                    self.AirCombo.ForceEnd();
-                }
-
-                // 退出期重力已由 GetCurrentGravityScale 处理，避免重复叠加
             }
             else
             {

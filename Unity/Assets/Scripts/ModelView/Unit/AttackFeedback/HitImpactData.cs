@@ -28,9 +28,18 @@ namespace ET
 
             /// <summary>命中方向（通常是 attacker→target 的水平向量）。</summary>
             public readonly Vector3 HitDirection;
-
+            //攻击范围
+            public readonly float AttackRadius;
+            //是否设置攻击者位置
+            public readonly bool HasAttackerWorldPos;
+            //攻击者位置
+            public readonly Vector3 AttackerWorldPos;
             /// <summary>硬直时间(ms, combat-time)。</summary>
             public readonly int HitStunMs;
+            //当前段攻击超时时长
+            public readonly int AttackerSegmentTimeoutMs;
+            //攻击总时长
+            public readonly int AttackTotalTimeoutMs;
 
             public HitRuleData(
                 HitReactionType reactionType,
@@ -39,7 +48,12 @@ namespace ET
                 HitMotionData motionData,
                 TargetStateMask targetStates,
                 Vector3 hitDirection,
-                int hitStunMs)
+                float attackRadius,
+                Vector3 attackerWorldPos,
+                bool hasAttackerWorldPos,
+                int hitStunMs,
+                int attackerSegmentTimeoutMs,
+                int attackTotalTimeoutMs)
             {
                 this.ReactionType = reactionType;
                 this.HitStrength = hitStrength;
@@ -47,7 +61,12 @@ namespace ET
                 this.MotionData = motionData;
                 this.TargetStates = targetStates;
                 this.HitDirection = hitDirection;
+                this.AttackRadius = attackRadius;
+                this.AttackerWorldPos = attackerWorldPos;
+                this.HasAttackerWorldPos = hasAttackerWorldPos;
                 this.HitStunMs = hitStunMs;
+                this.AttackerSegmentTimeoutMs = attackerSegmentTimeoutMs;
+                this.AttackTotalTimeoutMs = attackTotalTimeoutMs;
             }
         }
 
@@ -83,56 +102,33 @@ namespace ET
             }
         }
 
-        public readonly struct AirComboHint
-        {
-            /// <summary>
-            /// 攻击方当前段的连击超时(ms, combat-time)。
-            /// 用于受击方空连续期对齐，避免提前 BeginExit。
-            /// </summary>
-            public readonly int AttackerSegmentComboTimeoutMs;
-            public readonly int AttackSegmentTotalTimeoutMs;
-            public readonly float AttackRadius;
-            public readonly bool HasAttackerWorldPos;
-            public readonly Vector3 AttackerWorldPos;
-
-            public AirComboHint(
-                int attackerSegmentComboTimeoutMs,
-                int attackSegmentTotalTimeoutMs,
-                float attackRadius,
-                Vector3 attackerWorldPos,
-                bool hasAttackerWorldPos)
-            {
-                this.AttackerSegmentComboTimeoutMs = attackerSegmentComboTimeoutMs;
-                AttackSegmentTotalTimeoutMs = attackSegmentTotalTimeoutMs;
-                this.AttackRadius = attackRadius;
-                this.AttackerWorldPos = attackerWorldPos;
-                this.HasAttackerWorldPos = hasAttackerWorldPos;
-            }
-        }
-
         /// <summary>受击规则数据。</summary>
         public readonly HitRuleData Rule;
 
         /// <summary>受击反馈数据。</summary>
         public readonly HitFeedbackRequestData Feedback;
-
-        /// <summary>空中连击提示数据（续期/半径/中心点）。</summary>
-        public readonly AirComboHint AirCombo;
-
+        
         /// <summary>
         /// 完整构造（用于规则层 Normalize 后生成“有效请求”）。
         /// </summary>
         public HitImpactData(
             in HitRuleData rule,
-            in HitFeedbackRequestData feedback,
-            in AirComboHint airCombo)
+            in HitFeedbackRequestData feedback)
         {
             this.Rule = rule;
             this.Feedback = feedback;
-            this.AirCombo = airCombo;
         }
 
-        public HitImpactData(in HitEffectData effect, in HitFeedbackData feedback, Vector3 hitDirection, int defaultHitStopMs, AirComboHint airCombo = default)
+        public HitImpactData(
+            in HitEffectData effect,
+            in HitFeedbackData feedback,
+            Vector3 hitDirection,
+            int defaultHitStopMs,
+            int attackerSegmentTimeoutMs,
+            int attackerTotalTimeoutMs,
+            float attackRadius,
+            Vector3 attackerWorldPos,
+            bool hasAttackerWorldPos)
         {
             Rule = new HitRuleData(
                 effect.HitReaction,
@@ -141,20 +137,40 @@ namespace ET
                 effect.HitMotion,
                 effect.TargetStates,
                 hitDirection,
-                effect.HitStunMs);
+                attackRadius,
+                attackerWorldPos,
+                hasAttackerWorldPos,
+                effect.HitStunMs,
+                attackerSegmentTimeoutMs,
+                attackerTotalTimeoutMs);
             Feedback = new HitFeedbackRequestData(
                 feedback.ResolveVictimHitStopMs(defaultHitStopMs),
                 feedback.ScreenShakeIntensity,
                 feedback.ScreenShakeDurationMs,
                 feedback.TimeScale,
                 feedback.TimeScaleDurationMs);
-            AirCombo = airCombo;
         }
 
 
         public override string ToString()
         {
-            return $"受击请求(类型={this.Rule.ReactionType}, Priority={this.Rule.HitStrength}, 运动={this.Rule.MotionData.MotionType}:强度{this.Rule.MotionData.Force}, 目标状态过滤={this.Rule.TargetStates}, 方向={this.Rule.HitDirection}, 硬直时长={this.Rule.HitStunMs}ms, 受击停顿={this.Feedback.VictimHitStopMs}ms),攻击超时={this.AirCombo.AttackerSegmentComboTimeoutMs}ms";
+            var dir = Rule.HitDirection;
+            var attackerPos = Rule.HasAttackerWorldPos ? Rule.AttackerWorldPos.ToString("F2") : "未设置";
+            return $"HitImpactData[" +
+                   $"类型={Rule.ReactionType}, " +
+                   $"强度={Rule.HitStrength}, " +
+                   $"运动={Rule.MotionData.MotionType}(力={Rule.MotionData.Force:F2}, 时长={Rule.MotionData.DurationMs}ms), " +
+                   $"目标过滤={Rule.TargetStates}, " +
+                   $"方向=({dir.x:F2}, {dir.y:F2}, {dir.z:F2}), " +
+                   $"攻击半径={Rule.AttackRadius:F2}, " +
+                   $"攻击者位置={attackerPos}, " +
+                   $"硬直={Rule.HitStunMs}ms, " +
+                   $"段超时={Rule.AttackerSegmentTimeoutMs}ms, " +
+                   $"总超时={Rule.AttackTotalTimeoutMs}ms, " +
+                   $"受击停顿={Feedback.VictimHitStopMs}ms, " +
+                   $"震屏={Feedback.ScreenShakeIntensity:F2}({Feedback.ScreenShakeDurationMs}ms), " +
+                   $"时间缩放={Feedback.TimeScale:F2}({Feedback.TimeScaleDurationMs}ms)" +
+                   $"]";
         }
     }
 }

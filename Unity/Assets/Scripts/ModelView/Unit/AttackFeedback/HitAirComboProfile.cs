@@ -11,14 +11,8 @@ namespace ET
         /// <summary>是否启用空中连段物理模式。</summary>
         public readonly bool Enable;
 
-        /// <summary>每次命中至少维持的空中时间（combat-time）。</summary>
-        public readonly int MinAirTimeMs;
-
-        /// <summary>
-        /// 最大悬空总时长（combat-time）。
-        /// fail-safe：避免 bug/极端情况导致永远悬空。
-        /// </summary>
-        public readonly int MaxTotalHangMs;
+        /// <summary>每次命中最大维持的空中时间偏移（combat-time）。</summary>
+        public readonly int MaxAirOffsetMs;
 
         /// <summary>空中连段阶段重力缩放（0~1，推荐 0~0.2）。</summary>
         public readonly float GravityScaleDuringCombo;
@@ -37,15 +31,6 @@ namespace ET
 
         /// <summary>退出空中连段时重力恢复到 1 的 lerp 时长（combat-time）。</summary>
         public readonly int ExitLerpMs;
-
-        /// <summary>落地硬直（非砸地/非倒地语义时使用）。</summary>
-        public readonly int LandingStunMs;
-
-        /// <summary>
-        /// 空中二次击飞时允许的最大向上速度 (m/s)。
-        /// 0 表示完全禁止二次击飞；>0 时 Force 会被夹持到此值，实现“比原来高一点”的效果。
-        /// </summary>
-        public readonly float MaxAirborneKnockupForce;
         
         // ===== 空中连击横向控制 =====
         // 最大允许的横向偏移半径
@@ -64,15 +49,12 @@ namespace ET
 
         public HitAirComboProfile(
             bool enable,
-            int minAirTimeMs,
-            int maxTotalHangMs,
+            int maxAirOffsetMs,
             float gravityScaleDuringCombo,
             float minFallSpeedAbs,
             float minHeightOffset,
             float maxHeightOffset,
             int exitLerpMs,
-            int landingStunMs,
-            float maxAirborneKnockupForce,
             float maxHorizontalDistance,
             float maxHorizontalScale,
             float maxHorizontalSpeed,
@@ -80,15 +62,12 @@ namespace ET
             float recenterDeadZone)
         {
             this.Enable = enable;
-            this.MinAirTimeMs = minAirTimeMs;
-            this.MaxTotalHangMs = maxTotalHangMs;
+            this.MaxAirOffsetMs = maxAirOffsetMs;
             this.GravityScaleDuringCombo = gravityScaleDuringCombo;
             this.MinFallSpeedAbs = minFallSpeedAbs;
             this.MinHeightOffset = minHeightOffset;
             this.MaxHeightOffset = maxHeightOffset;
             this.ExitLerpMs = exitLerpMs;
-            this.LandingStunMs = landingStunMs;
-            this.MaxAirborneKnockupForce = Mathf.Max(0f, maxAirborneKnockupForce);
             this.MaxAirHorizontalDistance = maxHorizontalDistance;
             this.MaxAirHorizontalScale = maxHorizontalScale;
             this.MaxAirHorizontalSpeed = maxHorizontalSpeed;
@@ -98,10 +77,10 @@ namespace ET
 
         public override string ToString()
         {
-            return $"HitAirComboProfile(Enable={this.Enable}, MinAirTimeMs={this.MinAirTimeMs}, MaxTotalHangMs={this.MaxTotalHangMs}, " +
+            return $"HitAirComboProfile(Enable={this.Enable}, MaxAirOffsetTimeMs={this.MaxAirOffsetMs}, " +
                    $"GravityScaleDuringCombo={this.GravityScaleDuringCombo:0.###}, MinFallSpeedAbs={this.MinFallSpeedAbs:0.###}, " +
                    $"MinHeightOffset={this.MinHeightOffset:0.###}, MaxHeightOffset={this.MaxHeightOffset:0.###}, " +
-                   $"ExitLerpMs={this.ExitLerpMs}, LandingStunMs={this.LandingStunMs}, MaxAirborneKnockupForce={this.MaxAirborneKnockupForce:0.###})";
+                   $"ExitLerpMs={this.ExitLerpMs}";
         }
     }
 }

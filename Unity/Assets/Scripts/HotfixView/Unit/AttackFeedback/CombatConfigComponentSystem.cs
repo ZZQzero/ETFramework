@@ -35,7 +35,6 @@
                     thresholds.GetUp);
 
             var scales = new HitReactionConfig.Scales(
-                data.Scales.Stun,
                 data.Scales.Knockback,
                 data.Scales.Knockup);
 
@@ -67,15 +66,12 @@
         {
             return new HitAirComboProfile(
                 data.Enable,
-                data.MinAirTimeMs,
-                data.MaxTotalHangMs,
+                data.MaxAirOffsetMs,
                 data.GravityScaleDuringCombo,
                 data.MinFallSpeedAbs,
                 data.MinHeightOffset,
                 data.MaxHeightOffset,
                 data.ExitLerpMs,
-                data.LandingStunMs,
-                data.MaxAirborneKnockupForce,
                 data.MaxAirHorizontalDistance,
                 data.MaxAirHorizontalScale,
                 data.MaxAirHorizontalSpeed,
@@ -91,7 +87,7 @@
                 new AirborneThresholdData(70),
                 new KnockdownThresholdData(80),
                 new GetUpThresholdData(80)),
-            new HitReactionConfig.Scales(1f, 1f, 1f),
+            new HitReactionConfig.Scales(1f, 1f),
             new HitReactionConfig.Limits(int.MaxValue, float.MaxValue, float.MaxValue));
 
         private static readonly HitFeedbackConfig DefaultFeedback = new HitFeedbackConfig(

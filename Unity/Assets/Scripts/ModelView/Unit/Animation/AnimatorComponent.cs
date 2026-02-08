@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Animancer;
+﻿using Animancer;
 using UnityEngine;
 
 namespace ET
@@ -25,11 +24,41 @@ namespace ET
         /// </summary>
         public AnimancerLayer AttackLayer;
         public AnimancerComponent Animancer { get; set; }
-        public CharacterControllerComponent CharacterController { get; set; }
-        public CheckGroundedComponent Ground { get; set; }
-        public HitReactionComponent HitReaction { get; set; }
+
+        private ComponentRef<CharacterControllerComponent> characterControllerRef;
+        private ComponentRef<MovementContextComponent> movementContextRef;
+        private ComponentRef<CheckGroundedComponent> groundRef;
+        private ComponentRef<CombatContextComponent> combatContextRef;
+        private ComponentRef<HitReactionComponent> hitReactionRef;
+        private ComponentRef<AnimationCatalogComponent> animationCatalogRef;
+        /// <summary>
+        /// 初始化组件引用（延迟解析，避免 Awake 时序/重复 GetComponent）。
+        /// </summary>
+        public void InitComponentRefs(Unit unit)
+        {
+            this.characterControllerRef = new ComponentRef<CharacterControllerComponent>(unit);
+            this.movementContextRef = new ComponentRef<MovementContextComponent>(unit);
+            this.groundRef = new ComponentRef<CheckGroundedComponent>(unit);
+            this.combatContextRef = new ComponentRef<CombatContextComponent>(unit);
+            this.hitReactionRef = new ComponentRef<HitReactionComponent>(unit);
+            this.animationCatalogRef = new ComponentRef<AnimationCatalogComponent>(unit);
+        }
+
+        public CharacterControllerComponent CharacterController => this.characterControllerRef.Get();
+
+        public CheckGroundedComponent Ground => this.movementContextRef.Get()?.Ground ?? this.groundRef.Get();
+
+        public HitReactionComponent HitReaction => this.combatContextRef.Get()?.HitReaction ?? this.hitReactionRef.Get();
+        public AnimationCatalogComponent AnimationCatalog => this.animationCatalogRef.Get();
+        
+        public LocomotionIntentComponent LocomotionIntent => this.movementContextRef.Get()?.LocomotionIntent;
 
         public Unit Unit;
+        
+        /// <summary>
+        /// 受击事件是否已完成一次性绑定（避免 Update 中重复赋值）。
+        /// </summary>
+        public bool HitReactionStartHooked { get; set; }
         /// <summary>
         /// 是否已完成 Locomotion（Move/Jump）以及受击资源的加载。
         /// </summary>

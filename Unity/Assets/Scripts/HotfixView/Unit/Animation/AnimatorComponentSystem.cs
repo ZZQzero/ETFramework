@@ -11,6 +11,7 @@ namespace ET
 		private static void Awake(this AnimatorComponent self)
 		{
 			self.Unit = self.GetParent<Unit>();
+			self.InitComponentRefs(self.Unit);
 			var obj = self.Unit.GetComponent<GameObjectComponent>().GameObject;
 			self.Animancer = obj.GetComponent<AnimancerComponent>();
 			if (self.Animancer == null)
@@ -37,11 +38,11 @@ namespace ET
 				obj.AddComponent<AttackEventReceiver>();
 			}
 
-			self.CharacterController = self.Unit.GetComponent<CharacterControllerComponent>();
-			self.CharacterController.Animator = self.Animancer.Animator;
-			self.Ground = self.CharacterController.Ground;
-			self.HitReaction = self.Unit.GetComponent<CombatContextComponent>()?.HitReaction
-				?? self.Unit.GetComponent<HitReactionComponent>();
+			var characterController = self.CharacterController;
+			if (characterController != null)
+			{
+				characterController.Animator = self.Animancer.Animator;
+			}
 			
 			self.LoadAnimation().NoContext();
 		}
@@ -81,9 +82,7 @@ namespace ET
 				return;
 			}
 
-			var unit = self.GetParent<Unit>();
-			var catalog = unit.GetComponent<AnimationCatalogComponent>();
-			if (catalog == null)
+			if (self.AnimationCatalog == null)
 			{
 				Log.Error("AnimationCatalogComponent 缺失");
 				return;
@@ -92,8 +91,8 @@ namespace ET
 			// 1. 加载基础移动资源
 			if (!self.LocomotionLoaded)
 			{
-				if (catalog.TryGet(AnimationCatalogComponent.AnimKey.Locomotion_Move, out var moveName) &&
-				    catalog.TryGet(AnimationCatalogComponent.AnimKey.Locomotion_Jump, out var jumpName))
+				if (self.AnimationCatalog.TryGet(AnimationCatalogComponent.AnimKey.Locomotion_Move, out var moveName) &&
+				    self.AnimationCatalog.TryGet(AnimationCatalogComponent.AnimKey.Locomotion_Jump, out var jumpName))
 				{
 					self.MoveMixer = await self.LoadTransition<LinearMixerTransition>(moveName);
 					self.JumpMixer = await self.LoadTransition<LinearMixerTransition>(jumpName);
@@ -110,14 +109,14 @@ namespace ET
 			// 2. 加载受击资源
 			if (!self.HitAnimationsLoaded)
 			{
-				self.HitLightTransition = await self.LoadHitTransition(catalog, AnimationCatalogComponent.AnimKey.Hit_Light);
-				self.HitMediumTransition = await self.LoadHitTransition(catalog, AnimationCatalogComponent.AnimKey.Hit_Medium);
-				self.HitHeavyTransition = await self.LoadHitTransition(catalog, AnimationCatalogComponent.AnimKey.Hit_Heavy);
-				self.HitKnockbackTransition = await self.LoadHitTransition(catalog, AnimationCatalogComponent.AnimKey.Hit_Knockback);
-				self.HitAirborneTransition = await self.LoadHitTransition(catalog, AnimationCatalogComponent.AnimKey.Hit_Airborne);
-				self.HitFallingTransition = await self.LoadHitTransition(catalog, AnimationCatalogComponent.AnimKey.Hit_Falling);
-				self.HitKnockdownTransition = await self.LoadHitTransition(catalog, AnimationCatalogComponent.AnimKey.Hit_Knockdown);
-				self.HitGetUpTransition = await self.LoadHitTransition(catalog, AnimationCatalogComponent.AnimKey.Hit_GetUp);
+				self.HitLightTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Light);
+				self.HitMediumTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Medium);
+				self.HitHeavyTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Heavy);
+				self.HitKnockbackTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Knockback);
+				self.HitAirborneTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Airborne);
+				self.HitFallingTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Falling);
+				self.HitKnockdownTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Knockdown);
+				self.HitGetUpTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_GetUp);
 				
 				self.HitAnimationsLoaded = true; // 即使部分缺失也标记，避免重复加载
 			}
@@ -159,21 +158,21 @@ namespace ET
 				return;
 			}
 
-			if (self.HitReaction == null)
+			if (!self.HitReactionStartHooked)
 			{
-				self.HitReaction = self.Unit.GetComponent<CombatContextComponent>()?.HitReaction
-					?? self.Unit.GetComponent<HitReactionComponent>();
-				if (self.HitReaction != null)
+				var hitReaction = self.HitReaction;
+				if (hitReaction != null)
 				{
-					self.HitReaction.OnHitReactionStart = state =>
+					hitReaction.OnHitReactionStart = state =>
 					{
 						OnHitReactionStart(self,state);
 					};
+					self.HitReactionStartHooked = true;
 				}
 			}
 			// 1. 优先级：受击状态优先 (Hit Authority)
 			// 规则上处于受击并不等价于“必须播放受击动画”（可配置禁播/降级表现）
-			if (self.HitReaction != null && self.HitReaction.IsInHitVisual)
+			if (self.HitReaction != null && self.HitReaction.IsInHitReaction)
 			{
 				return;
 			}
@@ -266,28 +265,41 @@ namespace ET
 			AnimancerLayer layer = self.Animancer; // 隐式转换到 Layer 0
 			if (self.Ground.IsGrounded(self.Ground.StateContext.State))
 			{
-				if (layer.CurrentState != self.MoveMixer.State)
+				if (self.LocomotionIntent.IsMoveAllowed)
 				{
-					// 落地回到 Locomotion：击飞/连段落地通常希望更快衔接
-					float fade = 0.2f;
-					if (self.Ground != null && self.Ground.IsAirborne(self.Ground.StateContext.PrevState))
+					if (layer.CurrentState != self.MoveMixer.State)
 					{
-						switch (self.Ground.StateContext.AirborneReason)
+						// 落地回到 Locomotion：击飞/连段落地通常希望更快衔接
+						float fade = 0.2f;
+						if (self.Ground != null && self.Ground.IsAirborne(self.Ground.StateContext.PrevState))
 						{
-							case AirborneReason.Launched:
-							case AirborneReason.Juggled:
-							case AirborneReason.Knockdown:
-								fade = 0.12f;
-								break;
+							switch (self.Ground.StateContext.AirborneReason)
+							{
+								case AirborneReason.Launched:
+								case AirborneReason.Juggled:
+								case AirborneReason.Knockdown:
+									fade = 0.12f;
+									break;
+							}
 						}
+						self.Animancer.Play(self.MoveMixer, fade);
 					}
-					self.Animancer.Play(self.MoveMixer, fade);
+					self.MoveMixer.State.Parameter = self.CharacterController.GetNormalizedAnimationSpeed();
 				}
-				self.MoveMixer.State.Parameter = self.CharacterController.GetNormalizedAnimationSpeed();
+				else
+				{
+					// 防御性兜底：即使 Move 被 Inhibitor 锁定也播放 Idle（Parameter=0），
+					// 避免因 Inhibitor 泄漏导致动画永久卡在最后一帧
+					if (layer.CurrentState != self.MoveMixer.State)
+					{
+						self.Animancer.Play(self.MoveMixer, 0.2f);
+					}
+					self.MoveMixer.State.Parameter = 0;
+				}
 			}
 			else
 			{
-				if (self.JumpMixer == null)
+				if (self.JumpMixer == null || !self.LocomotionIntent.IsJumpAllowed)
 				{
 					return;
 				}
@@ -323,9 +335,6 @@ namespace ET
 			
 			self.MoveMixer = null;
 			self.JumpMixer = null;
-			self.HitReaction = null;
-			self.CharacterController = null;
-			self.Ground = null;
 			self.Animancer = null;
 			self.AttackLayer = null;
 		}

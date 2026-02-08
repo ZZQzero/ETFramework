@@ -97,12 +97,26 @@ namespace ET
 
             // 统一使用“combat-time”（受 HitStop 影响的时间源）来驱动所有截止点，
             // 保证顿帧期间不会提前超时/提前淡出。
+            // 每帧检查锁定目标有效性
+            self.ValidateLockedTarget();
+
             long nowCombatMs = self.GetCombatNowMs();
 
             self.UpdateBufferedInputTimeout(nowCombatMs);
             self.UpdateComboTimeout(nowCombatMs);
             self.UpdateAnimationState();
             self.UpdateAttackLayerFadeOut(nowCombatMs);
+        }
+
+        /// <summary>
+        /// 每帧检查并清理失效的锁定目标。
+        /// </summary>
+        private static void ValidateLockedTarget(this AttackComponent self)
+        {
+            if (self.LockedTarget != null && !self.IsLockedTargetValid())
+            {
+                self.ClearLockedTarget();
+            }
         }
 
         [EntitySystem]
@@ -239,6 +253,7 @@ namespace ET
             self.IsCancelWindowOpen = false;
             self.ComboTimeoutAtCombatMs = 0;
             self.AttackLayerFadeOutAtCombatMs = 0;
+            self.ClearLockedTarget();
         }
 
         private static bool IsHitBoxActive(ulong mask, int index)
@@ -633,6 +648,13 @@ namespace ET
             // 更新连击计数
             self.ComboCount++;
             self.OnComboCountChanged?.Invoke(self.ComboCount);
+
+            // 目标锁定：首段起手或无锁定目标时搜索最近目标
+            if (self.LockedTarget == null)
+            {
+                float lockRange = self.Config?.MaxLockOnRange ?? 6f;
+                self.FindAndLockNearestTarget(lockRange);
+            }
             
             // 初始化位移
             self.InitializeMovement(segment);
@@ -674,15 +696,29 @@ namespace ET
                 return;
             self.MovementStartPosition = self.OwnerTransform.position;
 
-            // 如果启用追踪，寻找最近目标
+            // 使用锁定目标（如果有）替代搜索；否则用前方
             if (segment.Movement.TrackTarget)
             {
-                self.TrackTarget = self.FindNearestTarget(segment.Movement.TrackRange);
+                self.TrackTarget = self.LockedTarget;
                 if (self.TrackTarget != null)
                 {
-                    Vector3 direction = (self.TrackTarget.position - self.OwnerTransform.position).normalized;
-                    direction.y = 0;
-                    self.MovementTargetPosition = self.MovementStartPosition + direction * segment.Movement.Distance;
+                    Vector3 direction = (self.TrackTarget.position - self.OwnerTransform.position);
+                    direction.y = 0f;
+                    if (direction.sqrMagnitude > 0.0001f)
+                    {
+                        direction.Normalize();
+                    }
+                    else
+                    {
+                        direction = self.OwnerTransform.forward;
+                    }
+                    // 受 OptimalCombatDistance 约束：目标位置不超过目标当前位置
+                    float optimalDist = self.Config?.OptimalCombatDistance ?? 0.8f;
+                    float distToTarget = Vector3.Distance(
+                        new Vector3(self.OwnerTransform.position.x, 0f, self.OwnerTransform.position.z),
+                        new Vector3(self.TrackTarget.position.x, 0f, self.TrackTarget.position.z));
+                    float moveDist = Mathf.Min(segment.Movement.Distance, Mathf.Max(0f, distToTarget - optimalDist));
+                    self.MovementTargetPosition = self.MovementStartPosition + direction * moveDist;
                 }
                 else
                 {
@@ -702,15 +738,93 @@ namespace ET
         }
 
         /// <summary>
-        /// TODO 寻找最近目标
+        /// 搜索最近的锁定目标（PhysicsHelper.OverlapSphere + 前方半角过滤 + 距离排序）。
+        /// 找到后同时设置 LockedTarget 和 LockedTargetUnit。
         /// </summary>
-        private static Transform FindNearestTarget(this AttackComponent self, float range)
+        private static void FindAndLockNearestTarget(this AttackComponent self, float range)
         {
-            // 这里需要根据实际项目的目标查找系统实现
-            // 示例实现：
-            /*var targetComponent = unit.GetComponent<TargetSearchComponent>();
-            return targetComponent?.FindNearestEnemy(range);*/
-            return null;
+            if (self.OwnerTransform == null) return;
+
+            int layer = self.AttackCatalog != null && self.AttackCatalog.TargetLayerMask != 0
+                ? self.AttackCatalog.TargetLayerMask
+                : LayerMask.GetMask("Enemy");
+
+            Vector3 selfPos = self.OwnerTransform.position;
+            Vector3 forward = self.OwnerTransform.forward;
+            float halfAngle = self.Config?.LockOnHalfAngle ?? 90f;
+            float cosHalfAngle = Mathf.Cos(halfAngle * Mathf.Deg2Rad);
+
+            var candidates = ListComponent<GameObject>.Create();
+            try
+            {
+                PhysicsHelper.OverlapSphere(selfPos, range, candidates, layer);
+                if (candidates.Count == 0) return;
+
+                Transform bestTarget = null;
+                Unit bestUnit = null;
+                float bestDistSqr = float.MaxValue;
+
+                foreach (var go in candidates)
+                {
+                    if (go == null || go == self.OwnerTransform.gameObject) continue;
+
+                    var unitRef = go.GetComponent<UnitReference>();
+                    if (unitRef == null || unitRef.Unit == null) continue;
+
+                    Vector3 toTarget = go.transform.position - selfPos;
+                    toTarget.y = 0f;
+                    float distSqr = toTarget.sqrMagnitude;
+                    if (distSqr < 0.0001f) continue;
+
+                    // 前方半角过滤
+                    if (halfAngle < 180f)
+                    {
+                        float dot = Vector3.Dot(forward, toTarget.normalized);
+                        if (dot < cosHalfAngle) continue;
+                    }
+
+                    if (distSqr < bestDistSqr)
+                    {
+                        bestDistSqr = distSqr;
+                        bestTarget = go.transform;
+                        bestUnit = unitRef.Unit;
+                    }
+                }
+
+                if (bestTarget != null)
+                {
+                    self.LockedTarget = bestTarget;
+                    self.LockedTargetUnit = bestUnit;
+                }
+            }
+            finally
+            {
+                ObjectPool.Recycle(candidates);
+            }
+        }
+
+        /// <summary>
+        /// 锁定目标有效性检查（每帧调用）。
+        /// </summary>
+        private static bool IsLockedTargetValid(this AttackComponent self)
+        {
+            if (self.LockedTarget == null) return false;
+            var unit = self.LockedTargetUnit;
+            if (unit == null || unit.IsDisposed) return false;
+            // 距离过远失效（2倍 MaxLockOnRange）
+            float maxDist = (self.Config?.MaxLockOnRange ?? 6f) * 2f;
+            Vector3 offset = self.LockedTarget.position - self.OwnerTransform.position;
+            offset.y = 0f;
+            return offset.sqrMagnitude <= maxDist * maxDist;
+        }
+
+        /// <summary>
+        /// 清空锁定目标。
+        /// </summary>
+        private static void ClearLockedTarget(this AttackComponent self)
+        {
+            self.LockedTarget = null;
+            self.LockedTargetUnit = null;
         }
 
         /// <summary>
@@ -1173,8 +1287,15 @@ namespace ET
             // 计算伤害
             float damage = self.CalculateDamage(target, effect);
 
-            // 应用受击反应：统一走 HitReactionRequest + HitRules
+            // 补锁：命中时若无锁定目标，以被命中目标作为锁定目标
             Unit unit = target.GetComponent<UnitReference>().Unit;
+            if (self.LockedTarget == null && unit != null)
+            {
+                self.LockedTarget = target.transform;
+                self.LockedTargetUnit = unit;
+            }
+
+            // 应用受击反应：统一走 HitReactionRequest + HitRules
             var hitReactionComponent = unit.GetComponent<CombatContextComponent>()?.HitReaction
                 ?? unit.GetComponent<HitReactionComponent>();
             if (hitReactionComponent != null)
@@ -1201,6 +1322,8 @@ namespace ET
                     attackRadius, 
                     attackerWorldPos, 
                     true);
+                // 传递攻击者 Transform：NormalHit 时 UpdateNormalHitMotion 每帧跟踪攻击者位置
+                hitReactionComponent.TetherAnchorTransform = self.OwnerTransform;
                 hitReactionComponent.TryApplyHit(in req);
             }
 
@@ -1378,6 +1501,7 @@ namespace ET
             self.IsCancelWindowOpen = false;
             self.ComboTimeoutAtCombatMs = 0;
             self.AttackLayerFadeOutAtCombatMs = 0;
+            // 软退出不清锁定：允许"立刻重起手"时继续追踪同一目标
         }
 
         #region AttachedActives（运行时显隐控制）

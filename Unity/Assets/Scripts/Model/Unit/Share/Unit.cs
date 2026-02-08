@@ -15,12 +15,10 @@ namespace ET
         public float3 Position
         {
             get => this.position;
-            set
-            {
-                float3 oldPos = this.position;
+            set => this.position = value;
+            /*float3 oldPos = this.position;
                 this.position = value;
-                EventSystem.Instance.Publish(this.Scene(), new ChangePosition() { Unit = this, OldPos = oldPos });
-            }
+                EventSystem.Instance.Publish(this.Scene(), new ChangePosition() { Unit = this, OldPos = oldPos });*/
         }
 
         public float3 Forward
@@ -34,11 +32,8 @@ namespace ET
         public quaternion Rotation
         {
             get => this.rotation;
-            set
-            {
-                this.rotation = value;
-                EventSystem.Instance.Publish(this.Scene(), new ChangeRotation() { Unit = this });
-            }
+            set => this.rotation = value;
+            //EventSystem.Instance.Publish(this.Scene(), new ChangeRotation() { Unit = this });
         }
     }
 }

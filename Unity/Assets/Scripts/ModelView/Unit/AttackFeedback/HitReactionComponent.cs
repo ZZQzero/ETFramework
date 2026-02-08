@@ -53,16 +53,6 @@ namespace ET
         public bool CancelAttackOnHit { get; set; } = true;
         
         #region 运行时数据
-
-        #region 空中受击落地语义（会话级）
-
-        /// <summary>
-        /// AirCombo 退出完成事件订阅句柄（用于 Destroy 退订）。
-        /// </summary>
-        public Action AirComboExitCompletedHandler;
-
-        public bool AirComboEventsBound;
-        #endregion
         
         /// <summary>
         /// 起身(GetUp)兜底超时(ms, combat-time)。
@@ -89,6 +79,8 @@ namespace ET
         /// 本单位当前“允许播放哪些受击状态动画”（运行时缓存，来自 ProfileLibrary/配置）。
         /// </summary>
         public HitStateVisualMask AllowedStateVisuals { get; set; } = HitStateVisualMask.All;
+
+        public float FirstUpForce;
         
         #endregion
 
@@ -159,6 +151,15 @@ namespace ET
 
         /// <summary>空中绝对高度上限（世界 Y），超过此高度时抑制向上冲量。</summary>
         public float MaxAirborneHeight { get; set; }
+
+        /// <summary>拴系锚点：最后一次命中时的攻击者 XZ 位置（地面+空中共用）</summary>
+        public Vector3 TetherAnchorPos { get; set; }
+
+        /// <summary>攻击者 Transform 引用（NormalHit 时用于每帧实时跟踪锚点位置）</summary>
+        public Transform TetherAnchorTransform { get; set; }
+
+        /// <summary>是否有有效的拴系锚点</summary>
+        public bool TetherActive { get; set; }
         
         #endregion
         
@@ -166,15 +167,6 @@ namespace ET
         
         /// <summary>是否处于受击状态</summary>
         public bool IsInHitReaction => CurrentHitState != HitState.None;
-
-        /// <summary>
-        /// 是否需要播放受击动画（视觉层）。
-        /// - VisualState=None：完全不播受击动画
-        /// - Grounded 且 VisualReactionType=None：不播地面受击动画（继续 Locomotion）
-        /// </summary>
-        public bool IsInHitVisual =>
-            this.VisualState != HitState.None &&
-            (this.VisualState != HitState.GroundedHit || this.VisualReactionType != HitReactionType.None);
         
         /// <summary>是否在空中</summary>
         public bool IsAirborne => CurrentHitState == HitState.AirborneHit;
@@ -191,9 +183,6 @@ namespace ET
         
         /// <summary>受击结束事件</summary>
         public Action OnHitReactionEnd;
-        
-        /// <summary>落地事件</summary>
-        public Action OnLanded;
         
         #endregion
     }

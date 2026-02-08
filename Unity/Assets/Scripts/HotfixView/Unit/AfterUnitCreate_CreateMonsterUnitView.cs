@@ -2,6 +2,7 @@
 
 namespace ET
 {
+    
     [Event(SceneType.Main)]
     public class AfterUnitCreate_CreateMonsterUnitView: AEvent<Scene, AfterUnitCreate>
     {
@@ -19,6 +20,8 @@ namespace ET
             go.transform.position = unit.Position;
             go.transform.localScale = Vector3.one;
             UnityEngine.Object.DontDestroyOnLoad(go);
+            int layer = LayerMask.NameToLayer("Enemy");
+            go.SetLayer(layer);
             unit.UnitName = monster.MonsterTable.Name;
             unit.AddComponent<GameObjectComponent>().GameObject = go;
             unit.AddComponent<CombatContextComponent>();

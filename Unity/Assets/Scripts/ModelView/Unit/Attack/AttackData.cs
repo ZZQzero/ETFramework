@@ -103,7 +103,8 @@ namespace ET
     public enum HitMotionType : byte
     {
         None = 0,
-
+        
+        NormalHit,           //普通受击
         HorizontalImpulse,   // 纯水平冲量（XZ）
         UpwardImpulse,       // 向上冲量（可带XZ）
         DownwardImpulse,     // 向下冲量（砸地）
@@ -548,15 +549,6 @@ namespace ET
     {
         /// <summary>是否启用位移</summary>
         public bool EnableMovement = false;
-
-        /// <summary>
-        /// 是否使用动画 Root Motion 作为位移来源。
-        /// 说明：
-        /// - true：本段位移由动画的 deltaPosition 驱动（由 CharacterControllerComponentSystem 在 OnAnimatorMove 中应用）。
-        /// - false：本段位移由脚本位移（MovePosition / 计算位移）驱动（<see cref="EnableMovement"/>）。
-        /// - 建议互斥：UseRootMotion=true 时，EnableMovement 应保持 false，避免“双重位移”叠加。
-        /// </summary>
-        public bool UseRootMotion = false;
         
         /// <summary>位移距离</summary>
         public float Distance = 0f;

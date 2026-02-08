@@ -156,9 +156,23 @@ namespace ET
             
             // 4. 旋转
             bool canRotate = self.LocomotionIntent == null || self.LocomotionIntent.IsRotateAllowed;
-            if (canRotate && (self.Attack == null || !self.Attack.IsAttacking))
+            if (canRotate)
             {
-                self.ApplyRotation(deltaTime);
+                bool isAttacking = self.Attack != null && self.Attack.IsAttacking;
+                bool hasLockedTarget = self.Attack?.LockedTarget != null;
+                bool faceTarget = self.Attack?.Config?.FaceLockedTarget ?? false;
+
+                if (isAttacking && hasLockedTarget && faceTarget)
+                {
+                    // 攻击中面向锁定目标（平滑插值）
+                    self.FaceTarget(self.Attack.LockedTarget.position, deltaTime,
+                        self.Attack.Config?.FaceTargetRotationScale ?? 3f);
+                }
+                else if (!isAttacking || self.Attack?.State == AttackState.Recovery)
+                {
+                    self.ApplyRotation(deltaTime);
+                }
+                // else: 攻击中无锁定目标，保持当前朝向（现有行为）
             }
             
             // 5. 计算动画速度
@@ -168,9 +182,7 @@ namespace ET
             bool allowRootMotionInAttack =
                 self.Attack != null &&
                 self.Attack.IsInAttack &&
-                !self.Attack.IsMovementActive &&
-                self.Attack.CurrentSegment?.Movement != null &&
-                self.Attack.CurrentSegment.Movement.UseRootMotion;
+                !self.Attack.IsMovementActive;
 
             // 当前水平速度平方
             float horizontalSpeedSqr = self.CurrentVelocity.x * self.CurrentVelocity.x + self.CurrentVelocity.z * self.CurrentVelocity.z;
@@ -179,12 +191,18 @@ namespace ET
             // - FreezeAnimationOnly/FreezeAll 会阻断 RootMotion
             bool blockRootMotion = self.HitStop != null && self.HitStop.IsHitStopActive && self.HitStop.FreezeMode != HitStopFreezeMode.None;
 
-            if (!blockRootMotion &&
-                (self.Attack == null || (!self.Attack.IsMovementActive && (!self.Attack.IsInAttack || allowRootMotionInAttack))) &&
-                horizontalSpeedSqr <= 0.0001f * 0.0001f &&
-                self.Animator != null && self.Animator.deltaPosition.magnitude > 0.0001f)
+            if (!blockRootMotion && allowRootMotionInAttack && horizontalSpeedSqr < 0.001f)
             {
-                self.Rigidbody.MovePosition(self.Rigidbody.position + self.Animator.deltaPosition);
+                Vector3 delta = self.Animator.deltaPosition;
+
+                Transform lockedTarget = self.Attack?.LockedTarget;
+                if (lockedTarget != null)
+                {
+                    float optimalDist = self.Attack?.Config?.OptimalCombatDistance ?? 0.8f;
+                    delta = ClampRootMotionToTarget(
+                        delta, self.Rigidbody.position, lockedTarget.position, optimalDist);
+                }
+                self.Rigidbody.MovePosition(self.Rigidbody.position + delta);
             }
 
             self.SyncUnitTransformFromRigidbody();
@@ -228,7 +246,8 @@ namespace ET
             if (self.LocomotionIntent != null && self.LocomotionIntent.ExternalImpulse.sqrMagnitude > 0.0001f)
             {
                 Vector3 impulse = self.LocomotionIntent.ExternalImpulse;
-                self.CurrentVelocity += impulse;
+                Vector3 velocity = new Vector3(self.CurrentVelocity.x, 0, self.CurrentVelocity.z) + impulse;
+                self.CurrentVelocity = velocity;
                 // Ground.Detect 依赖 Rigidbody 的 Y 速度
                 if (self.Rigidbody != null)
                 {
@@ -252,7 +271,7 @@ namespace ET
             }
 
             // 空连物理
-            if (self.AirCombo != null && self.AirCombo.Active && !self.AirCombo.IsExiting)
+            /*if (self.AirCombo != null && self.AirCombo.Active && !self.AirCombo.IsExiting)
             {
                 long nowCombatMs = self.HitStop != null ? self.HitStop.NowCombatMs() : TimeInfo.Instance.ClientFrameTime();
                 float gScale = self.AirCombo.GetCurrentGravityScale(nowCombatMs);
@@ -289,9 +308,31 @@ namespace ET
                     }
                 }
             }
-            else
+            else*/
             {
                 self.ApplyGravity(deltaTime);
+            }
+
+            // 空中高度安全网：防止残留上升速度导致超过天花板
+            if (self.HitReaction != null
+                && self.HitReaction.CurrentHitState == HitState.AirborneHit
+                && self.HitReaction.MaxAirborneHeight > self.HitReaction.AirborneOriginHeight
+                && self.Rigidbody != null)
+            {
+                float maxY = self.HitReaction.MaxAirborneHeight;
+                float currentY = self.Rigidbody.position.y;
+                if (currentY > maxY)
+                {
+                    Vector3 pos = self.Rigidbody.position;
+                    pos.y = maxY;
+                    self.Rigidbody.MovePosition(pos);
+                    // 清零向上速度，保留水平速度
+                    if (self.CurrentVelocity.y > 0f)
+                    {
+                        self.CurrentVelocity = new Vector3(
+                            self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
+                    }
+                }
             }
             
             if (self.Rigidbody != null)
@@ -329,30 +370,9 @@ namespace ET
                 return;
             }
 
-            Vector3 pos = self.Rigidbody.position;
-            Quaternion rot = self.Rigidbody.rotation;
-
-            // Position
-            var unitPos3 = self.Unit.Position;
-            var unitPos = new Vector3(unitPos3.x, unitPos3.y, unitPos3.z);
-            if ((unitPos - pos).sqrMagnitude > 0.000001f)
-            {
-                self.Unit.Position = pos;
-            }
-
-            // Rotation
-            Vector3 fwd = rot * Vector3.forward;
-            fwd.y = 0f;
-            if (fwd.sqrMagnitude > 0.0001f)
-            {
-                fwd.Normalize();
-                var unitFwd3 = self.Unit.Forward;
-                var unitFwd = new Vector3(unitFwd3.x, unitFwd3.y, unitFwd3.z);
-                if ((unitFwd - fwd).sqrMagnitude > 0.0001f)
-                {
-                    self.Unit.Forward = fwd;
-                }
-            }
+            // 直接写回（简化：不做阈值判断）
+            self.Unit.Position = self.Rigidbody.position;
+            self.Unit.Rotation = self.Rigidbody.rotation;
         }
 
 
@@ -391,6 +411,23 @@ namespace ET
                 return;
             }
             
+            // 动态更新目标位置：如果有锁定目标且启用了追踪，每帧跟随目标
+            if (movement.TrackTarget && self.Attack.LockedTarget != null)
+            {
+                Vector3 dir = self.Attack.LockedTarget.position - self.Attack.MovementStartPosition;
+                dir.y = 0f;
+                if (dir.sqrMagnitude > 0.0001f)
+                {
+                    dir.Normalize();
+                    float optimalDist = self.Attack.Config?.OptimalCombatDistance ?? 0.8f;
+                    float distToTarget = Vector3.Distance(
+                        new Vector3(self.Rigidbody.position.x, 0f, self.Rigidbody.position.z),
+                        new Vector3(self.Attack.LockedTarget.position.x, 0f, self.Attack.LockedTarget.position.z));
+                    float moveDist = Mathf.Min(movement.Distance, Mathf.Max(0f, distToTarget - optimalDist));
+                    self.Attack.MovementTargetPosition = self.Attack.MovementStartPosition + dir * moveDist;
+                }
+            }
+
             float moveProgress = (normalizedTime - movement.NormalizedStart) / (movement.NormalizedEnd - movement.NormalizedStart);
             moveProgress = Mathf.Clamp01(moveProgress);
             
@@ -495,6 +532,59 @@ namespace ET
                 targetRotation,
                 actualRotationSpeed * deltaTime
             );
+        }
+
+        /// <summary>
+        /// 攻击中面向锁定目标（平滑插值）。
+        /// </summary>
+        private static void FaceTarget(
+            this CharacterControllerComponent self,
+            Vector3 targetPos,
+            float deltaTime,
+            float rotationScale)
+        {
+            Vector3 dir = targetPos - self.Rigidbody.position;
+            dir.y = 0f;
+            if (dir.sqrMagnitude < 0.0001f) return;
+
+            Quaternion targetRot = Quaternion.LookRotation(dir.normalized);
+            var player = self.Rigidbody.transform;
+            player.rotation = Quaternion.RotateTowards(
+                player.rotation, targetRot,
+                self.RotationSpeed * rotationScale * deltaTime);
+        }
+
+        /// <summary>
+        /// 将 Root Motion deltaPosition 按与锁定目标的距离进行钳位（XZ 平面，地面/空中通用）。
+        /// - 前进分量：不超过 (distance - optimalDist)
+        /// - 后退/侧移分量：保留
+        /// </summary>
+        private static Vector3 ClampRootMotionToTarget(
+            Vector3 delta,
+            Vector3 selfPos,
+            Vector3 targetPos,
+            float optimalDist)
+        {
+            Vector3 toTarget = targetPos - selfPos;
+            toTarget.y = 0f;
+            float dist = toTarget.magnitude;
+            if (dist < 0.01f) return Vector3.zero; // 重叠保护
+
+            Vector3 dir = toTarget / dist;
+            float forwardDelta = Vector3.Dot(delta, dir);
+
+            if (forwardDelta <= 0f) return delta; // 后退方向不钳位
+
+            float remaining = dist - optimalDist;
+            if (remaining <= 0f)
+            {
+                // 已在最佳距离内：完全去除前进分量
+                return delta - dir * forwardDelta;
+            }
+
+            // 钳位前进分量到剩余距离
+            float clamped = Mathf.Min(forwardDelta, remaining);
+            return delta + dir * (clamped - forwardDelta);
         }
         
         /// <summary>

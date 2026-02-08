@@ -11,11 +11,7 @@ namespace ET
     [ComponentOf(typeof(Unit))]
     public sealed class AirComboComponent : Entity, IAwake
     {
-        /// <summary>
-        /// 空中连段退出完成事件。
-        /// </summary>
-        public EventHook OnExitCompleted;
-
+        
         // ===== 状态 =====
         public bool Active;
         public bool IsExiting;
@@ -53,22 +49,8 @@ namespace ET
         public float MinHeightOffset;
         public float MaxHeightOffset;
         
-        // ===== 空中连击横向控制 =====
-
-        // 连段中心（世界坐标，XZ 锚点）
-        public Vector3 ComboCenterWorldPos;
-
-        // 最大允许的横向偏移半径
-        public float MaxHorizontalDistance;
-
-        // 最大横向速度（XZ）
-        public float MaxHorizontalSpeed;
-
-        // 回拉强度（速度 = 超出距离 * Strength）
-        public float RecenterStrength;
-
-        // 回拉死区（小于该距离不拉）
-        public float RecenterDeadZone;
+        // 注：水平距离约束（ComboCenterWorldPos, MaxHorizontalDistance 等）已迁移到
+        // HitReactionComponent.TetherAnchorPos + HitTetherProfile 统一管理（地面+空中共用）。
         
         public override string ToString()
         {

@@ -162,6 +162,16 @@ namespace ET
 
         #endregion
 
+        #region 目标锁定
+
+        /// <summary>攻击锁定目标（整个连击会话共享，段切换时不清空）</summary>
+        public Transform LockedTarget { get; set; }
+
+        /// <summary>锁定目标对应的 Unit（用于有效性检查）</summary>
+        public Unit LockedTargetUnit { get; set; }
+
+        #endregion
+
         #region 位移控制
         
         /// <summary>位移开始位置</summary>

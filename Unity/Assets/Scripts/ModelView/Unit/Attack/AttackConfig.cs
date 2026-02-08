@@ -46,6 +46,22 @@ namespace ET
         /// </summary>
         public int RecoveryHoldMs = 200;
         
+        [Header("攻击追踪")]
+        /// <summary>最佳战斗距离（低于此距离抑制前进Root Motion）</summary>
+        public float OptimalCombatDistance = 0.8f;
+
+        /// <summary>最大锁定搜索半径</summary>
+        public float MaxLockOnRange = 6f;
+
+        /// <summary>锁定搜索前方半角（度，0=全方位，90=正前方半球）</summary>
+        public float LockOnHalfAngle = 90f;
+
+        /// <summary>攻击中是否面向锁定目标</summary>
+        public bool FaceLockedTarget = true;
+
+        /// <summary>面向目标时的旋转速度倍率（相对基础RotationSpeed）</summary>
+        public float FaceTargetRotationScale = 3f;
+
         /// <summary>攻击段列表</summary>
         public List<AttackSegmentData> Segments = new List<AttackSegmentData>();
 

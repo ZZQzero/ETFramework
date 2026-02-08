@@ -32,6 +32,12 @@ namespace ET
 
             switch (motion.MotionType)
             {
+                case HitMotionType.NormalHit:
+                    // NormalHit：水平位移由拴系弹簧驱动，Force 仅空中用作向上冲量
+                    // 按 Knockup 缩放（与 UpwardImpulse 一致），地面时 Force 不参与运动
+                    motion.Force *= reaction.Rule.Scale.Knockup;
+                    motion.Force = Mathf.Min(motion.Force, reaction.Rule.Limit.MaxKnockupForce);
+                    break;
                 case HitMotionType.HorizontalImpulse:
                 case HitMotionType.TowardAttacker:
                 case HitMotionType.CustomCurve:
@@ -42,9 +48,8 @@ namespace ET
                 case HitMotionType.UpwardImpulse:
                 case HitMotionType.DownwardImpulse:
                     motion.Force *= reaction.Rule.Scale.Knockup;
-                    motion.Force = Mathf.Min(motion.Force, reaction.Rule.Limit.MaxKnockbackForce);
+                    motion.Force = Mathf.Min(motion.Force, reaction.Rule.Limit.MaxKnockupForce);
                     break;
-
             }
 
             int hitStop = Mathf.Max(0, impactData.Feedback.VictimHitStopMs);
@@ -151,6 +156,7 @@ namespace ET
             switch (request.Rule.MotionData.MotionType)
             {
                 case HitMotionType.None:
+                case HitMotionType.NormalHit:
                 case HitMotionType.HorizontalImpulse:
                 case HitMotionType.CustomCurve:
                     type = AirborneReason.Juggled;

@@ -20,6 +20,9 @@
         /// <summary>运行时缓存：空连</summary>
         public HitAirComboProfile CachedAirCombo;
 
+        /// <summary>运行时缓存：拴系（地面+空中共用）</summary>
+        public HitTetherProfile CachedTether;
+
         /// <summary>缓存是否已构建</summary>
         public bool CacheReady;
 

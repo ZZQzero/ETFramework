@@ -31,21 +31,9 @@ namespace ET
 
         /// <summary>退出空中连段时重力恢复到 1 的 lerp 时长（combat-time）。</summary>
         public readonly int ExitLerpMs;
-        
-        // ===== 空中连击横向控制 =====
-        // 最大允许的横向偏移半径
-        public readonly float MaxAirHorizontalDistance;
-        // 最大横向缩放（距离 = 原始距离 * Scale）
-        public readonly float MaxAirHorizontalScale;
 
-        // 最大横向速度（XZ）
-        public readonly float MaxAirHorizontalSpeed;
-
-        // 回拉强度（速度 = 超出距离 * Strength）
-        public readonly float RecenterStrength;
-
-        // 回拉死区（小于该距离不拉）
-        public readonly float RecenterDeadZone;
+        /// <summary>绝对最大高度（相对首次击飞点），防止 UpwardImpulse 命中逐级抬升天花板。</summary>
+        public readonly float AbsoluteMaxHeight;
 
         public HitAirComboProfile(
             bool enable,
@@ -55,11 +43,7 @@ namespace ET
             float minHeightOffset,
             float maxHeightOffset,
             int exitLerpMs,
-            float maxHorizontalDistance,
-            float maxHorizontalScale,
-            float maxHorizontalSpeed,
-            float recenterStrength,
-            float recenterDeadZone)
+            float absoluteMaxHeight)
         {
             this.Enable = enable;
             this.MaxAirOffsetMs = maxAirOffsetMs;
@@ -68,11 +52,7 @@ namespace ET
             this.MinHeightOffset = minHeightOffset;
             this.MaxHeightOffset = maxHeightOffset;
             this.ExitLerpMs = exitLerpMs;
-            this.MaxAirHorizontalDistance = maxHorizontalDistance;
-            this.MaxAirHorizontalScale = maxHorizontalScale;
-            this.MaxAirHorizontalSpeed = maxHorizontalSpeed;
-            this.RecenterStrength = recenterStrength;
-            this.RecenterDeadZone = recenterDeadZone;
+            this.AbsoluteMaxHeight = absoluteMaxHeight;
         }
 
         public override string ToString()
@@ -80,7 +60,7 @@ namespace ET
             return $"HitAirComboProfile(Enable={this.Enable}, MaxAirOffsetTimeMs={this.MaxAirOffsetMs}, " +
                    $"GravityScaleDuringCombo={this.GravityScaleDuringCombo:0.###}, MinFallSpeedAbs={this.MinFallSpeedAbs:0.###}, " +
                    $"MinHeightOffset={this.MinHeightOffset:0.###}, MaxHeightOffset={this.MaxHeightOffset:0.###}, " +
-                   $"ExitLerpMs={this.ExitLerpMs}";
+                   $"ExitLerpMs={this.ExitLerpMs}, AbsoluteMaxHeight={this.AbsoluteMaxHeight:0.###}";
         }
     }
 }

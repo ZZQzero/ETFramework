@@ -17,6 +17,7 @@
                 self.HitReactionConfig = BuildRules(asset.Rules);
                 self.Feedback = BuildFeedback(asset.Feedback);
                 self.CachedAirCombo = BuildAirCombo(asset.AirCombo);
+                self.CachedTether = BuildTether(asset.Tether);
                 self.CacheReady = true;
             }
 
@@ -72,11 +73,17 @@
                 data.MinHeightOffset,
                 data.MaxHeightOffset,
                 data.ExitLerpMs,
-                data.MaxAirHorizontalDistance,
-                data.MaxAirHorizontalScale,
-                data.MaxAirHorizontalSpeed,
-                data.RecenterStrength,
-                data.RecenterDeadZone);
+                data.AbsoluteMaxHeight);
+        }
+
+        private static HitTetherProfile BuildTether(in HitTetherData data)
+        {
+            return new HitTetherProfile(
+                data.Enable,
+                data.AnchorPointDistance,
+                data.MaxDistance,
+                data.RepositionSpeed,
+                data.MaxHorizontalSpeed);
         }
 
         private static readonly HitReactionConfig DefaultRules = new HitReactionConfig(

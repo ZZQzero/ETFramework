@@ -1238,6 +1238,13 @@ namespace ET
                     case HitShapeType.Box:
                         PhysicsHelper.OverlapBox(worldPosition, hitBox.Size * 0.5f, worldRotation, hitTargets, layer);
                         break;
+                    case HitShapeType.Weapon:
+                        // Weapon：基于 UnitReference.weapon（不允许回退）
+                        if (!PhysicsHelper.TryOverlapWeaponBox(self.OwnerTransform, hitBox.Offset, hitBox.Size * 0.5f, hitBox.RotationEuler, hitTargets, layer))
+                        {
+                            return;
+                        }
+                        break;
                     case HitShapeType.Sphere:
                         PhysicsHelper.OverlapSphere(worldPosition, hitBox.Size.x, hitTargets, layer);
                         break;

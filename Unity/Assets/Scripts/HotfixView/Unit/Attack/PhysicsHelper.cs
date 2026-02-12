@@ -21,6 +21,28 @@ namespace ET
         /// </summary>
         private const float SizeEpsilon = 0.01f;
 
+        // Weapon HitBox：缺 weapon 时不要每帧刷屏
+        private const float MissingWeaponLogCooldownSec = 1f;
+        private static readonly Dictionary<int, float> MissingWeaponLastLogTimeByOwner = new Dictionary<int, float>(32);
+
+        private static void LogMissingWeaponOncePerCooldown(Transform ownerTransform, string context)
+        {
+            if (ownerTransform == null)
+            {
+                return;
+            }
+
+            int id = ownerTransform.GetInstanceID();
+            float now = Time.unscaledTime;
+            if (MissingWeaponLastLogTimeByOwner.TryGetValue(id, out float last) && (now - last) < MissingWeaponLogCooldownSec)
+            {
+                return;
+            }
+
+            MissingWeaponLastLogTimeByOwner[id] = now;
+            Log.Error($"PhysicsHelper: Weapon HitBox requires UnitReference.weapon, but it is null. context={context}, owner={ownerTransform.name}");
+        }
+
 #if UNITY_EDITOR
         /// <summary>
         /// 编辑器运行时调试绘制开关（Scene 视图需要开启 Gizmos 才能看到）。
@@ -28,16 +50,16 @@ namespace ET
         public static bool DebugDrawEnabled = true;
 
         /// <summary>调试线持续时间（秒）。0 = 仅 1 帧。</summary>
-        public static float DebugDrawDurationSec = 0.25f;
+        public static float DebugDrawDurationSec = 0f;
 
         /// <summary>扇形检测调试颜色。</summary>
-        public static Color DebugFanColor = new Color(0.1f, 0.9f, 0.3f, 1f);
+        public static Color DebugFanColor = new Color(0.2f, 1f, 0.2f, 1f);
 
         /// <summary>射线检测调试颜色。</summary>
-        public static Color DebugRayColor = new Color(1f, 0.85f, 0.1f, 1f);
+        public static Color DebugRayColor = new Color(0.2f, 1f, 0.2f, 1f);
 
         /// <summary>命中包围盒调试颜色。</summary>
-        public static Color DebugHitBoundsColor = new Color(1f, 0.3f, 0.3f, 1f);
+        public static Color DebugHitBoundsColor = new Color(0.2f, 1f, 0.2f, 1f);
 #endif
 
         /// <summary>
@@ -63,6 +85,44 @@ namespace ET
             }
 
             list.AddRange(UnitBuffer);
+        }
+
+        /// <summary>
+        /// Weapon HitBox 盒体检测：
+        /// - 参考 Transform：<see cref="UnitReference.weapon"/>
+        /// - Offset/RotationEuler 语义与 Box 一致，但相对 weapon 的局部空间
+        /// - weapon 为空时不回退（直接报错并返回 false）
+        /// </summary>
+        public static bool TryOverlapWeaponBox(Transform ownerTransform, Vector3 localOffset, Vector3 halfExtents, Vector3 localRotationEuler, ListComponent<GameObject> list, int layerMask, int maxTargets = 0)
+        {
+            if (ownerTransform == null || list == null)
+            {
+                return false;
+            }
+
+            var unitRef = ownerTransform.GetComponent<UnitReference>();
+            var weaponGo = unitRef != null ? unitRef.weapon : null;
+            if (weaponGo == null)
+            {
+                LogMissingWeaponOncePerCooldown(ownerTransform, context: "TryOverlapWeaponBox");
+                return false;
+            }
+
+            Transform weapon = weaponGo.transform;
+            Vector3 center = weapon.position + weapon.rotation * localOffset;
+            Quaternion rot = weapon.rotation * Quaternion.Euler(localRotationEuler);
+
+#if UNITY_EDITOR
+            if (DebugDrawEnabled)
+            {
+                // 运行时调试绘制：Weapon OverlapBox 线框（与 OverlapBox 参数一致）
+                Vector3 size = halfExtents * 2f;
+                DrawWireBox(center, rot, size, DebugHitBoundsColor, DebugDrawDurationSec);
+            }
+#endif
+
+            OverlapBox(center, halfExtents, rot, list, layerMask, maxTargets);
+            return true;
         }
 
         /// <summary>

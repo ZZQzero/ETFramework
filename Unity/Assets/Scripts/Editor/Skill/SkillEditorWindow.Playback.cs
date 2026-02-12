@@ -910,9 +910,16 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        // 计算判定框世界坐标（与运行时一致）
-        Vector3 worldPosition = player.position + player.rotation * hitBox.Offset;
-        Quaternion worldRotation = player.rotation * Quaternion.Euler(hitBox.RotationEuler);
+        // 计算判定框世界坐标（与运行时一致）：
+        // - Box/Sphere/Fan/Capsule：基于 player
+        // - Weapon：基于 UnitReference.weapon（不允许回退）
+        Transform reference = ResolveHitBoxReferenceTransformOrNull(player, hitBox, context: "PreviewHitDetection");
+        if (reference == null)
+        {
+            return;
+        }
+        Vector3 worldPosition = reference.position + reference.rotation * hitBox.Offset;
+        Quaternion worldRotation = reference.rotation * Quaternion.Euler(hitBox.RotationEuler);
 
         // 根据形状类型进行检测
         List<GameObject> detectedTargets = new List<GameObject>();
@@ -926,6 +933,7 @@ public partial class SkillEditorWindow : EditorWindow
             switch (hitBox.ShapeType)
             {
                 case HitShapeType.Box:
+                case HitShapeType.Weapon:
                     count = Physics.OverlapBoxNonAlloc(worldPosition, hitBox.Size * 0.5f, colliders, worldRotation, layerMask);
                     break;
                 case HitShapeType.Sphere:

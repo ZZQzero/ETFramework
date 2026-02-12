@@ -65,6 +65,7 @@ namespace ET
         Sphere = 1,
         Fan = 2,         // 扇形
         Capsule = 3,
+        Weapon = 4,//武器
     }
 
     /// <summary>
@@ -354,6 +355,7 @@ namespace ET
             switch (this.ShapeType)
             {
                 case HitShapeType.Box:
+                case HitShapeType.Weapon:
                     return Mathf.Max(this.Size.x, this.Size.y, this.Size.z) * 0.5f;
                 case HitShapeType.Sphere:
                     return this.Size.x;

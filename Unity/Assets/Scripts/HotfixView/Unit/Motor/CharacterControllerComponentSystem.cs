@@ -156,23 +156,9 @@ namespace ET
             
             // 4. 旋转
             bool canRotate = self.LocomotionIntent == null || self.LocomotionIntent.IsRotateAllowed;
-            if (canRotate)
+            if (canRotate && !self.Attack.IsInAttack)
             {
-                bool isAttacking = self.Attack != null && self.Attack.IsAttacking;
-                bool hasLockedTarget = self.Attack?.LockedTarget != null;
-                bool faceTarget = self.Attack?.Config?.FaceLockedTarget ?? false;
-
-                if (isAttacking && hasLockedTarget && faceTarget)
-                {
-                    // 攻击中面向锁定目标（平滑插值）
-                    self.FaceTarget(self.Attack.LockedTarget.position, deltaTime,
-                        self.Attack.Config?.FaceTargetRotationScale ?? 3f);
-                }
-                else if (!isAttacking || self.Attack?.State == AttackState.Recovery)
-                {
-                    self.ApplyRotation(deltaTime);
-                }
-                // else: 攻击中无锁定目标，保持当前朝向（现有行为）
+                self.ApplyRotation(deltaTime);
             }
             
             // 5. 计算动画速度
@@ -194,15 +180,7 @@ namespace ET
             if (!blockRootMotion && allowRootMotionInAttack && horizontalSpeedSqr < 0.001f)
             {
                 Vector3 delta = self.Animator.deltaPosition;
-
-                Transform lockedTarget = self.Attack?.LockedTarget;
-                if (lockedTarget != null)
-                {
-                    float optimalDist = self.Attack?.Config?.OptimalCombatDistance ?? 0.8f;
-                    delta = ClampRootMotionToTarget(
-                        delta, self.Rigidbody.position, lockedTarget.position, optimalDist);
-                }
-                self.Rigidbody.MovePosition(self.Rigidbody.position + delta);
+                self.Rigidbody.MovePosition(self.Rigidbody.transform.position + delta);
             }
 
             self.SyncUnitTransformFromRigidbody();
@@ -291,31 +269,37 @@ namespace ET
                     self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, minFall, self.CurrentVelocity.z);
                 }
 
-                // 高度夹持：仅在维持期生效，退出期重力已恢复，应允许自然下落
-                if (self.Rigidbody != null && !self.AirCombo.IsExiting && self.AirCombo.HeightClampInitialized)
-                {
-                    Vector3 pos = self.Rigidbody.position;
-                    float clampedY = Mathf.Clamp(pos.y, self.AirCombo.ComboMinHeight, self.AirCombo.ComboMaxHeight);
-                    if (!Mathf.Approximately(pos.y, clampedY))
-                    {
-                        // 上冲到顶时清零 Y
-                        if (pos.y > clampedY && self.CurrentVelocity.y > 0f)
-                        {
-                            self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
-                        }
-                        pos.y = clampedY;
-                        self.Rigidbody.MovePosition(pos);
-                    }
-                }
-            }
-            else*/
-            {
-                self.ApplyGravity(deltaTime);
-            }
+                
+            }*/
+          
+            self.ApplyGravity(deltaTime);
 
+            // 高度夹持：仅在维持期生效，退出期重力已恢复，应允许自然下落
+            if (self.Rigidbody != null && !self.AirCombo.IsExiting && self.AirCombo.HeightClampInitialized)
+            {
+                Vector3 pos = self.Rigidbody.position;
+                float clampedY = Mathf.Clamp(pos.y, self.AirCombo.ComboMinHeight, self.AirCombo.ComboMaxHeight);
+                if (!Mathf.Approximately(pos.y, clampedY))
+                {
+                    // 上冲到顶时清零 Y
+                    if (pos.y > clampedY)
+                    {
+                        self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
+                        self.Rigidbody.linearVelocity = self.CurrentVelocity;
+                    }
+                    pos.y = clampedY;
+                    self.Rigidbody.MovePosition(pos);
+                }
+                
+                /*float minFall = self.AirCombo.MinFallSpeed; // 最小下落速度
+                if (self.CurrentVelocity.y < -5)
+                {
+                    self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, -5, self.CurrentVelocity.z);
+                }*/
+            }
+            
             // 空中高度安全网：防止残留上升速度导致超过天花板
-            if (self.HitReaction != null
-                && self.HitReaction.CurrentHitState == HitState.AirborneHit
+            /*if (self.HitReaction != null 
                 && self.HitReaction.MaxAirborneHeight > self.HitReaction.AirborneOriginHeight
                 && self.Rigidbody != null)
             {
@@ -329,11 +313,10 @@ namespace ET
                     // 清零向上速度，保留水平速度
                     if (self.CurrentVelocity.y > 0f)
                     {
-                        self.CurrentVelocity = new Vector3(
-                            self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
+                        self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
                     }
                 }
-            }
+            }*/
             
             if (self.Rigidbody != null)
             {
@@ -369,10 +352,8 @@ namespace ET
             {
                 return;
             }
-
-            // 直接写回（简化：不做阈值判断）
-            self.Unit.Position = self.Rigidbody.position;
-            self.Unit.Rotation = self.Rigidbody.rotation;
+            self.Unit.Position = self.Rigidbody.transform.position;
+            self.Unit.Rotation = self.Rigidbody.transform.rotation;
         }
 
 
@@ -532,26 +513,6 @@ namespace ET
                 targetRotation,
                 actualRotationSpeed * deltaTime
             );
-        }
-
-        /// <summary>
-        /// 攻击中面向锁定目标（平滑插值）。
-        /// </summary>
-        private static void FaceTarget(
-            this CharacterControllerComponent self,
-            Vector3 targetPos,
-            float deltaTime,
-            float rotationScale)
-        {
-            Vector3 dir = targetPos - self.Rigidbody.position;
-            dir.y = 0f;
-            if (dir.sqrMagnitude < 0.0001f) return;
-
-            Quaternion targetRot = Quaternion.LookRotation(dir.normalized);
-            var player = self.Rigidbody.transform;
-            player.rotation = Quaternion.RotateTowards(
-                player.rotation, targetRot,
-                self.RotationSpeed * rotationScale * deltaTime);
         }
 
         /// <summary>

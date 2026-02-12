@@ -10,6 +10,60 @@ public partial class SkillEditorWindow : EditorWindow
 
     // === TimeWindowData <-> 时间轴重叠（Editor 侧同步） ===
 
+    /// <summary>
+    /// 按“归一化时间保持不变”的规则，从 <paramref name="changed"/> 开始，链式重算后续 AnimationClip 的绝对 StartTime。
+    /// 规则：
+    /// - 不修改任何归一化字段（如 TimeWindow.AnimationEnd、子片段 NormalizedStart/End）
+    /// - next.StartTime = cur.StartTime + cur.Duration * cur.AnimationEnd
+    /// - 同步 next.SegmentData.StartTime，并刷新 next 的子片段绝对时间（保持归一化不变）
+    /// </summary>
+    private void PropagateAnimationClipStartTimesKeepNormalized(AnimationClipItem changed)
+    {
+        if (changed?.SegmentData == null)
+        {
+            return;
+        }
+
+        var list = GetSortedAnimationClips();
+        int idx = -1;
+        for (int i = 0; i < list.Count; ++i)
+        {
+            if (ReferenceEquals(list[i], changed))
+            {
+                idx = i;
+                break;
+            }
+        }
+
+        if (idx < 0)
+        {
+            return;
+        }
+
+        for (int i = idx; i < list.Count - 1; ++i)
+        {
+            var cur = list[i];
+            var next = list[i + 1];
+            if (cur?.SegmentData == null || next?.SegmentData == null)
+            {
+                continue;
+            }
+
+            float duration = Mathf.Max(0f, cur.Duration);
+            float endNorm = cur.SegmentData.TimeWindow?.AnimationEnd ?? 1f;
+            endNorm = Mathf.Clamp01(endNorm);
+
+            float newNextStart = Mathf.Max(0f, cur.StartTime) + duration * endNorm;
+
+            // 写回 next 的绝对开始时间（段本体 + 配置）
+            next.StartTime = newNextStart;
+            next.SegmentData.StartTime = newNextStart;
+
+            // 由于 next 的 StartTime 变化：其子片段的归一化不变，但绝对时间需要重新换算
+            SyncOwnerChildClipsToOwner(next);
+        }
+    }
+
     private List<AnimationClipItem> GetSortedAnimationClips()
     {
         var list = new List<AnimationClipItem>(allAnimationClipItems.Count);

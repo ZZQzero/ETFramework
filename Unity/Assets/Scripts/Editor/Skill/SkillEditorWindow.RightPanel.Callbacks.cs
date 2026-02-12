@@ -126,11 +126,17 @@ public partial class SkillEditorWindow : EditorWindow
                 animClipItem.Frame = Mathf.RoundToInt(duration * 60f);
             }
 
+            // Clip 长度变化本质上会改变本段 Duration：按“归一化保持不变”的规则同步
+            // 1) 同步本段子片段绝对时间（NormalizedStart/End 不变）
+            // 2) 链式同步后续段的 StartTime（由 AnimationEnd 推导）
+            SyncOwnerChildClipsToOwner(animClipItem);
+            PropagateAnimationClipStartTimesKeepNormalized(animClipItem);
+
             // 更新动画结束时间黄色竖线位置
             UpdateAnimationEndLinePosition(animClipItem);
 
             MarkAssetDirty();
-            RefreshTrackContent();
+            ApplyViewModeAndRefresh();
 
             // 更新帧数显示（因为动画Clip改变了）
             if (selectedClip == animClipItem)
@@ -161,11 +167,17 @@ public partial class SkillEditorWindow : EditorWindow
                 }
             }
 
+            // Speed 改变会改变本段 Duration：按“归一化保持不变”的规则同步
+            // 1) 同步本段子片段绝对时间（NormalizedStart/End 不变）
+            // 2) 链式同步后续段的 StartTime（由 AnimationEnd 推导）
+            SyncOwnerChildClipsToOwner(animClipItem);
+            PropagateAnimationClipStartTimesKeepNormalized(animClipItem);
+
             // 更新动画结束时间黄色竖线位置
             UpdateAnimationEndLinePosition(animClipItem);
 
             MarkAssetDirty();
-            RefreshTrackContent();
+            ApplyViewModeAndRefresh();
 
             // 更新帧数显示（因为速度改变了）
             if (selectedClip == animClipItem)

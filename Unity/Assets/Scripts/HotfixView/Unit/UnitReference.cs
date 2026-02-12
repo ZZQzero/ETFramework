@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ET
 {
@@ -14,6 +15,10 @@ namespace ET
             get => _unit;
             set => _unit = value;
         }
+
+        public GameObject target;
+        public GameObject weaponPoint;
+        public GameObject weapon;
 
         private void OnDestroy()
         {

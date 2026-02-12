@@ -10,6 +10,38 @@ public partial class SkillEditorWindow : EditorWindow
     private readonly BoxBoundsHandle hitBoxBoundsHandle = new BoxBoundsHandle();
     private static readonly Color HitBoxActiveColor = new Color(0.2f, 1f, 0.2f, 0.9f);
     private static readonly Color HitBoxInactiveColor = new Color(0.4f, 0.4f, 0.4f, 0.5f);
+    private double lastMissingWeaponErrorLogTime;
+    private const double MissingWeaponErrorLogCooldownSec = 1.0;
+
+    private Transform ResolveHitBoxReferenceTransformOrNull(Transform player, HitBoxData hitBox, string context)
+    {
+        if (player == null || hitBox == null)
+        {
+            return null;
+        }
+
+        if (hitBox.ShapeType != HitShapeType.Weapon)
+        {
+            return player;
+        }
+
+        // Weapon：必须存在 UnitReference.weapon，否则视为配置错误（不回退到 Box）
+        var unitRef = player.GetComponent<UnitReference>();
+        var weaponGo = unitRef != null ? unitRef.weapon : null;
+        if (weaponGo == null)
+        {
+            // 避免每帧刷屏：做简单冷却
+            double now = EditorApplication.timeSinceStartup;
+            if (now - lastMissingWeaponErrorLogTime >= MissingWeaponErrorLogCooldownSec)
+            {
+                lastMissingWeaponErrorLogTime = now;
+                Debug.LogError($"SkillEditor: HitBox.ShapeType=Weapon 但未找到可用 weapon（UnitReference 或 weapon 为空）。context={context}");
+            }
+            return null;
+        }
+
+        return weaponGo.transform;
+    }
 
     private void OnEnable()
     {
@@ -118,11 +150,18 @@ public partial class SkillEditorWindow : EditorWindow
 
         var hitBox = hitBoxClip.HitBoxData;
 
-        // 使用统一的角色 Transform（已在方法开头获取）
+        // Weapon HitBox：基于 weapon.transform 进行摆放与编辑（Offset/RotationEuler 都是相对 reference transform 的局部空间）
+        Transform reference = ResolveHitBoxReferenceTransformOrNull(player, hitBox, context: "EditHitBox");
+        if (reference == null)
+        {
+            Handles.color = new Color(1f, 0.25f, 0.25f, 0.95f);
+            Handles.Label(player.position + Vector3.up * 1.5f, "HitBox(Weapon) 错误：UnitReference.weapon 为空");
+            return;
+        }
 
         // world pose
-        Vector3 worldCenter = player.TransformPoint(hitBox.Offset);
-        Quaternion worldRot = player.rotation * Quaternion.Euler(hitBox.RotationEuler);
+        Vector3 worldCenter = reference.TransformPoint(hitBox.Offset);
+        Quaternion worldRot = reference.rotation * Quaternion.Euler(hitBox.RotationEuler);
         Vector3 size = hitBox.Size;
 
         Handles.color = HitBoxActiveColor;
@@ -155,6 +194,7 @@ public partial class SkillEditorWindow : EditorWindow
         switch (hitBox.ShapeType)
         {
             case HitShapeType.Box:
+            case HitShapeType.Weapon:
             {
                 // 预览线框：Move/Rotate 模式下提供上下文；Scale 模式下 BoxBoundsHandle 本身会有可视化
                 // 注意：必须使用 hitBox.Size（而不是 Vector3.one），否则切换工具时会看到“盒子大小变化”的错觉。
@@ -345,9 +385,10 @@ public partial class SkillEditorWindow : EditorWindow
                 Undo.RecordObject(selectConfigAsset.value, "Edit HitBox");
             }
 
-            hitBox.Offset = player.InverseTransformPoint(newWorldCenter);
+            // 写回到 reference 局部空间（Weapon: weapon local；其他：player local）
+            hitBox.Offset = reference.InverseTransformPoint(newWorldCenter);
 
-            Quaternion relRot = Quaternion.Inverse(player.rotation) * newWorldRot;
+            Quaternion relRot = Quaternion.Inverse(reference.rotation) * newWorldRot;
             Vector3 euler = relRot.eulerAngles;
             euler.x = NormalizeAngle180(euler.x);
             euler.y = NormalizeAngle180(euler.y);
@@ -636,21 +677,28 @@ public partial class SkillEditorWindow : EditorWindow
         GUI.color = originalGUIColor;
     }
 
-    private static void DrawHitBoxWire(Transform player, HitBoxData hitBox, bool active)
+    private void DrawHitBoxWire(Transform player, HitBoxData hitBox, bool active)
     {
         if (player == null || hitBox == null)
         {
             return;
         }
 
-        Vector3 worldCenter = player.TransformPoint(hitBox.Offset);
-        Quaternion worldRot = player.rotation * Quaternion.Euler(hitBox.RotationEuler);
+        Transform reference = ResolveHitBoxReferenceTransformOrNull(player, hitBox, context: "DrawHitBoxWire");
+        if (reference == null)
+        {
+            return;
+        }
+
+        Vector3 worldCenter = reference.TransformPoint(hitBox.Offset);
+        Quaternion worldRot = reference.rotation * Quaternion.Euler(hitBox.RotationEuler);
 
         Handles.color = active ? HitBoxActiveColor : HitBoxInactiveColor;
 
         switch (hitBox.ShapeType)
         {
             case HitShapeType.Box:
+            case HitShapeType.Weapon:
             {
                 // Physics: OverlapBox(center, halfExtents, orientation)
                 Vector3 size = hitBox.Size;

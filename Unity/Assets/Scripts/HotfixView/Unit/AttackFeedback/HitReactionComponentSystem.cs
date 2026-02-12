@@ -55,6 +55,8 @@ namespace ET
                     break;
             }
         }
+        
+        
 
         private static void UpdateHitMotion(this HitReactionComponent self)
         {
@@ -273,7 +275,6 @@ namespace ET
             self.CurrentReactionType = request.Rule.ReactionType;
             long now = self.GetCombatNowMs();
             self.HitStunEndTimeMs = now + request.Rule.HitStunMs + request.Rule.AttackerSegmentTimeoutMs;
-            Log.Error($"开始受击 {self.CurrentHitState}");
             switch (self.CurrentHitState)
             {
                 case HitState.None:
@@ -411,37 +412,40 @@ namespace ET
 
         private static void HandleAirborneHit(this HitReactionComponent self, in HitImpactData request, in HitReactionConfig reactionConfig)
         {
-            // 空中终结判定：DownwardImpulse（砸地）触发空中终结
-            if (request.Rule.MotionData.MotionType == HitMotionType.DownwardImpulse)
+            self.InitPhysicalMotion(in request);
+            switch (request.Rule.MotionData.MotionType)
             {
-                self.EnterAirFinish(in request);
-                return;
+                case HitMotionType.NormalHit:
+                case HitMotionType.HorizontalImpulse:
+                case HitMotionType.TowardAttacker:
+                case HitMotionType.CustomCurve:
+                    self.ApplyImpulse(HitMotionType.UpwardImpulse, self.FirstUpForce);
+                    break;
+                case HitMotionType.UpwardImpulse:
+                    self.ApplyImpulse(HitMotionType.UpwardImpulse, request.Rule.MotionData.Force);
+                    break;
+                case HitMotionType.DownwardImpulse:
+                    // 空中终结判定：DownwardImpulse（砸地）触发空中终结
+                    self.EnterAirFinish(in request);
+                    return;
             }
             
-            self.InitPhysicalMotion(in request);
-
-            Log.Error($"空中攻击 {request.Rule.MotionData.MotionType}");
-            // 空中冲量处理：根据 MotionType 决定向上力来源
-            if (request.Rule.MotionData.MotionType != HitMotionType.None)
+            // 击飞型：使用自身 Force 作为向上冲量
+            if (self.Ground != null)
             {
-                // 击飞型：使用自身 Force 作为向上冲量
-                if (self.Ground != null)
-                {
-                    self.Ground.ForceBreakGround(AirborneReason.Juggled);
-                }
-                
-                float originY = self.Owner.position.y;
-                float maxOffset = self.CombatConfig.CachedAirCombo.MaxHeightOffset;
-                float candidateCeiling = originY + (maxOffset > 0f ? maxOffset : 2.2f);
-                float absoluteMaxHeight = self.CombatConfig.CachedAirCombo.AbsoluteMaxHeight;
-                if (absoluteMaxHeight > 0f)
-                {
-                    float absoluteCeiling = self.AirborneOriginHeight + absoluteMaxHeight;
-                    candidateCeiling = Mathf.Min(candidateCeiling, absoluteCeiling);
-                }
-                self.MaxAirborneHeight = candidateCeiling;
-                self.ApplyImpulse(HitMotionType.UpwardImpulse, request.Rule.MotionData.Force);
+                self.Ground.ForceBreakGround(AirborneReason.Juggled);
             }
+                
+            float originY = self.Owner.position.y;
+            float maxOffset = self.CombatConfig.CachedAirCombo.MaxHeightOffset;
+            float candidateCeiling = originY + (maxOffset > 0f ? maxOffset : 2.2f);
+            float absoluteMaxHeight = self.CombatConfig.CachedAirCombo.AbsoluteMaxHeight;
+            if (absoluteMaxHeight > 0f)
+            {
+                float absoluteCeiling = self.AirborneOriginHeight + absoluteMaxHeight;
+                candidateCeiling = Mathf.Min(candidateCeiling, absoluteCeiling);
+            }
+            self.MaxAirborneHeight = candidateCeiling;
 
             // AirCombo：命中续期
             if (self.AirCombo != null && self.AirCombo.Active)
@@ -491,22 +495,7 @@ namespace ET
         private static void EnterAirFinish(this HitReactionComponent self, in HitImpactData request)
         {
             // 进入终结态：强制结束 AirCombo
-            /*if (self.AirCombo != null && self.AirCombo.Active)
-            {
-                self.AirCombo.ForceEnd();
-            }*/
             self.AirCombo.BeginExit(self.GetCombatNowMs());
-            
-            Log.Debug("[HitReaction] EnterAirFinish");
-            /*if (self.Ground != null)
-            {
-                var reason = request.Rule.MotionData.MotionType == HitMotionType.UpwardImpulse
-                    ? AirborneReason.Launched
-                    : AirborneReason.Knockdown;
-                self.Ground.ForceBreakGround(reason);
-            }*/
-
-            self.InitPhysicalMotion(in request);
             self.AcquireGroundFrequencyInhibitIfNeeded();
 
             // 根据击飞类型设置不同的落地语义
@@ -770,6 +759,8 @@ namespace ET
                     break;
                 }
             }
+
+            Log.Debug($"[HitReaction] ApplyImpulse: {intent.ExternalImpulse}");
         }
 
         #endregion
@@ -795,7 +786,6 @@ namespace ET
                 long now = self.GetCombatNowMs();
                 if (now >= self.AirCombo.AirEndCombatMs && !self.AirCombo.IsExiting)
                 {
-                    Log.Error("退出空中");
                     self.AirCombo.BeginExit(now);
                 }
             }
@@ -803,7 +793,7 @@ namespace ET
 
         private static void FromAirToGround(this HitReactionComponent self)
         {
-            Log.Error("[HitReaction] FromAirToGround");
+            Log.Debug("[HitReaction] FromAirToGround");
             self.AirCombo?.ForceEnd();
             self.ReleaseGroundFrequencyInhibitIfNeeded();
             self.ClearPhysicalMotion();
@@ -815,7 +805,6 @@ namespace ET
         {
             if (self.GetCombatNowMs() >= self.KnockdownEndTime)
             {
-                Log.Error("倒地");
                 self.SwitchState(HitState.GetUpHit);
                 self.GetUpStartTime = self.GetCombatNowMs();
             }
@@ -848,7 +837,6 @@ namespace ET
             self.TetherActive = false;
             self.TetherAnchorTransform = null;
 
-            Log.Error("攻击结束");
             // 统一清理物理运动（含 ExternalTargetVelocity）
             self.ReleaseGroundFrequencyInhibitIfNeeded();
 

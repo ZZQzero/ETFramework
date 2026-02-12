@@ -78,11 +78,21 @@ namespace ET
             }
         }
         
-        internal void OnAnimatorMove()
+        internal void OnAnimatorMove(long targetInstanceId)
         {
             try
             {
-                this.EntitySystem.Publish(new OnAnimatorMoveEvent());
+                OnAnimatorMoveEvent onAnimatorMoveEvent = new OnAnimatorMoveEvent();
+
+                if (targetInstanceId != 0)
+                {
+                    if (this.EntitySystem.TryPublishTo(targetInstanceId, onAnimatorMoveEvent))
+                    {
+                        return;
+                    }
+                }
+
+                this.EntitySystem.Publish(onAnimatorMoveEvent);
             }
             catch (Exception e)
             {

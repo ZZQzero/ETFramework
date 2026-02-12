@@ -9,7 +9,7 @@ namespace ET
         {
             self.OwnerTransform = go.transform;
             self.Capsule = go.GetComponent<CapsuleCollider>();
-            self.Rigidbody = go.GetComponent<Rigidbody>();
+            self.CurrentVerticalSpeed = 0f;
 
             // 配置初始化：优先使用 MovementConfig 上的资产配置
             var unit = self.GetParent<Unit>();
@@ -141,12 +141,13 @@ namespace ET
         }
 
         /// <summary>
-        /// 主检测入口 - FixedUpdate
+        /// 主检测入口（由 Motor 的 Update 调用）
         /// </summary>
         public static void Detect(this CheckGroundedComponent self)
         {
             if (self.Capsule == null) return;
 
+            float dt = Time.deltaTime;
             var config = self.Config;
             self.FrameCounter++;
             
@@ -154,22 +155,21 @@ namespace ET
             self.UpdateIgnoredPlatform();
 
             // 性能优化：空中降频
-            // 核心逻辑：只有在没有抑制器（InhibitReduceFrequencyCount == 0）时，才允许跳帧检测
             bool allowReduce = config.ReduceAirborneCheckFrequency && self.InhibitReduceFrequencyCount == 0;
             if (allowReduce && self.IsAirborne(self.StateContext.State) && self.FrameCounter % config.AirborneCheckInterval != 0 || !self.Enable)
             {
-                self.UpdateTimers(Time.fixedDeltaTime);
+                self.UpdateTimers(dt);
                 return;
             }
 
             self.StateContext.PrevState = self.StateContext.State;
-            self.PerformGroundCheck();
+            self.PerformGroundCheck(dt);
             self.UpdateGroundState();
             self.HandleStateTransition();
         }
         
 
-        private static void PerformGroundCheck(this CheckGroundedComponent self)
+        private static void PerformGroundCheck(this CheckGroundedComponent self, float dt)
         {
             self.GroundHit.Reset();
 
@@ -184,11 +184,11 @@ namespace ET
                 ? config.GroundCheckDistance
                 : config.AirborneCheckDistance;
 
-            // 防穿透
-            if (self.Rigidbody != null)
+            // 防穿透：根据逻辑下落速度扩大检测距离
+            float fallSpeed = Mathf.Max(0, -self.CurrentVerticalSpeed);
+            if (fallSpeed > 0.01f)
             {
-                float fallSpeed = Mathf.Max(0, -self.Rigidbody.linearVelocity.y);
-                checkDistance = Mathf.Max(checkDistance, fallSpeed * Time.fixedDeltaTime * 2f);
+                checkDistance = Mathf.Max(checkDistance, fallSpeed * dt * 2f);
             }
 
             Vector3 sphereCenter = new Vector3(
@@ -437,8 +437,8 @@ namespace ET
 
             if (!hit.HasGround || hit.Distance > config.GroundCheckDistance)
             {
-                // 空中
-                newState = (self.Rigidbody != null && self.Rigidbody.linearVelocity.y < -0.5f)
+                // 空中：根据逻辑垂直速度判断 Falling/Airborne
+                newState = self.CurrentVerticalSpeed < -0.5f
                     ? GroundState.Falling
                     : GroundState.Airborne;
             }

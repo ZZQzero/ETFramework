@@ -109,14 +109,8 @@ namespace ET
 			// 2. 加载受击资源
 			if (!self.HitAnimationsLoaded)
 			{
-				self.HitLightTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Light);
-				self.HitMediumTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Medium);
-				self.HitHeavyTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Heavy);
-				self.HitKnockbackTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Knockback);
-				self.HitAirborneTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Airborne);
-				self.HitFallingTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Falling);
-				self.HitKnockdownTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Knockdown);
-				self.HitGetUpTransition = await self.LoadHitTransition(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_GetUp);
+				self.HitBack = await self.LoadHitTransition<ClipTransition>(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Knockback);
+				self.HitGetUpTransition = await self.LoadHitTransition<ClipTransition>(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_GetUp);
 				
 				self.HitAnimationsLoaded = true; // 即使部分缺失也标记，避免重复加载
 			}
@@ -124,11 +118,11 @@ namespace ET
 			await ETTask.CompletedTask;
 		}
 
-		private static async ETTask<ITransition> LoadHitTransition(this AnimatorComponent self, AnimationCatalogComponent catalog, AnimationCatalogComponent.AnimKey key)
+		private static async ETTask<T> LoadHitTransition<T>(this AnimatorComponent self, AnimationCatalogComponent catalog, AnimationCatalogComponent.AnimKey key) where T : class, ITransition
 		{
 			if (catalog.TryGet(key, out var assetName))
 			{
-				return await self.LoadTransition<ITransition>(assetName);
+				return await self.LoadTransition<T>(assetName);
 			}
 			return null;
 		}
@@ -174,6 +168,13 @@ namespace ET
 			// 规则上处于受击并不等价于“必须播放受击动画”（可配置禁播/降级表现）
 			if (self.HitReaction != null && self.HitReaction.IsInHitReaction)
 			{
+				// 受击期：强制将 Locomotion BlendTree 的 Parameter 钳为 0（Idle）。
+				// 原因：受击动画 OnEnd 触发后会切回 MoveMixer，但此处 early return 导致
+				// Parameter 不再被每帧更新，残余的走/跑权重会持续输出 RootMotion。
+				if (self.MoveMixer?.State != null)
+				{
+					self.MoveMixer.State.Parameter = 0;
+				}
 				return;
 			}
 
@@ -205,20 +206,7 @@ namespace ET
 			switch (hit.VisualState)
 			{
 				case HitState.GroundedHit:
-					switch (hit.VisualReactionType)
-					{
-						case HitReactionType.HeavyHit: transition = self.HitMediumTransition; break;
-						case HitReactionType.Launch:  transition = self.HitHeavyTransition; break;
-						case HitReactionType.AirCombo: transition = self.HitMediumTransition; break;
-						case HitReactionType.SlamDown: transition = self.HitHeavyTransition; break;
-						default:                     transition = self.HitLightTransition; break;
-					}
-					
-					// Grounded 时如存在“击退运动”，优先使用击退受击动画（更贴合表现语义）
-					if (hit.CurrentMotionType == HitMotionType.HorizontalImpulse || hit.CurrentMotionType == HitMotionType.CustomCurve)
-					{
-						transition = self.HitKnockbackTransition ?? transition;
-					}
+					transition = self.HitBack;
 					break;
 				case HitState.AirborneHit:
 				{
@@ -227,14 +215,11 @@ namespace ET
 					transition = isFalling ? self.HitFallingTransition : self.HitAirborneTransition;
 					break;
 				}
-				case HitState.KnockdownHit: transition = self.HitKnockdownTransition; break;
-				case HitState.GetUpHit:     transition = self.HitGetUpTransition; break;
-			}
-
-			// 回退逻辑：如果没有配置对应的受击动画，尝试播放最基础的轻度受击
-			if (transition == null)
-			{
-				transition = self.HitLightTransition;
+				case HitState.KnockdownHit: 
+					break;
+				case HitState.GetUpHit:    
+					transition = self.HitGetUpTransition;
+					break;
 			}
 
 			if (transition != null)
@@ -246,6 +231,7 @@ namespace ET
 					self.SynthesizeLocomotionAnimation();
 					hit.CurrentAnimEnd = true;
 				};
+				
 				// 受击瞬间：如果攻击层仍有权重，根据受击强度快速淡出，确保受击表现清晰
 				if (self.AttackLayer != null && self.AttackLayer.Weight > 0.01f)
 				{

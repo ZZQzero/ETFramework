@@ -158,9 +158,6 @@ namespace ET
         /// <summary>攻击者 Transform 引用（NormalHit 时用于每帧实时跟踪锚点位置）</summary>
         public Transform TetherAnchorTransform { get; set; }
 
-        /// <summary>是否有有效的拴系锚点</summary>
-        public bool TetherActive { get; set; }
-        
         #endregion
         
         #region 属性

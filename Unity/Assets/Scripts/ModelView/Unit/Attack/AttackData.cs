@@ -570,10 +570,23 @@ namespace ET
         /// <summary>追踪范围</summary>
         public float TrackRange = 5f;
 
+        /// <summary>
+        /// 攻击中是否允许方向键微位移（Drift）。
+        /// 启用后，Attacking 阶段按住方向键会叠加一个小幅度位移，用于追敌/微调站位。
+        /// </summary>
+        public bool AllowDrift = true;
+
+        /// <summary>
+        /// 微位移速度比例（相对于 MoveSpeed）。
+        /// 例如 0.2 表示攻击中的移动速度为正常移速的 20%。
+        /// </summary>
+        public float DriftSpeedRatio = 0.2f;
+
         public void ValidateAndNormalize(float segmentEnd01)
         {
             this.Distance = Mathf.Max(0f, this.Distance);
             this.TrackRange = Mathf.Max(0f, this.TrackRange);
+            this.DriftSpeedRatio = Mathf.Clamp01(this.DriftSpeedRatio);
 
             float start = this.NormalizedStart;
             float end = this.NormalizedEnd;

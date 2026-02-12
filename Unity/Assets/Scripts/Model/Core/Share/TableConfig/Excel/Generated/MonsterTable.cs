@@ -35,6 +35,7 @@ public sealed partial class MonsterTable : Luban.BeanBase
         MoveAsset = _buf.ReadString();
         JumpAsset = _buf.ReadString();
         Damage = _buf.ReadString();
+        GetUp = _buf.ReadString();
     }
 
     public static MonsterTable DeserializeMonsterTable(ByteBuf _buf)
@@ -118,6 +119,10 @@ public sealed partial class MonsterTable : Luban.BeanBase
     /// 受击动画
     /// </summary>
     public readonly string Damage;
+    /// <summary>
+    /// 起身动画
+    /// </summary>
+    public readonly string GetUp;
    
     public const int __ID__ = 706228276;
     public override int GetTypeId() => __ID__;
@@ -148,6 +153,7 @@ public sealed partial class MonsterTable : Luban.BeanBase
         + "MoveAsset:" + MoveAsset + ","
         + "JumpAsset:" + JumpAsset + ","
         + "Damage:" + Damage + ","
+        + "GetUp:" + GetUp + ","
         + "}";
     }
 }

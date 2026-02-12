@@ -30,10 +30,6 @@ namespace ET
             public readonly Vector3 HitDirection;
             //攻击范围
             public readonly float AttackRadius;
-            //是否设置攻击者位置
-            public readonly bool HasAttackerWorldPos;
-            //攻击者位置
-            public readonly Vector3 AttackerWorldPos;
             /// <summary>硬直时间(ms, combat-time)。</summary>
             public readonly int HitStunMs;
             //当前段攻击超时时长
@@ -49,8 +45,6 @@ namespace ET
                 TargetStateMask targetStates,
                 Vector3 hitDirection,
                 float attackRadius,
-                Vector3 attackerWorldPos,
-                bool hasAttackerWorldPos,
                 int hitStunMs,
                 int attackerSegmentTimeoutMs,
                 int attackTotalTimeoutMs)
@@ -62,8 +56,6 @@ namespace ET
                 this.TargetStates = targetStates;
                 this.HitDirection = hitDirection;
                 this.AttackRadius = attackRadius;
-                this.AttackerWorldPos = attackerWorldPos;
-                this.HasAttackerWorldPos = hasAttackerWorldPos;
                 this.HitStunMs = hitStunMs;
                 this.AttackerSegmentTimeoutMs = attackerSegmentTimeoutMs;
                 this.AttackTotalTimeoutMs = attackTotalTimeoutMs;
@@ -126,9 +118,7 @@ namespace ET
             int defaultHitStopMs,
             int attackerSegmentTimeoutMs,
             int attackerTotalTimeoutMs,
-            float attackRadius,
-            Vector3 attackerWorldPos,
-            bool hasAttackerWorldPos)
+            float attackRadius)
         {
             Rule = new HitRuleData(
                 effect.HitReaction,
@@ -138,8 +128,6 @@ namespace ET
                 effect.TargetStates,
                 hitDirection,
                 attackRadius,
-                attackerWorldPos,
-                hasAttackerWorldPos,
                 effect.HitStunMs,
                 attackerSegmentTimeoutMs,
                 attackerTotalTimeoutMs);
@@ -155,7 +143,6 @@ namespace ET
         public override string ToString()
         {
             var dir = Rule.HitDirection;
-            var attackerPos = Rule.HasAttackerWorldPos ? Rule.AttackerWorldPos.ToString("F2") : "未设置";
             return $"HitImpactData[" +
                    $"类型={Rule.ReactionType}, " +
                    $"强度={Rule.HitStrength}, " +
@@ -163,7 +150,6 @@ namespace ET
                    $"目标过滤={Rule.TargetStates}, " +
                    $"方向=({dir.x:F2}, {dir.y:F2}, {dir.z:F2}), " +
                    $"攻击半径={Rule.AttackRadius:F2}, " +
-                   $"攻击者位置={attackerPos}, " +
                    $"硬直={Rule.HitStunMs}ms, " +
                    $"段超时={Rule.AttackerSegmentTimeoutMs}ms, " +
                    $"总超时={Rule.AttackTotalTimeoutMs}ms, " +

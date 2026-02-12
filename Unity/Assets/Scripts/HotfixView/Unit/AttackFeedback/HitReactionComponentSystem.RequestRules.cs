@@ -67,8 +67,6 @@ namespace ET
                 impactData.Rule.TargetStates,
                 impactData.Rule.HitDirection,
                 impactData.Rule.AttackRadius,
-                impactData.Rule.AttackerWorldPos,
-                impactData.Rule.HasAttackerWorldPos,
                 stun,
                 impactData.Rule.AttackerSegmentTimeoutMs,
                 impactData.Rule.AttackTotalTimeoutMs);

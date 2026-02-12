@@ -5,23 +5,21 @@ namespace ET
     /// <summary>
     /// 角色运动执行组件（Motor）
     /// - 上层（玩家输入/AI/回放）只写入 Intent
-    /// - 本组件只负责运动学/物理执行，并把结果同步回 Unit.Position/Rotation
+    /// - 本组件只负责运动学执行，并把结果同步回 Unit.Position/Rotation
+    /// - 不依赖 Rigidbody，使用 CapsuleCast Sweep & Slide 做碰撞解算
+    /// - OnAnimatorMove 仅采集 Root Motion delta，所有运动逻辑在 Update 中统一执行
     /// </summary>
     [ComponentOf(typeof(Unit))]
-    public class CharacterControllerComponent: Entity, IAwake<GameObject>, IUpdate,IFixedUpdate,IOnAnimatorMove,IDestroy
+    public class CharacterControllerComponent: Entity, IAwake<GameObject>, IUpdate, IOnAnimatorMove, IDestroy
     {
-        /// <summary>
-        /// Unity Rigidbody组件引用
-        /// </summary>
-        public Rigidbody Rigidbody { get; set; }
         public CapsuleCollider CapsuleCollider { get; set; }
+        public Transform PlayerTransform { get; set; }
+        
         private ComponentRef<MovementContextComponent> movementContextRef;
         public Unit Unit { get; set; }
         public Animator Animator { get; set; }
         private ComponentRef<CombatContextComponent> combatContextRef;
-        /// <summary>
-        /// 受击系统引用：用于在受击期间由受击系统接管速度（避免 Motor 自己减速/改写速度）。
-        /// </summary>
+
         public void InitComponentRefs(Unit unit)
         {
             this.movementContextRef = new ComponentRef<MovementContextComponent>(unit);
@@ -35,61 +33,72 @@ namespace ET
         public HitStopComponent HitStop => this.combatContextRef.Get()?.HitStop;
         public AirComboComponent AirCombo => this.combatContextRef.Get()?.AirCombo;
 
-        /// <summary>
-        /// 移动速度（米/秒）
-        /// </summary>
+        // ===== 移动参数 =====
+        
         public float MoveSpeed { get; set; } = 5f;
-        /// <summary>
-        /// 加速度（米/秒²）
-        /// </summary>
         public float Acceleration { get; set; } = 20f;
-        /// <summary>
-        /// 减速度（米/秒²）
-        /// </summary>
         public float Deceleration { get; set; } = 25f;
-        /// <summary>
-        /// 旋转速度（度/秒）
-        /// </summary>
         public float RotationSpeed { get; set; } = 720f;
+        
         /// <summary>
-        /// 当前速度（用于平滑加速/减速）
+        /// 当前逻辑速度（包含 XZ 移动 + Y 重力/跳跃）
         /// </summary>
         public Vector3 CurrentVelocity { get; set; }
-        /// <summary>
-        /// 是否启用移动（[已过时] 请优先使用 LocomotionIntent 的 Inhibitors 控制）
-        /// </summary>
-        public bool EnableMovement { get; set; } = true;
-        // ===== 跳跃相关属性 =====
-        //重力
+
+        // ===== 跳跃/重力 =====
+        
         public float Gravity { get; set; } = 9.81f;
-        /// <summary>
-        /// 跳跃力（向上初速度，米/秒）
-        /// </summary>
         public float JumpForce { get; set; } = 10f;
-        /// <summary>
-        /// 重力倍数（相对于标准物理重力的倍数，1.0 = 9.81 m/s²）
-        /// </summary>
         public float GravityMultiplier { get; set; } = 1.5f;
-        /// <summary>
-        /// 跳跃请求标记（用于外部调用）
-        /// </summary>
         public bool JumpRequested { get; set; }
 
+        // ===== Root Motion =====
+        
         /// <summary>
-        /// 上一帧是否由 ExternalTargetVelocity 驱动 XZ 速度。
-        /// 用于在外部驱动结束时立即清零 CurrentVelocity 的 XZ，避免残留速度导致减速滑行。
+        /// OnAnimatorMove 中累积的 Root Motion 位移（每帧在 Update 中清零）
         /// </summary>
+        public Vector3 RootMotionDelta { get; set; }
+
+        public int LastRootMotionFrame;
+
+        // ===== 运行状态 =====
+        
         public bool WasDrivenByExternalVelocity { get; set; }
 
-        // ===== 动画速度相关属性 =====
+        /// <summary>
+        /// Sweep & Slide 最大迭代次数（撞墙→滑动→再撞角落）
+        /// </summary>
+        public int MaxSweepIterations = 3;
+        // ===== Sweep 碰撞解算 =====
+        
+        /// <summary>
+        /// Sweep 碰撞皮肤宽度（防止贴脸穿透）
+        /// </summary>
+        public float SkinWidth { get; set; } = 0.02f;
+        
+        /// <summary>
+        /// CapsuleCast 预分配缓存（避免 GC）
+        /// </summary>
+        public readonly RaycastHit[] SweepHitBuffer = new RaycastHit[8];
 
         /// <summary>
-        /// 动画速度标准化值
+        /// 碰撞检测 LayerMask（排除自身层）
         /// </summary>
-        public float NormalizedAnimationSpeed { get; set; }
+        public LayerMask CollisionMask { get; set; }
+        
         /// <summary>
-        /// 垂直动画速度（用于跳跃/下落动画）
+        /// Capsule 半径缓存
         /// </summary>
+        public float CapsuleRadius { get; set; }
+        
+        /// <summary>
+        /// Capsule 高度缓存
+        /// </summary>
+        public float CapsuleHeight { get; set; }
+
+        // ===== 动画参数 =====
+        
+        public float NormalizedAnimationSpeed { get; set; }
         public float VerticalAnimationSpeed { get; set; }
     }
 }

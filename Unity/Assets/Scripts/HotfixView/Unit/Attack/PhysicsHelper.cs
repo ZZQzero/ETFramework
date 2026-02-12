@@ -317,6 +317,87 @@ namespace ET
         }
 
         /// <summary>
+        /// CapsuleCast（返回最近有效命中）：
+        /// - 使用 NonAlloc，避免 GC
+        /// - 支持忽略自身 Collider 和子节点 Collider
+        /// - 自动排除初始重叠（distance <= 0）
+        /// </summary>
+        public static bool CapsuleCastClosest(
+            Vector3 position,
+            float radius,
+            float height,
+            Vector3 direction,
+            float maxDistance,
+            int layerMask,
+            RaycastHit[] hitBuffer,
+            Transform ignoreRoot,
+            Collider ignoreCollider,
+            float skinWidth,
+            out RaycastHit closestHit)
+        {
+            closestHit = default;
+            if (hitBuffer == null || hitBuffer.Length == 0)
+            {
+                return false;
+            }
+
+            float halfHeight = height * 0.5f;
+            float sphereOffset = Mathf.Max(0f, halfHeight - radius);
+            Vector3 center = position + Vector3.up * halfHeight;
+            Vector3 point1 = center + Vector3.up * sphereOffset;
+            Vector3 point2 = center - Vector3.up * sphereOffset;
+
+            // 收缩半径以留出 skinWidth，避免初始贴脸穿透
+            float castRadius = Mathf.Max(radius - skinWidth, 0.01f);
+
+            int hitCount = Physics.CapsuleCastNonAlloc(
+                point1,
+                point2,
+                castRadius,
+                direction,
+                hitBuffer,
+                maxDistance,
+                layerMask,
+                QueryTriggerInteraction.Ignore);
+
+            if (hitCount == 0)
+            {
+                return false;
+            }
+
+            float closestDist = float.MaxValue;
+            bool found = false;
+            for (int i = 0; i < hitCount; i++)
+            {
+                ref RaycastHit hit = ref hitBuffer[i];
+
+                if (ignoreCollider != null && hit.collider == ignoreCollider)
+                {
+                    continue;
+                }
+
+                if (ignoreRoot != null && hit.collider != null && hit.collider.transform.IsChildOf(ignoreRoot))
+                {
+                    continue;
+                }
+
+                if (hit.distance <= 0f)
+                {
+                    continue;
+                }
+
+                if (hit.distance < closestDist)
+                {
+                    closestDist = hit.distance;
+                    closestHit = hit;
+                    found = true;
+                }
+            }
+
+            return found;
+        }
+
+        /// <summary>
         /// 从Collider获取GameObject
         /// </summary>
         private static GameObject GetUnitFromCollider(Collider collider)

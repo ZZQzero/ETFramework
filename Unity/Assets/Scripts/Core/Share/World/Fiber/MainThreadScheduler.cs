@@ -98,10 +98,22 @@ namespace ET
             SynchronizationContext.SetSynchronizationContext(mainThreadSynchronizationContext);
         }
         
-        public void OnAnimatorMove()
+        public void OnAnimatorMove(long targetInstanceId, int targetFiberId)
         {
             SynchronizationContext.SetSynchronizationContext(this.mainThreadSynchronizationContext);
             mainThreadSynchronizationContext.Update();
+
+            if (targetFiberId != 0)
+            {
+                Fiber targetFiber = this.fiberManager.Get(targetFiberId);
+                if (targetFiber != null && !targetFiber.IsDisposed)
+                {
+                    SynchronizationContext.SetSynchronizationContext(targetFiber.ThreadSynchronizationContext);
+                    targetFiber.OnAnimatorMove(targetInstanceId);
+                }
+                SynchronizationContext.SetSynchronizationContext(mainThreadSynchronizationContext);
+                return;
+            }
 
             int count = fiberQueue.Count;
             while (count-- > 0)
@@ -120,7 +132,7 @@ namespace ET
                     continue;
                 }
                 SynchronizationContext.SetSynchronizationContext(fiber.ThreadSynchronizationContext);
-                fiber.OnAnimatorMove();
+                fiber.OnAnimatorMove(targetInstanceId);
                 fiberQueue.Enqueue(fiber);
             }
             SynchronizationContext.SetSynchronizationContext(mainThreadSynchronizationContext);

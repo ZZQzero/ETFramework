@@ -1,35 +1,20 @@
+using System;
 using UnityEngine;
-using Unity.Mathematics;
+using Object = UnityEngine.Object;
 
 namespace ET
 {
     public static partial class CharacterControllerComponentSystem
     {
+
         [EntitySystem]
         private static void Awake(this CharacterControllerComponent self, GameObject player)
         {
-            // 获取或添加 Rigidbody
-            self.Rigidbody = player.GetComponent<Rigidbody>();
-            if (self.Rigidbody == null)
-            {
-                self.Rigidbody = player.AddComponent<Rigidbody>();
-            }
-
-            // Rigidbody
-            self.Rigidbody.isKinematic = false;
-            self.Rigidbody.useGravity = false; // 使用自定义重力
-            self.Rigidbody.freezeRotation = true; // 锁定旋转避免倾倒
-            self.Rigidbody.angularDamping = 5f;
-            self.Rigidbody.linearDamping = 0f; // 线性阻尼保持 0，避免自动减速
-            self.Rigidbody.interpolation = RigidbodyInterpolation.Interpolate; // 插值平滑
-            self.Rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous; // 连续碰撞检测
-            // 清空速度避免残留
-            self.Rigidbody.linearVelocity = Vector3.zero;
-            self.Rigidbody.angularVelocity = Vector3.zero;
+            self.PlayerTransform = player.transform;
             self.Unit = self.GetParent<Unit>();
             self.InitComponentRefs(self.Unit);
 
-            // 读取移动配置（装备/BUFF/配置表）
+            // 读取移动配置
             var moveConfig = self.Unit.GetComponent<MovementConfigComponent>();
             if (moveConfig != null)
             {
@@ -42,357 +27,435 @@ namespace ET
                 self.GravityMultiplier = moveConfig.GravityMultiplier;
             }
 
+            // CapsuleCollider：作为 Sweep 的形状参考，不参与物理碰撞响应
             self.CapsuleCollider = player.GetComponent<CapsuleCollider>();
             if (self.CapsuleCollider == null)
             {
                 Log.Warning($"CharacterControllerComponent 缺少 CapsuleCollider，GameObject: {player.name}");
+                self.CapsuleRadius = 0.3f;
+                self.CapsuleHeight = 1.8f;
             }
             else
             {
-                // 初始化物理材质，减少粘地/卡滞
-                // Collider 可能已挂材质，这里仅做兜底
-                PhysicsMaterial physicsMaterial = self.CapsuleCollider.material;
-                if (physicsMaterial == null)
-                {
-                    physicsMaterial = new PhysicsMaterial("PlayerPhysicsMaterial");
-                    self.CapsuleCollider.material = physicsMaterial;
-                }
-                
-                physicsMaterial.dynamicFriction = 0.1f;
-                physicsMaterial.staticFriction = 0.2f;
-                physicsMaterial.bounciness = 0f;
-                physicsMaterial.frictionCombine = PhysicsMaterialCombine.Minimum;
-                physicsMaterial.bounceCombine = PhysicsMaterialCombine.Average;
+                self.CapsuleRadius = self.CapsuleCollider.radius;
+                self.CapsuleHeight = self.CapsuleCollider.height;
             }
-        }
 
-
-        [EntitySystem]
-        private static void Update(this CharacterControllerComponent self)
-        {
-            // 消费跳跃请求
-            if (self.LocomotionIntent != null &&
-                self.LocomotionIntent.ConsumeJumpRequest() &&
-                (self.Attack == null || !self.Attack.IsInAttack))
+            // 移除 Rigidbody（如果存在）：完全不依赖物理引擎
+            var rb = player.GetComponent<Rigidbody>();
+            if (rb != null)
             {
-                self.RequestJump();
+                Object.Destroy(rb);
+            }
+
+            // 碰撞掩码：使用 Ground 检测的配置，或默认排除自身
+            var ground = self.Ground;
+            if (ground != null && ground.Config != null)
+            {
+                self.CollisionMask = ground.Config.GroundMask | ground.Config.PlatformMask;
+            }
+            else
+            {
+                self.CollisionMask = ~LayerMask.GetMask("Player", "Ignore Raycast");
             }
         }
 
+        /// <summary>
+        /// OnAnimatorMove：纯数据采集，仅累积 Root Motion delta
+        /// </summary>
         [EntitySystem]
         private static void OnAnimatorMove(this CharacterControllerComponent self)
         {
-            float deltaTime = Time.deltaTime;
-            // 使用缓存引用，减少 GetComponent
-
-            // HitStop 冻结处理（影响 RootMotion）
-            if (self.HitStop != null && self.HitStop.IsHitStopActive)
+            if (self.Animator != null)
             {
-                if (self.Rigidbody != null)
+                if (self.LastRootMotionFrame != Time.frameCount)
                 {
-                    switch (self.HitStop.FreezeMode)
-                    {
-                        case HitStopFreezeMode.None:
-                        case HitStopFreezeMode.FreezeAnimationOnly:
-                            // 仅冻结动画，不冻结物理
-                            break;
-                        case HitStopFreezeMode.FreezeXZOnly:
-                            // 冻结 XZ
-                            self.Rigidbody.linearVelocity = new Vector3(0f, self.CurrentVelocity.y, 0f);
-                            self.CalculateAnimationSpeeds();
-                            self.SyncUnitTransformFromRigidbody();
-                            return;
-                        default:
-                            // 完全冻结
-                            self.Rigidbody.linearVelocity = Vector3.zero;
-                            self.CalculateAnimationSpeeds();
-                            self.SyncUnitTransformFromRigidbody();
-                            return;
-                    }
-                }
-            }
-
-            // 1. 计算水平速度（移动/攻击/减速）
-            bool isMoveAllowed = self.LocomotionIntent != null && self.LocomotionIntent.IsMoveAllowed;
-
-            if (self.Attack != null && self.Attack.IsMovementActive)
-            {
-                self.UpdateAttackMovement();
-                // 攻击位移后清空 XZ 速度
-                self.CurrentVelocity = Vector3.up * self.CurrentVelocity.y;
-            }
-            else if (!isMoveAllowed || (self.Attack != null && self.Attack.IsInAttack))
-            {
-                self.ApplyDeceleration(deltaTime);
-            }
-            else
-            {
-                self.ApplyMovement(deltaTime);
-            }
-
-            // 2. 外部目标速度覆盖
-            if (self.LocomotionIntent != null)
-            {
-                Vector2 targetVel = self.LocomotionIntent.ExternalTargetVelocity;
-                if (targetVel.sqrMagnitude > 0.0001f)
-                {
-                    // 外部驱动中：直接覆盖 XZ 速度
-                    self.CurrentVelocity = new Vector3(targetVel.x, self.CurrentVelocity.y, targetVel.y);
-                    self.WasDrivenByExternalVelocity = true;
-                }
-                else if (self.WasDrivenByExternalVelocity)
-                {
-                    // 外部驱动刚结束：立即清零 XZ，避免残留速度导致减速滑行
-                    self.WasDrivenByExternalVelocity = false;
-                    self.CurrentVelocity = new Vector3(0f, self.CurrentVelocity.y, 0f);
-                }
-            }
-
-            // 3. 同步速度到 Rigidbody
-            if (self.Rigidbody != null)
-            {
-                self.Rigidbody.linearVelocity = self.CurrentVelocity;
-            }
-            
-            // 4. 旋转
-            bool canRotate = self.LocomotionIntent == null || self.LocomotionIntent.IsRotateAllowed;
-            if (canRotate && !self.Attack.IsInAttack)
-            {
-                self.ApplyRotation(deltaTime);
-            }
-            
-            // 5. 计算动画速度
-            self.CalculateAnimationSpeeds();
-            
-            // 6. Root Motion 处理
-            bool allowRootMotionInAttack =
-                self.Attack != null &&
-                self.Attack.IsInAttack &&
-                !self.Attack.IsMovementActive;
-
-            // 当前水平速度平方
-            float horizontalSpeedSqr = self.CurrentVelocity.x * self.CurrentVelocity.x + self.CurrentVelocity.z * self.CurrentVelocity.z;
-
-            // HitStop 期间阻断 RootMotion
-            // - FreezeAnimationOnly/FreezeAll 会阻断 RootMotion
-            bool blockRootMotion = self.HitStop != null && self.HitStop.IsHitStopActive && self.HitStop.FreezeMode != HitStopFreezeMode.None;
-
-            if (!blockRootMotion && allowRootMotionInAttack && horizontalSpeedSqr < 0.001f)
-            {
-                Vector3 delta = self.Animator.deltaPosition;
-                self.Rigidbody.MovePosition(self.Rigidbody.transform.position + delta);
-            }
-
-            self.SyncUnitTransformFromRigidbody();
-        }
-
-        [EntitySystem]
-        private static void FixedUpdate(this CharacterControllerComponent self)
-        {
-            float deltaTime = Time.fixedDeltaTime;
-
-            // HitStop 冻结处理（FixedUpdate）
-            if (self.HitStop != null && self.HitStop.IsHitStopActive)
-            {
-                if (self.Rigidbody != null)
-                {
-                    switch (self.HitStop.FreezeMode)
-                    {
-                        case HitStopFreezeMode.None:
-                        case HitStopFreezeMode.FreezeAnimationOnly:
-                            // 仅冻结动画，不冻结物理
-                            break;
-                        case HitStopFreezeMode.FreezeXZOnly:
-                            // 冻结 XZ，保留 Y
-                            self.Rigidbody.linearVelocity = new Vector3(0f, self.CurrentVelocity.y, 0f);
-                            break;
-                        case HitStopFreezeMode.FreezeAll:
-                            if (self.Rigidbody != null)
-                            {
-                                // 完全冻结时清零速度
-                                self.Rigidbody.linearVelocity = Vector3.zero;
-                            }
-                            self.SyncUnitTransformFromRigidbody();
-                            return;
-                    }
-                }
-            }
-
-            // 处理外部冲量（3D）
-            // - 只在 FixedUpdate 应用
-            // - Ground.Detect 依赖 Y 速度判断落地
-            if (self.LocomotionIntent != null && self.LocomotionIntent.ExternalImpulse.sqrMagnitude > 0.0001f)
-            {
-                Vector3 impulse = self.LocomotionIntent.ExternalImpulse;
-                Vector3 velocity = new Vector3(self.CurrentVelocity.x, 0, self.CurrentVelocity.z) + impulse;
-                self.CurrentVelocity = velocity;
-                // Ground.Detect 依赖 Rigidbody 的 Y 速度
-                if (self.Rigidbody != null)
-                {
-                    self.Rigidbody.linearVelocity = self.CurrentVelocity;
-                }
-
-                self.LocomotionIntent.ExternalImpulse = Vector3.zero; // 清空一次性冲量
-            }
-
-            self.Ground.Detect();
-
-            if (self.JumpRequested && (self.Attack == null || !self.Attack.IsInAttack))
-            {
-                // 处理跳跃
-                bool canJump = self.LocomotionIntent == null || self.LocomotionIntent.IsJumpAllowed;
-                if (canJump)
-                {
-                    self.Jump();
-                }
-                self.JumpRequested = false;
-            }
-
-            // 空连物理
-            /*if (self.AirCombo != null && self.AirCombo.Active && !self.AirCombo.IsExiting)
-            {
-                long nowCombatMs = self.HitStop != null ? self.HitStop.NowCombatMs() : TimeInfo.Instance.ClientFrameTime();
-                float gScale = self.AirCombo.GetCurrentGravityScale(nowCombatMs);
-                gScale = Mathf.Clamp01(gScale);
-                
-                // 应用空连重力
-                if (self.CurrentVelocity.y > -1000f) 
-                {
-                    float g = self.Gravity * self.GravityMultiplier * gScale;
-                    self.CurrentVelocity += Vector3.down * g * deltaTime;
-                }
-
-                // 下落速度下限
-                float minFall = self.AirCombo.MinFallSpeed; // 最小下落速度
-                if (self.CurrentVelocity.y < minFall)
-                {
-                    self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, minFall, self.CurrentVelocity.z);
-                }
-
-                
-            }*/
-          
-            self.ApplyGravity(deltaTime);
-
-            // 高度夹持：仅在维持期生效，退出期重力已恢复，应允许自然下落
-            if (self.Rigidbody != null && !self.AirCombo.IsExiting && self.AirCombo.HeightClampInitialized)
-            {
-                Vector3 pos = self.Rigidbody.position;
-                float clampedY = Mathf.Clamp(pos.y, self.AirCombo.ComboMinHeight, self.AirCombo.ComboMaxHeight);
-                if (!Mathf.Approximately(pos.y, clampedY))
-                {
-                    // 上冲到顶时清零 Y
-                    if (pos.y > clampedY)
-                    {
-                        self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
-                        self.Rigidbody.linearVelocity = self.CurrentVelocity;
-                    }
-                    pos.y = clampedY;
-                    self.Rigidbody.MovePosition(pos);
-                }
-                
-                /*float minFall = self.AirCombo.MinFallSpeed; // 最小下落速度
-                if (self.CurrentVelocity.y < -5)
-                {
-                    self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, -5, self.CurrentVelocity.z);
-                }*/
-            }
-            
-            // 空中高度安全网：防止残留上升速度导致超过天花板
-            /*if (self.HitReaction != null 
-                && self.HitReaction.MaxAirborneHeight > self.HitReaction.AirborneOriginHeight
-                && self.Rigidbody != null)
-            {
-                float maxY = self.HitReaction.MaxAirborneHeight;
-                float currentY = self.Rigidbody.position.y;
-                if (currentY > maxY)
-                {
-                    Vector3 pos = self.Rigidbody.position;
-                    pos.y = maxY;
-                    self.Rigidbody.MovePosition(pos);
-                    // 清零向上速度，保留水平速度
-                    if (self.CurrentVelocity.y > 0f)
-                    {
-                        self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
-                    }
-                }
-            }*/
-            
-            if (self.Rigidbody != null)
-            {
-                if (self.HitStop != null && self.HitStop.IsHitStopActive && self.HitStop.FreezeMode == HitStopFreezeMode.FreezeXZOnly)
-                {
-                    self.Rigidbody.linearVelocity = new Vector3(0f, self.CurrentVelocity.y, 0f);
+                    self.LastRootMotionFrame = Time.frameCount;
+                    self.RootMotionDelta = self.Animator.deltaPosition; // 本帧第一次：赋值
                 }
                 else
                 {
-                    self.Rigidbody.linearVelocity = self.CurrentVelocity;
+                    self.RootMotionDelta += self.Animator.deltaPosition; // 本帧多次：累加
+                    Log.Error("同一帧 OnAnimatorMove 被调用多次，可能存在嵌套 Animator 或多个 Animator 组件。");
                 }
             }
-
-            // 同步 Unit 位置与朝向
-            self.SyncUnitTransformFromRigidbody();
         }
-        
+
+        /// <summary>
+        /// Update：运动管线（Pipeline）
+        /// 感知 → 决策 → 约束 → 执行 → 同步，每阶段职责单一
+        /// </summary>
+        [EntitySystem]
+        private static void Update(this CharacterControllerComponent self)
+        {
+            float dt = Time.deltaTime;
+            if (dt <= 0f) return;
+
+            // 完全冻结：跳过所有运动计算
+            if (self.IsFullyFrozen())
+            {
+                self.RootMotionDelta = Vector3.zero;
+                self.SyncOutput();
+                return;
+            }
+
+            bool freezeXZ = self.IsXZFrozen();
+
+            // ── 感知 ──
+            self.Sense();
+
+            // ── 决策 ──
+            self.ResolveJump();
+            self.ApplyGravity(dt);
+            Vector3 displacement = self.ComputeDisplacement(dt, freezeXZ);
+
+            // ── 约束 ──
+            displacement = self.ApplyConstraints(displacement);
+
+            // ── 执行 ──
+            self.SweepMove(displacement);
+            self.ResolveRotation(dt, freezeXZ);
+
+            // ── 同步 ──
+            self.SyncOutput();
+        }
+
         [EntitySystem]
         private static void Destroy(this CharacterControllerComponent self)
         {
-            // 清理引用
-            self.Rigidbody = null;
             self.CapsuleCollider = null;
+            self.PlayerTransform = null;
         }
 
-        /// <summary>
-        /// 将 Rigidbody 的位置/朝向同步到 Unit
-        /// 仅在变化时写回，避免多余同步
-        ///  </summary>
-        private static void SyncUnitTransformFromRigidbody(this CharacterControllerComponent self)
+        // ==================== 管线阶段 ====================
+
+        private static bool IsFullyFrozen(this CharacterControllerComponent self)
         {
-            if (self.Unit == null || self.Rigidbody == null)
-            {
-                return;
-            }
-            self.Unit.Position = self.Rigidbody.transform.position;
-            self.Unit.Rotation = self.Rigidbody.transform.rotation;
+            return self.HitStop != null
+                   && self.HitStop.IsHitStopActive
+                   && self.HitStop.FreezeMode == HitStopFreezeMode.FreezeAll;
         }
 
+        private static bool IsXZFrozen(this CharacterControllerComponent self)
+        {
+            return self.HitStop != null
+                   && self.HitStop.IsHitStopActive
+                   && self.HitStop.FreezeMode == HitStopFreezeMode.FreezeXZOnly;
+        }
 
         /// <summary>
-        /// 攻击位移（仅 XZ）
+        /// 感知：采集地面状态
         /// </summary>
-        private static void UpdateAttackMovement(this CharacterControllerComponent self)
+        private static void Sense(this CharacterControllerComponent self)
         {
-            if (self.Attack.State != AttackState.Attacking)
+            if (self.Ground == null) return;
+            self.Ground.CurrentVerticalSpeed = self.CurrentVelocity.y;
+            self.Ground.Detect();
+        }
+
+        /// <summary>
+        /// 决策：处理跳跃请求
+        /// Attacking 阶段不可跳，Recovery 阶段跳跃可取消后摇
+        /// </summary>
+        private static void ResolveJump(this CharacterControllerComponent self)
+        {
+            if (self.LocomotionIntent != null
+                && self.LocomotionIntent.ConsumeJumpRequest()
+                && (self.Attack == null || !self.Attack.IsAttacking))
             {
-                return;
+                self.JumpRequested = true;
             }
 
-            if (self.Attack.CurrentSegment?.Movement == null || !self.Attack.CurrentSegment.Movement.EnableMovement)
+            if (!self.JumpRequested) return;
+
+            bool canJump = (self.Attack == null || !self.Attack.IsAttacking)
+                           && (self.LocomotionIntent == null || self.LocomotionIntent.IsJumpAllowed);
+            if (canJump)
             {
-                return;
+                // 后摇中跳跃 → 取消后摇
+                if (self.Attack != null && self.Attack.State == AttackState.Recovery)
+                {
+                    self.Attack.ExitAttackState();
+                }
+                self.Jump();
             }
-            
+            self.JumpRequested = false;
+        }
+
+        /// <summary>
+        /// 决策：合成本帧位移（攻击曲线位移 / 速度+冲量+RootMotion+Drift）
+        /// </summary>
+        private static Vector3 ComputeDisplacement(this CharacterControllerComponent self, float dt, bool freezeXZ)
+        {
+            Vector3 currentPos = self.PlayerTransform.position;
+
+            // 攻击曲线位移（突刺/前冲等大幅度配置位移）
+            bool isAttackMovement = !freezeXZ && self.Attack != null && self.Attack.IsMovementActive;
+            if (isAttackMovement)
+            {
+                Vector3 attackXZ = self.ComputeAttackTargetXZ(currentPos);
+                float yDelta = self.CurrentVelocity.y * dt;
+                self.CurrentVelocity = new Vector3(0f, self.CurrentVelocity.y, 0f);
+                return new Vector3(attackXZ.x - currentPos.x, yDelta, attackXZ.z - currentPos.z);
+            }
+
+            // 常规位移：速度 + 冲量 + RootMotion
+            if (!freezeXZ)
+            {
+                self.ComputeHorizontalVelocity(dt);
+            }
+            else
+            {
+                self.CurrentVelocity = new Vector3(0f, self.CurrentVelocity.y, 0f);
+            }
+
+            self.ApplyImpulse();
+            Vector3 rootMotion = self.ConsumeRootMotion(dt);
+            Vector3 displacement = self.CurrentVelocity * dt + rootMotion;
+
+            // Drift：Attacking 阶段无曲线位移时，叠加方向键微位移
+            if (!freezeXZ)
+            {
+                displacement += self.ComputeDrift(dt);
+            }
+
+            return displacement;
+        }
+
+        /// <summary>
+        /// 约束：对位移施加限制（空连高度夹持等）
+        /// </summary>
+        private static Vector3 ApplyConstraints(this CharacterControllerComponent self, Vector3 displacement)
+        {
+            if (self.AirCombo == null || self.AirCombo.IsExiting || !self.AirCombo.HeightClampInitialized)
+                return displacement;
+
+            float currentY = self.PlayerTransform.position.y;
+            float targetY = currentY + displacement.y;
+            float clampedY = Mathf.Clamp(targetY, self.AirCombo.ComboMinHeight, self.AirCombo.ComboMaxHeight);
+
+            if (targetY > clampedY)
+            {
+                self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
+            }
+
+            displacement.y = clampedY - currentY;
+            return displacement;
+        }
+
+        /// <summary>
+        /// 执行：旋转
+        /// Attacking 阶段不可转，Recovery 阶段允许旋转
+        /// </summary>
+        private static void ResolveRotation(this CharacterControllerComponent self, float dt, bool freezeXZ)
+        {
+            if (freezeXZ) return;
+
+            bool canRotate = self.LocomotionIntent == null || self.LocomotionIntent.IsRotateAllowed;
+            if (canRotate && (self.Attack == null || !self.Attack.IsAttacking))
+            {
+                self.ApplyRotation(dt);
+            }
+        }
+
+        /// <summary>
+        /// 同步：位置/旋转写回 Unit + 更新动画参数
+        /// </summary>
+        private static void SyncOutput(this CharacterControllerComponent self)
+        {
+            if (self.Unit != null && self.PlayerTransform != null)
+            {
+                self.Unit.Position = self.PlayerTransform.position;
+                self.Unit.Rotation = self.PlayerTransform.rotation;
+            }
+            self.CalculateAnimationSpeeds();
+        }
+
+        // ==================== Sweep & Slide 碰撞解算 ====================
+
+        /// <summary>
+        /// CapsuleCast 检测碰撞，碰到障碍物沿表面滑动
+        /// </summary>
+        private static void SweepMove(this CharacterControllerComponent self, Vector3 displacement)
+        {
+            if (self.PlayerTransform == null) return;
+            if (displacement.sqrMagnitude < 0.000001f) return;
+            float skinWidth = self.SkinWidth;
+            Vector3 remaining = displacement;
+
+            for (int i = 0; i < self.MaxSweepIterations; i++)
+            {
+                float moveDist = remaining.magnitude;
+                if (moveDist < 0.0001f) break;
+
+                Vector3 moveDir = remaining / moveDist;
+
+                if (PhysicsHelper.CapsuleCastClosest(
+                        self.PlayerTransform.position,
+                        self.CapsuleRadius,
+                        self.CapsuleHeight,
+                        moveDir,
+                        moveDist + skinWidth,
+                        self.CollisionMask,
+                        self.SweepHitBuffer,
+                        self.PlayerTransform,
+                        self.CapsuleCollider,
+                        self.SkinWidth,
+                        out RaycastHit hit))
+                {
+                    float safeDist = Mathf.Max(0f, hit.distance - skinWidth);
+                    self.PlayerTransform.position += moveDir * safeDist;
+
+                    remaining -= moveDir * safeDist;
+                    remaining = Vector3.ProjectOnPlane(remaining, hit.normal);
+                }
+                else
+                {
+                    self.PlayerTransform.position += remaining;
+                    break;
+                }
+            }
+        }
+
+        // ==================== 速度计算 ====================
+
+        private static void ComputeHorizontalVelocity(this CharacterControllerComponent self, float dt)
+        {
+            bool isMoveAllowed = self.LocomotionIntent != null && self.LocomotionIntent.IsMoveAllowed;
+            var attack = self.Attack;
+
+            if (!isMoveAllowed)
+            {
+                self.ApplyDeceleration(dt);
+            }
+            else if (attack != null && attack.IsAttacking)
+            {
+                // Attacking 阶段：减速（Drift 微位移在 ComputeDisplacement 中单独处理）
+                self.ApplyDeceleration(dt);
+            }
+            else if (attack != null && attack.State == AttackState.Recovery)
+            {
+                // Recovery 阶段：有移动输入 → 取消后摇，恢复正常移动
+                Vector3 moveDir = self.LocomotionIntent?.MoveDirection ?? Vector3.zero;
+                if (moveDir.sqrMagnitude > 0.01f)
+                {
+                    attack.ExitAttackState();
+                    self.ApplyMovement(dt);
+                }
+                else
+                {
+                    self.ApplyDeceleration(dt);
+                }
+            }
+            else
+            {
+                self.ApplyMovement(dt);
+            }
+
+            // 外部目标速度覆盖
+            if (self.LocomotionIntent == null) return;
+
+            Vector2 targetVel = self.LocomotionIntent.ExternalTargetVelocity;
+            if (targetVel.sqrMagnitude > 0.0001f)
+            {
+                self.CurrentVelocity = new Vector3(targetVel.x, self.CurrentVelocity.y, targetVel.y);
+                self.WasDrivenByExternalVelocity = true;
+            }
+            else if (self.WasDrivenByExternalVelocity)
+            {
+                self.WasDrivenByExternalVelocity = false;
+                self.CurrentVelocity = new Vector3(0f, self.CurrentVelocity.y, 0f);
+            }
+        }
+
+        /// <summary>
+        /// 攻击中微位移（Drift）：按住方向键时叠加小幅度位移，用于追敌/微调站位。
+        /// 仅在当前攻击段配置 AllowDrift=true 时生效。
+        /// </summary>
+        private static Vector3 ComputeDrift(this CharacterControllerComponent self, float dt)
+        {
+            var attack = self.Attack;
+            if (attack == null || !attack.IsAttacking) return Vector3.zero;
+
+            var movement = attack.CurrentSegment?.Movement;
+            if (movement == null || !movement.AllowDrift) return Vector3.zero;
+
+            Vector3 moveDir = self.LocomotionIntent != null ? self.LocomotionIntent.MoveDirection : Vector3.zero;
+            if (moveDir.sqrMagnitude <= 0.01f) return Vector3.zero;
+
+            float driftSpeed = self.MoveSpeed * movement.DriftSpeedRatio;
+            Vector3 drift = moveDir.normalized * (driftSpeed * dt);
+            return drift;
+        }
+
+        private static void ApplyImpulse(this CharacterControllerComponent self)
+        {
+            if (self.LocomotionIntent == null) return;
+
+            Vector3 impulse = self.LocomotionIntent.ExternalImpulse;
+            if (impulse.sqrMagnitude <= 0.0001f) return;
+
+            self.CurrentVelocity += impulse;
+            self.LocomotionIntent.ExternalImpulse = Vector3.zero;
+        }
+
+        private static Vector3 ConsumeRootMotion(this CharacterControllerComponent self, float dt)
+        {
+            Vector3 delta = self.RootMotionDelta;
+            self.RootMotionDelta = Vector3.zero;
+
+            // HitStop 期间阻断 Root Motion
+            if (self.HitStop != null && self.HitStop.IsHitStopActive
+                && self.HitStop.FreezeMode != HitStopFreezeMode.None)
+            {
+                return Vector3.zero;
+            }
+
+            // 攻击中无外部位移时允许 Root Motion
+            if (self.Attack != null && self.Attack.IsInAttack && !self.Attack.IsMovementActive)
+            {
+                float hSqr = self.CurrentVelocity.x * self.CurrentVelocity.x
+                            + self.CurrentVelocity.z * self.CurrentVelocity.z;
+                if (hSqr < 0.001f)
+                {
+                    return delta;
+                }
+            }
+
+            // 受击期（怪物）：忽略受击动画 RootMotion，避免“动画自带位移”导致异常后退距离。
+            // 位移应由 HitReaction 的物理轨道（ExternalTargetVelocity/Impulse）控制。
+            if (self.HitReaction != null && self.HitReaction.IsInHitReaction)
+            {
+                bool isPlayer = self.Unit != null && self.Unit.UnitType() == UnitType.Player;
+                if (!isPlayer)
+                {
+                    bool hasExternal = self.LocomotionIntent != null
+                                       && self.LocomotionIntent.ExternalTargetVelocity.sqrMagnitude > 0.0001f;
+                    if (!hasExternal)
+                    {
+                        return delta;
+                    }
+                }
+            }
+
+            return Vector3.zero;
+        }
+
+        // ==================== 攻击位移 ====================
+
+        private static Vector3 ComputeAttackTargetXZ(this CharacterControllerComponent self, Vector3 currentPos)
+        {
+            if (self.Attack.State != AttackState.Attacking) return currentPos;
+            if (self.Attack.CurrentSegment?.Movement == null || !self.Attack.CurrentSegment.Movement.EnableMovement) return currentPos;
+
             var movement = self.Attack.CurrentSegment.Movement;
             float normalizedTime = self.Attack.CurrentNormalizedTime;
-            
-            // 时间窗检查
-            if (movement.NormalizedEnd - movement.NormalizedStart <= 0)
-            {
-                return;
-            }
-            
-            // 未到窗口
-            if (normalizedTime < movement.NormalizedStart)
-            {
-                return;
-            }
-            
-            if (normalizedTime > movement.NormalizedEnd || movement.NormalizedEnd == 0)
-            {
-                return;
-            }
-            
-            // 动态更新目标位置：如果有锁定目标且启用了追踪，每帧跟随目标
+
+            if (movement.NormalizedEnd - movement.NormalizedStart <= 0) return currentPos;
+            if (normalizedTime < movement.NormalizedStart) return currentPos;
+            if (normalizedTime > movement.NormalizedEnd || movement.NormalizedEnd == 0) return currentPos;
+
+            // 追踪目标时动态更新目标位置
             if (movement.TrackTarget && self.Attack.LockedTarget != null)
             {
                 Vector3 dir = self.Attack.LockedTarget.position - self.Attack.MovementStartPosition;
@@ -402,76 +465,67 @@ namespace ET
                     dir.Normalize();
                     float optimalDist = self.Attack.Config?.OptimalCombatDistance ?? 0.8f;
                     float distToTarget = Vector3.Distance(
-                        new Vector3(self.Rigidbody.position.x, 0f, self.Rigidbody.position.z),
+                        new Vector3(currentPos.x, 0f, currentPos.z),
                         new Vector3(self.Attack.LockedTarget.position.x, 0f, self.Attack.LockedTarget.position.z));
                     float moveDist = Mathf.Min(movement.Distance, Mathf.Max(0f, distToTarget - optimalDist));
                     self.Attack.MovementTargetPosition = self.Attack.MovementStartPosition + dir * moveDist;
                 }
             }
 
-            float moveProgress = (normalizedTime - movement.NormalizedStart) / (movement.NormalizedEnd - movement.NormalizedStart);
-            moveProgress = Mathf.Clamp01(moveProgress);
-            
+            float moveProgress = Mathf.Clamp01(
+                (normalizedTime - movement.NormalizedStart) / (movement.NormalizedEnd - movement.NormalizedStart));
             float curveValue = movement.MoveCurve.Evaluate(moveProgress);
 
-            Vector3 targetPos = Vector3.Lerp(
-                self.Attack.MovementStartPosition, 
-                self.Attack.MovementTargetPosition, 
-                curveValue
-            );
-            
-            if (self.Rigidbody != null)
-            {
-                Vector3 currentPos = self.Rigidbody.position;
-                // 只改 XZ，Y 由 FixedUpdate 处理
-                Vector3 newPos = new Vector3(targetPos.x, currentPos.y, targetPos.z);
-                self.Rigidbody.MovePosition(newPos);
-            }
+            return Vector3.Lerp(
+                self.Attack.MovementStartPosition,
+                self.Attack.MovementTargetPosition,
+                curveValue);
         }
-        
-        /// <summary>
-        /// 基于输入移动（OnAnimatorMove，XZ）
-        /// Y 由 FixedUpdate 处理
-        /// </summary>
-        private static void ApplyMovement(this CharacterControllerComponent self, float deltaTime)
+
+        // ==================== 移动/减速 ====================
+
+        private static void ApplyMovement(this CharacterControllerComponent self, float dt)
         {
             Vector3 inputDirection = self.LocomotionIntent != null ? self.LocomotionIntent.MoveDirection : Vector3.zero;
-            
-            // 贴地修正方向
+
             if (self.Ground != null && self.Ground.IsGrounded(self.Ground.StateContext.State))
             {
                 inputDirection = self.Ground.GetSlopeDirection(inputDirection);
             }
-            
-            // 有输入时加速
+
             if (inputDirection.magnitude > 0.01f)
             {
-                // 目标速度
                 var targetVelocity = inputDirection * self.MoveSpeed + new Vector3(0, self.CurrentVelocity.y, 0);
-                // 加速
-                self.CurrentVelocity = Vector3.MoveTowards(
-                    self.CurrentVelocity,
-                    targetVelocity,
-                    self.Acceleration * deltaTime
-                );
+                self.CurrentVelocity = Vector3.MoveTowards(self.CurrentVelocity, targetVelocity, self.Acceleration * dt);
             }
             else
             {
-                // 无输入时减速
-                self.CurrentVelocity = Vector3.MoveTowards(
-                    self.CurrentVelocity,
-                    new Vector3(0, self.CurrentVelocity.y, 0),
-                    self.Deceleration * deltaTime
-                );
+                self.ApplyDeceleration(dt);
             }
         }
-        
-        /// <summary>
-        /// 处理转向（OnAnimatorMove）
-        /// </summary>
-        private static void ApplyRotation(this CharacterControllerComponent self, float deltaTime)
+
+        private static void ApplyDeceleration(this CharacterControllerComponent self, float dt)
         {
-            // 取朝向输入
+            self.CurrentVelocity = Vector3.MoveTowards(
+                self.CurrentVelocity,
+                new Vector3(0f, self.CurrentVelocity.y, 0f),
+                self.Deceleration * dt);
+        }
+
+        public static void StopMovement(this CharacterControllerComponent self)
+        {
+            if (self.LocomotionIntent != null)
+            {
+                self.LocomotionIntent.MoveDirection = Vector3.zero;
+                self.LocomotionIntent.FaceDirection = Vector3.zero;
+            }
+            self.CurrentVelocity = new Vector3(0f, self.CurrentVelocity.y, 0f);
+        }
+
+        // ==================== 旋转 ====================
+
+        private static void ApplyRotation(this CharacterControllerComponent self, float dt)
+        {
             Vector3 inputDirection = Vector3.zero;
             if (self.LocomotionIntent != null)
             {
@@ -481,191 +535,88 @@ namespace ET
                     inputDirection = self.LocomotionIntent.MoveDirection;
                 }
             }
-            
-            // 无方向则返回
-            if (inputDirection.magnitude < 0.01f)
-            {
-                return;
-            }
-            
+            if (inputDirection.magnitude < 0.01f) return;
+
             inputDirection = inputDirection.normalized;
-            var player = self.Rigidbody.transform;
-            // 目标朝向
             Quaternion targetRotation = Quaternion.LookRotation(inputDirection);
 
             float actualRotationSpeed;
             if (self.Attack != null && self.Attack.State == AttackState.Recovery)
             {
-                float angle = Quaternion.Angle(player.rotation, targetRotation);
+                float angle = Quaternion.Angle(self.PlayerTransform.rotation, targetRotation);
                 float boost = Mathf.Lerp(2.5f, 4.5f, Mathf.Clamp01(angle / 180f));
                 actualRotationSpeed = self.RotationSpeed * boost;
             }
             else
             {
-                // 空中转向稍快
-                actualRotationSpeed = self.Ground.IsAirborne(self.Ground.StateContext.State) ?
-                    self.RotationSpeed * 1.2f : 
-                    self.RotationSpeed;
+                actualRotationSpeed = self.Ground != null && self.Ground.IsAirborne(self.Ground.StateContext.State)
+                    ? self.RotationSpeed * 1.2f
+                    : self.RotationSpeed;
             }
-            // 旋转插值
-            player.rotation = Quaternion.RotateTowards(
-                player.rotation,
+
+            self.PlayerTransform.rotation = Quaternion.RotateTowards(
+                self.PlayerTransform.rotation,
                 targetRotation,
-                actualRotationSpeed * deltaTime
-            );
+                actualRotationSpeed * dt);
         }
 
-        /// <summary>
-        /// 将 Root Motion deltaPosition 按与锁定目标的距离进行钳位（XZ 平面，地面/空中通用）。
-        /// - 前进分量：不超过 (distance - optimalDist)
-        /// - 后退/侧移分量：保留
-        /// </summary>
-        private static Vector3 ClampRootMotionToTarget(
-            Vector3 delta,
-            Vector3 selfPos,
-            Vector3 targetPos,
-            float optimalDist)
-        {
-            Vector3 toTarget = targetPos - selfPos;
-            toTarget.y = 0f;
-            float dist = toTarget.magnitude;
-            if (dist < 0.01f) return Vector3.zero; // 重叠保护
+        // ==================== 跳跃/重力 ====================
 
-            Vector3 dir = toTarget / dist;
-            float forwardDelta = Vector3.Dot(delta, dir);
-
-            if (forwardDelta <= 0f) return delta; // 后退方向不钳位
-
-            float remaining = dist - optimalDist;
-            if (remaining <= 0f)
-            {
-                // 已在最佳距离内：完全去除前进分量
-                return delta - dir * forwardDelta;
-            }
-
-            // 钳位前进分量到剩余距离
-            float clamped = Mathf.Min(forwardDelta, remaining);
-            return delta + dir * (clamped - forwardDelta);
-        }
-        
-        /// <summary>
-        /// 水平减速（OnAnimatorMove，XZ）
-        /// </summary>
-        private static void ApplyDeceleration(this CharacterControllerComponent self, float deltaTime)
-        {
-            // 水平减速
-            self.CurrentVelocity = Vector3.MoveTowards(
-                self.CurrentVelocity,
-                new Vector3(0f, self.CurrentVelocity.y, 0f),
-                self.Deceleration * deltaTime
-            );
-        }
-        
-        /// <summary>
-        /// 立即停止移动并同步速度
-        /// 同步 CurrentVelocity 与 Rigidbody
-        /// </summary>
-        public static void StopMovement(this CharacterControllerComponent self)
-        {
-            if (self.LocomotionIntent != null)
-            {
-                self.LocomotionIntent.MoveDirection = Vector3.zero;
-                self.LocomotionIntent.FaceDirection = Vector3.zero;
-            }
-            // 清空 XZ
-            Vector3 velocity = self.CurrentVelocity;
-            velocity.x = 0f;
-            velocity.z = 0f;
-            self.CurrentVelocity = velocity;
-            // 写回 Rigidbody
-            self.Rigidbody.linearVelocity = self.CurrentVelocity;
-        }
-
-        // ===== 跳跃 =====
-
-        /// <summary>
-        /// 请求跳跃
-        /// </summary>
         public static void RequestJump(this CharacterControllerComponent self)
         {
             self.JumpRequested = true;
         }
 
-        /// <summary>
-        /// 执行跳跃（设置 Y 速度）
-        /// FixedUpdate 负责同步到 Rigidbody
-        /// </summary>
         private static void Jump(this CharacterControllerComponent self)
         {
-            if (!self.Ground.CanJump())
-            {
-                return;
-            }
+            if (self.Ground == null || !self.Ground.CanJump()) return;
+
             self.Ground.Jump();
-            // 设置向上速度
-            Vector3 currentVelocity = self.CurrentVelocity;
-            currentVelocity.y = self.JumpForce;
-            self.CurrentVelocity = currentVelocity;
+            self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, self.JumpForce, self.CurrentVelocity.z);
         }
 
-        /// <summary>
-        /// 应用重力
-        /// FixedUpdate 负责同步到 Rigidbody
-        /// </summary>
-        private static void ApplyGravity(this CharacterControllerComponent self, float deltaTime)
+        private static void ApplyGravity(this CharacterControllerComponent self, float dt)
         {
-            // 空中施加重力
+            if (self.Ground == null) return;
+
             if (self.Ground.IsAirborne(self.Ground.StateContext.State))
             {
-                Vector3 velocity = self.CurrentVelocity;
                 float gravityAcceleration = self.Gravity * self.GravityMultiplier;
-                velocity.y -= gravityAcceleration * deltaTime;
-                self.CurrentVelocity = velocity;
+                self.CurrentVelocity -= new Vector3(0f, gravityAcceleration * dt, 0f);
+            }
+            else if (self.CurrentVelocity.y < 0f)
+            {
+                self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
+            }
+        }
+
+        // ==================== 动画参数 ====================
+
+        private static void CalculateAnimationSpeeds(this CharacterControllerComponent self)
+        {
+            float hx = self.CurrentVelocity.x;
+            float hz = self.CurrentVelocity.z;
+            float horizontalSpeed = Mathf.Sqrt(hx * hx + hz * hz);
+
+            if (self.HitReaction != null && self.HitReaction.IsInHitReaction)
+            {
+                self.NormalizedAnimationSpeed = horizontalSpeed / self.MoveSpeed * self.HitReaction.FirstUpForce;
             }
             else
             {
-                // 地面时清零下落速度
-                Vector3 velocity = self.CurrentVelocity;
-                if (velocity.y < 0f)
-                {
-                    velocity.y = 0f;
-                    self.CurrentVelocity = velocity;
-                }
+                self.NormalizedAnimationSpeed = horizontalSpeed / self.MoveSpeed * 10f;
             }
-        }
-
-        // ===== 动画参数 =====
-
-        /// <summary>
-        /// 计算动画速度参数
-        /// 由当前速度驱动动画
-        /// </summary>
-        private static void CalculateAnimationSpeeds(this CharacterControllerComponent self)
-        {
-            // 水平速度
-            Vector3 horizontalVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
-            float horizontalSpeed = horizontalVelocity.magnitude;
-            float normalizedSpeed = horizontalSpeed / self.MoveSpeed * 10f;
-            self.NormalizedAnimationSpeed = normalizedSpeed;
-            // 垂直速度
             self.VerticalAnimationSpeed = self.CurrentVelocity.y;
         }
 
-        /// <summary>
-        /// 获取水平动画速度
-        /// </summary>
         public static float GetNormalizedAnimationSpeed(this CharacterControllerComponent self)
         {
             return self.NormalizedAnimationSpeed;
         }
 
-        /// <summary>
-        /// 获取垂直动画速度
-        /// </summary>
         public static float GetVerticalAnimationSpeed(this CharacterControllerComponent self)
         {
             return self.VerticalAnimationSpeed;
         }
     }
 }
-

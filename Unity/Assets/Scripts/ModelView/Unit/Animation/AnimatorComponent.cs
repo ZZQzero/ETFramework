@@ -9,13 +9,10 @@ namespace ET
         public LinearMixerTransition JumpMixer;
 
         // 受击系列 Transitions
-        public ITransition HitLightTransition;
-        public ITransition HitMediumTransition;
-        public ITransition HitHeavyTransition;
-        public ITransition HitKnockbackTransition;
+        public LinearMixerTransition HitHorizontalMixer;
+        public ITransition HitBack;
         public ITransition HitAirborneTransition;
         public ITransition HitFallingTransition;
-        public ITransition HitKnockdownTransition;
         public ITransition HitGetUpTransition;
 
         /// <summary>

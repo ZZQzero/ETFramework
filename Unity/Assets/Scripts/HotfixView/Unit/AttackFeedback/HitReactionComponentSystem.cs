@@ -55,8 +55,6 @@ namespace ET
                     break;
             }
         }
-        
-        
 
         private static void UpdateHitMotion(this HitReactionComponent self)
         {
@@ -275,6 +273,7 @@ namespace ET
             self.CurrentReactionType = request.Rule.ReactionType;
             long now = self.GetCombatNowMs();
             self.HitStunEndTimeMs = now + request.Rule.HitStunMs + request.Rule.AttackerSegmentTimeoutMs;
+            self.FirstUpForce = request.Rule.MotionData.Force;
             switch (self.CurrentHitState)
             {
                 case HitState.None:
@@ -458,7 +457,7 @@ namespace ET
 
             // 非 NormalHit：击退方向偏向拴系锚点（攻击者位置），防止越打越远
             // NormalHit 不需要方向偏移——水平位移完全由 UpdateNormalHitMotion 弹簧控制
-            if (request.Rule.MotionData.MotionType != HitMotionType.NormalHit && self.TetherActive)
+            if (request.Rule.MotionData.MotionType != HitMotionType.NormalHit)
             {
                 Vector3 toAnchor = self.TetherAnchorPos - self.Owner.position;
                 toAnchor.y = 0f;
@@ -539,7 +538,7 @@ namespace ET
             self.InitPhysicalMotion(in request);
             self.ApplyImpulse(request.Rule.MotionData.MotionType, request.Rule.MotionData.Force);
             // 连段中心：优先使用攻击者位置
-            Vector3 comboCenterPos = request.Rule.HasAttackerWorldPos ? request.Rule.AttackerWorldPos : self.Owner.position;
+            Vector3 comboCenterPos = self.TetherAnchorTransform.position;
             self.AirCombo.Enter(
                 self.HitStunEndTimeMs, 
                 comboCenterPos, 
@@ -709,11 +708,7 @@ namespace ET
             }
 
             // 记录拴系锚点（攻击者位置）
-            if (request.Rule.HasAttackerWorldPos)
-            {
-                self.TetherAnchorPos = request.Rule.AttackerWorldPos;
-                self.TetherActive = true;
-            }
+            self.TetherAnchorPos = self.TetherAnchorTransform.position;
         }
 
         /// <summary>
@@ -834,7 +829,6 @@ namespace ET
             self.GetUpStartTime = 0;
             self.AirborneOriginHeight = 0f;
             self.MaxAirborneHeight = 0f;
-            self.TetherActive = false;
             self.TetherAnchorTransform = null;
 
             // 统一清理物理运动（含 ExternalTargetVelocity）

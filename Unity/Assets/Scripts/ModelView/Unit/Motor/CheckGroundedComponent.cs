@@ -342,10 +342,9 @@ namespace ET
         public CapsuleCollider Capsule;
 
         /// <summary>
-        /// 角色 Rigidbody。
-        /// 用于获取垂直速度、判断下落状态等。
+        /// 当前逻辑垂直速度（由 Motor 每帧传入，替代 Rigidbody.linearVelocity.y）
         /// </summary>
-        public Rigidbody Rigidbody;
+        public float CurrentVerticalSpeed;
 
 
         // ==================== 配置 ====================

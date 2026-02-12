@@ -79,9 +79,8 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.SimpleMonsterAIComponentSystem.ET_SimpleMonsterAIComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.SimpleMonsterAIComponentSystem.ET_SimpleMonsterAIComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CharacterControllerComponentSystem.ET_CharacterControllerComponent_UnityEngine_GameObject_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.CharacterControllerComponentSystem.ET_CharacterControllerComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CharacterControllerComponentSystem.ET_CharacterControllerComponent_OnAnimatorMoveSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.CharacterControllerComponentSystem.ET_CharacterControllerComponent_FixedUpdateSystem>();
+            EntitySystemSingleton.RegisterEntitySystem<ET.CharacterControllerComponentSystem.ET_CharacterControllerComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CharacterControllerComponentSystem.ET_CharacterControllerComponent_DestroySystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CheckGroundedComponentSystem.ET_CheckGroundedComponent_UnityEngine_GameObject_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CheckGroundedComponentSystem.ET_CheckGroundedComponent_DestroySystem>();

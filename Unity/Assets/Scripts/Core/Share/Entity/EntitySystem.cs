@@ -35,35 +35,79 @@ namespace ET
             }
         }
         
-    public void Publish<T>(T t) where T: struct
-    {
-        Type systemType = typeof(AClassEventSystem<T>);
-        
-        if (!this.queues.TryGetValue(systemType, out var queue))
+        public void Publish<T>(T t) where T: struct
         {
-            return;
-        }
-        
-        int count = queue.Count;
-        while (count-- > 0)
-        {
-            Entity component = queue.Dequeue();
-            if (component == null || component.IsDisposed)
+            Type systemType = typeof(AClassEventSystem<T>);
+            
+            if (!this.queues.TryGetValue(systemType, out var queue))
             {
-                continue;
+                return;
             }
             
-            Type componentType = component.GetType();
-            
-            try
+            int count = queue.Count;
+            while (count-- > 0)
             {
-                List<SystemObject> systems = EntitySystemSingleton.TypeSystems.GetSystems(componentType, systemType);
-                if (systems == null)
+                Entity component = queue.Dequeue();
+                if (component == null || component.IsDisposed)
                 {
                     continue;
                 }
 
                 queue.Enqueue(component);
+                this.RunClassSystems(component, systemType, t);
+            }
+        }
+
+        public bool TryPublishTo<T>(long targetInstanceId, T t) where T : struct
+        {
+            if (targetInstanceId == 0)
+            {
+                return false;
+            }
+
+            Type systemType = typeof(AClassEventSystem<T>);
+            if (!this.queues.TryGetValue(systemType, out var queue))
+            {
+                return false;
+            }
+
+            int count = queue.Count;
+            while (count-- > 0)
+            {
+                Entity component = queue.Dequeue();
+                if (component == null || component.IsDisposed)
+                {
+                    continue;
+                }
+
+                queue.Enqueue(component);
+                if (component.InstanceId != targetInstanceId)
+                {
+                    continue;
+                }
+
+                this.RunClassSystems(component, systemType, t);
+                return true;
+            }
+
+            return false;
+        }
+
+        public void PublishTo<T>(long targetInstanceId, T t) where T : struct
+        {
+            this.TryPublishTo(targetInstanceId, t);
+        }
+
+        private void RunClassSystems<T>(Entity component, Type systemType, T t) where T : struct
+        {
+            Type componentType = component.GetType();
+            try
+            {
+                List<SystemObject> systems = EntitySystemSingleton.TypeSystems.GetSystems(componentType, systemType);
+                if (systems == null)
+                {
+                    return;
+                }
 
                 foreach (AClassEventSystem<T> classSystem in systems)
                 {
@@ -82,6 +126,5 @@ namespace ET
                 throw new Exception($"entity system update fail: {componentType.FullName}", e);
             }
         }
-    }
     }
 }

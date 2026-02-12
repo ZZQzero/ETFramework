@@ -1318,7 +1318,6 @@ namespace ET
                 int attackerSegmentComboTimeoutMs = self.GetCurrentSegmentComboTimeoutMs();
                 int totalTimes = self.GetTotalSegmentEndMs();
                 float attackRadius = hitBox.GetAttackRadius();
-                Vector3 attackerWorldPos = self.OwnerTransform.position;
                 var req = BuildHitReactionRequest(
                     in effect, 
                     in feedback, 
@@ -1326,9 +1325,7 @@ namespace ET
                     defaultHitStopMs, 
                     attackerSegmentComboTimeoutMs, 
                     totalTimes,
-                    attackRadius, 
-                    attackerWorldPos, 
-                    true);
+                    attackRadius);
                 // 传递攻击者 Transform：NormalHit 时 UpdateNormalHitMotion 每帧跟踪攻击者位置
                 hitReactionComponent.TetherAnchorTransform = self.OwnerTransform;
                 hitReactionComponent.TryApplyHit(in req);
@@ -1383,9 +1380,7 @@ namespace ET
             int defaultHitStopMs,
             int attackerSegmentTimeoutMs = 0,
             int attackerTotalTimeoutMs = 0,
-            float attackRadius = 0f,
-            Vector3 attackerWorldPos = default,
-            bool hasAttackerWorldPos = false)
+            float attackRadius = 0f)
         {
             return new HitImpactData(effect, 
                 feedback, 
@@ -1393,9 +1388,7 @@ namespace ET
                 defaultHitStopMs,
                 attackerSegmentTimeoutMs,
                 attackerTotalTimeoutMs, 
-                attackRadius,
-                attackerWorldPos,
-                hasAttackerWorldPos);
+                attackRadius);
         }
 
         /// <summary>

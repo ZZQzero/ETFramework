@@ -53,9 +53,9 @@ namespace ET
         }
 
 #if UNITY
-        public void OnAnimatorMove()
+        public void OnAnimatorMove(long targetInstanceId, int targetFiberId)
         {
-            this.mainThreadScheduler.OnAnimatorMove();
+            this.mainThreadScheduler.OnAnimatorMove(targetInstanceId, targetFiberId);
         }
 #endif
 

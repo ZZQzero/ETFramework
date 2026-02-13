@@ -18,16 +18,16 @@ namespace ET
         private static void Awake(this AttackComponent self)
         {
             self.ResetState();
-            self.Unit = self.GetParent<Unit>();
+            self.OwnerUnit = self.GetParent<Unit>();
             Entity root = self.Root();
-            self.InitComponentRefs(self.Unit, root);
+            self.InitComponentRefs(self.OwnerUnit, root);
             
             // OwnerTransform：以 Unit 的 GameObjectComponent 为准
             self.OwnerTransform = self.GameObjectComponent?.Transform;
 
             self.EffectRoot = new GameObject("EffectRoot");
             // CameraFollow 只对“玩家表现”有意义，怪物没有也正常
-            if (self.CameraFollow == null && self.Unit.UnitType() == UnitType.Player)
+            if (self.CameraFollow == null && self.OwnerUnit.UnitType() == UnitType.Player)
             {
                 Log.Warning("没有找到CameraFollowComponent组件（仅玩家需要）");
             }
@@ -159,7 +159,7 @@ namespace ET
                 var skillTable = SkillConfig.Instance.GetOrDefault(skillId);
                 if (skillTable == null)
                 {
-                    Log.Error($"AttackComponent: SkillConfig 未找到 skillId={skillId}, Unit={self.Unit.UnitTable.UnitType} {self.Unit.UnitName}");
+                    Log.Error($"AttackComponent: SkillConfig 未找到 skillId={skillId}, Unit={self.OwnerUnit.UnitTable.UnitType} {self.OwnerUnit.UnitName}");
                     return;
                 }
                 
@@ -247,7 +247,6 @@ namespace ET
             self.TotalHitCount = 0;
             self.IsMovementActive = false;
             self.HitBoxActiveMask = 0UL;
-            self.TrackTarget = null;
             self.CurrentSegmentEnded = false;
             self.IsInputBufferWindowOpen = false;
             self.IsCancelWindowOpen = false;
@@ -697,33 +696,25 @@ namespace ET
             self.MovementStartPosition = self.OwnerTransform.position;
 
             // 使用锁定目标（如果有）替代搜索；否则用前方
-            if (segment.Movement.TrackTarget)
+            if (segment.Movement.TrackTarget && self.LockedTarget != null)
             {
-                self.TrackTarget = self.LockedTarget;
-                if (self.TrackTarget != null)
+                Vector3 direction = (self.LockedTarget.position - self.OwnerTransform.position);
+                direction.y = 0f;
+                if (direction.sqrMagnitude > 0.0001f)
                 {
-                    Vector3 direction = (self.TrackTarget.position - self.OwnerTransform.position);
-                    direction.y = 0f;
-                    if (direction.sqrMagnitude > 0.0001f)
-                    {
-                        direction.Normalize();
-                    }
-                    else
-                    {
-                        direction = self.OwnerTransform.forward;
-                    }
-                    // 受 OptimalCombatDistance 约束：目标位置不超过目标当前位置
-                    float optimalDist = self.Config?.OptimalCombatDistance ?? 0.8f;
-                    float distToTarget = Vector3.Distance(
-                        new Vector3(self.OwnerTransform.position.x, 0f, self.OwnerTransform.position.z),
-                        new Vector3(self.TrackTarget.position.x, 0f, self.TrackTarget.position.z));
-                    float moveDist = Mathf.Min(segment.Movement.Distance, Mathf.Max(0f, distToTarget - optimalDist));
-                    self.MovementTargetPosition = self.MovementStartPosition + direction * moveDist;
+                    direction.Normalize();
                 }
                 else
                 {
-                    self.MovementTargetPosition = self.MovementStartPosition + self.OwnerTransform.forward * segment.Movement.Distance;
+                    direction = self.OwnerTransform.forward;
                 }
+                // 受 OptimalCombatDistance 约束：目标位置不超过目标当前位置
+                float optimalDist = self.Config?.OptimalCombatDistance ?? 0.8f;
+                float distToTarget = Vector3.Distance(
+                    new Vector3(self.OwnerTransform.position.x, 0f, self.OwnerTransform.position.z),
+                    new Vector3(self.LockedTarget.position.x, 0f, self.LockedTarget.position.z));
+                float moveDist = Mathf.Min(segment.Movement.Distance, Mathf.Max(0f, distToTarget - optimalDist));
+                self.MovementTargetPosition = self.MovementStartPosition + direction * moveDist;
             }
             else
             {
@@ -1303,11 +1294,10 @@ namespace ET
             }
 
             // 应用受击反应：统一走 HitReactionRequest + HitRules
-            var hitReactionComponent = unit.GetComponent<CombatContextComponent>()?.HitReaction
-                ?? unit.GetComponent<HitReactionComponent>();
+            var hitReactionComponent = unit.GetComponent<HitReactionComponent>();
             if (hitReactionComponent != null)
             {
-                Vector3 hitDirection = (target.transform.position - self.OwnerTransform.position);
+                Vector3 hitDirection = target.transform.position - self.OwnerTransform.position;
                 hitDirection.y = 0f;
                 if (hitDirection.sqrMagnitude > 0.0001f)
                 {
@@ -1495,7 +1485,6 @@ namespace ET
             self.HasHitThisSegment = false;
             self.HitTargetsThisSegment.Clear();
             self.IsMovementActive = false;
-            self.TrackTarget = null;
             self.CurrentSegmentEnded = false;
             self.IsInputBufferWindowOpen = false;
             self.IsCancelWindowOpen = false;

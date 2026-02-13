@@ -238,7 +238,7 @@ namespace ET
             {
                 self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
             }
-
+            
             displacement.y = clampedY - currentY;
             return displacement;
         }
@@ -250,6 +250,20 @@ namespace ET
         private static void ResolveRotation(this CharacterControllerComponent self, float dt, bool freezeXZ)
         {
             if (freezeXZ) return;
+            if (self.HitReaction != null && self.HitReaction.IsInHitReaction)
+            {
+                //TODO 上层输入应该判断是否处于攻击状态，以避免击打过程中被击退时朝向瞬变
+                Log.Error($" {self.Unit.UnitName} ResolveRotation {self.LocomotionIntent.FaceDirection}");
+                
+                self.PlayerTransform.rotation = Quaternion.LookRotation(self.LocomotionIntent.FaceDirection);
+
+                // 同时更新 LocomotionIntent 的朝向，防止 Update 里的 ResolveRotation 又把它转回去了
+                if (self.LocomotionIntent != null)
+                {
+                    self.LocomotionIntent.FaceDirection = self.LocomotionIntent.FaceDirection;
+                }
+                return;
+            }
 
             bool canRotate = self.LocomotionIntent == null || self.LocomotionIntent.IsRotateAllowed;
             if (canRotate && (self.Attack == null || !self.Attack.IsAttacking))
@@ -422,20 +436,10 @@ namespace ET
                 }
             }
 
-            // 受击期（怪物）：忽略受击动画 RootMotion，避免“动画自带位移”导致异常后退距离。
-            // 位移应由 HitReaction 的物理轨道（ExternalTargetVelocity/Impulse）控制。
+            // Hit Reaction 期间允许 Root Motion（仅受动画驱动，无外部位移），以保持击退/击飞等效果的连贯性
             if (self.HitReaction != null && self.HitReaction.IsInHitReaction)
             {
-                bool isPlayer = self.Unit != null && self.Unit.UnitType() == UnitType.Player;
-                if (!isPlayer)
-                {
-                    bool hasExternal = self.LocomotionIntent != null
-                                       && self.LocomotionIntent.ExternalTargetVelocity.sqrMagnitude > 0.0001f;
-                    if (!hasExternal)
-                    {
-                        return delta;
-                    }
-                }
+                return delta;
             }
 
             return Vector3.zero;

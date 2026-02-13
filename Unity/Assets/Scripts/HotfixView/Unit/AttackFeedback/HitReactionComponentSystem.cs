@@ -64,11 +64,11 @@ namespace ET
             }
 
             // NormalHit：距离维持路径（弹簧模型）
-            if (self.CurrentMotionType == HitMotionType.NormalHit)
+            /*if (self.CurrentMotionType == HitMotionType.NormalHit)
             {
                 self.UpdateNormalHitMotion();
                 return;
-            }
+            }*/
 
             // ---- 非 NormalHit：Force/Curve 路径（无拴系约束）----
             long now = self.GetCombatNowMs();
@@ -193,11 +193,12 @@ namespace ET
             {
                 return false;
             }
-            
             // 缓存本单位的视觉许可（用于帧内/帧间状态流转时同步视觉状态）
             self.AllowedReactionGroups = self.CombatConfig.HitReactionConfig.Visual.AllowedReactionGroups;
             self.AllowedStateVisuals = self.CombatConfig.HitReactionConfig.Visual.AllowedStateVisuals;
+            self.LocomotionIntent.FaceDirection = -hitReaction.Rule.HitDirection;
 
+            Log.Error($"TryApplyHit {self.LocomotionIntent.FaceDirection}");
             bool hasVisualOrPhysical = hitReaction.Rule.ReactionType != HitReactionType.None || hitReaction.Rule.MotionData.MotionType != HitMotionType.None;
             bool hasAnyFeedback =
                 hitReaction.Feedback.VictimHitStopMs > 0 ||

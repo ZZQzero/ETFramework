@@ -51,7 +51,13 @@ namespace ET
 
         public GameObject EffectRoot { get; set; }
         
-        public Unit Unit { get; set; }
+        public Unit OwnerUnit { get; set; }
+        
+        /// <summary>
+        /// 单位视图根节点（用于位移基准、挂点、VFX/SFX、命中方向等）。
+        /// 注意：这是“OwnerTransform”，不是“Player”，避免语义误导。
+        /// </summary>
+        public Transform OwnerTransform;
         
         /// <summary>当前已加载的技能ID（对应 AttackCatalog/命令的 SkillId）</summary>
         public int LoadedSkillId { get; set; }
@@ -169,7 +175,7 @@ namespace ET
 
         /// <summary>锁定目标对应的 Unit（用于有效性检查）</summary>
         public Unit LockedTargetUnit { get; set; }
-
+        
         #endregion
 
         #region 位移控制
@@ -183,14 +189,6 @@ namespace ET
         /// <summary>位移是否激活</summary>
         public bool IsMovementActive { get; set; }
         
-        /// <summary>追踪目标</summary>
-        public Transform TrackTarget { get; set; }
-
-        /// <summary>
-        /// 单位视图根节点（用于位移基准、挂点、VFX/SFX、命中方向等）。
-        /// 注意：这是“OwnerTransform”，不是“Player”，避免语义误导。
-        /// </summary>
-        public Transform OwnerTransform;
         #endregion
 
         #region 便捷属性
@@ -200,21 +198,6 @@ namespace ET
 
         /// <summary>是否处于攻击流程中（包含后摇/顿帧），用于动画/移动系统判定</summary>
         public bool IsInAttack => State != AttackState.Idle;
-        
-        /// <summary>是否可以输入缓冲</summary>
-        public bool CanBufferInput
-        {
-            get
-            {
-                if (CurrentAnimState == null || CurrentSegment == null)
-                {
-                    return false;
-                }
-                return CurrentAnimState.HasEvents
-                    ? IsInputBufferWindowOpen
-                    : CurrentAnimState.NormalizedTime >= (CurrentSegment.TimeWindow != null ? CurrentSegment.TimeWindow.GetInputBufferStart01() : 0f);
-            }
-        }
         
         /// <summary>是否可以取消攻击</summary>
         public bool CanCancelAttack

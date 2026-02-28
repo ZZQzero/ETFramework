@@ -24,8 +24,6 @@ namespace ET
             go.SetLayer(layer);
             unit.UnitName = monster.MonsterTable.Name;
             unit.AddComponent<GameObjectComponent>().GameObject = go;
-            unit.AddComponent<CombatContextComponent>();
-            unit.AddComponent<MovementContextComponent>();
             unit.AddComponent<CombatConfigComponent,string>("HitReactionProfile");
             unit.AddComponent<LocomotionIntentComponent>();
             unit.AddComponent<AttackCommandComponent>();
@@ -35,6 +33,7 @@ namespace ET
             animCatalog.Set(AnimationCatalogComponent.AnimKey.Locomotion_Move, monster.MonsterTable.MoveAsset);
             animCatalog.Set(AnimationCatalogComponent.AnimKey.Locomotion_Jump, monster.MonsterTable.JumpAsset);
             animCatalog.Set(AnimationCatalogComponent.AnimKey.Hit_Knockback, monster.MonsterTable.Damage);
+            animCatalog.Set(AnimationCatalogComponent.AnimKey.Hit_Knockdown, monster.MonsterTable.Death);
             animCatalog.Set(AnimationCatalogComponent.AnimKey.Hit_GetUp, monster.MonsterTable.GetUp);
 
             var attackCatalog = unit.AddComponent<AttackCatalogComponent>();

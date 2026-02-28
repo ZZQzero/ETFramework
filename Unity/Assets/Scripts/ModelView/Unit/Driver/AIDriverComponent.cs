@@ -9,24 +9,23 @@ namespace ET
     [ComponentOf(typeof(Unit))]
     public class AIDriverComponent : Entity, IAwake, IUpdate
     {
-        private ComponentRef<MovementContextComponent> movementContextRef;
-        private ComponentRef<CombatContextComponent> combatContextRef;
         private ComponentRef<LocomotionIntentComponent> locomotionIntentRef;
         private ComponentRef<AttackCommandComponent> attackCommandRef;
         private ComponentRef<AirComboComponent> airComboRef;
+        private ComponentRef<HitReactionComponent> hitReactionRef;
 
         public void InitComponentRefs(Unit unit)
         {
-            this.movementContextRef = new ComponentRef<MovementContextComponent>(unit);
-            this.combatContextRef = new ComponentRef<CombatContextComponent>(unit);
             this.locomotionIntentRef = new ComponentRef<LocomotionIntentComponent>(unit);
             this.attackCommandRef = new ComponentRef<AttackCommandComponent>(unit);
             this.airComboRef = new ComponentRef<AirComboComponent>(unit);
+            hitReactionRef = new ComponentRef<HitReactionComponent>(unit);
         }
 
-        public LocomotionIntentComponent LocomotionIntent => this.movementContextRef.Get()?.LocomotionIntent ?? this.locomotionIntentRef.Get();
-        public AttackCommandComponent AttackCommand => this.combatContextRef.Get()?.AttackCommand ?? this.attackCommandRef.Get();
-        public AirComboComponent AirCombo => this.combatContextRef.Get()?.AirCombo ?? this.airComboRef.Get();
+        public LocomotionIntentComponent LocomotionIntent => locomotionIntentRef.Get();
+        public AttackCommandComponent AttackCommand => attackCommandRef.Get();
+        public AirComboComponent AirCombo => airComboRef.Get();
+        public HitReactionComponent HitReaction => hitReactionRef.Get();
 
         /// <summary>
         /// AI 期望移动方向（世界空间 XZ）

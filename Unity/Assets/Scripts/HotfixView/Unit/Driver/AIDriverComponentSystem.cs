@@ -33,6 +33,11 @@ namespace ET
                 return;
             }
 
+            if (self.HitReaction.IsInHitReaction)
+            {
+                return;
+            }
+            
             Vector3 move = self.DesiredMoveDirection;
             move.y = 0f;
             if (move.sqrMagnitude > 1f)

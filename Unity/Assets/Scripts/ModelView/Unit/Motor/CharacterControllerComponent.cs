@@ -14,24 +14,32 @@ namespace ET
     {
         public CapsuleCollider CapsuleCollider { get; set; }
         public Transform PlayerTransform { get; set; }
-        
-        private ComponentRef<MovementContextComponent> movementContextRef;
         public Unit Unit { get; set; }
         public Animator Animator { get; set; }
-        private ComponentRef<CombatContextComponent> combatContextRef;
+        
+        private ComponentRef<CheckGroundedComponent> _groundedRef;
+        private ComponentRef<LocomotionIntentComponent> _locomotionIntentRef;
+        private ComponentRef<AttackComponent> _attackRef;
+        private ComponentRef<HitReactionComponent> _hitReactionRef;
+        private ComponentRef<HitStopComponent> _hitStopRef;
+        private ComponentRef<AirComboComponent> _airComboRef;
 
         public void InitComponentRefs(Unit unit)
         {
-            this.movementContextRef = new ComponentRef<MovementContextComponent>(unit);
-            this.combatContextRef = new ComponentRef<CombatContextComponent>(unit);
+            _groundedRef = new ComponentRef<CheckGroundedComponent>(unit);
+            _locomotionIntentRef = new ComponentRef<LocomotionIntentComponent>(unit);
+            _attackRef = new ComponentRef<AttackComponent>(unit);
+            _hitReactionRef = new ComponentRef<HitReactionComponent>(unit);
+            _hitStopRef = new ComponentRef<HitStopComponent>(unit);
+            _airComboRef = new ComponentRef<AirComboComponent>(unit);
         }
 
-        public CheckGroundedComponent Ground => this.movementContextRef.Get()?.Ground;
-        public LocomotionIntentComponent LocomotionIntent => this.movementContextRef.Get()?.LocomotionIntent;
-        public AttackComponent Attack => this.combatContextRef.Get()?.Attack;
-        public HitReactionComponent HitReaction => this.combatContextRef.Get()?.HitReaction;
-        public HitStopComponent HitStop => this.combatContextRef.Get()?.HitStop;
-        public AirComboComponent AirCombo => this.combatContextRef.Get()?.AirCombo;
+        public CheckGroundedComponent Ground => _groundedRef.Get();
+        public LocomotionIntentComponent LocomotionIntent => _locomotionIntentRef.Get();
+        public AttackComponent Attack => _attackRef.Get();
+        public HitReactionComponent HitReaction => _hitReactionRef.Get();
+        public HitStopComponent HitStop => _hitStopRef.Get();
+        public AirComboComponent AirCombo => _airComboRef.Get();
 
         // ===== 移动参数 =====
         

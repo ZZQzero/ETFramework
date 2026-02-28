@@ -177,7 +177,7 @@ namespace ET
         private static void UpdateGroundedHitState(this HitReactionComponent self)
         {
             // 检查硬直结束 && 物理位移停止
-            if (self.GetCombatNowMs() >= self.HitStunEndTimeMs && self.CurrentMotionSpeed < 0.1f)
+            if (self.GetCombatNowMs() >= self.HitStunEndTimeMs && self.CurrentMotionSpeed < 0.1f && self.CurrentAnimEnd)
             {
                 self.EndHitReaction();
             }
@@ -198,7 +198,6 @@ namespace ET
             self.AllowedStateVisuals = self.CombatConfig.HitReactionConfig.Visual.AllowedStateVisuals;
             self.LocomotionIntent.FaceDirection = -hitReaction.Rule.HitDirection;
 
-            Log.Error($"TryApplyHit {self.LocomotionIntent.FaceDirection}");
             bool hasVisualOrPhysical = hitReaction.Rule.ReactionType != HitReactionType.None || hitReaction.Rule.MotionData.MotionType != HitMotionType.None;
             bool hasAnyFeedback =
                 hitReaction.Feedback.VictimHitStopMs > 0 ||
@@ -789,7 +788,7 @@ namespace ET
 
         private static void FromAirToGround(this HitReactionComponent self)
         {
-            Log.Debug("[HitReaction] FromAirToGround");
+            Log.Error("[HitReaction] FromAirToGround");
             self.AirCombo?.ForceEnd();
             self.ReleaseGroundFrequencyInhibitIfNeeded();
             self.ClearPhysicalMotion();
@@ -799,7 +798,7 @@ namespace ET
         }
         private static void UpdateKnockdown(this HitReactionComponent self)
         {
-            if (self.GetCombatNowMs() >= self.KnockdownEndTime)
+            if (self.GetCombatNowMs() >= self.KnockdownEndTime && self.CurrentAnimEnd)
             {
                 self.SwitchState(HitState.GetUpHit);
                 self.GetUpStartTime = self.GetCombatNowMs();
@@ -809,12 +808,7 @@ namespace ET
         private static void UpdateGetUp(this HitReactionComponent self)
         {
             long now = self.GetCombatNowMs();
-            if (self.GetUpTimeoutMs > 0 && now - self.GetUpStartTime >= self.GetUpTimeoutMs)
-            {
-                self.EndHitReaction();
-                return;
-            }
-            if (self.CurrentAnimEnd)
+            if (self.GetUpTimeoutMs > 0 && now - self.GetUpStartTime >= self.GetUpTimeoutMs && self.CurrentAnimEnd)
             {
                 self.EndHitReaction();
             }

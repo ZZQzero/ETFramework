@@ -11,6 +11,7 @@ namespace ET
         // 受击系列 Transitions
         public LinearMixerTransition HitHorizontalMixer;
         public ITransition HitBack;
+        public ITransition HitDeath;
         public ITransition HitAirborneTransition;
         public ITransition HitFallingTransition;
         public ITransition HitGetUpTransition;
@@ -23,32 +24,29 @@ namespace ET
         public AnimancerComponent Animancer { get; set; }
 
         private ComponentRef<CharacterControllerComponent> characterControllerRef;
-        private ComponentRef<MovementContextComponent> movementContextRef;
         private ComponentRef<CheckGroundedComponent> groundRef;
-        private ComponentRef<CombatContextComponent> combatContextRef;
         private ComponentRef<HitReactionComponent> hitReactionRef;
         private ComponentRef<AnimationCatalogComponent> animationCatalogRef;
+        private ComponentRef<LocomotionIntentComponent> _locomotionIntentRef;
+        
         /// <summary>
         /// 初始化组件引用（延迟解析，避免 Awake 时序/重复 GetComponent）。
         /// </summary>
         public void InitComponentRefs(Unit unit)
         {
             this.characterControllerRef = new ComponentRef<CharacterControllerComponent>(unit);
-            this.movementContextRef = new ComponentRef<MovementContextComponent>(unit);
             this.groundRef = new ComponentRef<CheckGroundedComponent>(unit);
-            this.combatContextRef = new ComponentRef<CombatContextComponent>(unit);
             this.hitReactionRef = new ComponentRef<HitReactionComponent>(unit);
             this.animationCatalogRef = new ComponentRef<AnimationCatalogComponent>(unit);
+            _locomotionIntentRef = new ComponentRef<LocomotionIntentComponent>(unit);
         }
 
         public CharacterControllerComponent CharacterController => this.characterControllerRef.Get();
 
-        public CheckGroundedComponent Ground => this.movementContextRef.Get()?.Ground ?? this.groundRef.Get();
-
-        public HitReactionComponent HitReaction => this.combatContextRef.Get()?.HitReaction ?? this.hitReactionRef.Get();
+        public CheckGroundedComponent Ground => groundRef.Get();
+        public HitReactionComponent HitReaction => hitReactionRef.Get();
         public AnimationCatalogComponent AnimationCatalog => this.animationCatalogRef.Get();
-        
-        public LocomotionIntentComponent LocomotionIntent => this.movementContextRef.Get()?.LocomotionIntent;
+        public LocomotionIntentComponent LocomotionIntent => _locomotionIntentRef.Get();
 
         public Unit Unit;
         

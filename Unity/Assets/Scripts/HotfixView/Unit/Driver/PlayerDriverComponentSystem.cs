@@ -58,17 +58,10 @@ namespace ET
             }
             self.LocomotionIntent.MoveDirection = move;
 
-            // FaceDirection：优先使用“最后有效输入方向”，没有则退回移动方向
-            Vector3 face = self.Input.GetLastMoveInput();
-            face.y = 0f;
-            if (face.sqrMagnitude > 0.001f)
+            // FaceDirection：仅有当前移动输入时写入，无输入时不覆盖（停攻后保持对敌，等有输入再转）
+            if (move.sqrMagnitude > 0.01f)
             {
-                face.Normalize();
-                self.LocomotionIntent.FaceDirection = face;
-            }
-            else
-            {
-                self.LocomotionIntent.FaceDirection = move;
+                self.LocomotionIntent.FaceDirection = move.normalized;
             }
 
             // Jump (无条件写入意图，由 Motor 最终裁决)

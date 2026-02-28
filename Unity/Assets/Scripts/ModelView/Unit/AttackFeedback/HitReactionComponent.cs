@@ -30,23 +30,29 @@ namespace ET
         
         public Unit OwnerUnit {get; set;}
         
-        private ComponentRef<CombatContextComponent> combatContextRef;
-        private ComponentRef<MovementContextComponent> movementContextRef;
-        private ComponentRef<CombatConfigComponent> combatConfigRef;
+        private ComponentRef<CombatConfigComponent> _combatConfigRef;
+        private ComponentRef<CheckGroundedComponent> _groundedRef;
+        private ComponentRef<LocomotionIntentComponent> _locomotionIntentRef;
+        private ComponentRef<HitStopComponent> _hitStopRef;
+        private ComponentRef<AirComboComponent> _airComboRef;
+        private ComponentRef<AttackComponent> _attackRef;
 
         public void InitComponentRefs(Unit unit)
         {
-            this.combatContextRef = new ComponentRef<CombatContextComponent>(unit);
-            this.movementContextRef = new ComponentRef<MovementContextComponent>(unit);
-            this.combatConfigRef = new ComponentRef<CombatConfigComponent>(unit);
+            _combatConfigRef = new ComponentRef<CombatConfigComponent>(unit);
+            _groundedRef = new ComponentRef<CheckGroundedComponent>(unit);
+            _locomotionIntentRef = new ComponentRef<LocomotionIntentComponent>(unit);
+            _attackRef = new ComponentRef<AttackComponent>(unit);
+            _hitStopRef = new ComponentRef<HitStopComponent>(unit);
+            _airComboRef = new ComponentRef<AirComboComponent>(unit);
         }
 
-        public HitStopComponent HitStop => this.combatContextRef.Get()?.HitStop;
-        public CheckGroundedComponent Ground => this.movementContextRef.Get()?.Ground;
-        public LocomotionIntentComponent LocomotionIntent => this.movementContextRef.Get()?.LocomotionIntent;
-        public AirComboComponent AirCombo => this.combatContextRef.Get()?.AirCombo;
-        public CombatConfigComponent CombatConfig => this.combatConfigRef.Get();
-        public AttackComponent Attack => this.combatContextRef.Get()?.Attack;
+        public HitStopComponent HitStop => _hitStopRef.Get();
+        public CheckGroundedComponent Ground => _groundedRef.Get();
+        public LocomotionIntentComponent LocomotionIntent => _locomotionIntentRef.Get();
+        public AirComboComponent AirCombo => _airComboRef.Get();
+        public CombatConfigComponent CombatConfig => _combatConfigRef.Get();
+        public AttackComponent Attack => _attackRef.Get();
         /// <summary>
         /// 进入受击时是否取消攻击（用于“被打断”）。
         /// </summary>

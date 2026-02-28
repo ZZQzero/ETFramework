@@ -11,8 +11,6 @@ namespace ET
     [ComponentOf(typeof(Unit))]
     public class AttackComponent : Entity, IAwake, IDestroy, IUpdate, IFixedUpdate
     {
-        private ComponentRef<CombatContextComponent> combatContextRef;
-        private ComponentRef<MovementContextComponent> movementContextRef;
         private ComponentRef<LocomotionIntentComponent> locomotionIntentRef;
         private ComponentRef<GameObjectComponent> gameObjectRef;
         private ComponentRef<AnimatorComponent> animatorRef;
@@ -24,8 +22,6 @@ namespace ET
 
         public void InitComponentRefs(Unit unit, Entity root)
         {
-            this.combatContextRef = new ComponentRef<CombatContextComponent>(unit);
-            this.movementContextRef = new ComponentRef<MovementContextComponent>(unit);
             this.locomotionIntentRef = new ComponentRef<LocomotionIntentComponent>(unit);
             this.gameObjectRef = new ComponentRef<GameObjectComponent>(unit);
             this.animatorRef = new ComponentRef<AnimatorComponent>(unit);
@@ -36,16 +32,14 @@ namespace ET
             this.timerRef = new ComponentRef<TimerComponent>(root);
         }
 
-        public CombatContextComponent CombatContext => this.combatContextRef.Get();
-        public MovementContextComponent MovementContext => this.movementContextRef.Get();
-        public LocomotionIntentComponent LocomotionIntent => this.MovementContext?.LocomotionIntent ?? this.locomotionIntentRef.Get();
+        public LocomotionIntentComponent LocomotionIntent => locomotionIntentRef.Get();
 
         public GameObjectComponent GameObjectComponent => this.gameObjectRef.Get();
         public AnimatorComponent AnimatorComponent => this.animatorRef.Get();
 
-        public AttackCommandComponent AttackCommand => this.CombatContext?.AttackCommand ?? this.attackCommandRef.Get();
-        public AttackCatalogComponent AttackCatalog => this.CombatContext?.AttackCatalog ?? this.attackCatalogRef.Get();
-        public HitStopComponent HitStop => this.CombatContext?.HitStop ?? this.hitStopRef.Get();
+        public AttackCommandComponent AttackCommand => attackCommandRef.Get();
+        public AttackCatalogComponent AttackCatalog => attackCatalogRef.Get();
+        public HitStopComponent HitStop => hitStopRef.Get();
         public CameraFollowComponent CameraFollow => this.cameraFollowRef.Get();
         public TimerComponent TimerComponent => this.timerRef.Get();
 

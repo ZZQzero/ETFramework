@@ -74,8 +74,6 @@ namespace ET
             EntitySystemSingleton.RegisterEntitySystem<ET.PlayerDriverComponentSystem.ET_PlayerDriverComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.InputComponentSystem.ET_InputComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.InputComponentSystem.ET_InputComponent_UpdateSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.CombatContextComponentSystem.ET_CombatContextComponent_AwakeSystem>();
-            EntitySystemSingleton.RegisterEntitySystem<ET.MovementContextComponentSystem.ET_MovementContextComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.SimpleMonsterAIComponentSystem.ET_SimpleMonsterAIComponent_AwakeSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.SimpleMonsterAIComponentSystem.ET_SimpleMonsterAIComponent_UpdateSystem>();
             EntitySystemSingleton.RegisterEntitySystem<ET.CharacterControllerComponentSystem.ET_CharacterControllerComponent_UnityEngine_GameObject_AwakeSystem>();

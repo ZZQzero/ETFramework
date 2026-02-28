@@ -111,7 +111,7 @@ namespace ET
 			{
 				self.HitBack = await self.LoadHitTransition<ClipTransition>(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Knockback);
 				self.HitGetUpTransition = await self.LoadHitTransition<ClipTransition>(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_GetUp);
-				
+				self.HitDeath = await self.LoadHitTransition<ClipTransition>(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Knockdown);
 				self.HitAnimationsLoaded = true; // 即使部分缺失也标记，避免重复加载
 			}
 
@@ -157,10 +157,7 @@ namespace ET
 				var hitReaction = self.HitReaction;
 				if (hitReaction != null)
 				{
-					hitReaction.OnHitReactionStart = state =>
-					{
-						OnHitReactionStart(self,state);
-					};
+					hitReaction.OnHitReactionStart = self.OnHitReactionStart;
 					self.HitReactionStartHooked = true;
 				}
 			}
@@ -185,23 +182,11 @@ namespace ET
 			}
 		}
 
-		private static void OnHitReactionStart(AnimatorComponent self, HitState state)
+		private static void OnHitReactionStart(this AnimatorComponent self, HitState state)
 		{
-			SynthesizeHitAnimation(self);
-		}
-
-		private static void SynthesizeHitAnimation(this AnimatorComponent self)
-		{
+			self.HitReaction.CurrentAnimEnd = false;
 			var hit = self.HitReaction;
-			AnimancerLayer layer = self.Animancer;
-			// 已切回 locomotion（由 OnEnd 回调触发）：只更新参数，不再播受击
-			if (self.MoveMixer != null && self.JumpMixer != null &&
-			    (layer.CurrentState == self.MoveMixer.State || layer.CurrentState == self.JumpMixer.State))
-			{
-				self.SynthesizeLocomotionAnimation();
-				return;
-			}
-
+			
 			ITransition transition = null;
 			switch (hit.VisualState)
 			{
@@ -215,7 +200,8 @@ namespace ET
 					transition = isFalling ? self.HitFallingTransition : self.HitAirborneTransition;
 					break;
 				}
-				case HitState.KnockdownHit: 
+				case HitState.KnockdownHit:
+					transition = self.HitDeath;
 					break;
 				case HitState.GetUpHit:    
 					transition = self.HitGetUpTransition;
@@ -224,12 +210,16 @@ namespace ET
 
 			if (transition != null)
 			{
-				var state = self.Animancer.Play(transition);
+				var curAnimaState = self.Animancer.Play(transition);
+				curAnimaState.Time = 0;
 				// 受击动画结束时，通过 OnEnd 回调切回 locomotion（Animancer 淡出时也会触发）
-				state.Events(self).OnEnd = () =>
+				curAnimaState.Events(self).OnEnd = () =>
 				{
-					self.SynthesizeLocomotionAnimation();
 					hit.CurrentAnimEnd = true;
+					if (state == HitState.GetUpHit)
+					{
+						self.SynthesizeLocomotionAnimation();
+					}
 				};
 				
 				// 受击瞬间：如果攻击层仍有权重，根据受击强度快速淡出，确保受击表现清晰

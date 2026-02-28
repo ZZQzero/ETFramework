@@ -40,14 +40,7 @@ namespace ET
                 self.CapsuleRadius = self.CapsuleCollider.radius;
                 self.CapsuleHeight = self.CapsuleCollider.height;
             }
-
-            // 移除 Rigidbody（如果存在）：完全不依赖物理引擎
-            var rb = player.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                Object.Destroy(rb);
-            }
-
+            
             // 碰撞掩码：使用 Ground 检测的配置，或默认排除自身
             var ground = self.Ground;
             if (ground != null && ground.Config != null)
@@ -245,22 +238,27 @@ namespace ET
 
         /// <summary>
         /// 执行：旋转
-        /// Attacking 阶段不可转，Recovery 阶段允许旋转
+        /// 受击时用 FaceDirection；攻击且锁敌时朝向敌人（XZ）；否则 Attacking 不转、Recovery 允许转。
         /// </summary>
         private static void ResolveRotation(this CharacterControllerComponent self, float dt, bool freezeXZ)
         {
             if (freezeXZ) return;
             if (self.HitReaction != null && self.HitReaction.IsInHitReaction)
             {
-                //TODO 上层输入应该判断是否处于攻击状态，以避免击打过程中被击退时朝向瞬变
-                Log.Error($" {self.Unit.UnitName} ResolveRotation {self.LocomotionIntent.FaceDirection}");
-                
                 self.PlayerTransform.rotation = Quaternion.LookRotation(self.LocomotionIntent.FaceDirection);
+                return;
+            }
 
-                // 同时更新 LocomotionIntent 的朝向，防止 Update 里的 ResolveRotation 又把它转回去了
-                if (self.LocomotionIntent != null)
+            // 攻击中且锁定敌人：每帧朝向敌人（XZ 水平线），复用平滑旋转
+            if (self.Attack != null && self.Attack.IsAttacking && self.Attack.LockedTarget != null && self.LocomotionIntent != null)
+            {
+                Vector3 toTarget = self.Attack.LockedTarget.position - self.PlayerTransform.position;
+                toTarget.y = 0f;
+                if (toTarget.sqrMagnitude > 0.0001f)
                 {
-                    self.LocomotionIntent.FaceDirection = self.LocomotionIntent.FaceDirection;
+                    toTarget.Normalize();
+                    self.LocomotionIntent.FaceDirection = toTarget;
+                    self.ApplyRotation(dt);
                 }
                 return;
             }
@@ -601,15 +599,7 @@ namespace ET
             float hx = self.CurrentVelocity.x;
             float hz = self.CurrentVelocity.z;
             float horizontalSpeed = Mathf.Sqrt(hx * hx + hz * hz);
-
-            if (self.HitReaction != null && self.HitReaction.IsInHitReaction)
-            {
-                self.NormalizedAnimationSpeed = horizontalSpeed / self.MoveSpeed * self.HitReaction.FirstUpForce;
-            }
-            else
-            {
-                self.NormalizedAnimationSpeed = horizontalSpeed / self.MoveSpeed * 10f;
-            }
+            self.NormalizedAnimationSpeed = horizontalSpeed / self.MoveSpeed * 10f;
             self.VerticalAnimationSpeed = self.CurrentVelocity.y;
         }
 

@@ -201,9 +201,6 @@ namespace ET
     {
         /// <summary>伤害倍率</summary>
         public float DamageMultiplier;
-
-        /// <summary>视觉受击反应类型（仅动画）</summary>
-        public HitReactionType HitReaction;
         
         /// <summary>物理运动数据（位移/击飞）</summary>
         public HitMotionData HitMotion;
@@ -219,7 +216,6 @@ namespace ET
         public static HitEffectData Default => new HitEffectData
         {
             DamageMultiplier = 1f,
-            HitReaction = HitReactionType.LightHit,
             HitMotion = HitMotionData.Default,
             HitStunMs = 200,
             TargetStates = TargetStateMask.Any,

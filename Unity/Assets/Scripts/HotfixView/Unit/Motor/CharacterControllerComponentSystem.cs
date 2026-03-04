@@ -102,9 +102,6 @@ namespace ET
             self.ApplyGravity(dt);
             Vector3 displacement = self.ComputeDisplacement(dt, freezeXZ);
 
-            // ── 约束 ──
-            displacement = self.ApplyConstraints(displacement);
-
             // ── 执行 ──
             self.SweepMove(displacement);
             self.ResolveRotation(dt, freezeXZ);
@@ -215,26 +212,6 @@ namespace ET
             return displacement;
         }
 
-        /// <summary>
-        /// 约束：对位移施加限制（空连高度夹持等）
-        /// </summary>
-        private static Vector3 ApplyConstraints(this CharacterControllerComponent self, Vector3 displacement)
-        {
-            if (self.AirCombo == null || self.AirCombo.IsExiting || !self.AirCombo.HeightClampInitialized)
-                return displacement;
-
-            float currentY = self.PlayerTransform.position.y;
-            float targetY = currentY + displacement.y;
-            float clampedY = Mathf.Clamp(targetY, self.AirCombo.ComboMinHeight, self.AirCombo.ComboMaxHeight);
-
-            if (targetY > clampedY)
-            {
-                self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
-            }
-            
-            displacement.y = clampedY - currentY;
-            return displacement;
-        }
 
         /// <summary>
         /// 执行：旋转
@@ -243,23 +220,21 @@ namespace ET
         private static void ResolveRotation(this CharacterControllerComponent self, float dt, bool freezeXZ)
         {
             if (freezeXZ) return;
-            if (self.HitReaction != null && self.HitReaction.IsInHitReaction)
+            // 受击转向：倒地/起身时禁止旋转，朝向在被击倒瞬间已固定
+            if (self.HitReaction != null && self.HitReaction.IsInHitReaction
+                && self.LocomotionIntent.FaceDirection.sqrMagnitude > 0.0001f
+                && self.HitReaction.CurrentHitState != HitState.KnockdownHit
+                && self.HitReaction.CurrentHitState != HitState.GetUpHit)
             {
                 self.PlayerTransform.rotation = Quaternion.LookRotation(self.LocomotionIntent.FaceDirection);
                 return;
             }
 
-            // 攻击中且锁定敌人：每帧朝向敌人（XZ 水平线），复用平滑旋转
-            if (self.Attack != null && self.Attack.IsAttacking && self.Attack.LockedTarget != null && self.LocomotionIntent != null)
+            // 攻击中且锁定敌人：使用起手帧锁定的方向，不逐帧跟踪目标实时位置
+            if (self.Attack != null && self.Attack.IsAttacking && self.Attack.LockedAttackFaceDir.sqrMagnitude > 0.0001f)
             {
-                Vector3 toTarget = self.Attack.LockedTarget.position - self.PlayerTransform.position;
-                toTarget.y = 0f;
-                if (toTarget.sqrMagnitude > 0.0001f)
-                {
-                    toTarget.Normalize();
-                    self.LocomotionIntent.FaceDirection = toTarget;
-                    self.ApplyRotation(dt);
-                }
+                self.LocomotionIntent.FaceDirection = self.Attack.LockedAttackFaceDir;
+                self.ApplyRotation(dt);
                 return;
             }
 
@@ -407,6 +382,11 @@ namespace ET
             Vector3 impulse = self.LocomotionIntent.ExternalImpulse;
             if (impulse.sqrMagnitude <= 0.0001f) return;
 
+            //向上冲量时，若角色正在下落则先清零Y速度，确保击飞效果不被下落速度抵消
+            if (impulse.y > 0f && self.CurrentVelocity.y < 0f)
+            {
+                self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
+            }
             self.CurrentVelocity += impulse;
             self.LocomotionIntent.ExternalImpulse = Vector3.zero;
         }

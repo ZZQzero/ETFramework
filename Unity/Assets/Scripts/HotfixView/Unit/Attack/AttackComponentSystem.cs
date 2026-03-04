@@ -654,6 +654,15 @@ namespace ET
                 float lockRange = self.Config?.MaxLockOnRange ?? 6f;
                 self.FindAndLockNearestTarget(lockRange);
             }
+
+            // 起手帧锁定朝向：捕获当前帧到目标的方向，攻击期间不再逐帧跟踪
+            if (self.LockedTarget != null)
+            {
+                Vector3 toTarget = self.LockedTarget.position - self.OwnerTransform.position;
+                toTarget.y = 0f;
+                if (toTarget.sqrMagnitude > 0.0001f)
+                    self.LockedAttackFaceDir = toTarget.normalized;
+            }
             
             // 初始化位移
             self.InitializeMovement(segment);

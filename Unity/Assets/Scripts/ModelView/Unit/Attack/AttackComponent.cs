@@ -169,7 +169,13 @@ namespace ET
 
         /// <summary>锁定目标对应的 Unit（用于有效性检查）</summary>
         public Unit LockedTargetUnit { get; set; }
-        
+
+        /// <summary>
+        /// 每段起手时锁定的朝向（XZ 水平）。
+        /// 攻击中不跟踪目标实时位置，防止突进/贴近时方向突变影响攻击判定。
+        /// </summary>
+        public Vector3 LockedAttackFaceDir { get; set; }
+
         #endregion
 
         #region 位移控制

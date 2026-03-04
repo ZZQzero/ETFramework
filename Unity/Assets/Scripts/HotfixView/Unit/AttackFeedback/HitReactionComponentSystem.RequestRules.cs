@@ -45,7 +45,6 @@ namespace ET
             int timeScaleMs = Mathf.Max(0, impactData.Feedback.TimeScaleDurationMs);
 
             var normalizedRule = new HitImpactData.HitRuleData(
-                impactData.Rule.ReactionType,
                 motion,
                 impactData.Rule.TargetStates,
                 impactData.Rule.HitDirection,
@@ -93,41 +92,11 @@ namespace ET
             {
                 HitReactionType.LightHit => HitReactionGroup.Minor,
                 HitReactionType.HeavyHit => HitReactionGroup.Minor,
-                HitReactionType.Launch => HitReactionGroup.Major,
+                HitReactionType.GroundToAir => HitReactionGroup.Major,
                 HitReactionType.AirCombo => HitReactionGroup.Control,
-                HitReactionType.SlamDown => HitReactionGroup.Control,
+                HitReactionType.AirToGround => HitReactionGroup.Control,
                 _ => HitReactionGroup.None
             };
-        }
-
-        public static HitReactionType DegradeReactionType(this HitReactionComponent self, HitReactionType desired, HitReactionGroup allowed)
-        {
-            if (desired == HitReactionType.None)
-            {
-                return HitReactionType.None;
-            }
-
-            HitReactionGroup g = ToGroup(desired);
-            if (g != HitReactionGroup.None && (allowed & g) != 0)
-            {
-                return desired;
-            }
-
-            // 降级链：Control → Major → Minor → None
-            if (g == HitReactionGroup.Control)
-            {
-                return self.DegradeReactionType(HitReactionType.Launch, allowed);
-            }
-            if (g == HitReactionGroup.Major)
-            {
-                return self.DegradeReactionType(HitReactionType.HeavyHit, allowed);
-            }
-            if (g == HitReactionGroup.Minor)
-            {
-                return HitReactionType.None;
-            }
-
-            return HitReactionType.None;
         }
 
         public static AirborneReason ResolveAirborneReasonForRequest(in HitImpactData request)

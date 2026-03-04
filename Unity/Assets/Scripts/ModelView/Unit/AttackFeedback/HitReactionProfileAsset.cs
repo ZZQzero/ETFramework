@@ -181,10 +181,7 @@ namespace ET
         [Tooltip("最小下落速度（绝对值）")]
         [Min(0f)] public float MinFallSpeedAbs;
 
-        [Tooltip("最小高度偏移")]
-        public float MinHeightOffset;
-
-        [Tooltip("最大高度偏移")]
+        [Tooltip("最大高度偏移（用于冲量衰减天花板）")]
         public float MaxHeightOffset;
 
         [Header("高度安全")]
@@ -197,7 +194,6 @@ namespace ET
             int exitLerpMs = 160,
             float gravityScaleDuringCombo = 0.12f,
             float minFallSpeedAbs = 0.8f,
-            float minHeightOffset = 0f,
             float maxHeightOffset = 2.2f,
             float absoluteMaxHeight = 6f)
         {
@@ -206,7 +202,6 @@ namespace ET
             this.ExitLerpMs = exitLerpMs;
             this.GravityScaleDuringCombo = gravityScaleDuringCombo;
             this.MinFallSpeedAbs = minFallSpeedAbs;
-            this.MinHeightOffset = minHeightOffset;
             this.MaxHeightOffset = maxHeightOffset;
             this.AbsoluteMaxHeight = absoluteMaxHeight;
         }

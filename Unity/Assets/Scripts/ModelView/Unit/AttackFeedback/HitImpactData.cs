@@ -11,9 +11,6 @@ namespace ET
     {
         public readonly struct HitRuleData
         {
-            /// <summary>视觉受击类型（决定规则层优先级/动画选择）。</summary>
-            public readonly HitReactionType ReactionType;
-
             /// <summary>物理运动数据（推/飞/砸/拉）。</summary>
             public readonly HitMotionData MotionData;
 
@@ -32,7 +29,6 @@ namespace ET
             public readonly int AttackTotalTimeoutMs;
 
             public HitRuleData(
-                HitReactionType reactionType,
                 HitMotionData motionData,
                 TargetStateMask targetStates,
                 Vector3 hitDirection,
@@ -41,7 +37,6 @@ namespace ET
                 int attackerSegmentTimeoutMs,
                 int attackTotalTimeoutMs)
             {
-                this.ReactionType = reactionType;
                 this.MotionData = motionData;
                 this.TargetStates = targetStates;
                 this.HitDirection = hitDirection;
@@ -111,7 +106,6 @@ namespace ET
             float attackRadius)
         {
             Rule = new HitRuleData(
-                effect.HitReaction,
                 effect.HitMotion,
                 effect.TargetStates,
                 hitDirection,
@@ -132,7 +126,6 @@ namespace ET
         {
             var dir = Rule.HitDirection;
             return $"HitImpactData[" +
-                   $"类型={Rule.ReactionType}, " +
                    $"运动={Rule.MotionData.MotionType}(力={Rule.MotionData.Force:F2}, 时长={Rule.MotionData.DurationMs}ms), " +
                    $"目标过滤={Rule.TargetStates}, " +
                    $"方向=({dir.x:F2}, {dir.y:F2}, {dir.z:F2}), " +

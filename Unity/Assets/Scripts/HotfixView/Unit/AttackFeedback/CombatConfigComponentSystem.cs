@@ -60,7 +60,6 @@
                 data.MaxAirOffsetMs,
                 data.GravityScaleDuringCombo,
                 data.MinFallSpeedAbs,
-                data.MinHeightOffset,
                 data.MaxHeightOffset,
                 data.ExitLerpMs,
                 data.AbsoluteMaxHeight);

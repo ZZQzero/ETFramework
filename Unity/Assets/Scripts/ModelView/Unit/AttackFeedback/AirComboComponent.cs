@@ -15,20 +15,10 @@ namespace ET
         // ===== 状态 =====
         public bool Active;
         public bool IsExiting;
-        /// <summary>高度夹持锚点（攻击者 Y），用于 min/max clamp 计算。</summary>
-        public float EnteredHeight;
-
         /// <summary>
         /// 空中结束时间 => 地面硬值时间 + offset
         /// </summary>
         public long AirEndCombatMs;
-        
-        /// <summary>高度夹持下限/上限（世界 Y）。</summary>
-        public float ComboMinHeight;
-        public float ComboMaxHeight;
-        
-        /// <summary>高度夹持是否已初始化（避免 Y<=0 场景下的误判）。</summary>
-        public bool HeightClampInitialized;
 
         /// <summary>空中连段目标重力缩放（0~1）。</summary>
         public float GravityScaleTarget = 1f;
@@ -45,10 +35,6 @@ namespace ET
         /// <summary>最小下落速度下限（负数，m/s）。例如 -1。</summary>
         public float MinFallSpeed = -1f;
 
-        /// <summary>进入时使用的高度偏移（相对 EnteredHeight），用于延迟捕获后计算 clamp。</summary>
-        public float MinHeightOffset;
-        public float MaxHeightOffset;
-        
         // 注：水平距离约束（ComboCenterWorldPos, MaxHorizontalDistance 等）已迁移到
         // HitReactionComponent.TetherAnchorPos + HitTetherProfile 统一管理（地面+空中共用）。
         
@@ -56,9 +42,7 @@ namespace ET
         {
             return
                 $"AirCombo(Active={Active}, Exiting={IsExiting}, " +
-                $"EnteredY={EnteredHeight:0.###}, MinY={ComboMinHeight:0.###}, MaxY={ComboMaxHeight:0.###}, " +
                 $"gTarget={GravityScaleTarget:0.###}, minFall={MinFallSpeed:0.###}, ExitLerpMs={ExitLerpMs})";
         }
     }
 }
-

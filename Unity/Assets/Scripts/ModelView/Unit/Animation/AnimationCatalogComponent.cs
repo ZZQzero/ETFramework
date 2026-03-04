@@ -21,14 +21,14 @@ namespace ET
             Locomotion_Jump = 2,
 
             // 受击系列 (Hit Reactions)
-            Hit_Light = 10,
-            Hit_Medium = 11,
-            Hit_Heavy = 12,
-            Hit_Knockback = 13,
-            Hit_Airborne = 14,
-            Hit_Falling = 15,
-            Hit_Knockdown = 16,
-            Hit_GetUp = 17,
+            Hit_Light,
+            Hit_Heavy,
+            Hit_GroundToAir,     // 击飞表现（进入空中）
+            Hit_AirCombo,   // 空中受击（非终结）
+            Hit_AirToGround,   // 砸地表现(从空中落地)
+            Hit_Knockdown,
+            Hit_Pull,       // 拉拽
+            Hit_GetUp,
         }
 
         private readonly Dictionary<AnimKey, string> _assets = new Dictionary<AnimKey, string>(8);
@@ -46,7 +46,6 @@ namespace ET
                 return !string.IsNullOrWhiteSpace(assetName);
             }
 
-            assetName = null;
             return false;
         }
     }

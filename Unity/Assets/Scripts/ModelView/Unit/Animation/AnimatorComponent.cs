@@ -1,4 +1,5 @@
-﻿using Animancer;
+﻿using System.Collections.Generic;
+using Animancer;
 using UnityEngine;
 
 namespace ET
@@ -16,6 +17,7 @@ namespace ET
         public ITransition HitFallingTransition;
         public ITransition HitGetUpTransition;
 
+        public Dictionary<HitReactionType,ITransition> HitAnimationDic = new Dictionary<HitReactionType,ITransition>();
         /// <summary>
         /// 攻击动画层（Animancer Layer1）。
         /// 设计：Move/Jump 常驻 Layer0，攻击在 Layer1 覆盖，从根上避免“段间被 Idle/Move 抢占”。

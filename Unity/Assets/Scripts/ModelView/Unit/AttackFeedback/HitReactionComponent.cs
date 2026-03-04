@@ -21,7 +21,7 @@ namespace ET
     }
     
     /// <summary>
-    /// 受击表现类型（仅决定视觉/动画/硬直时长）
+    /// 受击表现类型
     /// </summary>
     public enum HitReactionType : byte
     {
@@ -29,11 +29,12 @@ namespace ET
 
         LightHit,    // 轻击（地面）
         HeavyHit,    // 重击（地面）
-        Launch,     // 击飞表现（进入空中）
+        GroundToAir,     // 击飞表现（进入空中）
         AirCombo,   // 空中受击（非终结）
-        SlamDown,   // 砸地表现(从空中落地)
+        AirToGround,   // 砸地表现(从空中落地)
         Knockdown,  // 躺地，在地面击倒
         Pull,       // 拉拽
+        GetUp,       // 起身
     }
 
     /// <summary>
@@ -117,23 +118,11 @@ namespace ET
 
         /// <summary>
         /// 当前受击“原始反应类型”（Desired ReactionType）。
-        /// - 该值代表本次命中希望表达的结果语义
-        /// - 最终是否播放/如何降级由 <see cref="VisualReactionType"/> 决定
+        /// - 该值代表本次命中希望表达的结果
         /// </summary>
         public HitReactionType CurrentReactionType { get; set; } = HitReactionType.None;
         /// <summary>当前物理运动类型</summary>
         public HitMotionType CurrentMotionType { get; set; }
-        /// <summary>
-        /// 当前受击“视觉状态”（Visual State）。
-        /// - 可能与 <see cref="CurrentHitState"/> 不一致：当配置禁播某些状态动画时，规则继续但视觉不播
-        /// </summary>
-        public HitState VisualState { get; set; } = HitState.None;
-
-        /// <summary>
-        /// 当前受击“视觉反应类型”（Visual ReactionType）。
-        /// - 可能从 <see cref="CurrentReactionType"/> 降级（Control→Major→Minor→None）
-        /// </summary>
-        public HitReactionType VisualReactionType { get; set; } = HitReactionType.None;
         
         /// <summary>当前动画状态</summary>
         public bool CurrentAnimEnd { get; set; }
@@ -171,6 +160,13 @@ namespace ET
         /// <summary>首次击飞时的地面高度（世界 Y），用于计算空中绝对高度上限。</summary>
         public float AirborneOriginHeight { get; set; }
 
+        /// <summary>
+        /// 击飞保护帧计数器。
+        /// EnterAirborneFromGrounded 后物理尚未将角色抬离地面，需屏蔽 N 帧的落地判定，
+        /// 避免 Ground.Detect() 在同帧仍检测到地面而误判立即落地。
+        /// </summary>
+        public int AirborneGraceFramesLeft { get; set; }
+
         /// <summary>空中绝对高度上限（世界 Y），超过此高度时抑制向上冲量。</summary>
         public float MaxAirborneHeight { get; set; }
 
@@ -198,7 +194,7 @@ namespace ET
         #region 事件
         
         /// <summary>受击开始事件</summary>
-        public Action<HitState> OnHitReactionStart;
+        public Action<HitState,HitReactionType> OnHitReactionStart;
         
         /// <summary>受击结束事件</summary>
         public Action OnHitReactionEnd;

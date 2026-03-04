@@ -23,10 +23,7 @@ namespace ET
         /// </summary>
         public readonly float MinFallSpeedAbs;
 
-        /// <summary>最小高度偏移（相对 EnteredHeight）。用于防止自然下落导致“慢慢掉”。</summary>
-        public readonly float MinHeightOffset;
-
-        /// <summary>最大高度偏移（相对 EnteredHeight）。用于防止飞走。</summary>
+        /// <summary>最大高度偏移（相对当前高度），用于冲量衰减天花板计算。</summary>
         public readonly float MaxHeightOffset;
 
         /// <summary>退出空中连段时重力恢复到 1 的 lerp 时长（combat-time）。</summary>
@@ -40,7 +37,6 @@ namespace ET
             int maxAirOffsetMs,
             float gravityScaleDuringCombo,
             float minFallSpeedAbs,
-            float minHeightOffset,
             float maxHeightOffset,
             int exitLerpMs,
             float absoluteMaxHeight)
@@ -49,7 +45,6 @@ namespace ET
             this.MaxAirOffsetMs = maxAirOffsetMs;
             this.GravityScaleDuringCombo = gravityScaleDuringCombo;
             this.MinFallSpeedAbs = minFallSpeedAbs;
-            this.MinHeightOffset = minHeightOffset;
             this.MaxHeightOffset = maxHeightOffset;
             this.ExitLerpMs = exitLerpMs;
             this.AbsoluteMaxHeight = absoluteMaxHeight;
@@ -59,7 +54,6 @@ namespace ET
         {
             return $"HitAirComboProfile(Enable={this.Enable}, MaxAirOffsetTimeMs={this.MaxAirOffsetMs}, " +
                    $"GravityScaleDuringCombo={this.GravityScaleDuringCombo:0.###}, MinFallSpeedAbs={this.MinFallSpeedAbs:0.###}, " +
-                   $"MinHeightOffset={this.MinHeightOffset:0.###}, MaxHeightOffset={this.MaxHeightOffset:0.###}, " +
                    $"ExitLerpMs={this.ExitLerpMs}, AbsoluteMaxHeight={this.AbsoluteMaxHeight:0.###}";
         }
     }

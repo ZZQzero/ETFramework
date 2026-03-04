@@ -109,9 +109,33 @@ namespace ET
 			// 2. 加载受击资源
 			if (!self.HitAnimationsLoaded)
 			{
-				self.HitBack = await self.LoadHitTransition<ClipTransition>(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Knockback);
-				self.HitGetUpTransition = await self.LoadHitTransition<ClipTransition>(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_GetUp);
-				self.HitDeath = await self.LoadHitTransition<ClipTransition>(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Knockdown);
+				self.HitAnimationDic.Clear();
+				var hitHeavy = await self.LoadHitTransition<ClipTransition>(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Heavy);
+				if (hitHeavy != null)
+				{
+					self.HitAnimationDic.Add(HitReactionType.HeavyHit,hitHeavy);
+				}
+				var hitGitUp = await self.LoadHitTransition<ClipTransition>(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_GetUp);
+				if (hitGitUp != null)
+				{
+					self.HitAnimationDic.Add(HitReactionType.GetUp,hitGitUp);
+				}
+				var hitKnockdown = await self.LoadHitTransition<ClipTransition>(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_Knockdown);
+				if(hitKnockdown != null)
+				{
+					self.HitAnimationDic.Add(HitReactionType.Knockdown,hitKnockdown);
+				}
+				var hitGroundToAir = await self.LoadHitTransition<ClipTransition>(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_GroundToAir);
+				if(hitGroundToAir != null)
+				{
+					self.HitAnimationDic.Add(HitReactionType.GroundToAir,hitGroundToAir);
+					self.HitAnimationDic.Add(HitReactionType.AirCombo,hitGroundToAir);
+				}
+				var hitAirToGround = await self.LoadHitTransition<ClipTransition>(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_AirToGround);
+				if(hitAirToGround != null)
+				{
+					self.HitAnimationDic.Add(HitReactionType.AirToGround,hitAirToGround);
+				}
 				self.HitAnimationsLoaded = true; // 即使部分缺失也标记，避免重复加载
 			}
 
@@ -182,57 +206,38 @@ namespace ET
 			}
 		}
 
-		private static void OnHitReactionStart(this AnimatorComponent self, HitState state)
+		private static void OnHitReactionStart(this AnimatorComponent self, HitState state,
+			HitReactionType reactionType)
 		{
 			self.HitReaction.CurrentAnimEnd = false;
 			var hit = self.HitReaction;
-			
-			ITransition transition = null;
-			Log.Error("受击状态: " + hit.VisualState);
-			switch (hit.VisualState)
+			if (self.HitAnimationDic.TryGetValue(reactionType, out var transition))
 			{
-				case HitState.GroundedHit:
-					transition = self.HitBack;
-					break;
-				case HitState.AirborneHit:
+				if (transition != null)
 				{
-					// 仍保留 Falling 资源：用垂直速度做一次选择（不引入额外 HitState）
-					bool isFalling = self.CharacterController != null && self.CharacterController.CurrentVelocity.y < -0.01f;
-					transition = isFalling ? self.HitFallingTransition : self.HitAirborneTransition;
-					break;
-				}
-				case HitState.KnockdownHit:
-					transition = self.HitDeath;
-					break;
-				case HitState.GetUpHit:    
-					transition = self.HitGetUpTransition;
-					break;
-			}
-
-			if (transition != null)
-			{
-				var curAnimaState = self.Animancer.Play(transition);
-				curAnimaState.Time = 0;
-				// 受击动画结束时，通过 OnEnd 回调切回 locomotion（Animancer 淡出时也会触发）
-				curAnimaState.Events(self).OnEnd = () =>
-				{
-					hit.CurrentAnimEnd = true;
-					if (state == HitState.GetUpHit)
+					var curAnimaState = self.Animancer.Play(transition);
+					curAnimaState.Time = 0;
+					// 受击动画结束时，通过 OnEnd 回调切回 locomotion（Animancer 淡出时也会触发）
+					curAnimaState.Events(self).OnEnd = () =>
 					{
-						self.SynthesizeLocomotionAnimation();
+						hit.CurrentAnimEnd = true;
+						if (state == HitState.GetUpHit)
+						{
+							self.SynthesizeLocomotionAnimation();
+						}
+					};
+
+					// 受击瞬间：如果攻击层仍有权重，根据受击强度快速淡出，确保受击表现清晰
+					if (self.AttackLayer != null && self.AttackLayer.Weight > 0.01f)
+					{
+						// 重度受击、击飞、倒地：瞬间切断攻击层
+						// 轻度/中度受击：快速淡出 (0.1s)
+						bool isHeavyHit = state == HitState.AirborneHit ||
+						                  state == HitState.KnockdownHit ||
+						                  reactionType == HitReactionType.GroundToAir;
+
+						self.AttackLayer.StartFade(0f, isHeavyHit ? 0f : 0.1f);
 					}
-				};
-				
-				// 受击瞬间：如果攻击层仍有权重，根据受击强度快速淡出，确保受击表现清晰
-				if (self.AttackLayer != null && self.AttackLayer.Weight > 0.01f)
-				{
-					// 重度受击、击飞、倒地：瞬间切断攻击层
-					// 轻度/中度受击：快速淡出 (0.1s)
-					bool isHeavyHit = hit.VisualState == HitState.AirborneHit || 
-					                  hit.VisualState == HitState.KnockdownHit || 
-					                  hit.VisualReactionType == HitReactionType.Launch;
-						
-					self.AttackLayer.StartFade(0f, isHeavyHit ? 0f : 0.1f);
 				}
 			}
 		}

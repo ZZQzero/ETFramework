@@ -397,14 +397,6 @@ public partial class SkillEditorWindow : EditorWindow
         {
             hitEffectDamageMultiplierField.SetValueWithoutNotify(Mathf.Max(0f, effect.DamageMultiplier));
         }
-        if (hitEffectReactionField != null)
-        {
-            hitEffectReactionField.SetValueWithoutNotify(effect.HitReaction);
-        }
-        if (hitEffectPriorityField != null)
-        {
-            hitEffectPriorityField.SetValueWithoutNotify(effect.HitStrength);
-        }
         if (hitMotionTypeField != null)
         {
             hitMotionTypeField.SetValueWithoutNotify(effect.HitMotion.MotionType);

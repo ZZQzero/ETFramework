@@ -259,16 +259,6 @@
                             <ui:Label text="DamageMultiplier:" style="width: 120px;"/>
                             <ui:FloatField value="1" name="HitEffectDamageMultiplierField" style="flex-grow: 1;"/>
                         </ui:VisualElement>
-                        <ui:VisualElement style="flex-direction: row; align-items: center;">
-                            <ui:Label text="HitReaction:" style="width: 120px;"/>
-                            <ui:EnumField name="HitEffectReactionField" style="flex-grow: 1;"/>
-                        </ui:VisualElement>
-                        <ui:VisualElement style="flex-direction: row; align-items: center;">
-                            <ui:Label text="HitStrength:" style="width: 120px;"/>
-                            <ui:IntegerField value="0" name="HitEffectPriorityField" style="flex-grow: 1;"/>
-                            <ui:Button text="按Reaction默认" name="HitEffectPriorityAutoButton" style="margin-left: 6px;"/>
-                            <ui:Button text="补齐全部(仅0)" name="HitEffectPriorityAutoAllButton" style="margin-left: 6px;"/>
-                        </ui:VisualElement>
                         <ui:Label text="&#21629;&#20013;&#20301;&#31227;(HitMotion)" style="font-size: 12px; font-style: italic; margin-left: 10px; margin-top: 4px;"/>
                         <ui:VisualElement style="flex-direction: row; align-items: center; margin-left: 10px;">
                             <ui:Label text="MotionType:" style="width: 110px;"/>

@@ -14,12 +14,6 @@ namespace ET
             /// <summary>视觉受击类型（决定规则层优先级/动画选择）。</summary>
             public readonly HitReactionType ReactionType;
 
-            /// <summary>攻击强度（用于目标侧规则判定）。数值越大越“强”。</summary>
-            public readonly byte HitStrength;
-
-            /// <summary>是否显式设置过 HitStrength。</summary>
-            public readonly bool HasHitStrength;
-
             /// <summary>物理运动数据（推/飞/砸/拉）。</summary>
             public readonly HitMotionData MotionData;
 
@@ -39,8 +33,6 @@ namespace ET
 
             public HitRuleData(
                 HitReactionType reactionType,
-                byte hitStrength,
-                bool hasHitStrength,
                 HitMotionData motionData,
                 TargetStateMask targetStates,
                 Vector3 hitDirection,
@@ -50,8 +42,6 @@ namespace ET
                 int attackTotalTimeoutMs)
             {
                 this.ReactionType = reactionType;
-                this.HitStrength = hitStrength;
-                this.HasHitStrength = hasHitStrength;
                 this.MotionData = motionData;
                 this.TargetStates = targetStates;
                 this.HitDirection = hitDirection;
@@ -122,8 +112,6 @@ namespace ET
         {
             Rule = new HitRuleData(
                 effect.HitReaction,
-                effect.HitStrength,
-                effect.HitStrength != 0,
                 effect.HitMotion,
                 effect.TargetStates,
                 hitDirection,
@@ -145,7 +133,6 @@ namespace ET
             var dir = Rule.HitDirection;
             return $"HitImpactData[" +
                    $"类型={Rule.ReactionType}, " +
-                   $"强度={Rule.HitStrength}, " +
                    $"运动={Rule.MotionData.MotionType}(力={Rule.MotionData.Force:F2}, 时长={Rule.MotionData.DurationMs}ms), " +
                    $"目标过滤={Rule.TargetStates}, " +
                    $"方向=({dir.x:F2}, {dir.y:F2}, {dir.z:F2}), " +

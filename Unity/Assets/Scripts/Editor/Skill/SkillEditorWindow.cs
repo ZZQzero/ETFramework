@@ -155,10 +155,6 @@ public partial class SkillEditorWindow : EditorWindow
     private Vector3Field hitBoxSizeField;
     
     private FloatField hitEffectDamageMultiplierField;
-    private EnumField hitEffectReactionField;
-    private IntegerField hitEffectPriorityField;
-    private Button hitEffectPriorityAutoButton;
-    private Button hitEffectPriorityAutoAllButton;
     private EnumField hitMotionTypeField;
     private FloatField hitMotionForceField;
     private IntegerField hitMotionDurationMsField;

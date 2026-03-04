@@ -26,15 +26,6 @@
 
         private static HitReactionConfig BuildRules(in HitReactionRulesData data)
         {
-            var thresholds = data.InterruptThresholds;
-
-            HitReactionConfig.HitInterruptThresholds hitInterrupt =
-                new HitReactionConfig.HitInterruptThresholds(
-                    thresholds.Grounded,
-                    thresholds.Airborne,
-                    thresholds.Knockdown,
-                    thresholds.GetUp);
-
             var scales = new HitReactionConfig.Scales(
                 data.Scales.Knockback,
                 data.Scales.Knockup);
@@ -47,7 +38,6 @@
             return new HitReactionConfig(
                 data.AllowedReactionGroups,
                 data.AllowedStateVisuals,
-                hitInterrupt,
                 scales,
                 limits);
         }
@@ -89,11 +79,6 @@
         private static readonly HitReactionConfig DefaultRules = new HitReactionConfig(
             HitReactionGroup.All,
             HitStateVisualMask.All,
-            new HitReactionConfig.HitInterruptThresholds(
-                new GroundedThresholdData(20, 30, 50, 60),
-                new AirborneThresholdData(70),
-                new KnockdownThresholdData(80),
-                new GetUpThresholdData(80)),
             new HitReactionConfig.Scales(1f, 1f),
             new HitReactionConfig.Limits(int.MaxValue, float.MaxValue, float.MaxValue));
 

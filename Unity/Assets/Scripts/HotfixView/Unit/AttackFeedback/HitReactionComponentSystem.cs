@@ -62,19 +62,11 @@ namespace ET
             {
                 return;
             }
-
-            // NormalHit：距离维持路径（弹簧模型）
-            /*if (self.CurrentMotionType == HitMotionType.NormalHit)
-            {
-                self.UpdateNormalHitMotion();
-                return;
-            }*/
-
-            // ---- 非 NormalHit：Force/Curve 路径（无拴系约束）----
+            
             long now = self.GetCombatNowMs();
             long durationMs = self.MotionEndTime - self.MotionStartTime;
             // 检查运动是否结束
-            if (durationMs <= 0 || now >= self.MotionEndTime)
+            if (durationMs <= 0 || now >= self.MotionEndTime || self.MotionBaseForce == 0)
             {
                 self.ClearPhysicalMotion();
                 return;
@@ -84,7 +76,6 @@ namespace ET
             float t = Mathf.Clamp01((float)(now - self.MotionStartTime) / durationMs);
             float curveValue = self.CurrentMotionCurve != null ? self.CurrentMotionCurve.Evaluate(t) : (1f - t);
             self.CurrentMotionSpeed = self.MotionBaseForce * curveValue;
-
             var intent = self.LocomotionIntent;
             if (intent != null)
             {
@@ -222,27 +213,7 @@ namespace ET
 
             // 归一化参数（应用 Scale 和 Limit）
             HitImpactData normalized = self.Normalize(hitReaction, in self.CombatConfig.HitReactionConfig);
-
-            // GetUp：起身中，门槛不够直接拒绝（不进入受击会话，也不触发反馈）
-            if (self.CurrentHitState == HitState.GetUpHit) 
-            {
-                var getUpRes = self.CombatConfig.HitReactionConfig.Rule.HitInterrupt.GetUp;
-                if (normalized.Rule.HitStrength < getUpRes.GetUpInterruptThreshold)
-                {
-                    return false;
-                }
-            }
-
-            // Knockdown：倒地中，门槛不够直接拒绝（避免低强度命中消耗反馈资源）
-            if (self.CurrentHitState == HitState.KnockdownHit)
-            {
-                var knockdownRes = self.CombatConfig.HitReactionConfig.Rule.HitInterrupt.Knockdown;
-                if (normalized.Rule.HitStrength < knockdownRes.KnockdownThreshold)
-                {
-                    return false;
-                }
-            }
-
+            
             // 受击会话：进入会话才 acquire 外部能力锁（规则生效，与是否播放动画无关）
             self.AcquireHitSessionLocksIfNeeded();
 
@@ -521,6 +492,7 @@ namespace ET
 
         private static void EnterAirborneFromGrounded(this HitReactionComponent self, in HitImpactData request)
         {
+            Log.Error("击飞进入 AirborneHit：");
             // 记录击飞起始高度，用于全局空中高度上限
             float originY = self.Owner.position.y;
             self.AirborneOriginHeight = originY;
@@ -682,8 +654,15 @@ namespace ET
         private static void InitPhysicalMotion(this HitReactionComponent self, in HitImpactData request)
         {
             self.CurrentMotionType = request.Rule.MotionData.MotionType;
-
-            if (request.Rule.MotionData.MotionType == HitMotionType.NormalHit)
+            self.MotionDirection = request.Rule.MotionData.MotionType == HitMotionType.TowardAttacker
+                ? -request.Rule.HitDirection
+                : request.Rule.HitDirection;
+            self.MotionBaseForce = Mathf.Max(0f, request.Rule.MotionData.Force);
+            self.CurrentMotionSpeed = self.MotionBaseForce;
+            self.CurrentMotionCurve = request.Rule.MotionData.MotionCurve;
+            self.MotionStartTime = self.GetCombatNowMs();
+            self.MotionEndTime = self.MotionStartTime + Mathf.Max(0, request.Rule.MotionData.DurationMs);
+            /*if (request.Rule.MotionData.MotionType == HitMotionType.NormalHit)
             {
                 // NormalHit：水平位移由距离维持弹簧驱动，不需要 Force/Curve
                 self.MotionDirection = request.Rule.HitDirection;
@@ -705,7 +684,7 @@ namespace ET
                 self.CurrentMotionCurve = request.Rule.MotionData.MotionCurve;
                 self.MotionStartTime = self.GetCombatNowMs();
                 self.MotionEndTime = self.MotionStartTime + Mathf.Max(0, request.Rule.MotionData.DurationMs);
-            }
+            }*/
 
             // 记录拴系锚点（攻击者位置）
             self.TetherAnchorPos = self.TetherAnchorTransform.position;

@@ -9,20 +9,6 @@ namespace ET
     /// </summary>
     public static partial class HitReactionComponentSystem
     {
-        private static byte GetDefaultPriority(HitReactionType type)
-        {
-            // 仅作为“未配置 HitStrength 的兜底规则”，数值可以后续完全由策划配置覆盖。
-            switch (type)
-            {
-                case HitReactionType.LightHit: return 10;
-                case HitReactionType.HeavyHit: return 20;
-                case HitReactionType.Launch: return 40;
-                case HitReactionType.AirCombo: return 60;
-                case HitReactionType.SlamDown: return 80;
-                default: return 0;
-            }
-        }
-
         public static HitImpactData Normalize(this HitReactionComponent self, in HitImpactData impactData, in HitReactionConfig reaction)
         {
             int stun = Mathf.Min(impactData.Rule.HitStunMs, reaction.Rule.Limit.MaxHitStunMs);
@@ -58,11 +44,8 @@ namespace ET
             float timeScale = impactData.Feedback.TimeScale <= 0f ? 1f : impactData.Feedback.TimeScale;
             int timeScaleMs = Mathf.Max(0, impactData.Feedback.TimeScaleDurationMs);
 
-            byte hitStrength = impactData.Rule.HasHitStrength ? impactData.Rule.HitStrength : GetDefaultPriority(impactData.Rule.ReactionType);
             var normalizedRule = new HitImpactData.HitRuleData(
                 impactData.Rule.ReactionType,
-                hitStrength,
-                true,
                 motion,
                 impactData.Rule.TargetStates,
                 impactData.Rule.HitDirection,

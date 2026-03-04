@@ -41,9 +41,6 @@ namespace ET
         [Header("允许的受击状态动画")]
         public HitStateVisualMask AllowedStateVisuals;
 
-        [Header("受击打断门槛")]
-        public HitInterruptThresholdsData InterruptThresholds;
-
         [Header("数值倍率")]
         public HitReactionScalesData Scales;
 
@@ -53,120 +50,13 @@ namespace ET
         public HitReactionRulesData(
             HitReactionGroup allowedReactionGroups = HitReactionGroup.All,
             HitStateVisualMask allowedStateVisuals = HitStateVisualMask.All,
-            HitInterruptThresholdsData interruptThresholds = default,
             HitReactionScalesData scales = default,
             HitReactionLimitsData limits = default)
         {
-            this.AllowedReactionGroups = allowedReactionGroups;
-            this.AllowedStateVisuals = allowedStateVisuals;
-            this.InterruptThresholds = interruptThresholds;
-            this.Scales = scales;
-            this.Limits = limits;
-        }
-    }
-
-    /// <summary>
-    /// 受击打断门槛数据（可序列化版本）
-    /// </summary>
-    [System.Serializable]
-    public struct HitInterruptThresholdsData
-    {
-        [Header("地面状态门槛")]
-        public GroundedThresholdData Grounded;
-
-        [Header("空中状态门槛")]
-        public AirborneThresholdData Airborne;
-
-        [Header("倒地状态门槛")]
-        public KnockdownThresholdData Knockdown;
-
-        [Header("起身状态门槛")]
-        public GetUpThresholdData GetUp;
-
-    }
-
-    /// <summary>
-    /// 地面状态门槛数据
-    /// [已废弃] 受击路由已改为仅按 MotionType 分发，这些阈值不再用于 HandleGroundedHit。
-    /// 保留结构以兼容已有 ScriptableObject 序列化数据。
-    /// </summary>
-    [System.Serializable]
-    public struct GroundedThresholdData
-    {
-        [Obsolete("受击路由已改为 MotionType 分发，此字段不再使用")]
-        [Tooltip("轻度受击门槛（已废弃）")]
-        public byte LightReactionThreshold;
-
-        [Obsolete("受击路由已改为 MotionType 分发，此字段不再使用")]
-        [Tooltip("击退门槛（已废弃）")]
-        public byte KnockbackThreshold;
-
-        [Obsolete("受击路由已改为 MotionType 分发，此字段不再使用")]
-        [Tooltip("击飞门槛（已废弃）")]
-        public byte AirborneThreshold;
-
-        [Obsolete("受击路由已改为 MotionType 分发，此字段不再使用")]
-        [Tooltip("砸地门槛（已废弃）")]
-        public byte KnockdownThreshold;
-        
-        public GroundedThresholdData(
-            byte lightReactionThreshold = 20,
-            byte knockbackThreshold = 30,
-            byte airborneThreshold = 50,
-            byte knockdownThreshold = 60)
-        {
-            this.LightReactionThreshold = lightReactionThreshold;
-            this.KnockbackThreshold = knockbackThreshold;
-            this.AirborneThreshold = airborneThreshold;
-            this.KnockdownThreshold = knockdownThreshold;
-        }
-    }
-
-    /// <summary>
-    /// 空中状态门槛数据
-    /// [已废弃] 空中终结已改为按 MotionType == DownwardImpulse 触发，此阈值不再使用。
-    /// 保留结构以兼容已有 ScriptableObject 序列化数据。
-    /// </summary>
-    [System.Serializable]
-    public struct AirborneThresholdData
-    {
-        [Obsolete("空中终结已改为 MotionType 分发，此字段不再使用")]
-        [Tooltip("空中终结门槛（已废弃）")]
-        public byte AirborneThreshold;
-
-        public AirborneThresholdData(byte airborneThreshold = 70)
-        {
-            this.AirborneThreshold = airborneThreshold;
-        }
-    }
-
-    /// <summary>
-    /// 倒地状态门槛数据
-    /// </summary>
-    [System.Serializable]
-    public struct KnockdownThresholdData
-    {
-        [Tooltip("打断倒地门槛/从倒地状态拉起")]
-        public byte KnockdownThreshold;
-
-        public KnockdownThresholdData(byte knockdownThreshold = 80)
-        {
-            this.KnockdownThreshold = knockdownThreshold;
-        }
-    }
-
-    /// <summary>
-    /// 起身状态门槛数据
-    /// </summary>
-    [System.Serializable]
-    public struct GetUpThresholdData
-    {
-        [Tooltip("打断起身门槛")]
-        public byte GetUpInterruptThreshold;
-
-        public GetUpThresholdData(byte getUpInterruptThreshold = 80)
-        {
-            this.GetUpInterruptThreshold = getUpInterruptThreshold;
+            AllowedReactionGroups = allowedReactionGroups;
+            AllowedStateVisuals = allowedStateVisuals;
+            Scales = scales;
+            Limits = limits;
         }
     }
 

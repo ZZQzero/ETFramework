@@ -188,6 +188,7 @@ namespace ET
 			var hit = self.HitReaction;
 			
 			ITransition transition = null;
+			Log.Error("受击状态: " + hit.VisualState);
 			switch (hit.VisualState)
 			{
 				case HitState.GroundedHit:

@@ -774,24 +774,6 @@ public partial class SkillEditorWindow : EditorWindow
         MarkAssetDirty();
     }
 
-    private void OnHitEffectReactionChanged(ChangeEvent<Enum> evt)
-    {
-        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
-        {
-            return;
-        }
-
-        if (evt.newValue == null)
-        {
-            return;
-        }
-
-        var effect = hitBoxClipItem.HitBoxData.Effect;
-        effect.HitReaction = (HitReactionType)evt.newValue;
-        hitBoxClipItem.HitBoxData.Effect = effect;
-        MarkAssetDirty();
-    }
-
     private void OnHitMotionTypeChanged(ChangeEvent<Enum> evt)
     {
         if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
@@ -875,108 +857,6 @@ public partial class SkillEditorWindow : EditorWindow
         effect.HitStunMs = v;
         hitBoxClipItem.HitBoxData.Effect = effect;
         MarkAssetDirty();
-    }
-
-    private void OnHitEffectPriorityChanged(ChangeEvent<int> evt)
-    {
-        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
-        {
-            return;
-        }
-
-        int v = Mathf.Clamp(evt.newValue, 0, 255);
-        if (hitEffectPriorityField != null && v != evt.newValue)
-        {
-            hitEffectPriorityField.SetValueWithoutNotify(v);
-        }
-
-        var effect = hitBoxClipItem.HitBoxData.Effect;
-        effect.HitStrength = (byte)v;
-        hitBoxClipItem.HitBoxData.Effect = effect;
-        MarkAssetDirty();
-    }
-
-    private void OnHitEffectPriorityAutoClicked()
-    {
-        if (selectedClip is not HitBoxClipItem hitBoxClipItem || hitBoxClipItem.HitBoxData == null)
-        {
-            return;
-        }
-
-        var effect = hitBoxClipItem.HitBoxData.Effect;
-        int v = GetDefaultPriority(effect.HitReaction);
-        effect.HitStrength = (byte)Mathf.Clamp(v, 0, 255);
-        hitBoxClipItem.HitBoxData.Effect = effect;
-
-        if (hitEffectPriorityField != null)
-        {
-            hitEffectPriorityField.SetValueWithoutNotify(effect.HitStrength);
-        }
-        MarkAssetDirty();
-    }
-
-    private void OnHitEffectPriorityAutoAllClicked()
-    {
-        if (config == null || config.Segments == null)
-        {
-            return;
-        }
-
-        int changed = 0;
-        foreach (var seg in config.Segments)
-        {
-            if (seg == null || seg.HitBoxes == null)
-            {
-                continue;
-            }
-
-            for (int i = 0; i < seg.HitBoxes.Count; i++)
-            {
-                var hb = seg.HitBoxes[i];
-                if (hb == null)
-                {
-                    continue;
-                }
-
-                var effect = hb.Effect;
-                if (effect.HitStrength != 0)
-                {
-                    continue; // 仅补齐 0（避免覆盖策划显式配置）
-                }
-
-                effect.HitStrength = (byte)Mathf.Clamp(GetDefaultPriority(effect.HitReaction), 0, 255);
-                hb.Effect = effect;
-                changed++;
-            }
-        }
-
-        if (changed > 0 && selectedClip is HitBoxClipItem selectedHb && selectedHb.HitBoxData != null)
-        {
-            // 刷新当前显示（防止面板仍显示旧值）
-            if (hitEffectPriorityField != null)
-            {
-                hitEffectPriorityField.SetValueWithoutNotify(selectedHb.HitBoxData.Effect.HitStrength);
-            }
-        }
-
-        if (changed > 0)
-        {
-            MarkAssetDirty();
-        }
-    }
-
-    private static int GetDefaultPriority(HitReactionType type)
-    {
-        // 与运行时 HotfixView 的默认映射保持一致（0 表示不配置；此处用于编辑器一键补齐）
-        switch (type)
-        {
-            case HitReactionType.LightHit: return 10;
-            case HitReactionType.HeavyHit: return 20;
-            case HitReactionType.Launch: return 40;
-            case HitReactionType.AirCombo: return 60;
-            case HitReactionType.SlamDown: return 80;
-            default: return 0;
-        }
     }
 
     private void OnHitEffectTargetStateChanged(ChangeEvent<Enum> evt)

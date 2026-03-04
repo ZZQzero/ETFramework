@@ -19,6 +19,22 @@ namespace ET
         /// <summary>起身中受击。</summary>
         GetUpHit = 4,
     }
+    
+    /// <summary>
+    /// 受击表现类型（仅决定视觉/动画/硬直时长）
+    /// </summary>
+    public enum HitReactionType : byte
+    {
+        None = 0,
+
+        LightHit,    // 轻击（地面）
+        HeavyHit,    // 重击（地面）
+        Launch,     // 击飞表现（进入空中）
+        AirCombo,   // 空中受击（非终结）
+        SlamDown,   // 砸地表现(从空中落地)
+        Knockdown,  // 躺地，在地面击倒
+        Pull,       // 拉拽
+    }
 
     /// <summary>
     /// 受击反应组件

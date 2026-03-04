@@ -181,14 +181,6 @@ public partial class SkillEditorWindow : EditorWindow
 
         // HitEffectData / HitFeedbackData
         hitEffectDamageMultiplierField = rightContainer.Q<FloatField>("HitEffectDamageMultiplierField");
-        hitEffectReactionField = rightContainer.Q<EnumField>("HitEffectReactionField");
-        if (hitEffectReactionField != null)
-        {
-            hitEffectReactionField.Init(HitReactionType.LightHit);
-        }
-        hitEffectPriorityField = rightContainer.Q<IntegerField>("HitEffectPriorityField");
-        hitEffectPriorityAutoButton = rightContainer.Q<Button>("HitEffectPriorityAutoButton");
-        hitEffectPriorityAutoAllButton = rightContainer.Q<Button>("HitEffectPriorityAutoAllButton");
         hitMotionTypeField = rightContainer.Q<EnumField>("HitMotionTypeField");
         if (hitMotionTypeField != null)
         {
@@ -441,11 +433,6 @@ public partial class SkillEditorWindow : EditorWindow
             hitEffectDamageMultiplierField.tooltip = "伤害倍率：最终伤害 = 基础伤害 × 倍率。";
             hitEffectDamageMultiplierField.RegisterValueChangedCallback(OnHitEffectDamageMultiplierChanged);
         }
-        if (hitEffectReactionField != null)
-        {
-            hitEffectReactionField.tooltip = "视觉受击反应：决定目标播放哪种受击/硬直动画。";
-            hitEffectReactionField.RegisterValueChangedCallback(OnHitEffectReactionChanged);
-        }
         if (hitMotionTypeField != null)
         {
             hitMotionTypeField.tooltip = "物理运动类型：水平击退、击飞、砸地或拉拽。";
@@ -470,19 +457,6 @@ public partial class SkillEditorWindow : EditorWindow
         {
             hitEffectHitStunMsField.tooltip = "硬直时间(ms)：目标受击后无法行动的持续时间。";
             hitEffectHitStunMsField.RegisterValueChangedCallback(OnHitEffectHitStunMsChanged);
-        }
-        if (hitEffectPriorityField != null)
-        {
-            hitEffectPriorityField.tooltip = "攻击强度 HitStrength（0~255）。\n- 0：表示未配置，运行时会按 HitReactionType 使用默认映射兜底。\n- 建议：策划明确填值，避免默认兜底导致预期偏差。";
-            hitEffectPriorityField.RegisterValueChangedCallback(OnHitEffectPriorityChanged);
-        }
-        if (hitEffectPriorityAutoButton != null)
-        {
-            hitEffectPriorityAutoButton.clicked += OnHitEffectPriorityAutoClicked;
-        }
-        if (hitEffectPriorityAutoAllButton != null)
-        {
-            hitEffectPriorityAutoAllButton.clicked += OnHitEffectPriorityAutoAllClicked;
         }
         if (hitEffectTargetStateField != null)
         {

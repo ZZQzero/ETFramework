@@ -81,21 +81,7 @@ namespace ET
         Any = Grounded | Airborne | Knockdown,
     }
 
-    /// <summary>
-    /// 受击表现类型（仅决定视觉/动画/硬直时长）
-    /// </summary>
-    public enum HitReactionType : byte
-    {
-        None = 0,
-
-        LightHit,    // 轻击（地面）
-        HeavyHit,    // 重击（地面）
-        Launch,     // 击飞表现（进入空中）
-        AirCombo,   // 空中受击（非终结）
-        SlamDown,   // 砸地表现
-        Knockdown,  // 躺地
-        Pull,       // 拉拽
-    }
+    
 
 
     /// <summary>
@@ -218,13 +204,7 @@ namespace ET
 
         /// <summary>视觉受击反应类型（仅动画）</summary>
         public HitReactionType HitReaction;
-
-        /// <summary>
-        /// 攻击强度（用于目标侧受击规则判定）。
-        /// - 0：表示“未配置”，运行时会按 <see cref="HitReaction"/> 使用默认映射补齐
-        /// </summary>
-        public byte HitStrength;
-
+        
         /// <summary>物理运动数据（位移/击飞）</summary>
         public HitMotionData HitMotion;
 
@@ -240,7 +220,6 @@ namespace ET
         {
             DamageMultiplier = 1f,
             HitReaction = HitReactionType.LightHit,
-            HitStrength = 0, // 0 表示“未配置”，由 Hotfix 层在构造 HitReactionRequest 时补齐默认值
             HitMotion = HitMotionData.Default,
             HitStunMs = 200,
             TargetStates = TargetStateMask.Any,

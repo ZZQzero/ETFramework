@@ -204,10 +204,11 @@ namespace ET
             Vector3 displacement = self.CurrentVelocity * dt + rootMotion;
 
             // Drift：Attacking 阶段无曲线位移时，叠加方向键微位移
-            if (!freezeXZ)
+            /*if (!freezeXZ)
             {
                 displacement += self.ComputeDrift(dt);
             }
+            */
 
             return displacement;
         }
@@ -230,16 +231,20 @@ namespace ET
                 return;
             }
 
-            // 攻击中且锁定敌人：使用起手帧锁定的方向，不逐帧跟踪目标实时位置
-            if (self.Attack != null && self.Attack.IsAttacking && self.Attack.LockedAttackFaceDir.sqrMagnitude > 0.0001f)
+            // 攻击流程中（含后摇）：无摇杆输入时保持攻击朝向，有输入时允许旋转
+            if (self.Attack != null && self.Attack.IsInAttack)
             {
-                self.LocomotionIntent.FaceDirection = self.Attack.LockedAttackFaceDir;
-                self.ApplyRotation(dt);
+                bool hasInput = self.LocomotionIntent != null
+                    && self.LocomotionIntent.MoveDirection.sqrMagnitude > 0.01f;
+                if (hasInput)
+                {
+                    self.ApplyRotation(dt);
+                }
                 return;
             }
 
             bool canRotate = self.LocomotionIntent == null || self.LocomotionIntent.IsRotateAllowed;
-            if (canRotate && (self.Attack == null || !self.Attack.IsAttacking))
+            if (canRotate)
             {
                 self.ApplyRotation(dt);
             }
@@ -383,7 +388,7 @@ namespace ET
             if (impulse.sqrMagnitude <= 0.0001f) return;
 
             //向上冲量时，若角色正在下落则先清零Y速度，确保击飞效果不被下落速度抵消
-            if (impulse.y > 0f && self.CurrentVelocity.y < 0f)
+            if (impulse.y > 0f)
             {
                 self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
             }
@@ -436,23 +441,6 @@ namespace ET
             if (movement.NormalizedEnd - movement.NormalizedStart <= 0) return currentPos;
             if (normalizedTime < movement.NormalizedStart) return currentPos;
             if (normalizedTime > movement.NormalizedEnd || movement.NormalizedEnd == 0) return currentPos;
-
-            // 追踪目标时动态更新目标位置
-            if (movement.TrackTarget && self.Attack.LockedTarget != null)
-            {
-                Vector3 dir = self.Attack.LockedTarget.position - self.Attack.MovementStartPosition;
-                dir.y = 0f;
-                if (dir.sqrMagnitude > 0.0001f)
-                {
-                    dir.Normalize();
-                    float optimalDist = self.Attack.Config?.OptimalCombatDistance ?? 0.8f;
-                    float distToTarget = Vector3.Distance(
-                        new Vector3(currentPos.x, 0f, currentPos.z),
-                        new Vector3(self.Attack.LockedTarget.position.x, 0f, self.Attack.LockedTarget.position.z));
-                    float moveDist = Mathf.Min(movement.Distance, Mathf.Max(0f, distToTarget - optimalDist));
-                    self.Attack.MovementTargetPosition = self.Attack.MovementStartPosition + dir * moveDist;
-                }
-            }
 
             float moveProgress = Mathf.Clamp01(
                 (normalizedTime - movement.NormalizedStart) / (movement.NormalizedEnd - movement.NormalizedStart));
@@ -564,12 +552,35 @@ namespace ET
             if (self.Ground.IsAirborne(self.Ground.StateContext.State))
             {
                 float gravityAcceleration = self.Gravity * self.GravityMultiplier;
+                // 空中受击硬直期间抑制重力：角色被"打僵"悬停，硬直结束后恢复自然下落
+                if (self.IsInAirborneHitStun())
+                {
+                    // 硬直中将 Y 速度归零，角色悬停在当前高度
+                    if (self.CurrentVelocity.y < 0f)
+                    {
+                        gravityAcceleration *= self.HitReaction.CombatConfig.CachedAirCombo.GravityScaleDuringCombo;
+                    }
+                }
+
                 self.CurrentVelocity -= new Vector3(0f, gravityAcceleration * dt, 0f);
             }
             else if (self.CurrentVelocity.y < 0f)
             {
                 self.CurrentVelocity = new Vector3(self.CurrentVelocity.x, 0f, self.CurrentVelocity.z);
             }
+        }
+
+        /// <summary>
+        /// 是否处于空中受击硬直中（AirborneHit 状态 且 硬直未到期）。
+        /// </summary>
+        private static bool IsInAirborneHitStun(this CharacterControllerComponent self)
+        {
+            var hr = self.HitReaction;
+            if (hr == null || hr.CurrentHitState != HitState.AirborneHit)
+                return false;
+
+            long now = hr.HitStop?.NowCombatMs() ?? TimeInfo.Instance.ClientFrameTime();
+            return now < hr.HitStunEndTimeMs;
         }
 
         // ==================== 动画参数 ====================

@@ -23,10 +23,6 @@ namespace ET
         [Header("空中连段配置")]
         [Tooltip("空中连段数据")]
         public HitAirComboData AirCombo;
-
-        [Header("受击拴系配置（地面+空中共用）")]
-        [Tooltip("受击水平距离约束，替代原 AirCombo 的水平字段")]
-        public HitTetherData Tether;
     }
     
     /// <summary>
@@ -35,12 +31,6 @@ namespace ET
     [System.Serializable]
     public struct HitReactionRulesData
     {
-        [Header("允许的受击表现分组")]
-        public HitReactionGroup AllowedReactionGroups;
-
-        [Header("允许的受击状态动画")]
-        public HitStateVisualMask AllowedStateVisuals;
-
         [Header("数值倍率")]
         public HitReactionScalesData Scales;
 
@@ -48,13 +38,9 @@ namespace ET
         public HitReactionLimitsData Limits;
 
         public HitReactionRulesData(
-            HitReactionGroup allowedReactionGroups = HitReactionGroup.All,
-            HitStateVisualMask allowedStateVisuals = HitStateVisualMask.All,
             HitReactionScalesData scales = default,
             HitReactionLimitsData limits = default)
         {
-            AllowedReactionGroups = allowedReactionGroups;
-            AllowedStateVisuals = allowedStateVisuals;
             Scales = scales;
             Limits = limits;
         }
@@ -181,8 +167,8 @@ namespace ET
         [Tooltip("最小下落速度（绝对值）")]
         [Min(0f)] public float MinFallSpeedAbs;
 
-        [Tooltip("最大高度偏移（用于冲量衰减天花板）")]
-        public float MaxHeightOffset;
+        [Tooltip("期望空中连段维持高度（相对击飞起点），目标高度模型基准")]
+        public float DesiredComboHeight;
 
         [Header("高度安全")]
         [Tooltip("绝对最大高度（相对首次击飞点），防止 UpwardImpulse 命中逐级抬升天花板")]
@@ -194,7 +180,7 @@ namespace ET
             int exitLerpMs = 160,
             float gravityScaleDuringCombo = 0.12f,
             float minFallSpeedAbs = 0.8f,
-            float maxHeightOffset = 2.2f,
+            float desiredComboHeight = 2.2f,
             float absoluteMaxHeight = 6f)
         {
             this.Enable = enable;
@@ -202,46 +188,9 @@ namespace ET
             this.ExitLerpMs = exitLerpMs;
             this.GravityScaleDuringCombo = gravityScaleDuringCombo;
             this.MinFallSpeedAbs = minFallSpeedAbs;
-            this.MaxHeightOffset = maxHeightOffset;
+            this.DesiredComboHeight = desiredComboHeight;
             this.AbsoluteMaxHeight = absoluteMaxHeight;
         }
     }
 
-    /// <summary>
-    /// 受击拴系数据（地面+空中共用，可序列化版本）。
-    /// NormalHit 时基于距离维持：保持受击者在 [AnchorPointDistance, MaxDistance] 区间内。
-    /// 非 NormalHit 不受拴系约束。
-    /// </summary>
-    [System.Serializable]
-    public struct HitTetherData
-    {
-        [Tooltip("是否启用受击拴系（仅 NormalHit 生效）")]
-        public bool Enable;
-
-        [Tooltip("锚点距离（距攻击者的最优距离，怪物会被推到至少此距离）")]
-        [Min(0.1f)] public float AnchorPointDistance;
-
-        [Tooltip("最大水平距离（超过此距离怪物会被拉回）")]
-        [Min(0.5f)] public float MaxDistance;
-
-        [Tooltip("重定位弹簧刚度（越大响应越快）")]
-        [Min(0.1f)] public float RepositionSpeed;
-
-        [Tooltip("最大水平速度上限（m/s）")]
-        [Min(0f)] public float MaxHorizontalSpeed;
-
-        public HitTetherData(
-            bool enable = true,
-            float anchorPointDistance = 1.5f,
-            float maxDistance = 2f,
-            float repositionSpeed = 8f,
-            float maxHorizontalSpeed = 6f)
-        {
-            this.Enable = enable;
-            this.AnchorPointDistance = anchorPointDistance;
-            this.MaxDistance = maxDistance;
-            this.RepositionSpeed = repositionSpeed;
-            this.MaxHorizontalSpeed = maxHorizontalSpeed;
-        }
-    }
 }

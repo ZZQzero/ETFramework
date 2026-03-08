@@ -19,31 +19,23 @@ namespace ET
 
             /// <summary>命中方向（通常是 attacker→target 的水平向量）。</summary>
             public readonly Vector3 HitDirection;
-            //攻击范围
-            public readonly float AttackRadius;
             /// <summary>硬直时间(ms, combat-time)。</summary>
             public readonly int HitStunMs;
             //当前段攻击超时时长
             public readonly int AttackerSegmentTimeoutMs;
-            //攻击总时长
-            public readonly int AttackTotalTimeoutMs;
 
             public HitRuleData(
                 HitMotionData motionData,
                 TargetStateMask targetStates,
                 Vector3 hitDirection,
-                float attackRadius,
                 int hitStunMs,
-                int attackerSegmentTimeoutMs,
-                int attackTotalTimeoutMs)
+                int attackerSegmentTimeoutMs)
             {
                 this.MotionData = motionData;
                 this.TargetStates = targetStates;
                 this.HitDirection = hitDirection;
-                this.AttackRadius = attackRadius;
                 this.HitStunMs = hitStunMs;
                 this.AttackerSegmentTimeoutMs = attackerSegmentTimeoutMs;
-                this.AttackTotalTimeoutMs = attackTotalTimeoutMs;
             }
         }
 
@@ -100,21 +92,16 @@ namespace ET
             in HitEffectData effect,
             in HitFeedbackData feedback,
             Vector3 hitDirection,
-            int defaultHitStopMs,
-            int attackerSegmentTimeoutMs,
-            int attackerTotalTimeoutMs,
-            float attackRadius)
+            int attackerSegmentTimeoutMs)
         {
             Rule = new HitRuleData(
                 effect.HitMotion,
                 effect.TargetStates,
                 hitDirection,
-                attackRadius,
                 effect.HitStunMs,
-                attackerSegmentTimeoutMs,
-                attackerTotalTimeoutMs);
+                attackerSegmentTimeoutMs);
             Feedback = new HitFeedbackRequestData(
-                feedback.ResolveVictimHitStopMs(defaultHitStopMs),
+                feedback.VictimHitStopMs,
                 feedback.ScreenShakeIntensity,
                 feedback.ScreenShakeDurationMs,
                 feedback.TimeScale,
@@ -129,10 +116,8 @@ namespace ET
                    $"运动={Rule.MotionData.MotionType}(力={Rule.MotionData.Force:F2}, 时长={Rule.MotionData.DurationMs}ms), " +
                    $"目标过滤={Rule.TargetStates}, " +
                    $"方向=({dir.x:F2}, {dir.y:F2}, {dir.z:F2}), " +
-                   $"攻击半径={Rule.AttackRadius:F2}, " +
                    $"硬直={Rule.HitStunMs}ms, " +
                    $"段超时={Rule.AttackerSegmentTimeoutMs}ms, " +
-                   $"总超时={Rule.AttackTotalTimeoutMs}ms, " +
                    $"受击停顿={Feedback.VictimHitStopMs}ms, " +
                    $"震屏={Feedback.ScreenShakeIntensity:F2}({Feedback.ScreenShakeDurationMs}ms), " +
                    $"时间缩放={Feedback.TimeScale:F2}({Feedback.TimeScaleDurationMs}ms)" +

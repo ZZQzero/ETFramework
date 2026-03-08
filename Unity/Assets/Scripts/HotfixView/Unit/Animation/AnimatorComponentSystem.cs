@@ -114,6 +114,7 @@ namespace ET
 				if (hitHeavy != null)
 				{
 					self.HitAnimationDic.Add(HitReactionType.HeavyHit,hitHeavy);
+					self.HitAnimationDic.Add(HitReactionType.LightHit,hitHeavy);
 				}
 				var hitGitUp = await self.LoadHitTransition<ClipTransition>(self.AnimationCatalog, AnimationCatalogComponent.AnimKey.Hit_GetUp);
 				if (hitGitUp != null)

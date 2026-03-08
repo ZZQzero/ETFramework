@@ -53,6 +53,7 @@ namespace ET
         private ComponentRef<HitStopComponent> _hitStopRef;
         private ComponentRef<AirComboComponent> _airComboRef;
         private ComponentRef<AttackComponent> _attackRef;
+        private ComponentRef<CharacterControllerComponent> _motorRef;
 
         public void InitComponentRefs(Unit unit)
         {
@@ -62,6 +63,7 @@ namespace ET
             _attackRef = new ComponentRef<AttackComponent>(unit);
             _hitStopRef = new ComponentRef<HitStopComponent>(unit);
             _airComboRef = new ComponentRef<AirComboComponent>(unit);
+            _motorRef = new ComponentRef<CharacterControllerComponent>(unit);
         }
 
         public HitStopComponent HitStop => _hitStopRef.Get();
@@ -70,6 +72,7 @@ namespace ET
         public AirComboComponent AirCombo => _airComboRef.Get();
         public CombatConfigComponent CombatConfig => _combatConfigRef.Get();
         public AttackComponent Attack => _attackRef.Get();
+        public CharacterControllerComponent Motor => _motorRef.Get();
         /// <summary>
         /// 进入受击时是否取消攻击（用于“被打断”）。
         /// </summary>
@@ -92,16 +95,6 @@ namespace ET
         /// 是否已抑制地检空中降频，保证空中受击期间每帧检测。
         /// </summary>
         public bool GroundFrequencyInhibited { get; set; }
-
-        /// <summary>
-        /// 本单位当前“允许播放哪些受击表现分组”（运行时缓存，来自 ProfileLibrary/配置）。
-        /// </summary>
-        public HitReactionGroup AllowedReactionGroups { get; set; } = HitReactionGroup.All;
-
-        /// <summary>
-        /// 本单位当前“允许播放哪些受击状态动画”（运行时缓存，来自 ProfileLibrary/配置）。
-        /// </summary>
-        public HitStateVisualMask AllowedStateVisuals { get; set; } = HitStateVisualMask.All;
 
         public float FirstUpForce;
         
@@ -169,12 +162,6 @@ namespace ET
 
         /// <summary>空中绝对高度上限（世界 Y），超过此高度时抑制向上冲量。</summary>
         public float MaxAirborneHeight { get; set; }
-
-        /// <summary>拴系锚点：最后一次命中时的攻击者 XZ 位置（地面+空中共用）</summary>
-        public Vector3 TetherAnchorPos { get; set; }
-
-        /// <summary>攻击者 Transform 引用（NormalHit 时用于每帧实时跟踪锚点位置）</summary>
-        public Transform TetherAnchorTransform { get; set; }
 
         #endregion
         

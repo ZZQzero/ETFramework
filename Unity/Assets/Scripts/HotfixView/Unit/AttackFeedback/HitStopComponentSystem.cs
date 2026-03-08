@@ -17,6 +17,9 @@ namespace ET
             self.IsHitStopActive = false;
             self.HitStopEndRealtimeMs = 0;
             self.FreezeMode = HitStopFreezeMode.FreezeAll;
+            var unit = self.GetParent<Unit>();
+            var obj = unit.GetComponent<GameObjectComponent>().GameObject;
+            self.Animancer = obj.GetComponent<AnimancerComponent>();
         }
 
         [EntitySystem]
@@ -87,7 +90,7 @@ namespace ET
         /// - 时长叠加：取更晚结束点
         /// - 冻结策略叠加：取更强策略（None < AnimationOnly < FreezeXZOnly < FreezeAll）
         /// </summary>
-        public static void RequestHitStop(this HitStopComponent self, int durationMs, AnimancerComponent animancer, HitStopFreezeMode freezeMode)
+        public static void RequestHitStop(this HitStopComponent self, int durationMs, HitStopFreezeMode freezeMode)
         {
             if (self == null || self.IsDisposed)
             {
@@ -98,8 +101,7 @@ namespace ET
             {
                 return;
             }
-
-            self.Animancer = animancer;
+            
             long now = RealtimeMs();
             long end = now + durationMs;
             self.PauseAnimancer();

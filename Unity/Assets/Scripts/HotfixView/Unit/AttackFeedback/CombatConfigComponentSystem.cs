@@ -17,7 +17,6 @@
                 self.HitReactionConfig = BuildRules(asset.Rules);
                 self.Feedback = BuildFeedback(asset.Feedback);
                 self.CachedAirCombo = BuildAirCombo(asset.AirCombo);
-                self.CachedTether = BuildTether(asset.Tether);
                 self.CacheReady = true;
             }
 
@@ -35,11 +34,7 @@
                 data.Limits.MaxKnockbackForce,
                 data.Limits.MaxKnockupForce);
 
-            return new HitReactionConfig(
-                data.AllowedReactionGroups,
-                data.AllowedStateVisuals,
-                scales,
-                limits);
+            return new HitReactionConfig(scales, limits);
         }
 
         private static HitFeedbackConfig BuildFeedback(in HitReactionFeedbackData data)
@@ -60,24 +55,12 @@
                 data.MaxAirOffsetMs,
                 data.GravityScaleDuringCombo,
                 data.MinFallSpeedAbs,
-                data.MaxHeightOffset,
+                data.DesiredComboHeight,
                 data.ExitLerpMs,
                 data.AbsoluteMaxHeight);
         }
 
-        private static HitTetherProfile BuildTether(in HitTetherData data)
-        {
-            return new HitTetherProfile(
-                data.Enable,
-                data.AnchorPointDistance,
-                data.MaxDistance,
-                data.RepositionSpeed,
-                data.MaxHorizontalSpeed);
-        }
-
         private static readonly HitReactionConfig DefaultRules = new HitReactionConfig(
-            HitReactionGroup.All,
-            HitStateVisualMask.All,
             new HitReactionConfig.Scales(1f, 1f),
             new HitReactionConfig.Limits(int.MaxValue, float.MaxValue, float.MaxValue));
 

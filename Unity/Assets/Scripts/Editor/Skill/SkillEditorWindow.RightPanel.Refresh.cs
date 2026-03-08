@@ -132,11 +132,6 @@ public partial class SkillEditorWindow : EditorWindow
             inputBufferWindowMsField.SetValueWithoutNotify(hasConfig ? Mathf.Max(0, config.InputBufferWindowMs) : 0);
         }
 
-        if (defaultHitStopMsField != null)
-        {
-            defaultHitStopMsField.SetEnabled(hasConfig);
-            defaultHitStopMsField.SetValueWithoutNotify(hasConfig ? Mathf.Max(0, config.DefaultHitStopMs) : 0);
-        }
 
         if (recoveryHoldMsField != null)
         {
@@ -390,8 +385,8 @@ public partial class SkillEditorWindow : EditorWindow
 
         if (hitFeedbackShakeIntensityField != null) hitFeedbackShakeIntensityField.SetValueWithoutNotify(0f);
         if (hitFeedbackShakeDurationMsField != null) hitFeedbackShakeDurationMsField.SetValueWithoutNotify(0);
-        if (hitFeedbackAttackerHitStopMsField != null) hitFeedbackAttackerHitStopMsField.SetValueWithoutNotify(-1);
-        if (hitFeedbackVictimHitStopMsField != null) hitFeedbackVictimHitStopMsField.SetValueWithoutNotify(-1);
+        if (hitFeedbackAttackerHitStopMsField != null) hitFeedbackAttackerHitStopMsField.SetValueWithoutNotify(0);
+        if (hitFeedbackVictimHitStopMsField != null) hitFeedbackVictimHitStopMsField.SetValueWithoutNotify(0);
         if (hitFeedbackTimeScaleField != null) hitFeedbackTimeScaleField.SetValueWithoutNotify(1f);
         if (hitFeedbackTimeScaleDurationMsField != null) hitFeedbackTimeScaleDurationMsField.SetValueWithoutNotify(0);
     }

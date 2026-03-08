@@ -32,13 +32,6 @@ namespace ET
         public int InputBufferWindowMs = 200;
         
         /// <summary>
-        /// 默认顿帧时间（毫秒）。
-        /// 说明：当某个 <see cref="HitBoxData"/> 未配置 <see cref="HitFeedbackData.AttackerHitStopMs"/> / <see cref="HitFeedbackData.VictimHitStopMs"/>（为 -1）时，
-        /// 运行时使用该值作为兜底顿帧时长。
-        /// </summary>
-        public int DefaultHitStopMs = 40;
-
-        /// <summary>
         /// 攻击层（AttackLayer）在进入后摇(Recovery)后保持的时间（毫秒）。
         /// - 段结束进入 Recovery 且没有立刻接段时，不应立刻淡出 AttackLayer，否则会“闪回 Idle/Move”；
         ///   但也不能一直等到 <see cref="ComboTimeoutMs"/> 才淡出，否则玩家不输入时会长时间卡在攻击姿势/像没动画。
@@ -47,9 +40,6 @@ namespace ET
         public int RecoveryHoldMs = 200;
         
         [Header("攻击追踪")]
-        /// <summary>最佳战斗距离（低于此距离抑制前进Root Motion）</summary>
-        public float OptimalCombatDistance = 0.8f;
-
         /// <summary>最大锁定搜索半径</summary>
         public float MaxLockOnRange = 6f;
 
@@ -114,23 +104,10 @@ namespace ET
         }
 
         /// <summary>
-        /// 归一化/规范化入口（编辑器保存、配置构建、运行时加载后调用均可）。
-        /// - 目标：统一约束时间窗口、子事件范围、负值等，避免运行时/编辑器各自 Clamp 导致逻辑漂移。
+        /// 重置索引缓存（编辑器修改段列表后调用）。
         /// </summary>
-        public void ValidateAndNormalize()
+        public void InvalidateIndexCache()
         {
-            if (this.Segments == null)
-            {
-                return;
-            }
-
-            for (int i = 0; i < this.Segments.Count; i++)
-            {
-                var seg = this.Segments[i];
-                seg?.ValidateAndNormalize();
-            }
-
-            // 规范化后，索引缓存可能过期（段可能被编辑器改动）
             this._cachedSegmentCount = -1;
         }
     }

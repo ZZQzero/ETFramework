@@ -139,7 +139,7 @@ namespace ET
         #region 配置加载
         
         /// <summary>
-        /// 异步加载攻击配置（带超时保护）
+        /// 异步加载攻击配置
         /// </summary>
         private static async ETTask LoadConfigAsync(this AttackComponent self, int skillId)
         {
@@ -165,7 +165,7 @@ namespace ET
                 
                 var configAsset = await ResourcesLoadManager.Instance.LoadAssetAsync<AttackConfigAsset>(skillTable.SkillAsset);
                 
-                if (self == null || self.IsDisposed)
+                if (self.IsDisposed)
                 {
                     return;
                 }
@@ -178,13 +178,11 @@ namespace ET
 
                 self.Config = configAsset.Config;
                 self.LoadedSkillId = skillId;
-                // 运行时加载后统一规范化（保证窗口/子事件不越界，避免各处自行 Clamp 导致不一致）
-                self.Config?.ValidateAndNormalize();
             }
             finally
             {
                 // 确保无论成功失败都重置加载状态
-                if (self != null && !self.IsDisposed)
+                if (!self.IsDisposed)
                 {
                     self.IsLoadingConfig = false;
                 }
@@ -649,7 +647,7 @@ namespace ET
             self.OnComboCountChanged?.Invoke(self.ComboCount);
 
             // 目标锁定：首段起手或无锁定目标时搜索最近目标
-            if (self.LockedTarget == null)
+            /*if (self.LockedTarget == null)
             {
                 float lockRange = self.Config?.MaxLockOnRange ?? 6f;
                 self.FindAndLockNearestTarget(lockRange);
@@ -661,8 +659,10 @@ namespace ET
                 Vector3 toTarget = self.LockedTarget.position - self.OwnerTransform.position;
                 toTarget.y = 0f;
                 if (toTarget.sqrMagnitude > 0.0001f)
+                {
                     self.LockedAttackFaceDir = toTarget.normalized;
-            }
+                }
+            }*/
             
             // 初始化位移
             self.InitializeMovement(segment);
@@ -704,31 +704,19 @@ namespace ET
                 return;
             self.MovementStartPosition = self.OwnerTransform.position;
 
-            // 使用锁定目标（如果有）替代搜索；否则用前方
-            if (segment.Movement.TrackTarget && self.LockedTarget != null)
+            // 锁定目标时使用 LockedAttackFaceDir（同帧已算好），避免 forward 尚未旋转到位
+            Vector3 moveDir;
+            if (segment.Movement.TrackTarget && self.LockedAttackFaceDir.sqrMagnitude > 0.0001f)
             {
-                Vector3 direction = (self.LockedTarget.position - self.OwnerTransform.position);
-                direction.y = 0f;
-                if (direction.sqrMagnitude > 0.0001f)
-                {
-                    direction.Normalize();
-                }
-                else
-                {
-                    direction = self.OwnerTransform.forward;
-                }
-                // 受 OptimalCombatDistance 约束：目标位置不超过目标当前位置
-                float optimalDist = self.Config?.OptimalCombatDistance ?? 0.8f;
-                float distToTarget = Vector3.Distance(
-                    new Vector3(self.OwnerTransform.position.x, 0f, self.OwnerTransform.position.z),
-                    new Vector3(self.LockedTarget.position.x, 0f, self.LockedTarget.position.z));
-                float moveDist = Mathf.Min(segment.Movement.Distance, Mathf.Max(0f, distToTarget - optimalDist));
-                self.MovementTargetPosition = self.MovementStartPosition + direction * moveDist;
+                moveDir = self.LockedAttackFaceDir;
             }
             else
             {
-                self.MovementTargetPosition = self.MovementStartPosition + self.OwnerTransform.forward * segment.Movement.Distance;
+                moveDir = self.OwnerTransform.forward;
             }
+            moveDir.y = 0f;
+            moveDir.Normalize();
+            self.MovementTargetPosition = self.MovementStartPosition + moveDir * segment.Movement.Distance;
             
             if(segment.Movement.Distance > 0f)
             {
@@ -874,7 +862,7 @@ namespace ET
             if (self.CurrentAnimState == null || self.CurrentSegment == null)
                 return true;
 
-            float endTime = self.CurrentSegment.GetAnimationEnd01();
+            float endTime = self.CurrentSegment.TimeWindow.AnimationEnd;
             return self.CurrentAnimState.NormalizedTime >= endTime;
         }
 
@@ -968,7 +956,7 @@ namespace ET
                 }
 
                 // 窗口：输入缓冲 / 取消。由事件驱动置位，避免分散在逻辑里到处比较时间。
-                float inputWindow = segment.TimeWindow != null ? segment.TimeWindow.GetInputBufferStart01() : 0f;
+                float inputWindow = segment.TimeWindow != null ? segment.TimeWindow.InputBufferStart : 0f;
                 if (inputWindow > 0f)
                 {
                     events.Add(inputWindow, () =>
@@ -984,7 +972,7 @@ namespace ET
                     self.IsInputBufferWindowOpen = true;
                 }
 
-                float cancelWindow = segment.TimeWindow != null ? segment.TimeWindow.GetCancelableTime01() : 0f;
+                float cancelWindow = segment.TimeWindow != null ? segment.TimeWindow.CancelableTime : 0f;
                 if (cancelWindow > 0f)
                 {
                     events.Add(cancelWindow, () =>
@@ -1001,7 +989,7 @@ namespace ET
                 }
 
                 // 段结束阈值：使用 TimeWindow.AnimationEnd（可早于 1），实现提前进入后摇/接段。
-                float endTime = segment.GetAnimationEnd01();
+                float endTime = segment.TimeWindow.AnimationEnd;
                 if (endTime > 0f && endTime < 1f)
                 {
                     events.NormalizedEndTime = endTime;
@@ -1131,7 +1119,7 @@ namespace ET
                 if (segment.AttachedActives != null)
                 {
                     int hint = 0;
-                    float endNorm = segment.GetAnimationEnd01();
+                    float endNorm = segment.TimeWindow.AnimationEnd;
 
                     for (int i = 0; i < segment.AttachedActives.Count; i++)
                     {
@@ -1306,27 +1294,20 @@ namespace ET
             var hitReactionComponent = unit.GetComponent<HitReactionComponent>();
             if (hitReactionComponent != null)
             {
-                Vector3 hitDirection = target.transform.position - self.OwnerTransform.position;
+                Vector3 hitDirection = self.OwnerTransform.forward;
+                self.LockedAttackFaceDir = hitDirection;
                 hitDirection.y = 0f;
                 if (hitDirection.sqrMagnitude > 0.0001f)
                 {
                     hitDirection.Normalize();
                 }
 
-                int defaultHitStopMs = self.Config?.DefaultHitStopMs ?? 0;
                 int attackerSegmentComboTimeoutMs = self.GetCurrentSegmentComboTimeoutMs();
-                int totalTimes = self.GetTotalSegmentEndMs();
-                float attackRadius = hitBox.GetAttackRadius();
                 var req = BuildHitReactionRequest(
-                    in effect, 
-                    in feedback, 
+                    in effect,
+                    in feedback,
                     hitDirection,
-                    defaultHitStopMs, 
-                    attackerSegmentComboTimeoutMs, 
-                    totalTimes,
-                    attackRadius);
-                // 传递攻击者 Transform：NormalHit 时 UpdateNormalHitMotion 每帧跟踪攻击者位置
-                hitReactionComponent.TetherAnchorTransform = self.OwnerTransform;
+                    attackerSegmentComboTimeoutMs);
                 hitReactionComponent.TryApplyHit(in req);
             }
 
@@ -1334,10 +1315,9 @@ namespace ET
             self.PlayHitEffects(target, hitBox);
 
             // 攻击者侧顿帧：由 HitStopComponent 统一合并/叠加，避免多目标命中导致重入与恢复错误
-            int attackerHitStopMs = feedback.ResolveAttackerHitStopMs(self.Config?.DefaultHitStopMs ?? 0);
-            if (attackerHitStopMs > 0)
+            if (feedback.AttackerHitStopMs > 0)
             {
-                self.HitStop.RequestHitStop(attackerHitStopMs, self.AnimatorComponent.Animancer, HitStopFreezeMode.FreezeAll);
+                self.HitStop.RequestHitStop(feedback.AttackerHitStopMs, HitStopFreezeMode.FreezeAll);
             }
 
             // 应用屏幕震动
@@ -1376,18 +1356,12 @@ namespace ET
             in HitEffectData effect,
             in HitFeedbackData feedback,
             Vector3 hitDirection,
-            int defaultHitStopMs,
-            int attackerSegmentTimeoutMs = 0,
-            int attackerTotalTimeoutMs = 0,
-            float attackRadius = 0f)
+            int attackerSegmentTimeoutMs = 0)
         {
-            return new HitImpactData(effect, 
-                feedback, 
+            return new HitImpactData(effect,
+                feedback,
                 hitDirection,
-                defaultHitStopMs,
-                attackerSegmentTimeoutMs,
-                attackerTotalTimeoutMs, 
-                attackRadius);
+                attackerSegmentTimeoutMs);
         }
 
         /// <summary>

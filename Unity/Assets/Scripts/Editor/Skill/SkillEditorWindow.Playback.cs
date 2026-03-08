@@ -722,7 +722,7 @@ public partial class SkillEditorWindow : EditorWindow
                     continue;
                 }
 
-                int ms = hb.Feedback.ResolveAttackerHitStopMs(config.DefaultHitStopMs);
+                int ms = hb.Feedback.AttackerHitStopMs;
                 bestMs = Mathf.Max(bestMs, Mathf.Max(0, ms));
             }
         }

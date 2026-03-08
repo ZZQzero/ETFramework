@@ -23,8 +23,8 @@ namespace ET
         /// </summary>
         public readonly float MinFallSpeedAbs;
 
-        /// <summary>最大高度偏移（相对当前高度），用于冲量衰减天花板计算。</summary>
-        public readonly float MaxHeightOffset;
+        /// <summary>期望空中连段维持高度（相对击飞起点），目标高度模型的基准。</summary>
+        public readonly float DesiredComboHeight;
 
         /// <summary>退出空中连段时重力恢复到 1 的 lerp 时长（combat-time）。</summary>
         public readonly int ExitLerpMs;
@@ -37,7 +37,7 @@ namespace ET
             int maxAirOffsetMs,
             float gravityScaleDuringCombo,
             float minFallSpeedAbs,
-            float maxHeightOffset,
+            float desiredComboHeight,
             int exitLerpMs,
             float absoluteMaxHeight)
         {
@@ -45,7 +45,7 @@ namespace ET
             this.MaxAirOffsetMs = maxAirOffsetMs;
             this.GravityScaleDuringCombo = gravityScaleDuringCombo;
             this.MinFallSpeedAbs = minFallSpeedAbs;
-            this.MaxHeightOffset = maxHeightOffset;
+            this.DesiredComboHeight = desiredComboHeight;
             this.ExitLerpMs = exitLerpMs;
             this.AbsoluteMaxHeight = absoluteMaxHeight;
         }

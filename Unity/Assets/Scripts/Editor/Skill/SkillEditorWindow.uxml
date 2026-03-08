@@ -46,10 +46,6 @@
                         <ui:IntegerField value="200" name="InputBufferWindowMsField" style="flex-grow: 1;"/>
                     </ui:VisualElement>
                     <ui:VisualElement style="flex-direction: row; align-items: center;">
-                        <ui:Label text="&#40664;&#35748;&#39039;&#24103;(ms):" style="width: 120px;"/>
-                        <ui:IntegerField value="40" name="DefaultHitStopMsField" style="flex-grow: 1;"/>
-                    </ui:VisualElement>
-                    <ui:VisualElement style="flex-direction: row; align-items: center;">
                         <ui:Label text="&#21518;&#25671;&#20445;&#25345;(ms):" style="width: 120px;"/>
                         <ui:IntegerField value="200" name="RecoveryHoldMsField" style="flex-grow: 1;"/>
                     </ui:VisualElement>

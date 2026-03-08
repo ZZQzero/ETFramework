@@ -71,7 +71,7 @@ public partial class SkillEditorWindow : EditorWindow
     private Label clipPropertiesTitle;
     
     private IntegerField inputBufferWindowMsField;
-    private IntegerField defaultHitStopMsField;
+
     private IntegerField recoveryHoldMsField;
     private LayerMaskField previewHitTargetLayerMaskField;
     
@@ -254,13 +254,13 @@ public partial class SkillEditorWindow : EditorWindow
     }
     
     /// <summary>
-    /// 获取 Segment 的动画长度（优先使用 Duration，其次使用 Clip.length，最后使用默认值）
+    /// 获取 Segment 的实际播放时长（已计入 Speed）。
+    /// 用于归一化时间 ↔ 绝对时间换算，必须使用 Duration 而非 Clip.length。
     /// </summary>
     private static float GetSegmentAnimationLength(AttackSegmentData segment)
     {
-        return segment != null
-            ? segment.GetEffectiveDurationSec(DEFAULT_ANIMATION_LENGTH)
-            : DEFAULT_ANIMATION_LENGTH;
+        if (segment == null) return DEFAULT_ANIMATION_LENGTH;
+        return segment.Duration > 0f ? segment.Duration : DEFAULT_ANIMATION_LENGTH;
     }
 
     /// <summary>
@@ -270,7 +270,7 @@ public partial class SkillEditorWindow : EditorWindow
     /// </summary>
     private static float GetSegmentAnimationEndNorm(AttackSegmentData segment)
     {
-        return segment != null ? segment.GetAnimationEnd01() : 1f;
+        return segment != null ? segment.TimeWindow.AnimationEnd : 1f;
     }
     
     #endregion

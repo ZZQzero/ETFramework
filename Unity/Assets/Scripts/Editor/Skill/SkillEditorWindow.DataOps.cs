@@ -601,9 +601,7 @@ public partial class SkillEditorWindow : EditorWindow
     // 标记AttackConfigAsset为dirty，以便Unity保存更改
     private void MarkAssetDirty()
     {
-        // 商业级：在标记 Dirty 前先统一规范化配置（避免编辑器/运行时各处自行 Clamp 导致逻辑漂移）
-        // 注意：这是编辑器资产操作，允许直接写回配置对象。
-        config?.ValidateAndNormalize();
+        config?.InvalidateIndexCache();
 
         if (selectConfigAsset != null && selectConfigAsset.value != null)
         {

@@ -937,7 +937,7 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        int v = Mathf.Max(-1, evt.newValue);
+        int v = Mathf.Max(0, evt.newValue);
         if (hitFeedbackAttackerHitStopMsField != null && v != evt.newValue)
         {
             hitFeedbackAttackerHitStopMsField.SetValueWithoutNotify(v);
@@ -955,7 +955,7 @@ public partial class SkillEditorWindow : EditorWindow
             return;
         }
 
-        int v = Mathf.Max(-1, evt.newValue);
+        int v = Mathf.Max(0, evt.newValue);
         if (hitFeedbackVictimHitStopMsField != null && v != evt.newValue)
         {
             hitFeedbackVictimHitStopMsField.SetValueWithoutNotify(v);
@@ -1018,22 +1018,6 @@ public partial class SkillEditorWindow : EditorWindow
         if (inputBufferWindowMsField != null && v != evt.newValue)
         {
             inputBufferWindowMsField.SetValueWithoutNotify(v);
-        }
-        MarkAssetDirty();
-    }
-
-    private void OnDefaultHitStopMsChanged(ChangeEvent<int> evt)
-    {
-        if (config == null)
-        {
-            return;
-        }
-
-        int v = Mathf.Max(0, evt.newValue);
-        config.DefaultHitStopMs = v;
-        if (defaultHitStopMsField != null && v != evt.newValue)
-        {
-            defaultHitStopMsField.SetValueWithoutNotify(v);
         }
         MarkAssetDirty();
     }

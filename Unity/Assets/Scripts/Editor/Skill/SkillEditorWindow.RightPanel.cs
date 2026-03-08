@@ -38,7 +38,6 @@ public partial class SkillEditorWindow : EditorWindow
 
         // AttackConfig 全局参数（TrackInfoPanel 下方）
         inputBufferWindowMsField = rightContainer.Q<IntegerField>("InputBufferWindowMsField");
-        defaultHitStopMsField = rightContainer.Q<IntegerField>("DefaultHitStopMsField");
         recoveryHoldMsField = rightContainer.Q<IntegerField>("RecoveryHoldMsField");
         previewHitTargetLayerMaskField = rightContainer.Q<LayerMaskField>("PreviewHitTargetLayerMaskField");
 
@@ -416,11 +415,6 @@ public partial class SkillEditorWindow : EditorWindow
             inputBufferWindowMsField.tooltip = "输入缓冲有效期(ms)：缓存输入在被消费前能保留多久；与动画窗口(0-1)的 InputBufferStart 不同。";
             inputBufferWindowMsField.RegisterValueChangedCallback(OnInputBufferWindowMsChanged);
         }
-        if (defaultHitStopMsField != null)
-        {
-            defaultHitStopMsField.tooltip = "默认顿帧(ms)：当 HitFeedback.Attacker/VictimHitStopMs 为 -1 时回退使用该值。";
-            defaultHitStopMsField.RegisterValueChangedCallback(OnDefaultHitStopMsChanged);
-        }
         if (recoveryHoldMsField != null)
         {
             recoveryHoldMsField.tooltip = "后摇保持(ms)：进入Recovery后保持AttackLayer的时间，超时后淡出回到Move/Idle。";
@@ -476,12 +470,12 @@ public partial class SkillEditorWindow : EditorWindow
         }
         if (hitFeedbackAttackerHitStopMsField != null)
         {
-            hitFeedbackAttackerHitStopMsField.tooltip = "攻击者侧顿帧(ms)：-1=回退 DefaultHitStopMs；0=不顿帧；>0=强制使用。";
+            hitFeedbackAttackerHitStopMsField.tooltip = "攻击者侧顿帧(ms)：0=不顿帧；>0=顿帧时长。";
             hitFeedbackAttackerHitStopMsField.RegisterValueChangedCallback(OnHitFeedbackAttackerHitStopMsChanged);
         }
         if (hitFeedbackVictimHitStopMsField != null)
         {
-            hitFeedbackVictimHitStopMsField.tooltip = "受击者侧顿帧(ms)：-1=回退 DefaultHitStopMs；0=不顿帧；>0=强制使用（是否生效仍受 Victim Profile 控制）。";
+            hitFeedbackVictimHitStopMsField.tooltip = "受击者侧顿帧(ms)：0=不顿帧；>0=顿帧时长（是否生效仍受 Victim Profile 控制）。";
             hitFeedbackVictimHitStopMsField.RegisterValueChangedCallback(OnHitFeedbackVictimHitStopMsChanged);
         }
         if (hitFeedbackTimeScaleField != null)

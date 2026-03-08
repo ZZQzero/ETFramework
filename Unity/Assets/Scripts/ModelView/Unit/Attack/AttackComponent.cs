@@ -210,7 +210,7 @@ namespace ET
                 }
                 return CurrentAnimState.HasEvents
                     ? IsCancelWindowOpen
-                    : CurrentAnimState.NormalizedTime >= (CurrentSegment.TimeWindow != null ? CurrentSegment.TimeWindow.GetCancelableTime01() : 0f);
+                    : CurrentAnimState.NormalizedTime >= (CurrentSegment.TimeWindow != null ? CurrentSegment.TimeWindow.CancelableTime : 0f);
             }
         }
         

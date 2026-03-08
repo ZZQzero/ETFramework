@@ -17,7 +17,7 @@ namespace ET
         [EntitySystem]
         private static void Destroy(this HitReactionComponent self)
         {
-            // 兆底：确保会话级别的外部状态全部释放
+            //确保会话级别的外部状态全部释放
             self.ReleaseHitSessionLocksIfNeeded();
             self.ReleaseGroundFrequencyInhibitIfNeeded();
             
@@ -72,6 +72,9 @@ namespace ET
                 return;
             }
 
+            // AirCombo 激活期间：跳过落地判定，由 AirCombo 超时/终结决定何时落地
+            bool airComboProtected = self.AirCombo != null && self.AirCombo.Active && !self.AirCombo.IsExiting;
+
             // 击飞保护帧：ForceBreakGround 之后物理尚未将角色移离地面，
             // Ground.Detect() 可能仍检测到地面并将 State 设为 Landing，
             // 需等待物理更新完成，避免误判为立即落地。
@@ -79,14 +82,11 @@ namespace ET
             {
                 self.AirborneGraceFramesLeft--;
             }
-            else if (self.Ground != null && self.Ground.IsGrounded(self.Ground.StateContext.State))
+            else if (!airComboProtected && self.Ground != null && self.Ground.IsGrounded(self.Ground.StateContext.State))
             {
                 self.FromAirToGround();
                 return;
             }
-
-            self.UpdateAirComboTether();
-            
             // AirCombo 存在且 Active 时：检查超时并推进退出流程
             if (self.OwnerUnit != null && self.AirCombo != null && self.AirCombo.Active)
             {
@@ -134,7 +134,6 @@ namespace ET
             self.AirborneOriginHeight = 0f;
             self.MaxAirborneHeight = 0f;
             self.AirborneGraceFramesLeft = 0;
-            self.TetherAnchorTransform = null;
 
             // 统一清理物理运动（含 ExternalTargetVelocity）
             self.ReleaseGroundFrequencyInhibitIfNeeded();
@@ -208,77 +207,6 @@ namespace ET
         }
 
         /// <summary>
-        /// 距离维持：每帧根据攻击者-受击者水平距离，用弹簧模型计算速度，
-        /// 保持受击者在 [AnchorPointDistance, MaxDistance] 区间内。
-        /// </summary>
-        private static void UpdateAirComboTether(this HitReactionComponent self)
-        {
-            long now = self.GetCombatNowMs();
-            if (now >= self.MotionEndTime)
-            {
-                self.ClearPhysicalMotion();
-                return;
-            }
-
-            var intent = self.LocomotionIntent;
-            if (intent == null)
-                return;
-
-            // 实时更新锚点：跟踪攻击者 RootMotion 位移
-            if (self.TetherAnchorTransform != null)
-            {
-                self.TetherAnchorPos = self.TetherAnchorTransform.position;
-            }
-
-            var profile = self.CombatConfig?.CachedTether;
-            if (profile == null || !profile.Value.Enable)
-            {
-                intent.ExternalTargetVelocity = Vector2.zero;
-                self.CurrentMotionSpeed = 0f;
-                return;
-            }
-
-            var tether = profile.Value;
-
-            // 计算水平距离
-            Vector3 offset = self.Owner.position - self.TetherAnchorPos;
-            offset.y = 0f;
-            float dist = offset.magnitude;
-
-            // 方向：受击者相对于攻击者的方向（远离方向）
-            Vector3 awayDir = dist > 0.01f ? offset / dist : self.MotionDirection;
-
-            // 目标距离：钳位到 [AnchorPointDistance, MaxDistance]
-            float targetDist = Mathf.Clamp(dist, tether.AnchorPointDistance, tether.MaxDistance);
-            float error = targetDist - dist; // + = 推离（距离不够），- = 拉回（距离过远）
-
-            if (Mathf.Abs(error) < 0.01f)
-            {
-                // 已在最优区间
-                intent.ExternalTargetVelocity = Vector2.zero;
-                self.CurrentMotionSpeed = 0f;
-                return;
-            }
-
-            // 弹簧模型（P 控制器）：速度 = 误差 * 刚度，自然减速趋近目标
-            float speed = error * tether.RepositionSpeed;
-            Vector3 vel = awayDir * speed;
-
-            // 速度上限
-            if (tether.MaxHorizontalSpeed > 0f)
-            {
-                float magnitude = vel.magnitude;
-                if (magnitude > tether.MaxHorizontalSpeed)
-                {
-                    vel = vel / magnitude * tether.MaxHorizontalSpeed;
-                }
-            }
-
-            self.CurrentMotionSpeed = vel.magnitude;
-            intent.ExternalTargetVelocity = new Vector2(vel.x, vel.z);
-        }
-        
-        /// <summary>
         /// 统一受击入口
         /// - Resistance 按状态切表（Grounded/Airborne/AirStun/Knockdown/GetUp）
         /// </summary>
@@ -288,11 +216,9 @@ namespace ET
             {
                 return false;
             }
-            // 缓存本单位的视觉许可（用于帧内/帧间状态流转时同步视觉状态）
-            self.AllowedReactionGroups = self.CombatConfig.HitReactionConfig.Visual.AllowedReactionGroups;
-            self.AllowedStateVisuals = self.CombatConfig.HitReactionConfig.Visual.AllowedStateVisuals;
-            self.LocomotionIntent.FaceDirection = -hitReaction.Rule.HitDirection;
 
+            self.LocomotionIntent.FaceDirection = -hitReaction.Rule.HitDirection;   
+            
             bool hasVisualOrPhysical = hitReaction.Rule.MotionData.MotionType != HitMotionType.None;
             bool hasAnyFeedback =
                 hitReaction.Feedback.VictimHitStopMs > 0 ||
@@ -375,19 +301,6 @@ namespace ET
             Log.Debug($"[HitReaction] SwitchState → {self.CurrentHitState}");
         }
 
-        private static bool IsStateVisualAllowed(HitStateVisualMask allowed, HitState state)
-        {
-            HitStateVisualMask flag = state switch
-            {
-                HitState.GroundedHit => HitStateVisualMask.Grounded,
-                HitState.AirborneHit => HitStateVisualMask.Airborne,
-                HitState.KnockdownHit => HitStateVisualMask.Knockdown,
-                HitState.GetUpHit => HitStateVisualMask.GetUp,
-                _ => HitStateVisualMask.None
-            };
-            return flag != HitStateVisualMask.None && (allowed & flag) != 0;
-        }
-
         /// <summary>
         /// 地面受击路由：仅根据 MotionType 决定反应类型，消除 HitStrength 双重门控。
         /// 每个 MotionType 分支都保证调用 SwitchState，不存在穿透路径。
@@ -457,45 +370,19 @@ namespace ET
                     self.EnterAirFinish(in request);
                     return;
             }
-            
+
             // 击飞型：使用自身 Force 作为向上冲量
             if (self.Ground != null)
             {
                 self.Ground.ForceBreakGround(AirborneReason.Juggled);
             }
-                
-            float originY = self.Owner.position.y;
-            float maxOffset = self.CombatConfig.CachedAirCombo.MaxHeightOffset;
-            float candidateCeiling = originY + (maxOffset > 0f ? maxOffset : 2.2f);
-            float absoluteMaxHeight = self.CombatConfig.CachedAirCombo.AbsoluteMaxHeight;
-            if (absoluteMaxHeight > 0f)
-            {
-                float absoluteCeiling = self.AirborneOriginHeight + absoluteMaxHeight;
-                candidateCeiling = Mathf.Min(candidateCeiling, absoluteCeiling);
-            }
-            self.MaxAirborneHeight = candidateCeiling;
-
             // AirCombo：命中续期
             if (self.AirCombo != null && self.AirCombo.Active)
             {
                 self.AirCombo.OnHit(
                     self.HitStunEndTimeMs,
-                    in self.CombatConfig.CachedAirCombo,
-                    request.Rule.AttackRadius);
+                    in self.CombatConfig.CachedAirCombo);
             }
-
-            // 非 NormalHit：击退方向偏向拴系锚点（攻击者位置），防止越打越远
-            // NormalHit 不需要方向偏移——水平位移完全由 UpdateNormalHitMotion 弹簧控制
-            /*if (request.Rule.MotionData.MotionType != HitMotionType.NormalHit)
-            {
-                Vector3 toAnchor = self.TetherAnchorPos - self.Owner.position;
-                toAnchor.y = 0f;
-                if (toAnchor.sqrMagnitude > 0.01f)
-                {
-                    self.MotionDirection = Vector3.Lerp(
-                        self.MotionDirection, toAnchor.normalized, 0.3f);
-                }
-            }*/
             self.SwitchState(HitState.AirborneHit,HitReactionType.AirCombo);
         }
 
@@ -552,10 +439,8 @@ namespace ET
             // 期间 Ground.Detect() 仍会检测到地面，设置保护帧数防止 UpdateAirborne 误判落地。
             self.AirborneGraceFramesLeft = 5;
             // 记录击飞起始高度，用于全局空中高度上限
-            float originY = self.Owner.position.y;
-            self.AirborneOriginHeight = originY;
-            float maxOffset = self.CombatConfig.CachedAirCombo.MaxHeightOffset;
-            self.MaxAirborneHeight = originY + (maxOffset > 0f ? maxOffset : 2.2f);
+            self.AirborneOriginHeight = self.Owner.position.y;
+            self.RecalculateMaxAirborneHeight();
 
             if (self.Ground != null)
             {
@@ -567,13 +452,10 @@ namespace ET
             self.AcquireGroundFrequencyInhibitIfNeeded();
             self.InitPhysicalMotion(in request);
             self.ApplyImpulse(request.Rule.MotionData.MotionType, request.Rule.MotionData.Force);
-            // 连段中心：优先使用攻击者位置
-            Vector3 comboCenterPos = self.TetherAnchorTransform.position;
+
             self.AirCombo.Enter(
-                self.HitStunEndTimeMs, 
-                comboCenterPos, 
-                in self.CombatConfig.CachedAirCombo,
-                request.Rule.AttackRadius);
+                self.HitStunEndTimeMs,
+                in self.CombatConfig.CachedAirCombo);
         }
 
         #region 统一入口
@@ -653,7 +535,7 @@ namespace ET
               
                 if (self.HitStop != null && self.HitStop.Animancer != null)
                 {
-                    self.HitStop.RequestHitStop(ms, self.HitStop.Animancer, HitStopFreezeMode.FreezeAll);
+                    self.HitStop.RequestHitStop(ms, HitStopFreezeMode.FreezeAll);
                 }
             }
         }
@@ -676,10 +558,7 @@ namespace ET
                 self.LocomotionIntent.ExternalTargetVelocity = Vector2.zero;
             }
         }
-
-        // 旧 ApplyHitTether 已移除：NormalHit 使用 UpdateNormalHitMotion 弹簧模型；
-        // 非 NormalHit 纯 Force/Curve 驱动，无拴系约束。
-
+        
         /// <summary>
         /// 进入空中受击时抵制地检降频，确保每帧检测落地。
         /// </summary>
@@ -705,9 +584,7 @@ namespace ET
         }
 
         /// <summary>
-        /// 提取公共物理初始化逻辑。
-        /// - NormalHit：不使用 Force/Curve，由 UpdateNormalHitMotion 弹簧模型驱动，持续到硬直结束。
-        /// - 其他类型：HitDirection 是 attacker→target 方向，对 TowardAttacker（拉向攻击者）需要取反。
+        /// 公共物理初始化逻辑。
         /// </summary>
         private static void InitPhysicalMotion(this HitReactionComponent self, in HitImpactData request)
         {
@@ -720,40 +597,31 @@ namespace ET
             self.CurrentMotionCurve = request.Rule.MotionData.MotionCurve;
             self.MotionStartTime = self.GetCombatNowMs();
             self.MotionEndTime = self.MotionStartTime + Mathf.Max(0, request.Rule.MotionData.DurationMs);
-            /*if (request.Rule.MotionData.MotionType == HitMotionType.NormalHit)
-            {
-                // NormalHit：水平位移由距离维持弹簧驱动，不需要 Force/Curve
-                self.MotionDirection = request.Rule.HitDirection;
-                self.MotionBaseForce = 0f;
-                self.CurrentMotionSpeed = 0f;
-                self.CurrentMotionCurve = null;
-                self.MotionStartTime = self.GetCombatNowMs();
-                // 持续到硬直结束（每次命中刷新）
-                self.MotionEndTime = self.HitStunEndTimeMs;
-            }
-            else
-            {
-                // 非 NormalHit：Force/Curve 路径
-                self.MotionDirection = request.Rule.MotionData.MotionType == HitMotionType.TowardAttacker
-                    ? -request.Rule.HitDirection
-                    : request.Rule.HitDirection;
-                self.MotionBaseForce = Mathf.Max(0f, request.Rule.MotionData.Force);
-                self.CurrentMotionSpeed = self.MotionBaseForce;
-                self.CurrentMotionCurve = request.Rule.MotionData.MotionCurve;
-                self.MotionStartTime = self.GetCombatNowMs();
-                self.MotionEndTime = self.MotionStartTime + Mathf.Max(0, request.Rule.MotionData.DurationMs);
-            }*/
-
-            // 记录拴系锚点（攻击者位置）
-            self.TetherAnchorPos = self.TetherAnchorTransform.position;
         }
 
         /// <summary>
-        /// 竖直冲量注入：仅处理 UpwardImpulse 和 DownwardImpulse，通过 LocomotionIntent.ExternalImpulse 注入。
-        /// - UpwardImpulse：Y轴正方向，受空中绝对高度上限约束（接近上限线性衰减）。
-        /// - DownwardImpulse：Y轴负方向。
-        /// - HorizontalImpulse / TowardAttacker 不走瞬时冲量，由 InitPhysicalMotion + UpdateHitMotion
-        ///   通过 ExternalTargetVelocity 持续驱动，落地时 ClearPhysicalMotion 即可完全停止。
+        /// 计算空中连段目标高度（MaxAirborneHeight）。
+        /// - 基于 AirborneOriginHeight + DesiredComboHeight 设定固定目标
+        /// - 受 AbsoluteMaxHeight（相对首次击飞点）约束
+        /// - 仅在首次击飞时调用一次，后续空中命中不重新计算（目标高度固定）
+        /// </summary>
+        private static void RecalculateMaxAirborneHeight(this HitReactionComponent self)
+        {
+            float desiredHeight = self.CombatConfig.CachedAirCombo.DesiredComboHeight;
+            float ceiling = self.AirborneOriginHeight + (desiredHeight > 0f ? desiredHeight : 2.2f);
+
+            float absoluteMax = self.CombatConfig.CachedAirCombo.AbsoluteMaxHeight;
+            if (absoluteMax > 0f)
+            {
+                float absoluteCeiling = self.AirborneOriginHeight + absoluteMax;
+                ceiling = Mathf.Min(ceiling, absoluteCeiling);
+            }
+
+            self.MaxAirborneHeight = ceiling;
+        }
+
+        /// <summary>
+        /// 竖直冲量注入
         /// </summary>
         private static void ApplyImpulse(this HitReactionComponent self, HitMotionType motionType, float force)
         {
@@ -766,22 +634,25 @@ namespace ET
                 case HitMotionType.UpwardImpulse:
                 {
                     float yImpulse = force;
-                    // 向上冲量高度限制：仅当接近绝对上限时才衰减，低于缓冲区起点时冲量完整保留。
                     if (self.MaxAirborneHeight > self.AirborneOriginHeight)
                     {
                         float currentY = self.Owner.position.y;
-                        float maxY = self.MaxAirborneHeight;
-                        float totalRange = maxY - self.AirborneOriginHeight;
-                        float dampenZoneRatio = 0.3f;
-                        float dampenZoneStart = maxY - totalRange * dampenZoneRatio;
+                        float targetY = self.MaxAirborneHeight;
+                        float deficit = targetY - currentY;
 
-                        if (currentY > dampenZoneStart)
+                        if (deficit > 0f)
                         {
-                            float dampenRange = maxY - dampenZoneStart;
-                            float factor = Mathf.Clamp01((maxY - currentY) / dampenRange);
-                            yImpulse *= factor;
+                            float g = self.Motor.Gravity * self.Motor.GravityMultiplier;
+                            yImpulse = Mathf.Sqrt(2f * g * deficit);
+                        }
+                        else
+                        {
+                            // 超过目标高度时给一个小冲量，抵消部分重力，创造短暂悬停感
+                            float g = self.Motor.Gravity * self.Motor.GravityMultiplier;
+                            yImpulse = Mathf.Sqrt(2.5f * g * Mathf.Abs(deficit));
                         }
                     }
+
                     intent.ExternalImpulse += new Vector3(0, yImpulse, 0);
                     break;
                 }
@@ -791,8 +662,6 @@ namespace ET
                     break;
                 }
             }
-
-            Log.Debug($"[HitReaction] ApplyImpulse: {intent.ExternalImpulse}");
         }
 
         #endregion

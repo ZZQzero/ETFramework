@@ -440,11 +440,11 @@ public partial class SkillEditorWindow : EditorWindow
         }
         if (hitFeedbackAttackerHitStopMsField != null)
         {
-            hitFeedbackAttackerHitStopMsField.SetValueWithoutNotify(Mathf.Max(-1, feedback.AttackerHitStopMs));
+            hitFeedbackAttackerHitStopMsField.SetValueWithoutNotify(Mathf.Max(0, feedback.AttackerHitStopMs));
         }
         if (hitFeedbackVictimHitStopMsField != null)
         {
-            hitFeedbackVictimHitStopMsField.SetValueWithoutNotify(Mathf.Max(-1, feedback.VictimHitStopMs));
+            hitFeedbackVictimHitStopMsField.SetValueWithoutNotify(Mathf.Max(0, feedback.VictimHitStopMs));
         }
         if (hitFeedbackTimeScaleField != null)
         {
